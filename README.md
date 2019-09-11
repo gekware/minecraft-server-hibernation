@@ -15,7 +15,9 @@ link github:			https://github.com/supernifty/port-forwarder
 
 Usage
 1: create a service for minecraft server and set it to not launch automatically at start-up
+
 2: create a service for minecraft-vanilla_server_hibernation and set it to launch at start up
+
 3: set on the .py file:
 			START_MINECRAFT_SERVER	(example: 'sudo systemctl start minecraft-server')
 			STOP_MINECRAFT_SERVER	(example: 'sudo systemctl stop minecraft-server')
@@ -23,6 +25,7 @@ Usage
 			LISTEN_PORT				(example: 25555)
 			TARGET_HOST				(example: "127.0.0.1")
 			TARGET_PORT				(example: 25565)
+
 4: DONE!
 
 Note:	if you are the first to access to minecraft world you will have to wait 12 seconds
