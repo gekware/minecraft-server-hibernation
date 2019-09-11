@@ -91,8 +91,6 @@ def server(*settings):
                                                                                     #(remember: for each player there are 2 threads, 1 server-->client and 1 client-->server)
                                                                                     #the restart commands is used to avoid build-up of non-useful threads in the case
                                                                                     #of a player losing connection multiple times
-                
-
     except IOError as e:
         if e.errno == 111 and firstlaunch == True:                                  #errno:111 is returned when there is the first connection (and minecraft-server is down)
             print('errno_111 && firstlaunch == True ---> FIRST SERVER CONNECTION')
