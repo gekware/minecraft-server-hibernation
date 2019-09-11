@@ -4,7 +4,7 @@ created by gekigek99
 
 ==========================================================================
 
-Simple Python scripts to listen and forward network traffic (adapted manage minecraft server vanilla)
+Simple Python scripts to listen and forward network traffic (adapted manage start and stop minecraft server vanilla to avoid wasting of resources on your server)
 
 ==========================================================================
 
