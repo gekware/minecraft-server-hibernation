@@ -19,3 +19,4 @@ After that you have 240 to connect to the server before it is shutdown.
 ```Python
 TIMEOUT_SOCKET = 240
 ```
+You can change these parameters to fit your needs.
