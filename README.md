@@ -1,35 +1,22 @@
-# minecraft-vanilla-server-hibernation
-version 2.0
-created by gekigek99
+# minecraft-server-hibernation
+forked from [gekigek99](https://github.com/gekigek99/minecraft-vanilla-server-hibernation)
+which is derived from [supernifty](https://github.com/supernifty/port-forwarder)
 
-==========================================================================
-
-Simple Python scripts to listen and forward network traffic (adapted manage start and stop minecraft server vanilla to avoid wasting of resources on your server)
-
-==========================================================================
-
-Project derived from:	supernifty
-link github:		https://github.com/supernifty/port-forwarder
-
-==========================================================================
-
+This is a simple Python script to start a minecraft server on request and stop it when there are no player online.
 How to use:
-1) create a service for minecraft server and set it to not launch automatically at start-up
-2) create a service for minecraft-vanilla_server_hibernation and set it to launch at start up
-3) set on the .py file:
-	3.1) START_MINECRAFT_SERVER	(example: 'sudo systemctl start minecraft-server')
-	3.2) STOP_MINECRAFT_SERVER	(example: 'sudo systemctl stop minecraft-server')
-	3.3) LISTEN_HOST		(example: "0.0.0.0")
-	3.4) LISTEN_PORT		(example: 25555)
-	3.5) TARGET_HOST		(example: "127.0.0.1")
-	3.6) TARGET_PORT		(example: 25565)
-4) DONE!
+1. Install and run your desiered minecraft server.
+2. Rename the minecraft-server-jar to 'minecraft_server.jar'
+3. Change the port in 'server.properties' to 25555
+4. Edited the paramters in the script as needed. 
+5. run the script
 
-Note:	if you are the first to access to minecraft world you will have to wait 12 seconds
-			(you can modify this if you want) to let the server load the world, and then retry to connect
-			(to retry you have the amount of seconds specified in TIMEOUT_SOCKET)
-
-==========================================================================
-
-If you are planning to use this script for your server or you do modifications tell me, I would like to hear 
-that all the hours I spent modifying this are put to good use by others!
+**IMPORTANT**	
+If you are the first to access to minecraft world you will *have to wait 120 seconds*.
+```Python
+MINECRAFT_SERVER_STARTUPTIME = 120 
+```
+After that you have 240 to connect to the server before it is shutdown. 
+```Python
+TIMEOUT_SOCKET = 240
+```
+You can change these parameters to fit your needs.
