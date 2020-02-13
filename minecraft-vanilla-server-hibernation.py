@@ -44,7 +44,6 @@ def stop_empty_minecraft_server():
     print('MINECRAFT SERVER IS SHUTTING DOWN!')
     timelefttillup = MINECRAFT_SERVER_STARTUPTIME
 
-
 def start_minecraft_server():
     global server_status, START_MINECRAFT_SERVER, MINECRAFT_SERVER_STARTUPTIME, players, timelefttillup
     if server_status != "offline":
@@ -66,7 +65,6 @@ def start_minecraft_server():
     _update_timeleft()
     Timer(MINECRAFT_SERVER_STARTUPTIME, _set_server_status_online, ()).start()
 
-
 def printdatausage():
     global datacountbytes
     if datacountbytes != 0:
@@ -74,12 +72,11 @@ def printdatausage():
         datacountbytes = 0
     Timer(3, printdatausage, ()).start()
 
-
 def main():
     global players, START_MINECRAFT_SERVER, STOP_MINECRAFT_SERVER, server_status, timelefttillup
     dock_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     dock_socket.setblocking(1)
-    dock_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)           #to prevent errno 98 address already in use
+    dock_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) #to prevent errno 98 address already in use
     dock_socket.bind((LISTEN_HOST, LISTEN_PORT))
     dock_socket.listen(5)
     if DEBUG == True:
@@ -99,27 +96,28 @@ def main():
                 continue
             server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             server_socket.connect((TARGET_HOST, TARGET_PORT))
-            _thread.start_new_thread(clienttoserver, (client_socket, server_socket,))
-            _thread.start_new_thread(servertoclient, (server_socket, client_socket,))
+            connectsocketsasync(client_socket,server_socket)
         except Exception as e:
-            print ('Exception in main(): '+e)
+            print ('Exception in main(): '+str(e))
+
+def connectsocketsasync(client, server):
+    _thread.start_new_thread(clienttoserver, (client, server,))
+    _thread.start_new_thread(servertoclient, (server, client,))
 
 def clienttoserver(source, destination):
     global players, TIME_BEFORE_STOPPING_EMPTY_SERVER, stop_empty_minecraft_server
     players +=1
     print ('A PLAYER JOINED THE SERVER! - '+str(players)+' players online')
-    forward(source,destination)
+    forwardsync(source,destination)
     players -= 1
     print ('A PLAYER LEFT THE SERVER! - '+str(players)+' players remaining')
     Timer(TIME_BEFORE_STOPPING_EMPTY_SERVER, stop_empty_minecraft_server, ()).start()
 
-
 def servertoclient(source, destination):
-    forward(source, destination)
-
+    forwardsync(source, destination)
 
 #this thread passes data between connections
-def forward(source, destination):
+def forwardsync(source, destination):
     global datacountbytes
     data = ' '
     source.settimeout(60)
@@ -127,18 +125,14 @@ def forward(source, destination):
     try:
         while True:
             data = source.recv(1024)
-            if not data: #if there is no data close the socket and declare that a player has left the server
+            if not data: #if there is no data stop listening, this means the socket is closed
                 break
             destination.sendall(data)
             datacountbytes += len(data) #to calculate the quantity of data per second
-        source.shutdown(socket.SHUT_RD)
-        source.close()
-        destination.shutdown(socket.SHUT_WR)
-        destination.close()
     except IOError as e: 
-        if e.errno == 9: # user disconnected normally
+        if e.errno == 32: # user/server disconnected normally. has to be catched, because there is a race condition when trying to check if destination.recv does return data
             return
-        print('IOError: ' + str(e))
+        print('IOError in forward(): ' + str(e))
     except Exception as e:
         print('Exception in forward(): ' + str(e))
 
