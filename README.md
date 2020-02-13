@@ -15,8 +15,8 @@ If you are the first to access to minecraft world you will *have to wait 120 sec
 ```Python
 MINECRAFT_SERVER_STARTUPTIME = 120 
 ```
-After that you have 240 to connect to the server before it is shutdown. 
+After 120 seconds you have 240 to connect to the server before it is shutdown. 
 ```Python
-TIMEOUT_SOCKET = 240
+TIME_BEFORE_STOPPING_EMPTY_SERVER = 240
 ```
 You can change these parameters to fit your needs.
