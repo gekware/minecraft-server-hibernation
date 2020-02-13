@@ -22,7 +22,7 @@ TARGET_PORT = 25555         #the port specified on server.properties
 
 MINECRAFT_SERVER_STARTUPTIME = 120 # time the server needs until it is fully started
 
-TIME_BEFORE_STOPPING_EMPTY_SERVER = 20 
+TIME_BEFORE_STOPPING_EMPTY_SERVER = 240 
 
 #-----------------------advanced------------------------------#
 
