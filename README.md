@@ -1,11 +1,11 @@
 # minecraft-server-hibernation
-idea by [gekigek99](https://github.com/gekigek99/minecraft-vanilla-server-hibernation)
+concept and early-code by [gekigek99](https://github.com/gekigek99/minecraft-vanilla-server-hibernation)
+contributor (advanced-code) (big thanks) [najtin](https://github.com/najtin/minecraft-server-hibernation)
 derived from [supernifty](https://github.com/supernifty/port-forwarder)
-contributor (big thanks) [najtin](https://github.com/najtin/minecraft-server-hibernation)
 
 This is a simple Python script to start a minecraft server on request and stop it when there are no player online.
 How to use:
-1. Install and run your desiered minecraft server (and put this .py file in the same folder of minecraft_server.jar file).
+1. Install and run your desiered minecraft server
 2. Rename the minecraft-server-jar to 'minecraft_server.jar'
 3. Change the port in 'server.properties' to 25555
 4. Edited the paramters in the script as needed. 
