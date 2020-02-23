@@ -89,8 +89,8 @@ def main():
             if server_status == "offline":
                 start_minecraft_server()
             if server_status == "starting":
-                 # the padding to 88 chars is important, otherwise someclients will fail to interpret
-                client_socket.sendall(("e\0c{\"text\":\""+("Server is starting. Please wait. Time left: "+str(timelefttillup)+" seconds").ljust(88,' ')+"\"}").encode())
+                 # the padding to 88 chars is important, otherwise someclients will fail to interpret (byte 0x0a (equal to \n or new line) is used to put the phrase in the center of the screen)
+                client_socket.sendall(("e\0c{\"text\":\""+("Server is starting. Please wait. Time left: "+str(timelefttillup)+" seconds").ljust(88,'\x0a')+"\"}").encode())
                 client_socket.shutdown(1) # sends FIN to client
                 client_socket.close()
                 continue
