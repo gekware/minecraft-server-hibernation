@@ -13,12 +13,12 @@ How to use:
 6. you can connect to the server through port 25565
 
 **IMPORTANT**	
-If you are the first to access to minecraft world you will *have to wait 120 seconds* and then try to connect again.
+If you are the first to access to minecraft world you will *have to wait 30 seconds* and then try to connect again.
 ```Python
-MINECRAFT_SERVER_STARTUPTIME = 120 
+MINECRAFT_SERVER_STARTUPTIME = 30 #any parameter more than 10s is recommended
 ```
 After 120 seconds you have 240 to connect to the server before it is shutdown. 
 ```Python
-TIME_BEFORE_STOPPING_EMPTY_SERVER = 240
+TIME_BEFORE_STOPPING_EMPTY_SERVER = 120 #any parameter more than 60s is recommended
 ```
 You can change these parameters to fit your needs.
