@@ -2,7 +2,7 @@
 
 '''
 minecraft-vanilla_server_hibernation.py
-version 2.0
+version 4.0
 '''
 import psutil
 import socket
