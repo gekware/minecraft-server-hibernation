@@ -91,14 +91,13 @@ def main():
                 connection_data_recv = client_socket.recv(64)
                 player_data_recv = client_socket.recv(64)
                 player_name = player_data_recv[3:].decode('utf-8', errors='replace')
-                player_address = client_socket.getsockname()[0]
                 if player_name == '':
                     player_name = 'player unknown'
                 if b'\xdd\x02' in connection_data_recv:     #\xdd is not necessary but increase the specificity for selection of the transmitted data
-                    print(player_name, 'wants to join from', player_address)
+                    print(player_name, 'wants to join from', client_address[0])
                     start_minecraft_server()
                 elif b'\xdd\x01' in connection_data_recv:   #\xdd is not necessary but increase the specificity for selection of the transmitted data
-                    print(player_name, 'requested server info from', player_address)
+                    print(player_name, 'requested server info from', client_address[0])
                     client_socket.shutdown(1)
                     client_socket.close()
                     continue
@@ -108,7 +107,7 @@ def main():
                     continue
             if server_status == "starting":
                 sleep(0.01) #necessary otherwise it throws an error: Internal Exception: io.netty.handler.codec.Decoder.Exception java.lang.NullPointerException
-                print(player_name, 'connected from', player_address, 'while starting')
+                print(player_name, 'connected from', client_address[0], 'while starting')
                 #the padding to 88 chars is important, otherwise someclients will fail to interpret (byte 0x0a (equal to \n or new line) is used to put the phrase in the center of the screen)
                 client_socket.sendall(("e\0c{\"text\":\"" + ("Server is starting. Please wait. Time left: " + str(timelefttillup) + " seconds").ljust(88,'\x0a')+"\"}").encode())
                 client_socket.shutdown(1) # sends FIN to client
