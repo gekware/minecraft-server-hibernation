@@ -9,6 +9,7 @@ import socket
 import _thread
 import os
 from threading import Timer
+from time import sleep
 #------------------------modify-------------------------------#
 
 START_MINECRAFT_SERVER = 'cd PATH/TO/SERVERFOLDER; screen -dmS minecraftSERVER nice -19 java -jar minecraft_server.jar'    #set command to start minecraft-server service
@@ -87,10 +88,29 @@ def main():
             if DEBUG == True:
                 print ('*** from {}:{} to {}:{}'.format(client_address[0], LISTEN_PORT, TARGET_HOST, TARGET_PORT))
             if server_status == "offline":
-                start_minecraft_server()
+                connection_data_recv = client_socket.recv(64)
+                player_data_recv = client_socket.recv(64)
+                player_name = player_data_recv[3:].decode('utf-8', errors='replace')
+                player_address = client_socket.getsockname()[0]
+                if player_name == '':
+                    player_name = 'player unknown'
+                if b'\xdd\x02' in connection_data_recv:     #\xdd is not necessary but increase the specificity for selection of the transmitted data
+                    print(player_name, 'wants to join from', player_address)
+                    start_minecraft_server()
+                elif b'\xdd\x01' in connection_data_recv:   #\xdd is not necessary but increase the specificity for selection of the transmitted data
+                    print(player_name, 'requested server info from', player_address)
+                    client_socket.shutdown(1)
+                    client_socket.close()
+                    continue
+                else:
+                    client_socket.shutdown(1)
+                    client_socket.close()
+                    continue
             if server_status == "starting":
-                 # the padding to 88 chars is important, otherwise someclients will fail to interpret (byte 0x0a (equal to \n or new line) is used to put the phrase in the center of the screen)
-                client_socket.sendall(("e\0c{\"text\":\""+("Server is starting. Please wait. Time left: "+str(timelefttillup)+" seconds").ljust(88,'\x0a')+"\"}").encode())
+                sleep(0.01) #necessary otherwise it throws an error: Internal Exception: io.netty.handler.codec.Decoder.Exception java.lang.NullPointerException
+                print(player_name, 'connected from', player_address, 'while starting')
+                #the padding to 88 chars is important, otherwise someclients will fail to interpret (byte 0x0a (equal to \n or new line) is used to put the phrase in the center of the screen)
+                client_socket.sendall(("e\0c{\"text\":\"" + ("Server is starting. Please wait. Time left: " + str(timelefttillup) + " seconds").ljust(88,'\x0a')+"\"}").encode())
                 client_socket.shutdown(1) # sends FIN to client
                 client_socket.close()
                 continue
