@@ -15,17 +15,16 @@ from time import sleep
 START_MINECRAFT_SERVER = 'cd PATH/TO/SERVERFOLDER; screen -dmS minecraftSERVER nice -19 java -jar minecraft_server.jar'    #set command to start minecraft-server service
 STOP_MINECRAFT_SERVER = "screen -S minecraftSERVER -X stuff 'stop\\n'"    #set command to stop minecraft-server service
 
+MINECRAFT_SERVER_STARTUPTIME = 20       #time the server needs until it is fully started
+TIME_BEFORE_STOPPING_EMPTY_SERVER = 60  #time the server waits for clients to connect then it issues the stop command to server
+
+#-----------------------advanced------------------------------#
+
 LISTEN_HOST = "0.0.0.0"
 LISTEN_PORT = 25555         #the port you will connect to on minecraft client
 
 TARGET_HOST = "127.0.0.1"
 TARGET_PORT = 25565         #the port specified on server.properties
-
-MINECRAFT_SERVER_STARTUPTIME = 30 # time the server needs until it is fully started
-
-TIME_BEFORE_STOPPING_EMPTY_SERVER = 120 
-
-#-----------------------advanced------------------------------#
 
 DEBUG = False # if true more additional information is printed
 
