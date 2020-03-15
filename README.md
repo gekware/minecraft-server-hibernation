@@ -7,10 +7,10 @@ This is a simple Python script to start a minecraft server on request and stop i
 How to use:
 1. Install and run your desiered minecraft server
 2. Rename the minecraft-server-jar to 'minecraft_server.jar'
-3. Change the port in 'server.properties' to 25555
+3. Check the server-port parameter in 'server.properties': must be 25565
 4. Edited the paramters in the script as needed. 
 5. run the script at reboot
-6. you can connect to the server through port 25565
+6. you can connect to the server through port 25555
 
 **IMPORTANT**	
 If you are the first to access to minecraft world you will *have to wait 30 seconds* and then try to connect again.
