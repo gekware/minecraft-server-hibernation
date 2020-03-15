@@ -93,10 +93,10 @@ def main():
                 player_name = player_data_recv[3:].decode('utf-8', errors='replace')
                 if player_name == '':
                     player_name = 'player unknown'
-                if b'\xdd\x02' in connection_data_recv:     #\xdd is not necessary but increase the specificity for selection of the transmitted data
+                if connection_data_recv[-1] == 2:     #\x02 is the last byte when player is trying to join the server
                     print(player_name, 'wants to join from', client_address[0])
                     start_minecraft_server()
-                elif b'\xdd\x01' in connection_data_recv:   #\xdd is not necessary but increase the specificity for selection of the transmitted data
+                elif connection_data_recv[-1] == 1:   #\x01 is the last byte when requesting server info
                     print(player_name, 'requested server info from', client_address[0])
                     client_socket.shutdown(1)
                     client_socket.close()
