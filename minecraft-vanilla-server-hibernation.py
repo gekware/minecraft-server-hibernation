@@ -16,10 +16,10 @@ START_MINECRAFT_SERVER = 'cd PATH/TO/SERVERFOLDER; screen -dmS minecraftSERVER n
 STOP_MINECRAFT_SERVER = "screen -S minecraftSERVER -X stuff 'stop\\n'"    #set command to stop minecraft-server service
 
 LISTEN_HOST = "0.0.0.0"
-LISTEN_PORT = 25565         #the port you will connect to on minecraft client
+LISTEN_PORT = 25555         #the port you will connect to on minecraft client
 
 TARGET_HOST = "127.0.0.1"
-TARGET_PORT = 25555         #the port specified on server.properties
+TARGET_PORT = 25565         #the port specified on server.properties
 
 MINECRAFT_SERVER_STARTUPTIME = 30 # time the server needs until it is fully started
 
