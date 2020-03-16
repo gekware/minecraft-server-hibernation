@@ -30,7 +30,7 @@ DEBUG = False # if true more additional information is printed
 
 #---------------------do not modify---------------------------#
 
-players = 0    
+players = 0
 datacountbytes = 0
 server_status = "offline"
 timelefttillup = MINECRAFT_SERVER_STARTUPTIME
@@ -59,7 +59,7 @@ def start_minecraft_server():
         Timer(TIME_BEFORE_STOPPING_EMPTY_SERVER, stop_empty_minecraft_server, ()).start()
     def _update_timeleft():
         global timelefttillup
-        if timelefttillup > 0: 
+        if timelefttillup > 0:
             timelefttillup-=1
             Timer(1,_update_timeleft, ()).start()
     _update_timeleft()
@@ -92,7 +92,7 @@ def main():
                 player_name = player_data_recv[3:].decode('utf-8', errors='replace')
                 if player_name == '':
                     player_name = 'player unknown'
-                if connection_data_recv[-1] == 2:     #\x02 is the last byte of the first message when player is trying to join the server
+                if connection_data_recv[-1] == 2:       #\x02 is the last byte of the first message when player is trying to join the server
                     print(player_name, 'wants to join from', client_address[0])
                     start_minecraft_server()
                 else:
