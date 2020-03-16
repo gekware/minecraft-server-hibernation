@@ -79,6 +79,7 @@ def main():
     dock_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) #to prevent errno 98 address already in use
     dock_socket.bind((LISTEN_HOST, LISTEN_PORT))
     dock_socket.listen(5)
+    print('*** listening for new clients to connect...')
     if DEBUG == True:
         printdatausage()
     while True:
