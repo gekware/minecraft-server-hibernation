@@ -2,7 +2,7 @@
 
 '''
 minecraft-vanilla_server_hibernation.py
-version 2.0
+version 2.1
 '''
 
 import socket
@@ -13,20 +13,24 @@ import time
 
 #------------------------modify-------------------------------#
 
-START_MINECRAFT_SERVER = 'sudo systemctl start minecraft-server'    #set command to start minecraft-server service
-STOP_MINECRAFT_SERVER = 'sudo systemctl stop minecraft-server'      #set command to stop minecraft-server service
+START_MINECRAFT_SERVER = 'screen -dmS minecraftSERVER nice -19 java -jar minecraft_server.jar'    #set command to start minecraft-server service
+STOP_MINECRAFT_SERVER = "screen -S minecraftSERVER -X stuff 'stop\\n'"    #set command to stop minecraft-server service
 
 LISTEN_HOST = "0.0.0.0"
-LISTEN_PORT = 25555         #the port you will connect to on minecraft client
+LISTEN_PORT = 25565         #the port you will connect to on minecraft client
 
 TARGET_HOST = "127.0.0.1"
-TARGET_PORT = 25565         #the port specified on server.properties
+TARGET_PORT = 25555         #the port specified on server.properties
+
+MINECRAFT_SERVER_STARTUPTIME = 120 # time the server needs until it is fully started
+
+TIME_BEFORE_STOPPING_EMPTY_SERVER = 20 
 
 #-----------------------advanced------------------------------#
 
 WRITE_LOG = False               #for debug
 
-TIMEOUT_SOCKET = 60             #after which it is raised socket.timeout exception (to prevent the case in which someone clicks the first time
+TIMEOUT_SOCKET = 240             #after which it is raised socket.timeout exception (to prevent the case in which someone clicks the first time
                                 #to start up to server and then doesn't click a second time to enter the world)
 
 #---------------------do not modify---------------------------#
@@ -78,7 +82,8 @@ def server(*settings):
             print (str(players) + ' players')
 
     except socket.timeout:      #after the set socket.settimeout the program checks if there are no players, if so it send a stop minecraft-server service to make sure the server is down
-        print('connessione scaduta...')
+        print('connection timeout')
+        time.sleep(TIME_BEFORE_STOPPING_EMPTY_SERVER)
         if players <= 0:
             print('no players on server and connection timed out...')
             print('ISSUING STOP COMMAND TO MINECRAFT-SERVER!')
@@ -86,7 +91,7 @@ def server(*settings):
             print('STOP COMMAND TO MINECRAFT-SERVER ISSUED ---> MINECRAFT SERVER IS DOWN!')
             firstlaunch = True
             if restart_flag == True:
-                print('restarting ' + str(os.path.basename(__file__)) + '...')      #after a player exit the game restart_flag is set to true because there is the possibility 
+                print('restarting ' + str(os.path.basename(__file__)) + '...')      #after all player exit the game restart_flag is set to true because there is the possibility 
                 os.execl(str(os.path.basename(__file__)), 'python3')                #that the player has lost connection and that 1 thread is not closed successfully
                                                                                     #(remember: for each player there are 2 threads, 1 server-->client and 1 client-->server)
                                                                                     #the restart commands is used to avoid build-up of non-useful threads in the case
@@ -96,9 +101,9 @@ def server(*settings):
             print('errno_111 && firstlaunch == True ---> FIRST SERVER CONNECTION')
             print ('starting minecraft-server service')
             os.system(START_MINECRAFT_SERVER)
-            print('loading world, wait 12 seconds...')
+            print('loading world, wait '+str(MINECRAFT_SERVER_STARTUPTIME)+' seconds...')
             players = 0
-            time.sleep(12)      #needed for launching minecraft-server, it can vary on how fast is your server, and probably 2 or 3 seconds is enough (but higher number prevents a player from entering when the server is still loading the world)
+            time.sleep(MINECRAFT_SERVER_STARTUPTIME)      #needed for launching minecraft-server, it can vary on how fast is your server, and probably 2 or 3 seconds is enough (but higher number prevents a player from entering when the server is still loading the world)
             print ('MINECRAFT SERVER IS UP!')
             firstlaunch = False
         elif e.errno == 111 and firstlaunch == False:       #if the stop minecraft-server command has just been issued and if this script is not fast enough to bind again the socket there could be some errors, this IF prevents them
@@ -120,18 +125,16 @@ def forward(source, destination, description):              #this thread is the 
         data = ' '              #so that it is possible to enter the while loop
         while data:
             data = source.recv(1024)
-
             nowtime = time.time()
             #print('{}: {}'.format(description, data.decode('ascii', 'replace')))   #commented out because it's non useful and just resource consuming on terminal
             if WRITE_LOG == True:
                 f.write(str(nowtime) + '>' + str(description) + data.decode('ascii', 'replace') + '\n' )
-
             if data:
                 destination.sendall(data)
-
                 datacountbytes += len(data)                 #to calculate the quantity of data per second
                 if nowtime >= nexttime:
-                    print('{:.3f}KB/s'.format(datacountbytes/1024))
+                    if WRITE_LOG == True:
+                        print('{:.3f}KB/s'.format(datacountbytes/1024))
                     datacountbytes = 0
                     nexttime = nowtime + 1
             else:                                           #if there is no data close the socket and declare that a player has left the server
@@ -145,6 +148,7 @@ def forward(source, destination, description):              #this thread is the 
                 if WRITE_LOG == True:
                     f.write('A PLAYER LEFT THE SERVER\n') 
                 print (str(players) + ' players')
+                time.sleep(TIME_BEFORE_STOPPING_EMPTY_SERVER)
                 if players <= 0:
                     print('ISSUING STOP COMMAND TO MINECRAFT-SERVER!')
                     os.system(STOP_MINECRAFT_SERVER)        #stops minecraft-server service if there ar no players
