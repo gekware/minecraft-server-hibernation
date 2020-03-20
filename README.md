@@ -1,5 +1,5 @@
 # minecraft-server-hibernation
-version 4.0
+version 4.1
 concept and early-code by [gekigek99](https://github.com/gekigek99/minecraft-vanilla-server-hibernation)<br/>
 contributor (advanced-code) by [najtin](https://github.com/najtin/minecraft-server-hibernation)<br/>
 derived from [supernifty](https://github.com/supernifty/port-forwarder)<br/>
@@ -18,7 +18,7 @@ If you are the first to access to minecraft world you will *have to wait 30 seco
 ```Python
 MINECRAFT_SERVER_STARTUPTIME = 30       #any parameter more than 10s is recommended
 ```
-After 120 seconds you have 240 to connect to the server before it is shutdown. 
+After 120 seconds you have 120 to connect to the server before it is shutdown. 
 ```Python
 TIME_BEFORE_STOPPING_EMPTY_SERVER = 120 #any parameter more than 60s is recommended
 ```
