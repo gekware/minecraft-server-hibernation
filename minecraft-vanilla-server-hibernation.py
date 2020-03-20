@@ -2,35 +2,35 @@
 
 '''
 minecraft-vanilla_server_hibernation.py
-version 3.1
+version 4.0
 '''
 import psutil
 import socket
 import _thread
 import os
 from threading import Timer
+from time import sleep
 #------------------------modify-------------------------------#
 
 START_MINECRAFT_SERVER = 'cd PATH/TO/SERVERFOLDER; screen -dmS minecraftSERVER nice -19 java -jar minecraft_server.jar'    #set command to start minecraft-server service
 STOP_MINECRAFT_SERVER = "screen -S minecraftSERVER -X stuff 'stop\\n'"    #set command to stop minecraft-server service
 
-LISTEN_HOST = "0.0.0.0"
-LISTEN_PORT = 25565         #the port you will connect to on minecraft client
-
-TARGET_HOST = "127.0.0.1"
-TARGET_PORT = 25555         #the port specified on server.properties
-
-MINECRAFT_SERVER_STARTUPTIME = 30 # time the server needs until it is fully started
-
-TIME_BEFORE_STOPPING_EMPTY_SERVER = 120 
+MINECRAFT_SERVER_STARTUPTIME = 20       #time the server needs until it is fully started
+TIME_BEFORE_STOPPING_EMPTY_SERVER = 60  #time the server waits for clients to connect then it issues the stop command to server
 
 #-----------------------advanced------------------------------#
+
+LISTEN_HOST = "0.0.0.0"
+LISTEN_PORT = 25555         #the port you will connect to on minecraft client
+
+TARGET_HOST = "127.0.0.1"
+TARGET_PORT = 25565         #the port specified on server.properties
 
 DEBUG = False # if true more additional information is printed
 
 #---------------------do not modify---------------------------#
 
-players = 0    
+players = 0
 datacountbytes = 0
 server_status = "offline"
 timelefttillup = MINECRAFT_SERVER_STARTUPTIME
@@ -59,7 +59,7 @@ def start_minecraft_server():
         Timer(TIME_BEFORE_STOPPING_EMPTY_SERVER, stop_empty_minecraft_server, ()).start()
     def _update_timeleft():
         global timelefttillup
-        if timelefttillup > 0: 
+        if timelefttillup > 0:
             timelefttillup-=1
             Timer(1,_update_timeleft, ()).start()
     _update_timeleft()
@@ -79,6 +79,7 @@ def main():
     dock_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) #to prevent errno 98 address already in use
     dock_socket.bind((LISTEN_HOST, LISTEN_PORT))
     dock_socket.listen(5)
+    print('*** listening for new clients to connect...')
     if DEBUG == True:
         printdatausage()
     while True:
@@ -87,10 +88,25 @@ def main():
             if DEBUG == True:
                 print ('*** from {}:{} to {}:{}'.format(client_address[0], LISTEN_PORT, TARGET_HOST, TARGET_PORT))
             if server_status == "offline":
-                start_minecraft_server()
+                connection_data_recv = client_socket.recv(64)
+                player_data_recv = client_socket.recv(64)
+                player_name = player_data_recv[3:].decode('utf-8', errors='replace')
+                if player_name == '':
+                    player_name = 'player unknown'
+                if connection_data_recv[-1] == 2:       #\x02 is the last byte of the first message when player is trying to join the server
+                    print(player_name, 'wants to join from', client_address[0])
+                    start_minecraft_server()
+                else:
+                    if connection_data_recv[-1] == 1:   #\x01 is the last byte of the first message when requesting server info
+                        print(player_name, 'requested server info from', client_address[0])
+                    client_socket.shutdown(1)
+                    client_socket.close()
+                    continue
             if server_status == "starting":
-                 # the padding to 88 chars is important, otherwise someclients will fail to interpret (byte 0x0a (equal to \n or new line) is used to put the phrase in the center of the screen)
-                client_socket.sendall(("e\0c{\"text\":\""+("Server is starting. Please wait. Time left: "+str(timelefttillup)+" seconds").ljust(88,'\x0a')+"\"}").encode())
+                sleep(0.01) #necessary otherwise it throws an error: Internal Exception: io.netty.handler.codec.Decoder.Exception java.lang.NullPointerException
+                print(player_name, 'connected from', client_address[0], 'while starting')
+                #the padding to 88 chars is important, otherwise someclients will fail to interpret (byte 0x0a (equal to \n or new line) is used to put the phrase in the center of the screen)
+                client_socket.sendall(("e\0c{\"text\":\"" + ("Server is starting. Please wait. Time left: " + str(timelefttillup) + " seconds").ljust(88,'\x0a')+"\"}").encode())
                 client_socket.shutdown(1) # sends FIN to client
                 client_socket.close()
                 continue
