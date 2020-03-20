@@ -1,5 +1,5 @@
 # minecraft-vanilla-server-hibernation
-version 2.0
+version 2.1
 created by gekigek99
 
 ==========================================================================
@@ -8,7 +8,7 @@ Simple Python scripts to listen and forward network traffic (adapted manage star
 
 ==========================================================================
 
-Project derived from:	[supernifty/port-forwarder](https://github.com/supernifty/port-forwarder)
+Project derived from: [supernifty/port-forwarder](https://github.com/supernifty/port-forwarder)
 
 ==========================================================================
 
