@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 
 '''
-minecraft-vanilla_server_hibernation.py
-version 4.0
+minecraft-vanilla_server_hibernation.py is used to start and stop automatically a vanilla minecraft server
+Copyright (C) 2020  gekigek99
+v4.1 (Python)
+visit my github page: https://github.com/gekigek99
 '''
 import psutil
 import socket
@@ -26,7 +28,7 @@ LISTEN_PORT = 25555         #the port you will connect to on minecraft client
 TARGET_HOST = "127.0.0.1"
 TARGET_PORT = 25565         #the port specified on server.properties
 
-DEBUG = False # if true more additional information is printed
+DEBUG = False               #if true more additional information is printed
 
 #---------------------do not modify---------------------------#
 
@@ -74,9 +76,12 @@ def printdatausage():
 
 def main():
     global players, START_MINECRAFT_SERVER, STOP_MINECRAFT_SERVER, server_status, timelefttillup
+    print('minecraft-vanilla-server-hibernation v4.1 (Python)')
+    print('Copyright (C) 2020 gekigek99')
+    print('visit my github page for updates: https://github.com/gekigek99')
     dock_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     dock_socket.setblocking(1)
-    dock_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) #to prevent errno 98 address already in use
+    dock_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)   #to prevent errno 98 address already in use
     dock_socket.bind((LISTEN_HOST, LISTEN_PORT))
     dock_socket.listen(5)
     print('*** listening for new clients to connect...')
@@ -84,35 +89,37 @@ def main():
         printdatausage()
     while True:
         try:
-            client_socket, client_address = dock_socket.accept() # blocking
+            client_socket, client_address = dock_socket.accept()        #blocking
             if DEBUG == True:
                 print ('*** from {}:{} to {}:{}'.format(client_address[0], LISTEN_PORT, TARGET_HOST, TARGET_PORT))
-            if server_status == "offline":
+            if server_status == "offline" or server_status == "starting":
                 connection_data_recv = client_socket.recv(64)
-                player_data_recv = client_socket.recv(64)
-                player_name = player_data_recv[3:].decode('utf-8', errors='replace')
-                if player_name == '':
-                    player_name = 'player unknown'
                 if connection_data_recv[-1] == 2:       #\x02 is the last byte of the first message when player is trying to join the server
-                    print(player_name, 'wants to join from', client_address[0])
-                    start_minecraft_server()
+                    player_data_recv = client_socket.recv(64)   #here it's reading an other packet containing the player name
+                    player_name = player_data_recv[3:].decode('utf-8', errors='replace')
+                    if server_status == "offline":
+                        print(player_name, 'tryed to join from', client_address[0])
+                        start_minecraft_server()
+                    if server_status == "starting":
+                        print(player_name, 'tryed to join from', client_address[0], 'during server startup')
+                        sleep(0.01)     #necessary otherwise it could throw an error: 
+                                        #Internal Exception: io.netty.handler.codec.Decoder.Exception java.lang.NullPointerException
+                        #the padding to 88 chars is important, otherwise someclients will fail to interpret
+                        #(byte 0x0a (equal to \n or new line) is used to put the phrase in the center of the screen)
+                        client_socket.sendall(("e\0c{\"text\":\"" + ("Server is starting. Please wait. Time left: " + str(timelefttillup) + " seconds").ljust(88,'\x0a')+"\"}").encode())
                 else:
                     if connection_data_recv[-1] == 1:   #\x01 is the last byte of the first message when requesting server info
-                        print(player_name, 'requested server info from', client_address[0])
-                    client_socket.shutdown(1)
-                    client_socket.close()
-                    continue
-            if server_status == "starting":
-                sleep(0.01) #necessary otherwise it throws an error: Internal Exception: io.netty.handler.codec.Decoder.Exception java.lang.NullPointerException
-                print(player_name, 'connected from', client_address[0], 'while starting')
-                #the padding to 88 chars is important, otherwise someclients will fail to interpret (byte 0x0a (equal to \n or new line) is used to put the phrase in the center of the screen)
-                client_socket.sendall(("e\0c{\"text\":\"" + ("Server is starting. Please wait. Time left: " + str(timelefttillup) + " seconds").ljust(88,'\x0a')+"\"}").encode())
-                client_socket.shutdown(1) # sends FIN to client
+                        if server_status == "offline":
+                            print('player unknown requested server info from', client_address[0])
+                        if server_status == "starting":
+                            print('player unknown requested server info from', client_address[0], 'during server startup')
+                client_socket.shutdown(1)   #sends FIN to client
                 client_socket.close()
                 continue
-            server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            server_socket.connect((TARGET_HOST, TARGET_PORT))
-            connectsocketsasync(client_socket,server_socket)
+            if server_status == "online":    
+                server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                server_socket.connect((TARGET_HOST, TARGET_PORT))
+                connectsocketsasync(client_socket,server_socket)
         except Exception as e:
             print ('Exception in main(): '+str(e))
 
@@ -141,13 +148,13 @@ def forwardsync(source, destination):
     try:
         while True:
             data = source.recv(1024)
-            if not data: #if there is no data stop listening, this means the socket is closed
+            if not data:                #if there is no data stop listening, this means the socket is closed
                 break
             destination.sendall(data)
             datacountbytes += len(data) #to calculate the quantity of data per second
     except IOError as e: 
-        if e.errno == 32: # user/server disconnected normally. has to be catched, because there is a race condition when trying to check if destination.recv does return data
-            return
+        if e.errno == 32:               #user/server disconnected normally. has to be catched, because there is a race condition
+            return                      #when trying to check if destination.recv does return data
         print('IOError in forward(): ' + str(e))
     except Exception as e:
         print('Exception in forward(): ' + str(e))
