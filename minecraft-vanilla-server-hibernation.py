@@ -3,8 +3,8 @@
 '''
 minecraft-vanilla_server_hibernation.py is used to start and stop automatically a vanilla minecraft server
 Copyright (C) 2020  gekigek99
+v4.1 (Python)
 visit my github page: https://github.com/gekigek99
-version 4.1
 '''
 import psutil
 import socket
@@ -76,9 +76,9 @@ def printdatausage():
 
 def main():
     global players, START_MINECRAFT_SERVER, STOP_MINECRAFT_SERVER, server_status, timelefttillup
-    print('minecraft-vanilla-server-hibernation')
+    print('minecraft-vanilla-server-hibernation v4.1 (Python)')
     print('Copyright (C) 2020 gekigek99')
-    print('please visit my github page for updates: https://github.com/gekigek99')
+    print('visit my github page for updates: https://github.com/gekigek99')
     dock_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     dock_socket.setblocking(1)
     dock_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)   #to prevent errno 98 address already in use
