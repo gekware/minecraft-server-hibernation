@@ -1,26 +1,20 @@
 #!/usr/bin/env python3
 
 '''
-minecraft-vanilla_server_hibernation.py is used to start and stop automatically a vanilla minecraft server
-Copyright (C) 2020  gekigek99
-v4.1 (Python)
-visit my github page: https://github.com/gekigek99
+minecraft-vanilla_server_hibernation.py
+version 2.0
 '''
-import psutil
+
 import socket
+import sys
 import _thread
 import os
-from threading import Timer
-from time import sleep
+import time
+
 #------------------------modify-------------------------------#
 
-START_MINECRAFT_SERVER = 'cd PATH/TO/SERVERFOLDER; screen -dmS minecraftSERVER nice -19 java -jar minecraft_server.jar'    #set command to start minecraft-server service
-STOP_MINECRAFT_SERVER = "screen -S minecraftSERVER -X stuff 'stop\\n'"    #set command to stop minecraft-server service
-
-MINECRAFT_SERVER_STARTUPTIME = 20       #time the server needs until it is fully started
-TIME_BEFORE_STOPPING_EMPTY_SERVER = 60  #time the server waits for clients to connect then it issues the stop command to server
-
-#-----------------------advanced------------------------------#
+START_MINECRAFT_SERVER = 'sudo systemctl start minecraft-server'    #set command to start minecraft-server service
+STOP_MINECRAFT_SERVER = 'sudo systemctl stop minecraft-server'      #set command to stop minecraft-server service
 
 LISTEN_HOST = "0.0.0.0"
 LISTEN_PORT = 25555         #the port you will connect to on minecraft client
@@ -28,136 +22,147 @@ LISTEN_PORT = 25555         #the port you will connect to on minecraft client
 TARGET_HOST = "127.0.0.1"
 TARGET_PORT = 25565         #the port specified on server.properties
 
-DEBUG = False               #if true more additional information is printed
+#-----------------------advanced------------------------------#
+
+WRITE_LOG = False               #for debug
+
+TIMEOUT_SOCKET = 60             #after which it is raised socket.timeout exception (to prevent the case in which someone clicks the first time
+                                #to start up to server and then doesn't click a second time to enter the world)
 
 #---------------------do not modify---------------------------#
 
-players = 0
+restart_flag = False            #used when there is a disconnection of a player, if true it signals the need to restart this program
+
+players = 0                     #declared here because it's a global variable
+
+firstlaunch = True              #used to know that the minecraft-server service is not running and this program needs to start it
+
 datacountbytes = 0
-server_status = "offline"
-timelefttillup = MINECRAFT_SERVER_STARTUPTIME
+nowtime = 0
+nexttime = 0
 
-def stop_empty_minecraft_server():
-    global server_status, STOP_MINECRAFT_SERVER, players, timelefttillup
-    if players > 0 or server_status == "offline":
-        return
-    server_status = "offline"
-    os.system(STOP_MINECRAFT_SERVER)
-    print('MINECRAFT SERVER IS SHUTTING DOWN!')
-    timelefttillup = MINECRAFT_SERVER_STARTUPTIME
+if WRITE_LOG == True:
+    f = open('log.txt', 'w')
 
-def start_minecraft_server():
-    global server_status, START_MINECRAFT_SERVER, MINECRAFT_SERVER_STARTUPTIME, players, timelefttillup
-    if server_status != "offline":
-        return
-    server_status = "starting"
-    os.system(START_MINECRAFT_SERVER)
-    print ('MINECRAFT SERVER IS STARTING!')
-    players = 0
-    def _set_server_status_online():
-        global server_status
-        server_status = "online"
-        print ('MINECRAFT SERVER IS UP!')
-        Timer(TIME_BEFORE_STOPPING_EMPTY_SERVER, stop_empty_minecraft_server, ()).start()
-    def _update_timeleft():
-        global timelefttillup
-        if timelefttillup > 0:
-            timelefttillup-=1
-            Timer(1,_update_timeleft, ()).start()
-    _update_timeleft()
-    Timer(MINECRAFT_SERVER_STARTUPTIME, _set_server_status_online, ()).start()
-
-def printdatausage():
-    global datacountbytes
-    if datacountbytes != 0:
-        print('{:.3f}KB/s'.format(datacountbytes/1024/3))
-        datacountbytes = 0
-    Timer(3, printdatausage, ()).start()
 
 def main():
-    global players, START_MINECRAFT_SERVER, STOP_MINECRAFT_SERVER, server_status, timelefttillup
-    print('minecraft-vanilla-server-hibernation v4.1 (Python)')
-    print('Copyright (C) 2020 gekigek99')
-    print('visit my github page for updates: https://github.com/gekigek99')
-    dock_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    dock_socket.setblocking(1)
-    dock_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)   #to prevent errno 98 address already in use
-    dock_socket.bind((LISTEN_HOST, LISTEN_PORT))
-    dock_socket.listen(5)
-    print('*** listening for new clients to connect...')
-    if DEBUG == True:
-        printdatausage()
-    while True:
-        try:
-            client_socket, client_address = dock_socket.accept()        #blocking
-            if DEBUG == True:
-                print ('*** from {}:{} to {}:{}'.format(client_address[0], LISTEN_PORT, TARGET_HOST, TARGET_PORT))
-            if server_status == "offline" or server_status == "starting":
-                connection_data_recv = client_socket.recv(64)
-                if connection_data_recv[-1] == 2:       #\x02 is the last byte of the first message when player is trying to join the server
-                    player_data_recv = client_socket.recv(64)   #here it's reading an other packet containing the player name
-                    player_name = player_data_recv[3:].decode('utf-8', errors='replace')
-                    if server_status == "offline":
-                        print(player_name, 'tryed to join from', client_address[0])
-                        start_minecraft_server()
-                    if server_status == "starting":
-                        print(player_name, 'tryed to join from', client_address[0], 'during server startup')
-                        sleep(0.01)     #necessary otherwise it could throw an error: 
-                                        #Internal Exception: io.netty.handler.codec.Decoder.Exception java.lang.NullPointerException
-                        #the padding to 88 chars is important, otherwise someclients will fail to interpret
-                        #(byte 0x0a (equal to \n or new line) is used to put the phrase in the center of the screen)
-                        client_socket.sendall(("e\0c{\"text\":\"" + ("Server is starting. Please wait. Time left: " + str(timelefttillup) + " seconds").ljust(88,'\x0a')+"\"}").encode())
-                else:
-                    if connection_data_recv[-1] == 1:   #\x01 is the last byte of the first message when requesting server info
-                        if server_status == "offline":
-                            print('player unknown requested server info from', client_address[0])
-                        if server_status == "starting":
-                            print('player unknown requested server info from', client_address[0], 'during server startup')
-                client_socket.shutdown(1)   #sends FIN to client
-                client_socket.close()
-                continue
-            if server_status == "online":    
-                server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                server_socket.connect((TARGET_HOST, TARGET_PORT))
-                connectsocketsasync(client_socket,server_socket)
-        except Exception as e:
-            print ('Exception in main(): '+str(e))
+    _thread.start_new_thread(server, () )
+    lock = _thread.allocate_lock()
+    lock.acquire()              #I don't know why it is needed to be called twice lock.acquire, but it works... ;)
+    lock.acquire()
 
-def connectsocketsasync(client, server):
-    _thread.start_new_thread(clienttoserver, (client, server,))
-    _thread.start_new_thread(servertoclient, (server, client,))
 
-def clienttoserver(source, destination):
-    global players, TIME_BEFORE_STOPPING_EMPTY_SERVER, stop_empty_minecraft_server
-    players +=1
-    print ('A PLAYER JOINED THE SERVER! - '+str(players)+' players online')
-    forwardsync(source,destination)
-    players -= 1
-    print ('A PLAYER LEFT THE SERVER! - '+str(players)+' players remaining')
-    Timer(TIME_BEFORE_STOPPING_EMPTY_SERVER, stop_empty_minecraft_server, ()).start()
+def server(*settings):
+    global players, firstlaunch, restart_flag, TIMEOUT_SOCKET, START_MINECRAFT_SERVER, STOP_MINECRAFT_SERVER
 
-def servertoclient(source, destination):
-    forwardsync(source, destination)
-
-#this thread passes data between connections
-def forwardsync(source, destination):
-    global datacountbytes
-    data = ' '
-    source.settimeout(60)
-    destination.settimeout(60)
     try:
+        dock_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        dock_socket.settimeout(TIMEOUT_SOCKET)
+        dock_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)           #to prevent errno 98 address already in use
+        print('waiting to bind socket...')
+        dock_socket.bind((LISTEN_HOST, LISTEN_PORT))                                #listen
+        print('socket binded')
+        dock_socket.listen(5)
         while True:
-            data = source.recv(1024)
-            if not data:                #if there is no data stop listening, this means the socket is closed
-                break
-            destination.sendall(data)
-            datacountbytes += len(data) #to calculate the quantity of data per second
-    except IOError as e: 
-        if e.errno == 32:               #user/server disconnected normally. has to be catched, because there is a race condition
-            return                      #when trying to check if destination.recv does return data
-        print('IOError in forward(): ' + str(e))
+            print ('*** listening on {}:{}'.format(LISTEN_HOST, LISTEN_PORT))
+            client_socket, client_address = dock_socket.accept()                    #accept
+            print ('*** from {}:{} to {}:{}'.format(client_address[0], LISTEN_PORT, TARGET_HOST, TARGET_PORT))
+            server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            server_socket.connect((TARGET_HOST, TARGET_PORT))                       #connect
+            _thread.start_new_thread(forward, (client_socket, server_socket, "client-->server",))   #a new thread is started to send data from client to server
+            _thread.start_new_thread(forward, (server_socket, client_socket, "server-->client",))   #a new thread is started to send data from server to client
+            print ('A PLAYER JOINED THE SERVER!')           #if the socket was accepted without errors, it means that a player has just connected
+            if WRITE_LOG == True:
+                f.write('A PLAYER JOINED THE SERVER!\n')
+            players += 1
+            print (str(players) + ' players')
+
+    except socket.timeout:      #after the set socket.settimeout the program checks if there are no players, if so it send a stop minecraft-server service to make sure the server is down
+        print('connessione scaduta...')
+        if players <= 0:
+            print('no players on server and connection timed out...')
+            print('ISSUING STOP COMMAND TO MINECRAFT-SERVER!')
+            os.system(STOP_MINECRAFT_SERVER)
+            print('STOP COMMAND TO MINECRAFT-SERVER ISSUED ---> MINECRAFT SERVER IS DOWN!')
+            firstlaunch = True
+            if restart_flag == True:
+                print('restarting ' + str(os.path.basename(__file__)) + '...')      #after a player exit the game restart_flag is set to true because there is the possibility 
+                os.execl(str(os.path.basename(__file__)), 'python3')                #that the player has lost connection and that 1 thread is not closed successfully
+                                                                                    #(remember: for each player there are 2 threads, 1 server-->client and 1 client-->server)
+                                                                                    #the restart commands is used to avoid build-up of non-useful threads in the case
+                                                                                    #of a player losing connection multiple times
+    except IOError as e:
+        if e.errno == 111 and firstlaunch == True:                                  #errno:111 is returned when there is the first connection (and minecraft-server is down)
+            print('errno_111 && firstlaunch == True ---> FIRST SERVER CONNECTION')
+            print ('starting minecraft-server service')
+            os.system(START_MINECRAFT_SERVER)
+            print('loading world, wait 12 seconds...')
+            players = 0
+            time.sleep(12)      #needed for launching minecraft-server, it can vary on how fast is your server, and probably 2 or 3 seconds is enough (but higher number prevents a player from entering when the server is still loading the world)
+            print ('MINECRAFT SERVER IS UP!')
+            firstlaunch = False
+        elif e.errno == 111 and firstlaunch == False:       #if the stop minecraft-server command has just been issued and if this script is not fast enough to bind again the socket there could be some errors, this IF prevents them
+            print('errno_111 ---> not ready yet')
+        else:
+            print('IOError.errno: ' + str(e.errno))         #the else (always put it at the end!!!) caches all other possible errors to make the debug easyer
+
     except Exception as e:
-        print('Exception in forward(): ' + str(e))
+        print('exception in function server(): ' + str(e))  #this is to catch the most general errors (not only IOErrors)
+
+    finally:
+        _thread.start_new_thread(server, () )               #after the cycle has been completed start a new server thread to listen for new players to connect
+
+
+def forward(source, destination, description):              #this thread is the one that manages alle data passing through this program
+    global players, firstlaunch, datacountbytes, nowtime, nexttime, f, restart_flag, LISTEN_HOST, LISTEN_PORT, WRITE_LOG
+
+    try:
+        data = ' '              #so that it is possible to enter the while loop
+        while data:
+            data = source.recv(1024)
+
+            nowtime = time.time()
+            #print('{}: {}'.format(description, data.decode('ascii', 'replace')))   #commented out because it's non useful and just resource consuming on terminal
+            if WRITE_LOG == True:
+                f.write(str(nowtime) + '>' + str(description) + data.decode('ascii', 'replace') + '\n' )
+
+            if data:
+                destination.sendall(data)
+
+                datacountbytes += len(data)                 #to calculate the quantity of data per second
+                if nowtime >= nexttime:
+                    print('{:.3f}KB/s'.format(datacountbytes/1024))
+                    datacountbytes = 0
+                    nexttime = nowtime + 1
+            else:                                           #if there is no data close the socket and declare that a player has left the server
+                source.shutdown(socket.SHUT_RD)
+                destination.shutdown(socket.SHUT_WR)
+
+                players -= 1
+                print('A PLAYER LEFT THE SERVER!')
+                restart_flag = True                         #(as said before) this flag is set in order to prevent problems derived from a player losing connection
+                print('restart_flag set')
+                if WRITE_LOG == True:
+                    f.write('A PLAYER LEFT THE SERVER\n') 
+                print (str(players) + ' players')
+                if players <= 0:
+                    print('ISSUING STOP COMMAND TO MINECRAFT-SERVER!')
+                    os.system(STOP_MINECRAFT_SERVER)        #stops minecraft-server service if there ar no players
+                    print('STOP COMMAND TO MINECRAFT-SERVER ISSUED ---> MINECRAFT SERVER IS DOWN!')
+                    firstlaunch = True
+                    print ('*** listening on {}:{}'.format(LISTEN_HOST, LISTEN_PORT))
+
+    except IOError as e:                                    #if error number 107 is caught it means that a player has left the game and restart_flag is set in order to prevent problems derived from a player losing connection
+        if e.errno == 107:
+            print('errno_107 ---> a player just disconnected')
+            restart_flag = True
+            print('restart_flag set')
+        else:
+            print('IOError: ' + str(e))
+
+    except Exception as e:
+        print('Exception in function forward(): ' + str(e))
+
 
 if __name__ == '__main__':
     main()
