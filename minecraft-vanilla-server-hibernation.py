@@ -2,7 +2,7 @@
 
 '''
 minecraft-vanilla_server_hibernation.py
-version 3.0
+version 3.1
 '''
 import psutil
 import socket
@@ -20,9 +20,9 @@ LISTEN_PORT = 25565         #the port you will connect to on minecraft client
 TARGET_HOST = "127.0.0.1"
 TARGET_PORT = 25555         #the port specified on server.properties
 
-MINECRAFT_SERVER_STARTUPTIME = 120 # time the server needs until it is fully started
+MINECRAFT_SERVER_STARTUPTIME = 30 # time the server needs until it is fully started
 
-TIME_BEFORE_STOPPING_EMPTY_SERVER = 240 
+TIME_BEFORE_STOPPING_EMPTY_SERVER = 120 
 
 #-----------------------advanced------------------------------#
 
@@ -89,8 +89,8 @@ def main():
             if server_status == "offline":
                 start_minecraft_server()
             if server_status == "starting":
-                 # the padding to 88 chars is important, otherwise someclients will fail to interpret
-                client_socket.sendall(("e\0c{\"text\":\""+("Server is starting. Please wait. Time left: "+str(timelefttillup)+" seconds").ljust(88,' ')+"\"}").encode())
+                 # the padding to 88 chars is important, otherwise someclients will fail to interpret (byte 0x0a (equal to \n or new line) is used to put the phrase in the center of the screen)
+                client_socket.sendall(("e\0c{\"text\":\""+("Server is starting. Please wait. Time left: "+str(timelefttillup)+" seconds").ljust(88,'\x0a')+"\"}").encode())
                 client_socket.shutdown(1) # sends FIN to client
                 client_socket.close()
                 continue
