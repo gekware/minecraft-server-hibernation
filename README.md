@@ -1,5 +1,5 @@
 # minecraft-server-hibernation
-version 3.1
+version 4.0
 concept and early-code by [gekigek99](https://github.com/gekigek99/minecraft-vanilla-server-hibernation)<br/>
 contributor (advanced-code) by [najtin](https://github.com/najtin/minecraft-server-hibernation)<br/>
 derived from [supernifty](https://github.com/supernifty/port-forwarder)<br/>
@@ -8,15 +8,15 @@ This is a simple Python script to start a minecraft server on request and stop i
 How to use:
 1. Install and run your desiered minecraft server
 2. Rename the minecraft-server-jar to 'minecraft_server.jar'
-3. Change the port in 'server.properties' to 25555
-4. Edited the paramters in the script as needed. 
+3. Check the server-port parameter in 'server.properties': it should be 25565
+4. Edit the paramters in the script as needed (you should modify START_MINECRAFT_SERVER, STOP_MINECRAFT_SERVER, MINECRAFT_SERVER_STARTUPTIME, TIME_BEFORE_STOPPING_EMPTY_SERVER )
 5. run the script at reboot
-6. you can connect to the server through port 25565
+6. you can connect to the server through port 25555
 
 **IMPORTANT**	
 If you are the first to access to minecraft world you will *have to wait 30 seconds* and then try to connect again.
 ```Python
-MINECRAFT_SERVER_STARTUPTIME = 30 #any parameter more than 10s is recommended
+MINECRAFT_SERVER_STARTUPTIME = 30       #any parameter more than 10s is recommended
 ```
 After 120 seconds you have 240 to connect to the server before it is shutdown. 
 ```Python
