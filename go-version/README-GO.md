@@ -1,4 +1,4 @@
-minecraft-vanilla-server-hibernation (go) version 1.0
+minecraft-vanilla-server-hibernation v1.0 (Go) - derived from v4.1 (Python)
 
 The version was successfully compiled in go-version 1.14
 
