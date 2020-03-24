@@ -3,7 +3,7 @@
 '''
 minecraft-vanilla_server_hibernation.py is used to start and stop automatically a vanilla minecraft server
 Copyright (C) 2020  gekigek99
-v4.1 (Python)
+v5.0 (Python)
 visit my github page: https://github.com/gekigek99
 '''
 import psutil
