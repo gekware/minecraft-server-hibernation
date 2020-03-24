@@ -1,7 +1,7 @@
 # minecraft-server-hibernation
 version 4.1
 
-concept and early-code by [gekigek99](https://github.com/gekigek99/minecraft-vanilla-server-hibernation)<br/>
+concept, early-code and improvements by [gekigek99](https://github.com/gekigek99/minecraft-vanilla-server-hibernation)<br/>
 contributor (advanced-code) by [najtin](https://github.com/najtin/minecraft-server-hibernation)<br/>
 derived from [supernifty](https://github.com/supernifty/port-forwarder)<br/>
 
