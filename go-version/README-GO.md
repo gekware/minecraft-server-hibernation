@@ -1,4 +1,7 @@
 # minecraft-vanilla-server-hibernation v1.0 (Go)
+
+#### If you like what I do please consider having some cups coffee with me at: https://www.buymeacoffee.com/gekigek99
+
 version 1.0 (Go) derived from v4.1 (Python)
 
 written and translated by [gekigek99](https://github.com/gekigek99/minecraft-vanilla-server-hibernation)<br/>
