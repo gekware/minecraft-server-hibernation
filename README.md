@@ -1,4 +1,7 @@
 # minecraft-server-hibernation (Python)
+
+#### If you like what I do please consider having some cups coffee with me at: https://www.buymeacoffee.com/gekigek99
+
 version 5.0
 
 concept, early-code and lastest improvements by [gekigek99](https://github.com/gekigek99/minecraft-vanilla-server-hibernation)<br/>
