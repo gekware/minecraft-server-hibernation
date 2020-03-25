@@ -1,6 +1,6 @@
 # minecraft-server-hibernation (Python)
 
-#### If you like what I do please consider having some cups coffee with me at: https://www.buymeacoffee.com/gekigek99
+#### If you like what I do please consider having a cup of coffee with me at: https://www.buymeacoffee.com/gekigek99
 
 version 5.0
 
