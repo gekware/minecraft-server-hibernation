@@ -19,7 +19,7 @@ START_MINECRAFT_SERVER = 'cd PATH/TO/SERVERFOLDER; screen -dmS minecraftSERVER n
 STOP_MINECRAFT_SERVER = "screen -S minecraftSERVER -X stuff 'stop\\n'"    #set command to stop minecraft-server service
 
 MINECRAFT_SERVER_STARTUPTIME = 20       #time the server needs until it is fully started
-TIME_BEFORE_STOPPING_EMPTY_SERVER = 60  #time the server waits for clients to connect then it issues the stop command to server
+TIME_BEFORE_STOPPING_EMPTY_SERVER = 120  #time the server waits for clients to connect then it issues the stop command to server
 
 #-----------------------advanced------------------------------#
 

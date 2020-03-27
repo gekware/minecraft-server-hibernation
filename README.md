@@ -23,7 +23,7 @@ How to use:
 **IMPORTANT**	
 If you are the first to access to minecraft world you will *have to wait 30 seconds* and then try to connect again.
 ```Python
-MINECRAFT_SERVER_STARTUPTIME = 30       #any parameter more than 10s is recommended
+MINECRAFT_SERVER_STARTUPTIME = 20       #any parameter more than 10s is recommended
 ```
 After 120 seconds you have 120 to connect to the server before it is shutdown. 
 ```Python
