@@ -112,6 +112,7 @@ func main() {
 	for {
 		docksocket, err := net.Listen("tcp", listenhost+":"+listenport)
 		CheckError(err)
+		defer StopEmptyMinecraftServer()
 		defer func() {
 			if debug == true {
 				log.Println("Closing connection for: docksocket")
