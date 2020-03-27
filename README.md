@@ -21,7 +21,7 @@ How to use:
 6. you can connect to the server through port 25555
 
 **IMPORTANT**	
-If you are the first to access to minecraft world you will *have to wait 30 seconds* and then try to connect again.
+If you are the first to access to minecraft world you will *have to wait the specified amount of time in seconds* and then try to connect again.
 ```Python
 MINECRAFT_SERVER_STARTUPTIME = 20       #any parameter more than 10s is recommended
 ```
