@@ -93,8 +93,8 @@ func SetServerStatusOnline() {
 //UpdateTimeleft updates the global variable timelefttillup
 func UpdateTimeleft() {
 	if timelefttillup > 0 {
-		timelefttillup--
 		go Timer(1, UpdateTimeleft)
+		timelefttillup--
 	}
 }
 
@@ -178,11 +178,11 @@ func handleclientsocket(clientsocket net.Conn) {
 				playername = string(buffer[locationpattern+4 : datalenght])
 			}
 			if serverstatus == "offline" {
-				log.Printf("*** %s tryed to join from %s:%s to %s:%s\n", playername, clientsocketremoteaddr, listenport, targethost, targetport)
+				log.Printf("*** %s tried to join from %s:%s to %s:%s\n", playername, clientsocketremoteaddr, listenport, targethost, targetport)
 				StartMinecraftServer()
 			}
 			if serverstatus == "starting" {
-				log.Printf("*** %s tryed to join from %s:%s to %s:%s during server startup\n", playername, clientsocketremoteaddr, listenport, targethost, targetport)
+				log.Printf("*** %s tried to join from %s:%s to %s:%s during server startup\n", playername, clientsocketremoteaddr, listenport, targethost, targetport)
 				message := BuildMessage(fmt.Sprintf("Server is starting. Please wait. Time left: %d seconds", timelefttillup))
 				clientsocket.Write(message)
 			}
