@@ -1,15 +1,20 @@
 /*
 minecraft-vanilla_server_hibernation is used to start and stop automatically a vanilla minecraft server
 Copyright (C) 2020  gekigek99
-v1.0 (Go) - derived from v4.1 (Python)
-visit my github page: https://github.com/gekigek99
+v1.1 (Go) - derived from v4.1 (Python)
+visit original creators github page: https://github.com/gekigek99
 
-If you like what I do please consider having a cup of coffee with me at: https://www.buymeacoffee.com/gekigek99
+If you like what he does consider having a cup of coffee with him at: https://www.buymeacoffee.com/gekigek99
+
+
+I modified this script slightly for docker usage. This was mainly for myself, but I wanted to make it available publicly as well.
+My github page can be found here: https://github.com/lubocode/
 */
 
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -23,7 +28,8 @@ import (
 
 //------------------------modify-------------------------------//
 
-const startminecraftserver = "cd PATH/TO/SERVERFOLDER; screen -dmS minecraftSERVER nice -19 java -jar minecraft_server.jar"
+var startminecraftserver string // To modify this, have a look at the default values (third argument) of the flags in main() or pass the corresponding command line arguments.
+
 const stopminecraftserver = "screen -S minecraftSERVER -X stuff 'stop\\n'"
 
 const minecraftserverstartuptime = 20
@@ -106,9 +112,22 @@ func printdatausage() {
 }
 
 func main() {
-	fmt.Println("minecraft-vanilla-server-hibernation v1.0 (Go) - derived from v4.1 (Python)")
+	var minRAM string
+	var maxRAM string
+	var mcPath string
+
+	flag.StringVar(&minRAM, "minRAM", "-Xms512M", "Specify minimum amount of RAM. Default value is -Xms512M")
+	flag.StringVar(&maxRAM, "maxRAM", "-Xmx2G", "Specify maximum amount of RAM. Default value is -Xmx2G")
+	flag.StringVar(&mcPath, "path", "/minecraftserver/", "Specify path of Minecraft folder. Default is /minecraftserver/")
+	flag.Parse()
+
+	startminecraftserver = "cd " + mcPath + "; screen -dmS minecraftSERVER nice -19 java " + minRAM + " " + maxRAM + " -jar minecraft_server.jar"
+
+	fmt.Println("minecraft-vanilla-server-hibernation v1.1 (Go) - derived from v4.1 (Python)")
 	fmt.Println("Copyright (C) 2020 gekigek99")
-	fmt.Println("visit my github page for updates: https://github.com/gekigek99")
+	fmt.Println("Original creators github page: https://github.com/gekigek99")
+	fmt.Println("Modified for docker usage by: https://github.com/lubocode")
+
 	for {
 		docksocket, err := net.Listen("tcp", listenhost+":"+listenport)
 		CheckError(err)
