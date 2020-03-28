@@ -115,18 +115,21 @@ func main() {
 	var minRAM string
 	var maxRAM string
 	var mcPath string
+	var mcFile string
 
 	flag.StringVar(&minRAM, "minRAM", "-Xms512M", "Specify minimum amount of RAM.")
 	flag.StringVar(&maxRAM, "maxRAM", "-Xmx2G", "Specify maximum amount of RAM.")
 	flag.StringVar(&mcPath, "mcPath", "/minecraftserver/", "Specify path of Minecraft folder.")
+	flag.StringVar(&mcFile, "mcFile", "minecraft_server.jar", "Specify name of Minecraft .jar file")
 	flag.Parse()
 
-	startminecraftserver = "cd " + mcPath + "; screen -dmS minecraftSERVER nice -19 java " + minRAM + " " + maxRAM + " -jar minecraft_server.jar"
+	startminecraftserver = "cd " + mcPath + "; screen -dmS minecraftSERVER nice -19 java " + minRAM + " " + maxRAM + " -jar " + mcFile
 
 	fmt.Println("minecraft-vanilla-server-hibernation v1.1 (Go) - derived from v4.1 (Python)")
 	fmt.Println("Copyright (C) 2020 gekigek99")
 	fmt.Println("Original creators github page: https://github.com/gekigek99")
 	fmt.Println("Modified for docker usage by: https://github.com/lubocode")
+	fmt.Println("Container started with the following arguments: minRAM:" + minRAM + " maxRAM:" + maxRAM + " mcPath:" + mcPath + " mcFile:" + mcFile)
 
 	for {
 		docksocket, err := net.Listen("tcp", listenhost+":"+listenport)
