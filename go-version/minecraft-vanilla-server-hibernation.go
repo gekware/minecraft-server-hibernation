@@ -129,7 +129,7 @@ func main() {
 	fmt.Println("Copyright (C) 2020 gekigek99")
 	fmt.Println("Original creators github page: https://github.com/gekigek99")
 	fmt.Println("Modified for docker usage by: https://github.com/lubocode")
-	fmt.Println("Container started with the following arguments: minRAM:" + minRAM + " maxRAM:" + maxRAM + " mcPath:" + mcPath + " mcFile:" + mcFile)
+	fmt.Println("Container started with the following arguments: \n\tminRAM:" + minRAM + " maxRAM:" + maxRAM + " mcPath:" + mcPath + " mcFile:" + mcFile)
 
 	for {
 		docksocket, err := net.Listen("tcp", listenhost+":"+listenport)
