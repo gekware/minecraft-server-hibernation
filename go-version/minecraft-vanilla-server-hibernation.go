@@ -125,7 +125,7 @@ func main() {
 	flag.StringVar(&mcFile, "mcFile", "minecraft_server.jar", "Specify name of Minecraft .jar file")
 	flag.Parse()
 
-	startminecraftserver = "cd " + mcPath + "; screen -dmS minecraftSERVER nice -19 java " + minRAM + " " + maxRAM + " -jar " + mcFile
+	startminecraftserver = "\"cd " + mcPath + "; screen -dmS minecraftSERVER nice -19 java " + minRAM + " " + maxRAM + " -jar " + mcFile + "\""
 
 	fmt.Println("minecraft-vanilla-server-hibernation v1.1 (Go) - derived from v4.1 (Python)")
 	fmt.Println("Copyright (C) 2020 gekigek99")
