@@ -11,3 +11,16 @@ If you want to deviate from this, use the arguments specified in the Dockerfile.
 Similarly, if you want to change the amount of RAM for your server, have a look at the arguments as well.
 
 The exposed container port is 25555. The script passes traffic through to 25565, which is MCs standard port.
+
+**Usage:**
+
+```bash
+docker run \
+    -p 25555:25555 \
+    -v /docker/appdata/minecraftserver-hibernate:/minecraftserver:rw \
+    minecraftserver-hibernate \
+    -minRAM=512M \
+    -maxRAM=2G \
+    -mcPath=/minecraftserver/ \
+    -mcFile=minecraft_server.jar
+```
