@@ -59,7 +59,7 @@ func StopEmptyMinecraftServer() {
 		return
 	}
 	serverstatus = "offline"
-	err := exec.Command("/bin/sh", "-c", stopminecraftserver).Run()
+	err := exec.Command("/bin/bash", "-c", stopminecraftserver).Run()
 	if err != nil {
 		log.Printf("error stopping minecraft server: %v\n", err)
 	}
@@ -73,7 +73,7 @@ func StartMinecraftServer() {
 		return
 	}
 	serverstatus = "starting"
-	err := exec.Command("/bin/sh", "-c", startminecraftserver).Run()
+	err := exec.Command("/bin/bash", "-c", startminecraftserver).Run()
 	if err != nil {
 		log.Printf("error starting minecraft server: %v\n", err)
 	}
@@ -125,7 +125,7 @@ func main() {
 	flag.StringVar(&mcFile, "mcFile", "minecraft_server.jar", "Specify name of Minecraft .jar file")
 	flag.Parse()
 
-	startminecraftserver = "\"cd " + mcPath + "; screen -dmS minecraftSERVER nice -19 java " + minRAM + " " + maxRAM + " -jar " + mcFile + "\""
+	startminecraftserver = "cd " + mcPath + "; screen -dmS minecraftSERVER nice -19 java " + minRAM + " " + maxRAM + " -jar " + mcFile
 
 	fmt.Println("minecraft-vanilla-server-hibernation v1.1 (Go) - derived from v4.1 (Python)")
 	fmt.Println("Copyright (C) 2020 gekigek99")

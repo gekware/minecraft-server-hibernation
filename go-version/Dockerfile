@@ -15,8 +15,8 @@ LABEL \
     org.label-schema.description="OpenJDK image with go script for automatically starting and stopping the supplied minecraft_server.jar" \
     org.label-schema.url="https://www.minecraft.net/download/server/" \
     org.label-schema.vcs-url="https://github.com/lubocode/minecraft-vanilla-server-hibernation/tree/master/go-version"
-# Add screen utility to start and stop MC server
-RUN apk add --no-cache screen
+# Add bash and screen utility to start and stop MC server
+RUN apk add --no-cache bash screen
 # Create user without password or home driectory for running script and minecraftserver
 RUN adduser -D -H runtimeuser
 USER runtimeuser
