@@ -59,7 +59,7 @@ func StopEmptyMinecraftServer() {
 		return
 	}
 	serverstatus = "offline"
-	err := exec.Command("/bin/bash", "-c", stopminecraftserver).Run()
+	err := exec.Command("/bin/sh", "-c", stopminecraftserver).Run()
 	if err != nil {
 		log.Printf("error stopping minecraft server: %v\n", err)
 	}
@@ -73,7 +73,7 @@ func StartMinecraftServer() {
 		return
 	}
 	serverstatus = "starting"
-	err := exec.Command("/bin/bash", "-c", startminecraftserver).Run()
+	err := exec.Command("/bin/sh", "-c", startminecraftserver).Run()
 	if err != nil {
 		log.Printf("error starting minecraft server: %v\n", err)
 	}
