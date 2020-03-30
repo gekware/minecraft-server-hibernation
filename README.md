@@ -2,15 +2,14 @@
 
 version 5.0
 
-## If you like what the original author does, consider having a cup of coffee with him at: [https://www.buymeacoffee.com/gekigek99](https://www.buymeacoffee.com/gekigek99)
-
-## Contact him at gekigek.99@gmail.com for the pterodaptyl panel version able to easily hibernate multiple game servers through the API
+**If you like what the original author does, consider having a cup of coffee with him at: [https://www.buymeacoffee.com/gekigek99](https://www.buymeacoffee.com/gekigek99)**\
+**Contact him at gekigek.99@gmail.com for the pterodaptyl panel version able to easily hibernate multiple game servers through the API**
 
 concept, early-code and lastest improvements by [gekigek99](https://github.com/gekigek99/minecraft-vanilla-server-hibernation)\
 contributor (advanced-code) by [najtin](https://github.com/najtin/minecraft-server-hibernation)\
 derived from [supernifty](https://github.com/supernifty/port-forwarder)\
 
-### INSTRUCTIONS
+## INSTRUCTIONS
 
 This is a simple Python script to start a minecraft server on request and stop it when there are no player online.
 How to use:
