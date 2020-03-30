@@ -22,7 +22,7 @@ USER runtimeuser
 # Expose Port specified in script
 EXPOSE 25555
 # Copy compiled go script from first stage
-COPY --from=buildstage /usr/src/minecraft-vanilla-server-hibernation/go-version/minecraft-vanilla-server-hibernation /minecraftserver/minecraft-server-hibernation
+COPY --from=buildstage /usr/src/minecraft-vanilla-server-hibernation/go-version/minecraft-vanilla-server-hibernation .
 # Volume to copy script into and for user to insert Minecraft server Java file
 VOLUME ["/minecraftserver"]
 # Arguments for RAM size and Minecraft path
@@ -31,4 +31,4 @@ ARG maxRAM="2G"
 ARG minecraftPath="/minecraftserver/"
 ARG minecraftFileName="minecraft_server.jar"
 ENV Xms=${minRAM} Xmx=${maxRAM} mcPath=${minecraftPath} mcFile=${minecraftFileName}
-ENTRYPOINT /minecraftserver/minecraft-server-hibernation -minRAM "-Xms$Xms" -maxRAM "-Xmx$Xmx" -mcPath "$mcPath" -mcFile "$mcFile"
+ENTRYPOINT ./minecraft-vanilla-server-hibernation -minRAM "-Xms$Xms" -maxRAM "-Xmx$Xmx" -mcPath "$mcPath" -mcFile "$mcFile"
