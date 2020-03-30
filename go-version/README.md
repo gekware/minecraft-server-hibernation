@@ -1,7 +1,7 @@
 # README
 
-Go script written and translated by [gekigek99](https://github.com/gekigek99/minecraft-vanilla-server-hibernation)\
-Slightly modified for docker usage by [lubocode](https://github.com/lubocode/minecraft-vanilla-server-hibernation)
+Go script written and translated by [gekigek99](https://github.com/gekigek99/minecraft-vanilla-server-hibernation/tree/master/go-version)\
+Slightly modified for docker usage by [lubocode](https://github.com/lubocode/minecraft-vanilla-server-hibernation/tree/master/go-version)
 
 This image does **NOT** contain a minecraft server installation.\
 Please insert your minecraft server files into the volume created by running this image as a container.
