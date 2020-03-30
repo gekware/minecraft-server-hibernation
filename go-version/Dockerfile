@@ -1,11 +1,9 @@
 # Image for compiling script
 FROM golang:alpine AS buildstage
-RUN apk add git
-WORKDIR /usr/src/
-# Clone repo with script change to subdir and compile
+RUN apk add --no-cache git
+# Clone repo with script, change to subdir and compile
 RUN git clone https://github.com/lubocode/minecraft-vanilla-server-hibernation.git
-WORKDIR /usr/src/minecraft-vanilla-server-hibernation/go-version
-RUN go build minecraft-vanilla-server-hibernation.go
+RUN go build /minecraft-vanilla-server-hibernation/go-version/minecraft-vanilla-server-hibernation.go
 
 
 # Image for running script
@@ -22,7 +20,7 @@ USER runtimeuser
 # Expose Port specified in script
 EXPOSE 25555
 # Copy compiled go script from first stage
-COPY --from=buildstage /usr/src/minecraft-vanilla-server-hibernation/go-version/minecraft-vanilla-server-hibernation .
+COPY --from=buildstage /minecraft-vanilla-server-hibernation/go-version/minecraft-vanilla-server-hibernation .
 # Volume to copy script into and for user to insert Minecraft server Java file
 VOLUME ["/minecraftserver"]
 # Arguments for RAM size and Minecraft path
