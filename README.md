@@ -1,10 +1,7 @@
 # minecraft-server-hibernation (Python)
-
 version 5.0
 
-#### If you like what I do please consider having a cup of coffee with me at: https://www.buymeacoffee.com/gekigek99
-
-#### Contact me at gekigek.99@gmail.com for the pterodaptyl panel version able to easily hibernate multiple game servers through the API.
+#### I'm writing the pterodaptyl panel version able to easily hibernate multiple game servers through the API, for info contact me at gekigek.99@gmail.com
 
 concept, early-code and lastest improvements by [gekigek99](https://github.com/gekigek99/minecraft-vanilla-server-hibernation)<br/>
 contributor (advanced-code) by [najtin](https://github.com/najtin/minecraft-server-hibernation)<br/>
@@ -30,3 +27,5 @@ After 120 seconds you have 120 to connect to the server before it is shutdown.
 TIME_BEFORE_STOPPING_EMPTY_SERVER = 120 #any parameter more than 60s is recommended
 ```
 You can change these parameters to fit your needs.
+
+#### If you like what I do please consider having a cup of coffee with me at: https://www.buymeacoffee.com/gekigek99
