@@ -20,6 +20,6 @@ docker run \
     -e minRAM=512M \
     -e maxRAM=2G \
     -e mcPath=/minecraftserver/ \
-    -e mcFile=minecraft_server.jar
+    -e mcFile=minecraft_server.jar \
     minecraftserver-hibernate
 ```

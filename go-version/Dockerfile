@@ -20,8 +20,6 @@ RUN adduser -D -H runtimeuser
 USER runtimeuser
 # Expose Port specified in script
 EXPOSE 25555
-# Copy compiled go script from first stage
-COPY --from=buildstage /usr/src/minecraft-vanilla-server-hibernation .
 # Volume to copy script into and for user to insert Minecraft server Java file
 VOLUME ["/minecraftserver"]
 # Environment variables to change script parameters at runtime
@@ -29,4 +27,6 @@ ENV minRAM=512M \
     maxRAM=2G \
     mcPath=/minecraftserver/ \
     mcFile=minecraft_server.jar
+# Copy compiled go script from first stage
+COPY --from=buildstage /usr/src/minecraft-vanilla-server-hibernation .
 ENTRYPOINT ./minecraft-vanilla-server-hibernation -minRAM=${minRAM} -maxRAM=${maxRAM} -mcPath=${mcPath} -mcFile=${mcFile}
