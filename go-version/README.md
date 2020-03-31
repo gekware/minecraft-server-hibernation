@@ -17,9 +17,9 @@ The exposed container port is 25555. The script passes traffic through to 25565,
 docker run \
     -p 25555:25555 \
     -v /docker/appdata/minecraftserver-hibernate:/minecraftserver:rw \
-    minecraftserver-hibernate \
-    -minRAM=512M \
-    -maxRAM=2G \
-    -mcPath=/minecraftserver/ \
-    -mcFile="minecraft_server.jar"
+    -e minRAM=512M \
+    -e maxRAM=2G \
+    -e mcPath=/minecraftserver/ \
+    -e mcFile=minecraft_server.jar
+    minecraftserver-hibernate
 ```

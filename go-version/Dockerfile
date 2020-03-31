@@ -1,18 +1,16 @@
 # Image for compiling script
 FROM golang:alpine AS buildstage
-RUN apk add --no-cache git
-# Clone repo with script, change to subdir and compile
-RUN git clone https://github.com/lubocode/minecraft-vanilla-server-hibernation.git /usr/src/minecraft-vanilla-server-hibernation/
-WORKDIR /usr/src/minecraft-vanilla-server-hibernation/go-version
+# Copy script, change to subdir and compile
+COPY minecraft-vanilla-server-hibernation.go /usr/src/
+WORKDIR /usr/src/
 RUN go build minecraft-vanilla-server-hibernation.go
-
 
 # Image for running script
 FROM openjdk:8-jre-alpine
 LABEL \
     maintainer="lubocode@outlook.com" \
     org.label-schema.name="minecraftserver-hibernation" \
-    org.label-schema.description="OpenJDK image with go script for automatically starting and stopping the supplied minecraft_server.jar" \
+    org.label-schema.description="OpenJDK image with go script for automatically starting and stopping the supplied Minecraft server." \
     org.label-schema.url="https://www.minecraft.net/download/server/" \
     org.label-schema.vcs-url="https://github.com/lubocode/minecraft-vanilla-server-hibernation/tree/master/go-version"
 # Add bash and screen utility to start and stop MC server
@@ -23,7 +21,12 @@ USER runtimeuser
 # Expose Port specified in script
 EXPOSE 25555
 # Copy compiled go script from first stage
-COPY --from=buildstage /usr/src/minecraft-vanilla-server-hibernation/go-version/minecraft-vanilla-server-hibernation .
+COPY --from=buildstage /usr/src/minecraft-vanilla-server-hibernation .
 # Volume to copy script into and for user to insert Minecraft server Java file
 VOLUME ["/minecraftserver"]
-ENTRYPOINT [ "./minecraft-vanilla-server-hibernation" ]
+# Environment variables to change script parameters at runtime
+ENV minRAM=512M
+ENV maxRAM=2G
+ENV mcPath=/minecraftserver/
+ENV mcFile=minecraft_server.jar
+ENTRYPOINT ./minecraft-vanilla-server-hibernation -minRAM=${minRAM} -maxRAM=${maxRAM} -mcPath=${mcPath} -mcFile=${mcFile}
