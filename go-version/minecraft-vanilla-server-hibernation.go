@@ -118,12 +118,12 @@ func main() {
 	var mcFile string
 
 	flag.StringVar(&minRAM, "minRAM", "512M", "Specify minimum amount of RAM.")
-	minRAM = "-Xms" + minRAM
 	flag.StringVar(&maxRAM, "maxRAM", "2G", "Specify maximum amount of RAM.")
-	maxRAM = "-Xmx" + maxRAM
 	flag.StringVar(&mcPath, "mcPath", "/minecraftserver/", "Specify path of Minecraft folder.")
 	flag.StringVar(&mcFile, "mcFile", "minecraft_server.jar", "Specify name of Minecraft .jar file")
 	flag.Parse()
+	minRAM = "-Xms" + minRAM
+	maxRAM = "-Xmx" + maxRAM
 
 	startminecraftserver = "cd " + mcPath + "; screen -dmS minecraftSERVER nice -19 java " + minRAM + " " + maxRAM + " -jar " + mcFile
 
