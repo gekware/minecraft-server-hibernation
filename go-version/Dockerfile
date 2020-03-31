@@ -25,8 +25,8 @@ COPY --from=buildstage /usr/src/minecraft-vanilla-server-hibernation .
 # Volume to copy script into and for user to insert Minecraft server Java file
 VOLUME ["/minecraftserver"]
 # Environment variables to change script parameters at runtime
-ENV minRAM=512M
-ENV maxRAM=2G
-ENV mcPath=/minecraftserver/
-ENV mcFile=minecraft_server.jar
+ENV minRAM=512M \
+    maxRAM=2G \
+    mcPath=/minecraftserver/ \
+    mcFile=minecraft_server.jar
 ENTRYPOINT ./minecraft-vanilla-server-hibernation -minRAM=${minRAM} -maxRAM=${maxRAM} -mcPath=${mcPath} -mcFile=${mcFile}
