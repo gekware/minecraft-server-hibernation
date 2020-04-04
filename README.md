@@ -1,8 +1,8 @@
 # minecraft-server-hibernation (Python)
-
+## Docker (lubocode/minecraftserver-hibernate on Dockerhub) is built upon the Go script
 version 5.0
 
-**If you like what the original author does, consider having a cup of coffee with him at: [https://www.buymeacoffee.com/gekigek99](https://www.buymeacoffee.com/gekigek99)**\
+
 **Contact him at gekigek.99@gmail.com for the pterodaptyl panel version able to easily hibernate multiple game servers through the API**
 
 concept, early-code and lastest improvements by [gekigek99](https://github.com/gekigek99/minecraft-vanilla-server-hibernation)\
@@ -35,3 +35,5 @@ TIME_BEFORE_STOPPING_EMPTY_SERVER = 120 #any parameter more than 60s is recommen
 ```
 
 You can change these parameters to fit your needs.
+
+**If you like what the original author does, consider having a cup of coffee with him at: [https://www.buymeacoffee.com/gekigek99](https://www.buymeacoffee.com/gekigek99)**\
