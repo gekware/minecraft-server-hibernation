@@ -1,10 +1,8 @@
 /*
 minecraft-vanilla_server_hibernation is used to start and stop automatically a vanilla minecraft server
 Copyright (C) 2020  gekigek99
-v1.0 (Go) - derived from v4.1 (Python)
+v1.1 (Go)
 visit my github page: https://github.com/gekigek99
-
-If you like what I do please consider having a cup of coffee with me at: https://www.buymeacoffee.com/gekigek99
 */
 
 package main
@@ -23,8 +21,8 @@ import (
 
 //------------------------modify-------------------------------//
 
-const startminecraftserver = "cd PATH/TO/SERVERFOLDER; screen -dmS minecraftSERVER nice -19 java -jar minecraft_server.jar"
-const stopminecraftserver = "screen -S minecraftSERVER -X stuff 'stop\\n'"
+const startminecraftserver = "systemctl start minecraft-server"
+const stopminecraftserver = "systemctl stop minecraft-server"
 
 const minecraftserverstartuptime = 20
 const timebeforestoppingemptyserver = 120
@@ -45,10 +43,18 @@ var players int = 0
 var datacountbytestoserver, datacountbytestoclients float64 = 0, 0
 var serverstatus string = "offline"
 var timelefttillup int = minecraftserverstartuptime
+var stopinstances int = 0
 var mutex = &sync.Mutex{}
 
 //StopEmptyMinecraftServer stops the minecraft server
 func StopEmptyMinecraftServer() {
+	mutex.Lock()
+	if stopinstances > 1 {
+		stopinstances--
+		return
+	}
+	stopinstances = 0
+	mutex.Unlock()
 	if players > 0 || serverstatus == "offline" {
 		return
 	}
@@ -81,6 +87,9 @@ func StartMinecraftServer() {
 func SetServerStatusOnline() {
 	serverstatus = "online"
 	log.Print("*** MINECRAFT SERVER IS UP!")
+	mutex.Lock()
+	stopinstances++
+	mutex.Unlock()
 	go Timer(timebeforestoppingemptyserver, StopEmptyMinecraftServer)
 }
 
@@ -206,6 +215,9 @@ func ClientToServer(source, destination net.Conn) {
 	ForwardSync(source, destination, false)
 	players--
 	log.Printf("*** A PLAYER LEFT THE SERVER! - %d players online", players)
+	mutex.Lock()
+	stopinstances++
+	mutex.Unlock()
 	go Timer(timebeforestoppingemptyserver, StopEmptyMinecraftServer)
 }
 
