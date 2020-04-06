@@ -111,7 +111,7 @@ func printdatausage() {
 }
 
 func main() {
-	fmt.Println("minecraft-vanilla-server-hibernation v1.0 (Go) - derived from v4.1 (Python)")
+	fmt.Println("minecraft-vanilla-server-hibernation v1.1 (Go)")
 	fmt.Println("Copyright (C) 2020 gekigek99")
 	fmt.Println("visit my github page for updates: https://github.com/gekigek99")
 	for {
