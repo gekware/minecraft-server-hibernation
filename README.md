@@ -1,8 +1,6 @@
 # minecraft-server-hibernation (Python)
 version 5.0
 
-#### I'm writing the pterodaptyl panel version able to easily hibernate multiple game servers through the API, for info contact me at gekigek.99@gmail.com
-
 concept, early-code and lastest improvements by [gekigek99](https://github.com/gekigek99/minecraft-vanilla-server-hibernation)<br/>
 contributor (advanced-code) by [najtin](https://github.com/najtin/minecraft-server-hibernation)<br/>
 derived from [supernifty](https://github.com/supernifty/port-forwarder)<br/>
