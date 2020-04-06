@@ -1,5 +1,5 @@
-# minecraft-vanilla-server-hibernation v1.0 (Go)
-version 1.0 (Go) derived from v4.1 (Python)
+# minecraft-vanilla-server-hibernation v1.1 (Go)
+version 1.1 (Go)
 
 written and translated by [gekigek99](https://github.com/gekigek99/minecraft-vanilla-server-hibernation)<br/>
 
