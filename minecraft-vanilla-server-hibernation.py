@@ -2,16 +2,15 @@
 '''
 minecraft-vanilla_server_hibernation.py is used to start and stop automatically a vanilla minecraft server
 Copyright (C) 2020  gekigek99
-v4.1 (Python)
+v4.2 (Python)
 visit my github page: https://github.com/gekigek99
-
 If you like what I do please consider having a cup of coffee with me at: https://www.buymeacoffee.com/gekigek99
 '''
 import psutil
 import socket
 import _thread
 import os
-from threading import Timer
+from threading import Timer, Lock
 from time import sleep
 #------------------------modify-------------------------------#
 
@@ -37,11 +36,15 @@ players = 0
 datacountbytes = 0
 server_status = "offline"
 timelefttillup = MINECRAFT_SERVER_STARTUPTIME
+lock = Lock()
+stopinstances = 0
 
 def stop_empty_minecraft_server():
-    global server_status, STOP_MINECRAFT_SERVER, players, timelefttillup
-    if players > 0 or server_status == "offline":
-        return
+    global server_status, STOP_MINECRAFT_SERVER, players, timelefttillup, stopinstances, lock
+    with lock:
+        stopinstances -= 1
+        if stopinstances > 0 or players > 0 or server_status == "offline":
+            return
     server_status = "offline"
     os.system(STOP_MINECRAFT_SERVER)
     print('MINECRAFT SERVER IS SHUTTING DOWN!')
@@ -56,9 +59,11 @@ def start_minecraft_server():
     print ('MINECRAFT SERVER IS STARTING!')
     players = 0
     def _set_server_status_online():
-        global server_status
+        global server_status, stopinstances, lock
         server_status = "online"
         print ('MINECRAFT SERVER IS UP!')
+        with lock:
+            stopinstances += 1
         Timer(TIME_BEFORE_STOPPING_EMPTY_SERVER, stop_empty_minecraft_server, ()).start()
     def _update_timeleft():
         global timelefttillup
@@ -69,15 +74,16 @@ def start_minecraft_server():
     Timer(MINECRAFT_SERVER_STARTUPTIME, _set_server_status_online, ()).start()
 
 def printdatausage():
-    global datacountbytes
-    if datacountbytes != 0:
-        print('{:.3f}KB/s'.format(datacountbytes/1024/3))
-        datacountbytes = 0
+    global datacountbytes, lock
+    with lock:
+        if datacountbytes != 0:
+            print('{:.3f}KB/s'.format(datacountbytes/1024/3))
+            datacountbytes = 0
     Timer(3, printdatausage, ()).start()
 
 def main():
     global players, START_MINECRAFT_SERVER, STOP_MINECRAFT_SERVER, server_status, timelefttillup
-    print('minecraft-vanilla-server-hibernation v4.1 (Python)')
+    print('minecraft-vanilla-server-hibernation v4.2 (Python)')
     print('Copyright (C) 2020 gekigek99')
     print('visit my github page for updates: https://github.com/gekigek99')
     dock_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -129,12 +135,14 @@ def connectsocketsasync(client, server):
     _thread.start_new_thread(servertoclient, (server, client,))
 
 def clienttoserver(source, destination):
-    global players, TIME_BEFORE_STOPPING_EMPTY_SERVER, stop_empty_minecraft_server
+    global players, TIME_BEFORE_STOPPING_EMPTY_SERVER, stop_empty_minecraft_server, stopinstances, lock
     players +=1
     print ('A PLAYER JOINED THE SERVER! - '+str(players)+' players online')
     forwardsync(source,destination)
     players -= 1
     print ('A PLAYER LEFT THE SERVER! - '+str(players)+' players remaining')
+    with lock:
+        stopinstances += 1
     Timer(TIME_BEFORE_STOPPING_EMPTY_SERVER, stop_empty_minecraft_server, ()).start()
 
 def servertoclient(source, destination):
@@ -142,7 +150,7 @@ def servertoclient(source, destination):
 
 #this thread passes data between connections
 def forwardsync(source, destination):
-    global datacountbytes
+    global datacountbytes, lock
     data = ' '
     source.settimeout(60)
     destination.settimeout(60)
@@ -152,7 +160,8 @@ def forwardsync(source, destination):
             if not data:                #if there is no data stop listening, this means the socket is closed
                 break
             destination.sendall(data)
-            datacountbytes += len(data) #to calculate the quantity of data per second
+            with lock:
+                datacountbytes += len(data) #to calculate the quantity of data per second
     except IOError as e: 
         if e.errno == 32:               #user/server disconnected normally. has to be catched, because there is a race condition
             return                      #when trying to check if destination.recv does return data
