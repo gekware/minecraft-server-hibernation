@@ -49,15 +49,11 @@ var mutex = &sync.Mutex{}
 //StopEmptyMinecraftServer stops the minecraft server
 func StopEmptyMinecraftServer() {
 	mutex.Lock()
-	if stopinstances > 1 {
-		stopinstances--
+	stopinstances--
+	if stopinstances > 0 || players > 0 || serverstatus == "offline" {
 		return
 	}
-	stopinstances = 0
 	mutex.Unlock()
-	if players > 0 || serverstatus == "offline" {
-		return
-	}
 	serverstatus = "offline"
 	err := exec.Command("/bin/bash", "-c", stopminecraftserver).Run()
 	if err != nil {
