@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-'''
+"""
 minecraft-vanilla_server_hibernation.py is used to start and stop automatically a vanilla minecraft server
 Copyright (C) 2020  gekigek99
 v4.2 (Python)
@@ -7,7 +7,7 @@ visit my github page: https://github.com/gekigek99
 If you like what I do please consider having a cup of coffee with me at: https://www.buymeacoffee.com/gekigek99
 
 Modified by dangercrow https://github.com/dangercrow
-'''
+"""
 import socket
 import _thread
 import os
@@ -162,8 +162,7 @@ def main():
                                     "Server is starting. Please wait. Time left: " + str(
                                 timelefttillup) + " seconds").ljust(88, '\x0a') + "\"}").encode())
                 else:
-                    if connection_data_recv[
-                        -1] == 1:  # \x01 is the last byte of the first message when requesting server info
+                    if connection_data_recv[-1] == 1:  # \x01 is the last byte of the first message when requesting server info
                         if server_status == ServerState.OFFLINE:
                             print('player unknown requested server info from', client_address[0])
                         if server_status == ServerState.STARTING:
