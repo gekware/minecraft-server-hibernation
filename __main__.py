@@ -44,7 +44,7 @@ stopinstances = 0
 
 
 def stop_empty_minecraft_server():
-    global server_status, STOP_MINECRAFT_SERVER, players, timelefttillup, stopinstances, lock
+    global server_status, timelefttillup, stopinstances
     with lock:
         stopinstances -= 1
         if stopinstances > 0 or players > 0 or server_status == ServerState.OFFLINE:
@@ -56,7 +56,7 @@ def stop_empty_minecraft_server():
 
 
 def start_minecraft_server():
-    global server_status, START_MINECRAFT_SERVER, MINECRAFT_SERVER_STARTUPTIME, players, timelefttillup
+    global server_status, players
     if server_status != ServerState.OFFLINE:
         return
     server_status = ServerState.STARTING
@@ -65,7 +65,7 @@ def start_minecraft_server():
     players = 0
 
     def _set_server_status_online():
-        global server_status, stopinstances, lock
+        global server_status, stopinstances
         server_status = ServerState.ONLINE
         print('MINECRAFT SERVER IS UP!')
         with lock:
@@ -76,14 +76,14 @@ def start_minecraft_server():
         global timelefttillup
         if timelefttillup > 0:
             timelefttillup -= 1
-            Timer(1, _update_timeleft, ()).start()
+            Timer(1, _update_timeleft).start()
 
     _update_timeleft()
     Timer(MINECRAFT_SERVER_STARTUPTIME, _set_server_status_online, ()).start()
 
 
 def printdatausage():
-    global datacountbytes, lock
+    global datacountbytes
     with lock:
         if datacountbytes != 0:
             print('{:.3f}KB/s'.format(datacountbytes / 1024 / 3))
@@ -120,7 +120,7 @@ def winhinibitor():
 
 
 def main():
-    global players, START_MINECRAFT_SERVER, STOP_MINECRAFT_SERVER, server_status, timelefttillup
+    global players
     print('minecraft-vanilla-server-hibernation v4.2 (Python)')
     print('Copyright (C) 2020 gekigek99')
     print('visit my github page for updates: https://github.com/gekigek99')
@@ -179,7 +179,7 @@ def connectsocketsasync(client, server):
 
 
 def clienttoserver(source, destination):
-    global players, TIME_BEFORE_STOPPING_EMPTY_SERVER, stop_empty_minecraft_server, stopinstances, lock
+    global players, stopinstances
     players += 1
     print(f"A PLAYER JOINED THE SERVER! - {players} players online")
     forwardsync(source, destination)
@@ -196,7 +196,7 @@ def servertoclient(source, destination):
 
 # this thread passes data between connections
 def forwardsync(source, destination):
-    global datacountbytes, lock
+    global datacountbytes
     source.settimeout(60)
     destination.settimeout(60)
     try:
