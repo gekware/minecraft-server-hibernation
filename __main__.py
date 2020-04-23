@@ -79,20 +79,20 @@ def start_minecraft_server():
         global timelefttillup
         if timelefttillup > 0:
             timelefttillup -= 1
-            Timer(1, _update_timeleft).start()
 
-    _update_timeleft()
+    set_interval(_update_timeleft, 1)
+
     Timer(MINECRAFT_SERVER_STARTUPTIME, _set_server_status_online, ()).start()
 
 
-def set_interval(f: Callable, interval: float):
+def set_interval(f: Callable, interval: float, *, thread_name=None):
     stop_event = Event()
 
     def thread_fn():
         while not stop_event.wait(interval):
             f()
 
-    Thread(target=thread_fn).start()
+    Thread(target=thread_fn, name=thread_name).start()
     return stop_event
 
 
@@ -120,12 +120,13 @@ class WindowsInhibitor:
         ctypes.windll.kernel32.SetThreadExecutionState(WindowsInhibitor.ES_CONTINUOUS)
 
 
-def winhinibitor():
-    if players > 0:
-        WindowsInhibitor.inhibit()
-    else:
-        WindowsInhibitor.uninhibit()
-    Timer(1, winhinibitor).start()
+class PlayerBasedWinInhibitor:
+    @staticmethod
+    def with_players(player_count: int):
+        if player_count > 0:
+            WindowsInhibitor.inhibit()
+        else:
+            WindowsInhibitor.uninhibit()
 
 
 def main():
@@ -133,7 +134,7 @@ def main():
     print('minecraft-vanilla-server-hibernation v4.2 (Python)')
     print('Copyright (C) 2020 gekigek99')
     print('visit my github page for updates: https://github.com/gekigek99')
-    Thread(target=winhinibitor, name="Inhibitor").start()
+    set_interval(lambda: PlayerBasedWinInhibitor.with_players(players), 1, thread_name="WinInhibitor")
     dock_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     dock_socket.setblocking(True)
     dock_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # to prevent errno 98 address already in use
