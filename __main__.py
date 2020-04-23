@@ -15,6 +15,7 @@ from time import sleep
 from typing import Callable
 
 from data_usage import DataUsageMonitor
+from inhibitors import PlayerBasedWinInhibitor
 from server_state import ServerState
 
 # ------------------------modify-------------------------------#
@@ -98,35 +99,6 @@ def set_interval(f: Callable, interval: float, *, thread_name=None):
 
 def log_data_usage(data_usage_monitor: DataUsageMonitor, log_interval: float = 3) -> Event:
     return set_interval(lambda: print('{:.3f}KB/s'.format(data_usage_monitor.kilobytes_per_second)), log_interval)
-
-
-class WindowsInhibitor:
-    ES_CONTINUOUS = 0x80000000
-    ES_SYSTEM_REQUIRED = 0x00000001
-
-    @staticmethod
-    def inhibit():
-        """Prevents Windows from going to sleep"""
-        import ctypes
-        print("Preventing Windows from going to sleep")
-        es_flags = WindowsInhibitor.ES_CONTINUOUS | WindowsInhibitor.ES_SYSTEM_REQUIRED
-        ctypes.windll.kernel32.SetThreadExecutionState(es_flags)
-
-    @staticmethod
-    def uninhibit():
-        """Allows Windows to go to sleep"""
-        import ctypes
-        print("Allowing Windows to go to sleep")
-        ctypes.windll.kernel32.SetThreadExecutionState(WindowsInhibitor.ES_CONTINUOUS)
-
-
-class PlayerBasedWinInhibitor:
-    @staticmethod
-    def with_players(player_count: int):
-        if player_count > 0:
-            WindowsInhibitor.inhibit()
-        else:
-            WindowsInhibitor.uninhibit()
 
 
 def main():
