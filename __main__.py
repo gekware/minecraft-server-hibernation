@@ -154,9 +154,7 @@ def main():
                         # Internal Exception: io.netty.handler.codec.Decoder.Exception java.lang.NullPointerException
                         # the padding to 88 chars is important, otherwise someclients will fail to interpret
                         # (byte 0x0a (equal to \n or new line) is used to put the phrase in the center of the screen)
-                        client_socket.sendall(("e\0c{\"text\":\"" + (
-                                    "Server is starting. Please wait. Time left: " + str(
-                                timelefttillup) + " seconds").ljust(88, '\x0a') + "\"}").encode())
+                        client_socket.sendall(("e\0c{\"text\":\"" + (f"Server is starting. Please wait. Time left: {timelefttillup} seconds").ljust(88, '\x0a') + "\"}").encode())
                 else:
                     if connection_data_recv[-1] == 1:  # \x01 is the last byte of the first message when requesting server info
                         if server_status == ServerState.OFFLINE:
@@ -172,7 +170,7 @@ def main():
                 server_socket.connect((TARGET_HOST, TARGET_PORT))
                 connectsocketsasync(client_socket, server_socket)
         except Exception as e:
-            print('Exception in main(): ' + str(e))
+            print(f"Exception in main(): {e}")
 
 
 def connectsocketsasync(client, server):
@@ -183,10 +181,10 @@ def connectsocketsasync(client, server):
 def clienttoserver(source, destination):
     global players, TIME_BEFORE_STOPPING_EMPTY_SERVER, stop_empty_minecraft_server, stopinstances, lock
     players += 1
-    print('A PLAYER JOINED THE SERVER! - ' + str(players) + ' players online')
+    print(f"A PLAYER JOINED THE SERVER! - {players} players online")
     forwardsync(source, destination)
     players -= 1
-    print('A PLAYER LEFT THE SERVER! - ' + str(players) + ' players remaining')
+    print(f"A PLAYER LEFT THE SERVER! - {players} players remaining")
     with lock:
         stopinstances += 1
     Timer(TIME_BEFORE_STOPPING_EMPTY_SERVER, stop_empty_minecraft_server, ()).start()
@@ -213,9 +211,9 @@ def forwardsync(source, destination):
     except IOError as e:
         if e.errno == 32:  # user/server disconnected normally. has to be catched, because there is a race condition
             return  # when trying to check if destination.recv does return data
-        print('IOError in forward(): ' + str(e))
+        print(f"IOError in forward(): {e}")
     except Exception as e:
-        print('Exception in forward(): ' + str(e))
+        print(f"Exception in forward(): {e}")
 
 
 if __name__ == '__main__':
