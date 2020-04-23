@@ -10,9 +10,11 @@ Modified by dangercrow https://github.com/dangercrow
 """
 import os
 import socket
-from threading import Timer, Lock, Thread
+from threading import Timer, Lock, Thread, Event
 from time import sleep
+from typing import Callable
 
+from data_usage import DataUsageMonitor
 from server_state import ServerState
 
 # ------------------------modify-------------------------------#
@@ -35,11 +37,12 @@ DEBUG = False  # if true more additional information is printed
 
 # ---------------------do not modify---------------------------#
 
-players = 0
-datacountbytes = 0
+data_monitor = DataUsageMonitor()
 server_status = ServerState.OFFLINE
-timelefttillup = MINECRAFT_SERVER_STARTUPTIME
 lock = Lock()
+
+players = 0
+timelefttillup = MINECRAFT_SERVER_STARTUPTIME
 stopinstances = 0
 
 
@@ -82,13 +85,19 @@ def start_minecraft_server():
     Timer(MINECRAFT_SERVER_STARTUPTIME, _set_server_status_online, ()).start()
 
 
-def printdatausage():
-    global datacountbytes
-    with lock:
-        if datacountbytes != 0:
-            print('{:.3f}KB/s'.format(datacountbytes / 1024 / 3))
-            datacountbytes = 0
-    Timer(3, printdatausage, ()).start()
+def set_interval(f: Callable, interval: float):
+    stop_event = Event()
+
+    def thread_fn():
+        while not stop_event.wait(interval):
+            f()
+
+    Thread(target=thread_fn).start()
+    return stop_event
+
+
+def log_data_usage(data_usage_monitor: DataUsageMonitor, log_interval: float = 3) -> Event:
+    return set_interval(lambda: print('{:.3f}KB/s'.format(data_usage_monitor.kilobytes_per_second)), log_interval)
 
 
 class WindowsInhibitor:
@@ -132,6 +141,7 @@ def main():
     dock_socket.listen(5)
     print('*** listening for new clients to connect...')
     if DEBUG:
+        log_data_usage(data_monitor)
         printdatausage()
     while True:
         try:
@@ -196,7 +206,6 @@ def servertoclient(source, destination):
 
 # this thread passes data between connections
 def forwardsync(source, destination):
-    global datacountbytes
     source.settimeout(60)
     destination.settimeout(60)
     try:
@@ -206,7 +215,7 @@ def forwardsync(source, destination):
                 break
             destination.sendall(data)
             with lock:
-                datacountbytes += len(data)  # to calculate the quantity of data per second
+                data_monitor.used_bytes(len(data))
     except IOError as e:
         if e.errno == 32:  # user/server disconnected normally. has to be catched, because there is a race condition
             return  # when trying to check if destination.recv does return data
