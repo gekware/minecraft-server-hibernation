@@ -81,11 +81,42 @@ def printdatausage():
             datacountbytes = 0
     Timer(3, printdatausage, ()).start()
 
+
+class WindowsInhibitor:
+    ES_CONTINUOUS = 0x80000000
+    ES_SYSTEM_REQUIRED = 0x00000001
+    def __init__(self):
+        pass
+    def inhibit(self):
+        import ctypes
+        print("Preventing Windows from going to sleep")
+        ctypes.windll.kernel32.SetThreadExecutionState(
+            WindowsInhibitor.ES_CONTINUOUS | \
+            WindowsInhibitor.ES_SYSTEM_REQUIRED)
+    def uninhibit(self):
+        import ctypes
+        print("Allowing Windows to go to sleep")
+        ctypes.windll.kernel32.SetThreadExecutionState(
+            WindowsInhibitor.ES_CONTINUOUS)
+
+
+def winhinibitor ():
+    global players, WindowsInhibitor
+    osSleep = WindowsInhibitor()
+    while True:
+        if players > 0:
+            osSleep.uninhibit() #prevents windows to go to sleep (there is no check if this code is running on windows--> could throw errors if run on linux)
+        else:
+            osSleep.inhibit()   #allows windows to go to sleep
+        sleep(1)
+
+
 def main():
     global players, START_MINECRAFT_SERVER, STOP_MINECRAFT_SERVER, server_status, timelefttillup
     print('minecraft-vanilla-server-hibernation v4.2 (Python)')
     print('Copyright (C) 2020 gekigek99')
     print('visit my github page for updates: https://github.com/gekigek99')
+    _thread.start_new_thread(winhinibitor, ())
     dock_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     dock_socket.setblocking(1)
     dock_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)   #to prevent errno 98 address already in use
