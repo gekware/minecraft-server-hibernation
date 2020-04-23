@@ -8,7 +8,6 @@ If you like what I do please consider having a cup of coffee with me at: https:/
 
 Modified by dangercrow https://github.com/dangercrow
 '''
-import psutil
 import socket
 import _thread
 import os
