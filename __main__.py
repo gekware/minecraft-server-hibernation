@@ -13,6 +13,7 @@ import _thread
 import os
 from threading import Timer, Lock
 from time import sleep
+from server_state import ServerState
 #------------------------modify-------------------------------#
 
 START_MINECRAFT_SERVER = 'cd PATH/TO/SERVERFOLDER; screen -dmS minecraftSERVER nice -19 java -jar minecraft_server.jar'    #set command to start minecraft-server service
@@ -35,7 +36,7 @@ DEBUG = False               #if true more additional information is printed
 
 players = 0
 datacountbytes = 0
-server_status = "offline"
+server_status = ServerState.OFFLINE
 timelefttillup = MINECRAFT_SERVER_STARTUPTIME
 lock = Lock()
 stopinstances = 0
@@ -44,24 +45,24 @@ def stop_empty_minecraft_server():
     global server_status, STOP_MINECRAFT_SERVER, players, timelefttillup, stopinstances, lock
     with lock:
         stopinstances -= 1
-        if stopinstances > 0 or players > 0 or server_status == "offline":
+        if stopinstances > 0 or players > 0 or server_status == ServerState.OFFLINE:
             return
-    server_status = "offline"
+    server_status = ServerState.OFFLINE
     os.system(STOP_MINECRAFT_SERVER)
     print('MINECRAFT SERVER IS SHUTTING DOWN!')
     timelefttillup = MINECRAFT_SERVER_STARTUPTIME
 
 def start_minecraft_server():
     global server_status, START_MINECRAFT_SERVER, MINECRAFT_SERVER_STARTUPTIME, players, timelefttillup
-    if server_status != "offline":
+    if server_status != ServerState.OFFLINE:
         return
-    server_status = "starting"
+    server_status = ServerState.STARTING
     os.system(START_MINECRAFT_SERVER)
     print ('MINECRAFT SERVER IS STARTING!')
     players = 0
     def _set_server_status_online():
         global server_status, stopinstances, lock
-        server_status = "online"
+        server_status = ServerState.ONLINE
         print ('MINECRAFT SERVER IS UP!')
         with lock:
             stopinstances += 1
@@ -131,15 +132,15 @@ def main():
             client_socket, client_address = dock_socket.accept()        #blocking
             if DEBUG == True:
                 print ('*** from {}:{} to {}:{}'.format(client_address[0], LISTEN_PORT, TARGET_HOST, TARGET_PORT))
-            if server_status == "offline" or server_status == "starting":
+            if server_status == ServerState.OFFLINE or server_status == ServerState.STARTING:
                 connection_data_recv = client_socket.recv(64)
                 if connection_data_recv[-1] == 2:       #\x02 is the last byte of the first message when player is trying to join the server
                     player_data_recv = client_socket.recv(64)   #here it's reading an other packet containing the player name
                     player_name = player_data_recv[3:].decode('utf-8', errors='replace')
-                    if server_status == "offline":
+                    if server_status == ServerState.OFFLINE:
                         print(player_name, 'tryed to join from', client_address[0])
                         start_minecraft_server()
-                    if server_status == "starting":
+                    if server_status == ServerState.STARTING:
                         print(player_name, 'tryed to join from', client_address[0], 'during server startup')
                         sleep(0.01)     #necessary otherwise it could throw an error: 
                                         #Internal Exception: io.netty.handler.codec.Decoder.Exception java.lang.NullPointerException
@@ -148,14 +149,14 @@ def main():
                         client_socket.sendall(("e\0c{\"text\":\"" + ("Server is starting. Please wait. Time left: " + str(timelefttillup) + " seconds").ljust(88,'\x0a')+"\"}").encode())
                 else:
                     if connection_data_recv[-1] == 1:   #\x01 is the last byte of the first message when requesting server info
-                        if server_status == "offline":
+                        if server_status == ServerState.OFFLINE:
                             print('player unknown requested server info from', client_address[0])
-                        if server_status == "starting":
+                        if server_status == ServerState.STARTING:
                             print('player unknown requested server info from', client_address[0], 'during server startup')
                 client_socket.shutdown(1)   #sends FIN to client
                 client_socket.close()
                 continue
-            if server_status == "online":    
+            if server_status == ServerState.ONLINE:
                 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 server_socket.connect((TARGET_HOST, TARGET_PORT))
                 connectsocketsasync(client_socket,server_socket)
