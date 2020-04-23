@@ -197,7 +197,6 @@ def servertoclient(source, destination):
 # this thread passes data between connections
 def forwardsync(source, destination):
     global datacountbytes, lock
-    data = ' '
     source.settimeout(60)
     destination.settimeout(60)
     try:
