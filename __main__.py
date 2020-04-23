@@ -5,6 +5,8 @@ Copyright (C) 2020  gekigek99
 v4.2 (Python)
 visit my github page: https://github.com/gekigek99
 If you like what I do please consider having a cup of coffee with me at: https://www.buymeacoffee.com/gekigek99
+
+Modified by dangercrow https://github.com/dangercrow
 '''
 import psutil
 import socket
