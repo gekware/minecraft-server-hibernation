@@ -126,17 +126,17 @@ def main():
     print('visit my github page for updates: https://github.com/gekigek99')
     _thread.start_new_thread(winhinibitor, ())
     dock_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    dock_socket.setblocking(1)
+    dock_socket.setblocking(True)
     dock_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # to prevent errno 98 address already in use
     dock_socket.bind((LISTEN_HOST, LISTEN_PORT))
     dock_socket.listen(5)
     print('*** listening for new clients to connect...')
-    if DEBUG == True:
+    if DEBUG:
         printdatausage()
     while True:
         try:
             client_socket, client_address = dock_socket.accept()  # blocking
-            if DEBUG == True:
+            if DEBUG:
                 print('*** from {}:{} to {}:{}'.format(client_address[0], LISTEN_PORT, TARGET_HOST, TARGET_PORT))
             if server_status == ServerState.OFFLINE or server_status == ServerState.STARTING:
                 connection_data_recv = client_socket.recv(64)
