@@ -95,17 +95,15 @@ class WindowsInhibitor:
     ES_CONTINUOUS = 0x80000000
     ES_SYSTEM_REQUIRED = 0x00000001
 
-    def __init__(self):
-        pass
-
-    def inhibit(self):
+    @staticmethod
+    def inhibit():
         import ctypes
         print("Preventing Windows from going to sleep")
-        ctypes.windll.kernel32.SetThreadExecutionState(
-            WindowsInhibitor.ES_CONTINUOUS | \
-            WindowsInhibitor.ES_SYSTEM_REQUIRED)
+        es_flags = WindowsInhibitor.ES_CONTINUOUS | WindowsInhibitor.ES_SYSTEM_REQUIRED
+        ctypes.windll.kernel32.SetThreadExecutionState(es_flags)
 
-    def uninhibit(self):
+    @staticmethod
+    def uninhibit():
         import ctypes
         print("Allowing Windows to go to sleep")
         ctypes.windll.kernel32.SetThreadExecutionState(
@@ -113,13 +111,11 @@ class WindowsInhibitor:
 
 
 def winhinibitor():
-    global players, WindowsInhibitor
-    osSleep = WindowsInhibitor()
     while True:
         if players > 0:
-            osSleep.uninhibit()  # prevents windows to go to sleep (there is no check if this code is running on windows--> could throw errors if run on linux)
+            WindowsInhibitor.uninhibit()  # prevents windows to go to sleep (there is no check if this code is running on windows--> could throw errors if run on linux)
         else:
-            osSleep.inhibit()  # allows windows to go to sleep
+            WindowsInhibitor.inhibit()  # allows windows to go to sleep
         sleep(1)
 
 
