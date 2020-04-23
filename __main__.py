@@ -8,11 +8,11 @@ If you like what I do please consider having a cup of coffee with me at: https:/
 
 Modified by dangercrow https://github.com/dangercrow
 """
-import socket
-import _thread
 import os
-from threading import Timer, Lock
+import socket
+from threading import Timer, Lock, Thread
 from time import sleep
+
 from server_state import ServerState
 
 # ------------------------modify-------------------------------#
@@ -124,7 +124,7 @@ def main():
     print('minecraft-vanilla-server-hibernation v4.2 (Python)')
     print('Copyright (C) 2020 gekigek99')
     print('visit my github page for updates: https://github.com/gekigek99')
-    _thread.start_new_thread(winhinibitor, ())
+    Thread(target=winhinibitor, name="Inhibitor").start()
     dock_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     dock_socket.setblocking(True)
     dock_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # to prevent errno 98 address already in use
@@ -174,8 +174,8 @@ def main():
 
 
 def connectsocketsasync(client, server):
-    _thread.start_new_thread(clienttoserver, (client, server,))
-    _thread.start_new_thread(servertoclient, (server, client,))
+    Thread(target=clienttoserver, name="ClientToServer", args=(client, server)).start()
+    Thread(target=servertoclient, name="ServerToClient", args=(server, client)).start()
 
 
 def clienttoserver(source, destination):
