@@ -16,6 +16,7 @@ from typing import Callable
 
 from data_usage import DataUsageMonitor
 from inhibitors import PlayerBasedWinInhibitor
+from proxy import Proxy
 from server_state import ServerState
 
 # ------------------------modify-------------------------------#
@@ -154,44 +155,24 @@ def main():
 
 
 def connectsocketsasync(client, server):
-    Thread(target=clienttoserver, name="ClientToServer", args=(client, server)).start()
-    Thread(target=servertoclient, name="ServerToClient", args=(server, client)).start()
+    proxy = Proxy(server, client, data_monitor)
 
+    @proxy.before_client_to_server
+    def player_joins():
+        global players
+        players += 1
+        print(f"A PLAYER JOINED THE SERVER! - {players} players online")
 
-def clienttoserver(source, destination):
-    global players, stopinstances
-    players += 1
-    print(f"A PLAYER JOINED THE SERVER! - {players} players online")
-    forwardsync(source, destination)
-    players -= 1
-    print(f"A PLAYER LEFT THE SERVER! - {players} players remaining")
-    with lock:
-        stopinstances += 1
-    Timer(TIME_BEFORE_STOPPING_EMPTY_SERVER, stop_empty_minecraft_server, ()).start()
+    @proxy.after_client_to_server
+    def player_leaves():
+        global players, stopinstances
+        players -= 1
+        print(f"A PLAYER LEFT THE SERVER! - {players} players remaining")
+        with lock:
+            stopinstances += 1
+        Timer(TIME_BEFORE_STOPPING_EMPTY_SERVER, stop_empty_minecraft_server, ()).start()
 
-
-def servertoclient(source, destination):
-    forwardsync(source, destination)
-
-
-# this thread passes data between connections
-def forwardsync(source, destination):
-    source.settimeout(60)
-    destination.settimeout(60)
-    try:
-        while True:
-            data = source.recv(1024)
-            if not data:  # if there is no data stop listening, this means the socket is closed
-                break
-            destination.sendall(data)
-            with lock:
-                data_monitor.used_bytes(len(data))
-    except IOError as e:
-        if e.errno == 32:  # user/server disconnected normally. has to be catched, because there is a race condition
-            return  # when trying to check if destination.recv does return data
-        print(f"IOError in forward(): {e}")
-    except Exception as e:
-        print(f"Exception in forward(): {e}")
+    proxy.start()
 
 
 if __name__ == '__main__':
