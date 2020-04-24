@@ -1,3 +1,6 @@
+from .atomic_integer import AtomicInteger
+
+
 class WindowsInhibitor:
     ES_CONTINUOUS = 0x80000000
     ES_SYSTEM_REQUIRED = 0x00000001
@@ -20,7 +23,7 @@ class WindowsInhibitor:
 
 class PlayerBasedWinInhibitor:
     @staticmethod
-    def with_players(player_count: int):
+    def with_players(player_count: AtomicInteger):
         if player_count > 0:
             WindowsInhibitor.inhibit()
         else:

@@ -18,6 +18,7 @@ from .data_usage import DataUsageMonitor
 from .inhibitors import PlayerBasedWinInhibitor
 from .proxy import Proxy
 from .server_state import ServerState, ServerStateTracker
+from .atomic_integer import AtomicInteger
 
 # ------------------------modify-------------------------------#
 
@@ -44,44 +45,39 @@ data_monitor = DataUsageMonitor()
 server_status_tracker = ServerStateTracker()
 lock = Lock()
 
-players = 0
-timelefttillup = MINECRAFT_SERVER_STARTUPTIME
-stopinstances = 0
+players = AtomicInteger()
+stopinstances = AtomicInteger()
+timelefttillup = AtomicInteger(MINECRAFT_SERVER_STARTUPTIME)
 
 
 def stop_empty_minecraft_server():
-    global timelefttillup, stopinstances
     with lock:
-        stopinstances -= 1
-        if stopinstances > 0 or players > 0 or server_status_tracker.state == ServerState.OFFLINE:
+        stopinstances.dec()
+        if stopinstances.value > 0 or players.value > 0 or server_status_tracker.state == ServerState.OFFLINE:
             return
     server_status_tracker.state = ServerState.OFFLINE
     os.system(STOP_MINECRAFT_SERVER)
     print('MINECRAFT SERVER IS SHUTTING DOWN!')
-    timelefttillup = MINECRAFT_SERVER_STARTUPTIME
+    timelefttillup.value = MINECRAFT_SERVER_STARTUPTIME
 
 
 def start_minecraft_server():
-    global server_status, players
     if server_status_tracker.state != ServerState.OFFLINE:
         return
     server_status_tracker.state = ServerState.STARTING
     os.system(START_MINECRAFT_SERVER)
     print('MINECRAFT SERVER IS STARTING!')
-    players = 0
+    players.value = 0
 
     def _set_server_status_online():
-        global stopinstances
         server_status_tracker.state = ServerState.ONLINE
         print('MINECRAFT SERVER IS UP!')
-        with lock:
-            stopinstances += 1
+        stopinstances.inc()
         Timer(TIME_BEFORE_STOPPING_EMPTY_SERVER, stop_empty_minecraft_server, ()).start()
 
     def _update_timeleft():
-        global timelefttillup
-        if timelefttillup > 0:
-            timelefttillup -= 1
+        if timelefttillup.value > 0:
+            timelefttillup.dec()
 
     set_interval(_update_timeleft, 1)
 
@@ -100,7 +96,6 @@ def set_interval(f: Callable, interval: float, *, thread_name=None):
 
 
 def main():
-    global players
     print('minecraft-vanilla-server-hibernation v4.2 (Python)')
     print('Copyright (C) 2020 gekigek99')
     print('visit my github page for updates: https://github.com/gekigek99')
@@ -159,17 +154,14 @@ def connectsocketsasync(client, server):
 
     @proxy.before_client_to_server
     def player_joins():
-        global players
-        players += 1
+        players.inc()
         print(f"A PLAYER JOINED THE SERVER! - {players} players online")
 
     @proxy.after_client_to_server
     def player_leaves():
-        global players, stopinstances
-        players -= 1
+        players.dec()
         print(f"A PLAYER LEFT THE SERVER! - {players} players remaining")
-        with lock:
-            stopinstances += 1
+        stopinstances.inc()
         Timer(TIME_BEFORE_STOPPING_EMPTY_SERVER, stop_empty_minecraft_server, ()).start()
 
     proxy.start()
