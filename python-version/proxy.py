@@ -2,7 +2,7 @@ from socket import socket
 from threading import Thread
 from typing import Callable, Optional
 
-from data_usage import DataUsageMonitor
+from .data_usage import DataUsageMonitor
 
 
 class Proxy:

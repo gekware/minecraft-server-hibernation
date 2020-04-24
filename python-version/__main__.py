@@ -14,10 +14,10 @@ from threading import Timer, Lock, Thread, Event
 from time import sleep
 from typing import Callable
 
-from data_usage import DataUsageMonitor
-from inhibitors import PlayerBasedWinInhibitor
-from proxy import Proxy
-from server_state import ServerState
+from .data_usage import DataUsageMonitor
+from .inhibitors import PlayerBasedWinInhibitor
+from .proxy import Proxy
+from .server_state import ServerState
 
 # ------------------------modify-------------------------------#
 
