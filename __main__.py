@@ -35,6 +35,7 @@ TARGET_HOST = "127.0.0.1"
 TARGET_PORT = 25565  # the port specified on server.properties
 
 DEBUG = False  # if true more additional information is printed
+DATA_USAGE_LOG_INTERVAL = 3  # The time, in seconds, between each debug log
 
 # ---------------------do not modify---------------------------#
 
@@ -97,10 +98,6 @@ def set_interval(f: Callable, interval: float, *, thread_name=None):
     return stop_event
 
 
-def log_data_usage(data_usage_monitor: DataUsageMonitor, log_interval: float = 3) -> Event:
-    return set_interval(lambda: print('{:.3f}KB/s'.format(data_usage_monitor.kilobytes_per_second)), log_interval)
-
-
 def main():
     global players
     print('minecraft-vanilla-server-hibernation v4.2 (Python)')
@@ -114,13 +111,13 @@ def main():
     dock_socket.listen(5)
     print('*** listening for new clients to connect...')
     if DEBUG:
-        log_data_usage(data_monitor)
-        printdatausage()
+        set_interval(lambda: print('{:.3f}KB/s'.format(data_monitor.kilobytes_per_second)), DATA_USAGE_LOG_INTERVAL,
+                     thread_name="DataUsageLogging")
     while True:
         try:
             client_socket, client_address = dock_socket.accept()  # blocking
             if DEBUG:
-                print('*** from {}:{} to {}:{}'.format(client_address[0], LISTEN_PORT, TARGET_HOST, TARGET_PORT))
+                print(f'*** from {client_address[0]}:{LISTEN_PORT} to {TARGET_HOST}:{TARGET_PORT}')
             if server_status == ServerState.OFFLINE or server_status == ServerState.STARTING:
                 connection_data_recv = client_socket.recv(64)
                 if connection_data_recv[
