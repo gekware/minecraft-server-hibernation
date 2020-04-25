@@ -1,0 +1,67 @@
+import json
+import socket
+from time import sleep
+
+from minecraft_server_controller import MinecraftServerController
+from proxy import Proxy
+
+
+class ConnectionHandler:
+    def __init__(self, controller: MinecraftServerController, data_monitor):
+        self.data_monitor = data_monitor
+        self.controller = controller
+
+    def setup_player_counting_proxy(self, client: socket.socket, server: socket.socket):
+        proxy = Proxy(server, client, self.data_monitor)
+
+        @proxy.before_client_to_server
+        def player_joins():
+            self.controller.player_joined()
+
+        @proxy.after_client_to_server
+        def player_leaves():
+            self.controller.player_left()
+
+        proxy.start()
+
+    def handle_connection(self, dock_socket: socket.socket, server_host: str, server_port: int, listen_port: int, debug: bool):
+        client_socket, client_address = dock_socket.accept()  # blocking
+        if debug:
+            print(f'*** from {client_address[0]}:{listen_port} to {server_host}:{server_port}')
+        if self.controller.server_is_online:
+            server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            server_socket.connect((server_host, server_port))
+            self.setup_player_counting_proxy(client_socket, server_socket)
+        else:
+            connection_data_recv = client_socket.recv(64)
+            if connection_data_recv[-1] == 2:  # Final byte \x02 indicates a player join request
+                self.handle_join_attempt(client_address, client_socket)
+            elif connection_data_recv[-1] == 1:  # Final byte \x01 indicates a server info request
+                self.handle_server_info_request(client_address)
+            client_socket.shutdown(1)  # sends FIN to client
+            client_socket.close()
+
+    def handle_server_info_request(self, client_address):
+        if self.controller.server_is_offline:
+            print(f'Unknown player requested server info from {client_address[0]}')
+        if self.controller.server_is_starting:
+            print(f'Unknown player requested server info from {client_address[0]} during server startup')
+
+    def handle_join_attempt(self, client_address, client_socket):
+        player_data_recv = client_socket.recv(64)  # here it's reading an other packet containing the player name
+        player_name = player_data_recv[3:].decode('utf-8', errors='replace')
+        if self.controller.server_is_offline:
+            print(f"{player_name} tried to join from {client_address[0]}, starting server.")
+            self.controller.start_minecraft_server()
+        if self.controller.server_is_starting:
+            print(f"{player_name} tried to join from {client_address[0]} during server startup.")
+            sleep(0.01)  # necessary otherwise it could throw an error:
+            # Internal Exception: io.netty.handler.codec.Decoder.Exception java.lang.NullPointerException
+            # the padding to 88 chars is important, otherwise some clients will fail to interpret
+            # (byte 0x0a (equal to \n or new line) is used to put the phrase in the center of the screen)
+            time_left = self.controller._time_left_until_up.value  # TODO Can this be abstracted ?
+            display_text = f"Server is starting. Please wait. Time left: {time_left} seconds".ljust(88, '\x0a')
+            display_json = json.dumps(dict(text=display_text))
+            packet_prefix = "e\0c"  # TODO Find source for this prefix
+            packet_contents = f"{packet_prefix}{display_json}".encode()
+            client_socket.sendall(packet_contents)
