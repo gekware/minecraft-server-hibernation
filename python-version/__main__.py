@@ -39,14 +39,17 @@ stopinstances = AtomicInteger()
 timelefttillup = AtomicInteger(MINECRAFT_SERVER_STARTUPTIME)
 
 
-def stop_empty_minecraft_server():
-    stopinstances.dec()
-    if stopinstances.value > 0 or players.value > 0 or server_status_tracker.state == ServerState.OFFLINE:
-        return
-    server_status_tracker.state = ServerState.OFFLINE
-    os.system(STOP_MINECRAFT_SERVER)
-    print('MINECRAFT SERVER IS SHUTTING DOWN!')
-    timelefttillup.value = MINECRAFT_SERVER_STARTUPTIME
+def register_check_to_stop_empty_minecraft_server(time_until_check=TIME_BEFORE_STOPPING_EMPTY_SERVER):
+    def stop_empty_minecraft_server():
+        stopinstances.dec()
+        if stopinstances.value > 0 or players.value > 0 or server_status_tracker.state == ServerState.OFFLINE:
+            return
+        server_status_tracker.state = ServerState.OFFLINE
+        os.system(STOP_MINECRAFT_SERVER)
+        print('MINECRAFT SERVER IS SHUTTING DOWN!')
+        timelefttillup.value = MINECRAFT_SERVER_STARTUPTIME
+
+    Timer(time_until_check, stop_empty_minecraft_server, ()).start()
 
 
 def start_minecraft_server():
@@ -61,7 +64,7 @@ def start_minecraft_server():
         server_status_tracker.state = ServerState.ONLINE
         print('MINECRAFT SERVER IS UP!')
         stopinstances.inc()
-        Timer(TIME_BEFORE_STOPPING_EMPTY_SERVER, stop_empty_minecraft_server, ()).start()
+        register_check_to_stop_empty_minecraft_server()
 
     def _update_timeleft():
         if timelefttillup.value > 0:
@@ -70,6 +73,24 @@ def start_minecraft_server():
     set_interval(_update_timeleft, 1)
 
     Timer(MINECRAFT_SERVER_STARTUPTIME, _set_server_status_online, ()).start()
+
+
+def setup_player_counting_proxy(client, server):
+    proxy = Proxy(server, client, data_monitor)
+
+    @proxy.before_client_to_server
+    def player_joins():
+        players.inc()
+        print(f"A PLAYER JOINED THE SERVER! - {players} players online")
+
+    @proxy.after_client_to_server
+    def player_leaves():
+        players.dec()
+        print(f"A PLAYER LEFT THE SERVER! - {players} players remaining")
+        stopinstances.inc()
+        register_check_to_stop_empty_minecraft_server()
+
+    proxy.start()
 
 
 def main(*, debug, listen_host, listen_port, server_host, server_port, data_usage_log_interval):
@@ -122,27 +143,9 @@ def main(*, debug, listen_host, listen_port, server_host, server_port, data_usag
             if server_status_tracker.state == ServerState.ONLINE:
                 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 server_socket.connect((server_host, server_port))
-                connectsocketsasync(client_socket, server_socket)
+                setup_player_counting_proxy(client_socket, server_socket)
         except Exception as e:
             print(f"Exception in main(): {e}")
-
-
-def connectsocketsasync(client, server):
-    proxy = Proxy(server, client, data_monitor)
-
-    @proxy.before_client_to_server
-    def player_joins():
-        players.inc()
-        print(f"A PLAYER JOINED THE SERVER! - {players} players online")
-
-    @proxy.after_client_to_server
-    def player_leaves():
-        players.dec()
-        print(f"A PLAYER LEFT THE SERVER! - {players} players remaining")
-        stopinstances.inc()
-        Timer(TIME_BEFORE_STOPPING_EMPTY_SERVER, stop_empty_minecraft_server, ()).start()
-
-    proxy.start()
 
 
 if __name__ == '__main__':
