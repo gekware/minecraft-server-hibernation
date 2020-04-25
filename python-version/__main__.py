@@ -10,16 +10,16 @@ Modified by dangercrow https://github.com/dangercrow
 """
 import os
 import socket
-from threading import Timer, Lock, Thread, Event
+from argparse import ArgumentParser
+from threading import Timer
 from time import sleep
-from typing import Callable
 
 from thread_helpers import set_interval
+from .atomic_integer import AtomicInteger
 from .data_usage import DataUsageMonitor
 from .inhibitors import PlayerBasedWinInhibitor
 from .proxy import Proxy
 from .server_state import ServerState, ServerStateTracker
-from .atomic_integer import AtomicInteger
 
 # ------------------------modify-------------------------------#
 
@@ -28,17 +28,6 @@ STOP_MINECRAFT_SERVER = "screen -S minecraftSERVER -X stuff 'stop\\n'"  # set co
 
 MINECRAFT_SERVER_STARTUPTIME = 20  # time the server needs until it is fully started
 TIME_BEFORE_STOPPING_EMPTY_SERVER = 60  # time the server waits for clients to connect then it issues the stop command to server
-
-# -----------------------advanced------------------------------#
-
-LISTEN_HOST = "0.0.0.0"
-LISTEN_PORT = 25555  # the port you will connect to on minecraft client
-
-TARGET_HOST = "127.0.0.1"
-TARGET_PORT = 25565  # the port specified on server.properties
-
-DEBUG = False  # if true more additional information is printed
-DATA_USAGE_LOG_INTERVAL = 3  # The time, in seconds, between each debug log
 
 # ---------------------do not modify---------------------------#
 
@@ -83,7 +72,7 @@ def start_minecraft_server():
     Timer(MINECRAFT_SERVER_STARTUPTIME, _set_server_status_online, ()).start()
 
 
-def main():
+def main(*, debug, listen_host, listen_port, server_host, server_port, data_usage_log_interval):
     print('minecraft-vanilla-server-hibernation v4.2 (Python)')
     print('Copyright (C) 2020 gekigek99')
     print('visit my github page for updates: https://github.com/gekigek99')
@@ -91,17 +80,18 @@ def main():
     dock_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     dock_socket.setblocking(True)
     dock_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # to prevent errno 98 address already in use
-    dock_socket.bind((LISTEN_HOST, LISTEN_PORT))
+    dock_socket.bind((listen_host, listen_port))
     dock_socket.listen(5)
     print('*** listening for new clients to connect...')
-    if DEBUG:
-        set_interval(lambda: print('{:.3f}KB/s'.format(data_monitor.kilobytes_per_second)), DATA_USAGE_LOG_INTERVAL,
+
+    if debug:
+        set_interval(lambda: print('{:.3f}KB/s'.format(data_monitor.kilobytes_per_second)), data_usage_log_interval,
                      thread_name="DataUsageLogging")
     while True:
         try:
             client_socket, client_address = dock_socket.accept()  # blocking
-            if DEBUG:
-                print(f'*** from {client_address[0]}:{LISTEN_PORT} to {TARGET_HOST}:{TARGET_PORT}')
+            if debug:
+                print(f'*** from {client_address[0]}:{listen_port} to {server_host}:{server_port}')
             if server_status_tracker.state == ServerState.OFFLINE or server_status_tracker.state == ServerState.STARTING:
                 connection_data_recv = client_socket.recv(64)
                 if connection_data_recv[
@@ -131,7 +121,7 @@ def main():
                 continue
             if server_status_tracker.state == ServerState.ONLINE:
                 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                server_socket.connect((TARGET_HOST, TARGET_PORT))
+                server_socket.connect((server_host, server_port))
                 connectsocketsasync(client_socket, server_socket)
         except Exception as e:
             print(f"Exception in main(): {e}")
@@ -156,4 +146,21 @@ def connectsocketsasync(client, server):
 
 
 if __name__ == '__main__':
-    main()
+    parser = ArgumentParser()
+    parser.add_argument("--listen-host", default="0.0.0.0", help="The host on which the client should listen")
+    parser.add_argument("--listen-port", type=int, default=25555, help="The port on which the client should listen")
+    parser.add_argument("--server-host", default="0.0.0.0", help="The host on which the Minecraft server runs")
+    parser.add_argument("--server-port", type=int, default=25565, help="The port on which the Minecraft server runs")
+    parser.add_argument("--debug", action="set_true", default=False, help="If set, print additional debug information")
+    parser.add_argument("--debug-data-usage-log-interval", type=int, default=3, help="Debug log frequency")
+
+    args = parser.parse_args()
+
+    main(
+        debug=args.debug,
+        listen_host=args.listen_host,
+        listen_port=args.listen_port,
+        server_host=args.server_host,
+        server_port=args.server_port,
+        data_usage_log_interval=args.debug_data_usage_log_interval,
+    )
