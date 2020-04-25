@@ -4,10 +4,10 @@ import socket
 from time import sleep
 from typing import Optional
 
-from data_usage import DataUsageMonitor
-from minecraft_server_controller import MinecraftServerController
-from proxy import Proxy
-from thread_helpers import set_interval
+from .data_usage import DataUsageMonitor
+from .minecraft_server_controller import MinecraftServerController
+from .proxy import Proxy
+from .thread_helpers import set_interval
 
 
 class ConnectionHandler:

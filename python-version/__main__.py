@@ -35,7 +35,7 @@ if __name__ == '__main__':
     parser.add_argument("--idle-time-until-shutdown", type=int, default=60,
                         help="How long the server should remain up, with no players, before shutting down")
 
-    parser.add_argument("--debug", action="set_true", default=False, help="If set, print additional debug information")
+    parser.add_argument("--debug", action="store_true", default=False, help="If set, print additional debug information")
     parser.add_argument("--debug-data-usage-log-interval", type=int, default=3, help="Debug log frequency")
 
     args = parser.parse_args()

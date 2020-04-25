@@ -1,8 +1,7 @@
-import enum
-from enum import auto
+from enum import auto, Enum
 
 
-class ServerState(enum):
+class ServerState(Enum):
     OFFLINE = auto()
     STARTING = auto()
     ONLINE = auto()
@@ -10,12 +9,4 @@ class ServerState(enum):
 
 class ServerStateTracker:
     def __init__(self):
-        self._state = ServerState.OFFLINE
-
-    @property
-    def state(self):
-        return self._state
-
-    @state.setter
-    def state(self, state):
-        self.state = state
+        self.state: ServerState = ServerState.OFFLINE

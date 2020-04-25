@@ -2,9 +2,9 @@ import os
 from pathlib import Path
 from threading import Timer
 
-from atomic_integer import AtomicInteger
-from server_state import ServerState, ServerStateTracker
-from thread_helpers import set_interval
+from .atomic_integer import AtomicInteger
+from .server_state import ServerState, ServerStateTracker
+from .thread_helpers import set_interval
 
 
 class MinecraftServerController:
