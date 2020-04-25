@@ -9,13 +9,12 @@ from thread_helpers import set_interval
 START_MINECRAFT_SERVER = 'cd PATH/TO/SERVERFOLDER; screen -dmS minecraftSERVER nice -19 java -jar minecraft_server.jar'  # set command to start minecraft-server service
 STOP_MINECRAFT_SERVER = "screen -S minecraftSERVER -X stuff 'stop\\n'"  # set command to stop minecraft-server service
 
-MINECRAFT_SERVER_STARTUPTIME = 20  # time the server needs until it is fully started
-TIME_BEFORE_STOPPING_EMPTY_SERVER = 60  # time the server waits for clients to connect then it issues the stop command to server
-
 
 class MinecraftServerController:
-    def __init__(self):
-        self._time_left_until_up = AtomicInteger(MINECRAFT_SERVER_STARTUPTIME)
+    def __init__(self, *, expected_startup_time, idle_time_until_shutdown):
+        self.expected_startup_time = expected_startup_time
+        self.idle_time_until_shutdown = idle_time_until_shutdown
+        self._time_left_until_up = AtomicInteger(self.expected_startup_time)
         self._recent_activity = AtomicInteger()
         self._players = AtomicInteger()
         self._server_status_tracker = ServerStateTracker()
@@ -41,9 +40,9 @@ class MinecraftServerController:
 
         set_interval(_update_timeleft, 1)
 
-        Timer(MINECRAFT_SERVER_STARTUPTIME, _set_server_status_online).start()
+        Timer(self.expected_startup_time, _set_server_status_online).start()
 
-    def register_check_to_stop_empty_minecraft_server(self, time_until_check=TIME_BEFORE_STOPPING_EMPTY_SERVER):
+    def register_check_to_stop_empty_minecraft_server(self):
         def stop_empty_minecraft_server():
             self._recent_activity.dec()
             if self._recent_activity.value > 0 or self._players.value > 0 or self.server_is_offline:
@@ -51,9 +50,9 @@ class MinecraftServerController:
             self._server_status_tracker.state = ServerState.OFFLINE
             os.system(STOP_MINECRAFT_SERVER)
             print('MINECRAFT SERVER IS SHUTTING DOWN!')
-            self._time_left_until_up.value = MINECRAFT_SERVER_STARTUPTIME
+            self._time_left_until_up.value = self.expected_startup_time
 
-        Timer(time_until_check, stop_empty_minecraft_server, ()).start()
+        Timer(self.idle_time_until_shutdown, stop_empty_minecraft_server, ()).start()
 
     def player_left(self):
         self._players.dec()

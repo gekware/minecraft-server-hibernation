@@ -16,13 +16,14 @@ from .minecraft_server_controller import MinecraftServerController
 from .thread_helpers import set_interval
 
 
-def main(*, debug, listen_host, listen_port, server_host, server_port, data_usage_log_interval):
+def main(*, debug, listen_host, listen_port, server_host, server_port, data_usage_log_interval, expected_server_startup_time,
+         idle_time_until_shutdown):
     print('minecraft-vanilla-server-hibernation v4.2 (Python)')
     print('Copyright (C) 2020 gekigek99')
     print('visit my github page for updates: https://github.com/gekigek99')
 
     data_monitor = DataUsageMonitor()
-    server_controller = MinecraftServerController()
+    server_controller = MinecraftServerController(expected_startup_time=expected_server_startup_time, idle_time_until_shutdown=idle_time_until_shutdown)
     connection_handler = ConnectionHandler(server_controller, data_monitor, listen_host, listen_port, server_host, server_port)
     print('*** listening for new clients to connect...')
 
@@ -40,8 +41,14 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument("--listen-host", default="0.0.0.0", help="The host on which the client should listen")
     parser.add_argument("--listen-port", type=int, default=25555, help="The port on which the client should listen")
+
     parser.add_argument("--server-host", default="0.0.0.0", help="The host on which the Minecraft server runs")
     parser.add_argument("--server-port", type=int, default=25565, help="The port on which the Minecraft server runs")
+
+    parser.add_argument("--expected-startup-time", type=int, default=20, help="How long the server takes to start")
+    parser.add_argument("--idle-time-until-shutdown", type=int, default=60,
+                        help="How long the server should remain up, with no players, before shutting down")
+
     parser.add_argument("--debug", action="set_true", default=False, help="If set, print additional debug information")
     parser.add_argument("--debug-data-usage-log-interval", type=int, default=3, help="Debug log frequency")
 
@@ -54,4 +61,6 @@ if __name__ == '__main__':
         server_host=args.server_host,
         server_port=args.server_port,
         data_usage_log_interval=args.debug_data_usage_log_interval,
+        expected_server_startup_time=args.expected_startup_time,
+        idle_time_until_shutdown=args.idle_time_until_shutdown,
     )
