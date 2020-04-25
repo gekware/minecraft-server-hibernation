@@ -21,6 +21,9 @@ if __name__ == '__main__':
                         default="nice -19 java -jar minecraft_server.jar")
     parser.add_argument("--minecraft-server-stop-commands", help="Repeatable. Commands to run to stop the server",
                         nargs='+', default=['stop'])
+    parser.add_argument("--prevent-windows-from-sleeping", action="store_true",
+                        help="Prevent the machine from sleeping whilst the server is live. "
+                             "Windows specific, may raise errors on other platforms.")
 
     parser.add_argument("--listen-host", default="0.0.0.0", help="The host on which the client should listen")
     parser.add_argument("--listen-port", type=int, default=25555, help="The port on which the client should listen")
@@ -44,7 +47,8 @@ if __name__ == '__main__':
         expected_startup_time=args.expected_startup_time,
         idle_time_until_shutdown=args.idle_time_until_shutdown,
         startup_command=args.minecraft_server_startup_command,
-        minecraft_commands_to_run_to_stop=args.minecraft_server_stop_commands
+        minecraft_commands_to_run_to_stop=args.minecraft_server_stop_commands,
+        prevent_windows_from_sleeping=args.prevent_windows_from_sleeping
     )
     handler = ConnectionHandler(
         controller=server_controller,

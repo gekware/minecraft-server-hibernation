@@ -3,13 +3,12 @@ from pathlib import Path
 from threading import Timer
 
 from atomic_integer import AtomicInteger
-from inhibitors import PlayerBasedWinInhibitor
 from server_state import ServerState, ServerStateTracker
 from thread_helpers import set_interval
 
 
 class MinecraftServerController:
-    def __init__(self, minecraft_server_path: Path, *, startup_command, minecraft_commands_to_run_to_stop, expected_startup_time, idle_time_until_shutdown):
+    def __init__(self, minecraft_server_path: Path, *, startup_command, minecraft_commands_to_run_to_stop, expected_startup_time, idle_time_until_shutdown, prevent_windows_from_sleeping):
         self._expected_startup_time = expected_startup_time
         self._idle_time_until_shutdown = idle_time_until_shutdown
         self._time_left_until_up = AtomicInteger(self._expected_startup_time)
@@ -21,7 +20,9 @@ class MinecraftServerController:
         stop_commands = '\\n'.join(minecraft_commands_to_run_to_stop)
         self.stop_minecraft_server_command = f"screen -S minecraftSERVER -X stuff '{stop_commands}\\n'"
 
-        set_interval(lambda: PlayerBasedWinInhibitor.with_players(self._players), 1, thread_name="WinInhibitor")
+        if prevent_windows_from_sleeping:
+            from inhibitors import PlayerBasedWinInhibitor
+            set_interval(lambda: PlayerBasedWinInhibitor.with_players(self._players), 1, thread_name="WinInhibitor")
 
     def start_minecraft_server(self):
         if self._server_status_tracker.state != ServerState.OFFLINE:
