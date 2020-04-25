@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 """
-minecraft-vanilla_server_hibernation.py is used to start and stop automatically a vanilla minecraft server
-Copyright (C) 2020  gekigek99
-v4.2 (Python)
-visit my github page: https://github.com/gekigek99
-If you like what I do please consider having a cup of coffee with me at: https://www.buymeacoffee.com/gekigek99
+minecraft-vanilla-server-hibernation is used to cause a vanilla minecraft server to "hibernate" when no players are
+online for a while. The server will then spin up again when a player attempts to connect.
 
-Modified by dangercrow https://github.com/dangercrow
+Original work Copyright (C) 2020  gekigek99
+Modifications Copyright (C) 2020 dangercrow
+v5.0 (Python)
 """
 from argparse import ArgumentParser
 from pathlib import Path
@@ -57,9 +56,11 @@ if __name__ == '__main__':
         data_logging_interval=args.debug_data_usage_log_interval if args.debug else None
     )
 
-    print('minecraft-vanilla-server-hibernation v4.2 (Python)')
-    print('Copyright (C) 2020 gekigek99')
-    print('visit my github page for updates: https://github.com/gekigek99')
+    print('minecraft-vanilla-server-hibernation v5.0 (Python)')
+    print('Original work Copyright (C) 2020 gekigek99')
+    print('Modifications Copyright (C) 2020 dangercrow')
+    print('Available on GitHub with full history at: '
+          'https://github.com/dangercrow/minecraft-vanilla-server-hibernation')
 
     while True:
         try:
