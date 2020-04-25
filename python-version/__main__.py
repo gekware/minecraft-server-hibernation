@@ -14,6 +14,7 @@ from threading import Timer, Lock, Thread, Event
 from time import sleep
 from typing import Callable
 
+from thread_helpers import set_interval
 from .data_usage import DataUsageMonitor
 from .inhibitors import PlayerBasedWinInhibitor
 from .proxy import Proxy
@@ -80,17 +81,6 @@ def start_minecraft_server():
     set_interval(_update_timeleft, 1)
 
     Timer(MINECRAFT_SERVER_STARTUPTIME, _set_server_status_online, ()).start()
-
-
-def set_interval(f: Callable, interval: float, *, thread_name=None):
-    stop_event = Event()
-
-    def thread_fn():
-        while not stop_event.wait(interval):
-            f()
-
-    Thread(target=thread_fn, name=thread_name).start()
-    return stop_event
 
 
 def main():
