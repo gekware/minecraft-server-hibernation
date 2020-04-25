@@ -2,21 +2,29 @@ import functools
 import json
 import socket
 from time import sleep
+from typing import Optional
 
 from data_usage import DataUsageMonitor
 from minecraft_server_controller import MinecraftServerController
 from proxy import Proxy
+from thread_helpers import set_interval
 
 
 class ConnectionHandler:
     def __init__(self, controller: MinecraftServerController, data_monitor: DataUsageMonitor, listen_host: str,
-                 listen_port: int, server_host, server_port):
+                 listen_port: int, server_host, server_port, data_logging_interval: Optional[int]):
         self.data_monitor = data_monitor
         self.controller = controller
         self.listen_host = listen_host
         self.listen_port = listen_port
         self.server_host = server_host
         self.server_port = server_port
+
+        if data_logging_interval:
+            def log_data_usage():
+                print('{:.3f}KB/s'.format(self.data_monitor.kilobytes_per_second))
+
+            set_interval(log_data_usage, data_logging_interval, thread_name="DataUsageLogging")
 
     def setup_player_counting_proxy(self, client: socket.socket, server: socket.socket):
         proxy = Proxy(server, client, self.data_monitor)
@@ -35,6 +43,7 @@ class ConnectionHandler:
         server_host = self.server_host
         server_port = self.server_port
         listen_port = self.listen_port
+        print('*** listening for new clients to connect...')
         client_socket, client_address = self.listen_socket.accept()  # blocking
         if debug:
             print(f'*** from {client_address[0]}:{listen_port} to {server_host}:{server_port}')

@@ -9,36 +9,20 @@ If you like what I do please consider having a cup of coffee with me at: https:/
 Modified by dangercrow https://github.com/dangercrow
 """
 from argparse import ArgumentParser
+from pathlib import Path
 
 from .connection_handler import ConnectionHandler
 from .data_usage import DataUsageMonitor
 from .minecraft_server_controller import MinecraftServerController
-from .thread_helpers import set_interval
-
-
-def main(*, debug, listen_host, listen_port, server_host, server_port, data_usage_log_interval, expected_server_startup_time,
-         idle_time_until_shutdown):
-    print('minecraft-vanilla-server-hibernation v4.2 (Python)')
-    print('Copyright (C) 2020 gekigek99')
-    print('visit my github page for updates: https://github.com/gekigek99')
-
-    data_monitor = DataUsageMonitor()
-    server_controller = MinecraftServerController(expected_startup_time=expected_server_startup_time, idle_time_until_shutdown=idle_time_until_shutdown)
-    connection_handler = ConnectionHandler(server_controller, data_monitor, listen_host, listen_port, server_host, server_port)
-    print('*** listening for new clients to connect...')
-
-    if debug:
-        set_interval(lambda: print('{:.3f}KB/s'.format(data_monitor.kilobytes_per_second)), data_usage_log_interval,
-                     thread_name="DataUsageLogging")
-    while True:
-        try:
-            connection_handler.handle_connection(debug=debug)
-        except Exception as e:
-            print(f"Exception in main(): {e}")
-
 
 if __name__ == '__main__':
     parser = ArgumentParser()
+    parser.add_argument("--minecraft-server-path", type=Path, help="The working directory in which to run the server")
+    parser.add_argument("--minecraft-server-startup-command", help="The command to launch the server",
+                        default="nice -19 java -jar minecraft_server.jar")
+    parser.add_argument("--minecraft-server-stop-commands", help="Repeatable. Commands to run to stop the server",
+                        nargs='+', default=['stop'])
+
     parser.add_argument("--listen-host", default="0.0.0.0", help="The host on which the client should listen")
     parser.add_argument("--listen-port", type=int, default=25555, help="The port on which the client should listen")
 
@@ -54,13 +38,31 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    main(
-        debug=args.debug,
+    data_monitor = DataUsageMonitor()
+
+    server_controller = MinecraftServerController(
+        minecraft_server_path=args.minecraft_server_path,
+        expected_startup_time=args.expected_startup_time,
+        idle_time_until_shutdown=args.idle_time_until_shutdown,
+        startup_command=args.minecraft_server_startup_command,
+        minecraft_commands_to_run_to_stop=args.minecraft_server_stop_commands
+    )
+    handler = ConnectionHandler(
+        controller=server_controller,
+        data_monitor=data_monitor,
         listen_host=args.listen_host,
         listen_port=args.listen_port,
         server_host=args.server_host,
         server_port=args.server_port,
-        data_usage_log_interval=args.debug_data_usage_log_interval,
-        expected_server_startup_time=args.expected_startup_time,
-        idle_time_until_shutdown=args.idle_time_until_shutdown,
+        data_logging_interval=args.debug_data_usage_log_interval if args.debug else None
     )
+
+    print('minecraft-vanilla-server-hibernation v4.2 (Python)')
+    print('Copyright (C) 2020 gekigek99')
+    print('visit my github page for updates: https://github.com/gekigek99')
+
+    while True:
+        try:
+            handler.handle_connection(debug=args.debug)
+        except Exception as e:
+            print(f"Exception in main(): {e}")
