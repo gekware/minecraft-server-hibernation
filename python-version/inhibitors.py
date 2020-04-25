@@ -24,7 +24,7 @@ class WindowsInhibitor:
 class PlayerBasedWinInhibitor:
     @staticmethod
     def with_players(player_count: AtomicInteger):
-        if player_count > 0:
+        if player_count.value > 0:
             WindowsInhibitor.inhibit()
         else:
             WindowsInhibitor.uninhibit()
