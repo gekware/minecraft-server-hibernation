@@ -8,6 +8,7 @@ If you like what I do please consider having a cup of coffee with me at: https:/
 
 Modified by dangercrow https://github.com/dangercrow
 """
+import json
 import os
 import socket
 from argparse import ArgumentParser
@@ -110,41 +111,53 @@ def main(*, debug, listen_host, listen_port, server_host, server_port, data_usag
                      thread_name="DataUsageLogging")
     while True:
         try:
-            client_socket, client_address = dock_socket.accept()  # blocking
-            if debug:
-                print(f'*** from {client_address[0]}:{listen_port} to {server_host}:{server_port}')
-            if server_status_tracker.state == ServerState.OFFLINE or server_status_tracker.state == ServerState.STARTING:
-                connection_data_recv = client_socket.recv(64)
-                if connection_data_recv[
-                    -1] == 2:  # \x02 is the last byte of the first message when player is trying to join the server
-                    player_data_recv = client_socket.recv(
-                        64)  # here it's reading an other packet containing the player name
-                    player_name = player_data_recv[3:].decode('utf-8', errors='replace')
-                    if server_status_tracker.state == ServerState.OFFLINE:
-                        print(player_name, 'tryed to join from', client_address[0])
-                        start_minecraft_server()
-                    if server_status_tracker.state == ServerState.STARTING:
-                        print(player_name, 'tryed to join from', client_address[0], 'during server startup')
-                        sleep(0.01)  # necessary otherwise it could throw an error:
-                        # Internal Exception: io.netty.handler.codec.Decoder.Exception java.lang.NullPointerException
-                        # the padding to 88 chars is important, otherwise someclients will fail to interpret
-                        # (byte 0x0a (equal to \n or new line) is used to put the phrase in the center of the screen)
-                        client_socket.sendall(("e\0c{\"text\":\"" + (f"Server is starting. Please wait. Time left: {timelefttillup} seconds").ljust(88, '\x0a') + "\"}").encode())
-                else:
-                    if connection_data_recv[-1] == 1:  # \x01 is the last byte of the first message when requesting server info
-                        if server_status_tracker.state == ServerState.OFFLINE:
-                            print('player unknown requested server info from', client_address[0])
-                        if server_status_tracker.state == ServerState.STARTING:
-                            print('player unknown requested server info from', client_address[0],
-                                  'during server startup')
-                client_socket.shutdown(1)  # sends FIN to client
-                client_socket.close()
-            elif server_status_tracker.state == ServerState.ONLINE:
-                server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                server_socket.connect((server_host, server_port))
-                setup_player_counting_proxy(client_socket, server_socket)
+            handle_connection(dock_socket, server_host, server_port, listen_port, debug)
         except Exception as e:
             print(f"Exception in main(): {e}")
+
+
+def handle_connection(dock_socket: socket.socket, server_host: str, server_port: int, listen_port: int, debug: bool):
+    client_socket, client_address = dock_socket.accept()  # blocking
+    if debug:
+        print(f'*** from {client_address[0]}:{listen_port} to {server_host}:{server_port}')
+    if server_status_tracker.state == ServerState.OFFLINE or server_status_tracker.state == ServerState.STARTING:
+        connection_data_recv = client_socket.recv(64)
+        if connection_data_recv[-1] == 2:  # Final byte \x02 indicates a player join request
+            handle_join_attempt(client_address, client_socket)
+        elif connection_data_recv[-1] == 1:  # Final byte \x01 indicates a server info request
+            handle_server_info_request(client_address)
+        client_socket.shutdown(1)  # sends FIN to client
+        client_socket.close()
+    elif server_status_tracker.state == ServerState.ONLINE:
+        server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server_socket.connect((server_host, server_port))
+        setup_player_counting_proxy(client_socket, server_socket)
+
+
+def handle_server_info_request(client_address):
+    if server_status_tracker.state == ServerState.OFFLINE:
+        print(f'Unknown player requested server info from {client_address[0]}')
+    if server_status_tracker.state == ServerState.STARTING:
+        print(f'Unknown player requested server info from {client_address[0]} during server startup')
+
+
+def handle_join_attempt(client_address, client_socket):
+    player_data_recv = client_socket.recv(64)  # here it's reading an other packet containing the player name
+    player_name = player_data_recv[3:].decode('utf-8', errors='replace')
+    if server_status_tracker.state == ServerState.OFFLINE:
+        print(f"{player_name} tried to join from {client_address[0]}, starting server.")
+        start_minecraft_server()
+    if server_status_tracker.state == ServerState.STARTING:
+        print(f"{player_name} tried to join from {client_address[0]} during server startup.")
+        sleep(0.01)  # necessary otherwise it could throw an error:
+        # Internal Exception: io.netty.handler.codec.Decoder.Exception java.lang.NullPointerException
+        # the padding to 88 chars is important, otherwise some clients will fail to interpret
+        # (byte 0x0a (equal to \n or new line) is used to put the phrase in the center of the screen)
+        display_text = f"Server is starting. Please wait. Time left: {timelefttillup} seconds".ljust(88, '\x0a')
+        display_json = json.dumps(dict(text=display_text))
+        packet_prefix = "e\0c"
+        packet_contents = f"{packet_prefix}{display_json}".encode()
+        client_socket.sendall(packet_contents)
 
 
 if __name__ == '__main__':
