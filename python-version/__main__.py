@@ -35,14 +35,14 @@ data_monitor = DataUsageMonitor()
 server_status_tracker = ServerStateTracker()
 
 players = AtomicInteger()
-stopinstances = AtomicInteger()
+recent_activity = AtomicInteger()
 timelefttillup = AtomicInteger(MINECRAFT_SERVER_STARTUPTIME)
 
 
 def register_check_to_stop_empty_minecraft_server(time_until_check=TIME_BEFORE_STOPPING_EMPTY_SERVER):
     def stop_empty_minecraft_server():
-        stopinstances.dec()
-        if stopinstances.value > 0 or players.value > 0 or server_status_tracker.state == ServerState.OFFLINE:
+        recent_activity.dec()
+        if recent_activity.value > 0 or players.value > 0 or server_status_tracker.state == ServerState.OFFLINE:
             return
         server_status_tracker.state = ServerState.OFFLINE
         os.system(STOP_MINECRAFT_SERVER)
@@ -63,7 +63,7 @@ def start_minecraft_server():
     def _set_server_status_online():
         server_status_tracker.state = ServerState.ONLINE
         print('MINECRAFT SERVER IS UP!')
-        stopinstances.inc()
+        recent_activity.inc()
         register_check_to_stop_empty_minecraft_server()
 
     def _update_timeleft():
@@ -72,7 +72,7 @@ def start_minecraft_server():
 
     set_interval(_update_timeleft, 1)
 
-    Timer(MINECRAFT_SERVER_STARTUPTIME, _set_server_status_online, ()).start()
+    Timer(MINECRAFT_SERVER_STARTUPTIME, _set_server_status_online).start()
 
 
 def setup_player_counting_proxy(client, server):
@@ -87,7 +87,7 @@ def setup_player_counting_proxy(client, server):
     def player_leaves():
         players.dec()
         print(f"A PLAYER LEFT THE SERVER! - {players} players remaining")
-        stopinstances.inc()
+        recent_activity.inc()
         register_check_to_stop_empty_minecraft_server()
 
     proxy.start()
@@ -139,8 +139,7 @@ def main(*, debug, listen_host, listen_port, server_host, server_port, data_usag
                                   'during server startup')
                 client_socket.shutdown(1)  # sends FIN to client
                 client_socket.close()
-                continue
-            if server_status_tracker.state == ServerState.ONLINE:
+            elif server_status_tracker.state == ServerState.ONLINE:
                 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 server_socket.connect((server_host, server_port))
                 setup_player_counting_proxy(client_socket, server_socket)
