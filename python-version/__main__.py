@@ -43,7 +43,6 @@ DATA_USAGE_LOG_INTERVAL = 3  # The time, in seconds, between each debug log
 
 data_monitor = DataUsageMonitor()
 server_status_tracker = ServerStateTracker()
-lock = Lock()
 
 players = AtomicInteger()
 stopinstances = AtomicInteger()
@@ -51,10 +50,9 @@ timelefttillup = AtomicInteger(MINECRAFT_SERVER_STARTUPTIME)
 
 
 def stop_empty_minecraft_server():
-    with lock:
-        stopinstances.dec()
-        if stopinstances.value > 0 or players.value > 0 or server_status_tracker.state == ServerState.OFFLINE:
-            return
+    stopinstances.dec()
+    if stopinstances.value > 0 or players.value > 0 or server_status_tracker.state == ServerState.OFFLINE:
+        return
     server_status_tracker.state = ServerState.OFFLINE
     os.system(STOP_MINECRAFT_SERVER)
     print('MINECRAFT SERVER IS SHUTTING DOWN!')
