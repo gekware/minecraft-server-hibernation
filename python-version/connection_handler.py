@@ -1,15 +1,22 @@
+import functools
 import json
 import socket
 from time import sleep
 
+from data_usage import DataUsageMonitor
 from minecraft_server_controller import MinecraftServerController
 from proxy import Proxy
 
 
 class ConnectionHandler:
-    def __init__(self, controller: MinecraftServerController, data_monitor):
+    def __init__(self, controller: MinecraftServerController, data_monitor: DataUsageMonitor, listen_host: str,
+                 listen_port: int, server_host, server_port):
         self.data_monitor = data_monitor
         self.controller = controller
+        self.listen_host = listen_host
+        self.listen_port = listen_port
+        self.server_host = server_host
+        self.server_port = server_port
 
     def setup_player_counting_proxy(self, client: socket.socket, server: socket.socket):
         proxy = Proxy(server, client, self.data_monitor)
@@ -24,8 +31,11 @@ class ConnectionHandler:
 
         proxy.start()
 
-    def handle_connection(self, dock_socket: socket.socket, server_host: str, server_port: int, listen_port: int, debug: bool):
-        client_socket, client_address = dock_socket.accept()  # blocking
+    def handle_connection(self, *, debug: bool):
+        server_host = self.server_host
+        server_port = self.server_port
+        listen_port = self.listen_port
+        client_socket, client_address = self.listen_socket.accept()  # blocking
         if debug:
             print(f'*** from {client_address[0]}:{listen_port} to {server_host}:{server_port}')
         if self.controller.server_is_online:
@@ -65,3 +75,13 @@ class ConnectionHandler:
             packet_prefix = "e\0c"  # TODO Find source for this prefix
             packet_contents = f"{packet_prefix}{display_json}".encode()
             client_socket.sendall(packet_contents)
+
+    @property
+    @functools.lru_cache
+    def listen_socket(self):
+        listen_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        listen_socket.setblocking(True)
+        listen_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # Prevents errno 98 address already in use
+        listen_socket.bind((self.listen_host, self.listen_port))
+        listen_socket.listen(5)
+        return listen_socket

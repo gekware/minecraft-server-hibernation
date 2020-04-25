@@ -8,7 +8,6 @@ If you like what I do please consider having a cup of coffee with me at: https:/
 
 Modified by dangercrow https://github.com/dangercrow
 """
-import socket
 from argparse import ArgumentParser
 
 from .connection_handler import ConnectionHandler
@@ -16,20 +15,15 @@ from .data_usage import DataUsageMonitor
 from .minecraft_server_controller import MinecraftServerController
 from .thread_helpers import set_interval
 
-data_monitor = DataUsageMonitor()
-controller = MinecraftServerController()
-connection_handler = ConnectionHandler(controller, data_monitor)
-
 
 def main(*, debug, listen_host, listen_port, server_host, server_port, data_usage_log_interval):
     print('minecraft-vanilla-server-hibernation v4.2 (Python)')
     print('Copyright (C) 2020 gekigek99')
     print('visit my github page for updates: https://github.com/gekigek99')
-    dock_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    dock_socket.setblocking(True)
-    dock_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # to prevent errno 98 address already in use
-    dock_socket.bind((listen_host, listen_port))
-    dock_socket.listen(5)
+
+    data_monitor = DataUsageMonitor()
+    server_controller = MinecraftServerController()
+    connection_handler = ConnectionHandler(server_controller, data_monitor, listen_host, listen_port, server_host, server_port)
     print('*** listening for new clients to connect...')
 
     if debug:
@@ -37,7 +31,7 @@ def main(*, debug, listen_host, listen_port, server_host, server_port, data_usag
                      thread_name="DataUsageLogging")
     while True:
         try:
-            connection_handler.handle_connection(dock_socket, server_host, server_port, listen_port, debug)
+            connection_handler.handle_connection(debug=debug)
         except Exception as e:
             print(f"Exception in main(): {e}")
 
