@@ -1,6 +1,7 @@
 import functools
 import json
 import socket
+from logging import getLogger
 from time import sleep
 from typing import Optional
 
@@ -8,6 +9,8 @@ from .data_usage import DataUsageMonitor
 from .minecraft_server_controller import MinecraftServerController
 from .proxy import Proxy
 from .thread_helpers import set_interval
+
+logger = getLogger(__name__)
 
 
 class ConnectionHandler:
@@ -22,7 +25,7 @@ class ConnectionHandler:
 
         if data_logging_interval:
             def log_data_usage():
-                print('{:.3f}KB/s'.format(self.data_monitor.kilobytes_per_second))
+                logger.debug('{:.3f}KB/s'.format(self.data_monitor.kilobytes_per_second))
 
             set_interval(log_data_usage, data_logging_interval, thread_name="DataUsageLogging")
 
@@ -43,10 +46,10 @@ class ConnectionHandler:
         server_host = self.server_host
         server_port = self.server_port
         listen_port = self.listen_port
-        print('*** listening for new clients to connect...')
+        logger.info('*** listening for new clients to connect...')
         client_socket, client_address = self.listen_socket.accept()  # blocking
         if debug:
-            print(f'*** from {client_address[0]}:{listen_port} to {server_host}:{server_port}')
+            logger.debug(f'*** from {client_address[0]}:{listen_port} to {server_host}:{server_port}')
         if self.controller.server_is_online:
             server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             server_socket.connect((server_host, server_port))
@@ -62,18 +65,18 @@ class ConnectionHandler:
 
     def handle_server_info_request(self, client_address):
         if self.controller.server_is_offline:
-            print(f'Unknown player requested server info from {client_address[0]}')
+            logger.info(f'Unknown player requested server info from {client_address[0]}')
         if self.controller.server_is_starting:
-            print(f'Unknown player requested server info from {client_address[0]} during server startup')
+            logger.info(f'Unknown player requested server info from {client_address[0]} during server startup')
 
     def handle_join_attempt(self, client_address, client_socket):
         player_data_recv = client_socket.recv(64)  # here it's reading an other packet containing the player name
         player_name = player_data_recv[3:].decode('utf-8', errors='replace')
         if self.controller.server_is_offline:
-            print(f"{player_name} tried to join from {client_address[0]}, starting server.")
+            logger.info(f"{player_name} tried to join from {client_address[0]}, starting server.")
             self.controller.start_minecraft_server()
         if self.controller.server_is_starting:
-            print(f"{player_name} tried to join from {client_address[0]} during server startup.")
+            logger.info(f"{player_name} tried to join from {client_address[0]} during server startup.")
             sleep(0.01)  # necessary otherwise it could throw an error:
             # Internal Exception: io.netty.handler.codec.Decoder.Exception java.lang.NullPointerException
             # the padding to 88 chars is important, otherwise some clients will fail to interpret

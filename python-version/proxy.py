@@ -1,8 +1,11 @@
+from logging import getLogger
 from socket import socket
 from threading import Thread
 from typing import Callable, Optional
 
 from .data_usage import DataUsageMonitor
+
+logger = getLogger(__name__)
 
 
 class Proxy:
@@ -70,6 +73,6 @@ class Proxy:
         except IOError as e:
             if e.errno == 32:  # user/server disconnected normally. has to be caught, because there is a race condition
                 return  # when trying to check if destination.recv does return data
-            print(f"IOError in forward(): {e}")
+            logger.exception(f"Unexpected IOError in forward()", e)
         except Exception as e:
-            print(f"Exception in forward(): {e}")
+            logger.exception(e)

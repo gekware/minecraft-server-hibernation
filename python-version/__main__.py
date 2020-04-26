@@ -8,6 +8,7 @@ Modifications Copyright (C) 2020 dangercrow
 v5.0 (Python)
 """
 from argparse import ArgumentParser
+from logging import getLogger, basicConfig, INFO, DEBUG
 from pathlib import Path
 
 from .connection_handler import ConnectionHandler
@@ -40,6 +41,8 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    basicConfig(level=DEBUG if args.debug else INFO)
+
     data_monitor = DataUsageMonitor()
 
     server_controller = MinecraftServerController(
@@ -59,15 +62,15 @@ if __name__ == '__main__':
         server_port=args.server_port,
         data_logging_interval=args.debug_data_usage_log_interval if args.debug else None
     )
-
-    print('minecraft-vanilla-server-hibernation v5.0 (Python)')
-    print('Original work Copyright (C) 2020 gekigek99')
-    print('Modifications Copyright (C) 2020 dangercrow')
-    print('Available on GitHub with full history at: '
-          'https://github.com/dangercrow/minecraft-vanilla-server-hibernation')
+    logger = getLogger("Main")
+    logger.info('minecraft-vanilla-server-hibernation v5.0 (Python)')
+    logger.info('Original work Copyright (C) 2020 gekigek99')
+    logger.info('Modifications Copyright (C) 2020 dangercrow')
+    logger.info('Available on GitHub with full history at: '
+                'https://github.com/dangercrow/minecraft-vanilla-server-hibernation')
 
     while True:
         try:
             handler.handle_connection(debug=args.debug)
         except Exception as e:
-            print(f"Exception in main(): {e}")
+            logger.exception(e)

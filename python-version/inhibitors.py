@@ -1,4 +1,8 @@
+from logging import getLogger
+
 from .atomic_integer import AtomicInteger
+
+logger = getLogger(__name__)
 
 
 class WindowsInhibitor:
@@ -9,7 +13,7 @@ class WindowsInhibitor:
     def inhibit():
         """Prevents Windows from going to sleep"""
         import ctypes
-        print("Preventing Windows from going to sleep")
+        logger.info("Preventing Windows from going to sleep")
         es_flags = WindowsInhibitor.ES_CONTINUOUS | WindowsInhibitor.ES_SYSTEM_REQUIRED
         ctypes.windll.kernel32.SetThreadExecutionState(es_flags)
 
@@ -17,7 +21,7 @@ class WindowsInhibitor:
     def uninhibit():
         """Allows Windows to go to sleep"""
         import ctypes
-        print("Allowing Windows to go to sleep")
+        logger.info("Allowing Windows to go to sleep")
         ctypes.windll.kernel32.SetThreadExecutionState(WindowsInhibitor.ES_CONTINUOUS)
 
 

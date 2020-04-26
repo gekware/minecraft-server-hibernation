@@ -1,10 +1,13 @@
 import os
+from logging import getLogger
 from pathlib import Path
 from threading import Timer
 
 from .atomic_integer import AtomicInteger
 from .server_state import ServerState, ServerStateTracker
 from .thread_helpers import set_interval
+
+logger = getLogger(__name__)
 
 
 class MinecraftServerController:
@@ -30,12 +33,12 @@ class MinecraftServerController:
         self._server_status_tracker.state = ServerState.STARTING
 
         os.system(self.start_minecraft_server_command)
-        print('MINECRAFT SERVER IS STARTING!')
+        logger.info('MINECRAFT SERVER IS STARTING!')
         self._players.value = 0
 
         def _set_server_status_online():
             self._server_status_tracker.state = ServerState.ONLINE
-            print('MINECRAFT SERVER IS UP!')
+            logger.info('MINECRAFT SERVER IS UP!')
             self._recent_activity.inc()
             self.register_check_to_stop_empty_minecraft_server()
 
@@ -54,20 +57,20 @@ class MinecraftServerController:
                 return
             self._server_status_tracker.state = ServerState.OFFLINE
             os.system(self.stop_minecraft_server_command)
-            print('MINECRAFT SERVER IS SHUTTING DOWN!')
+            logger.info('MINECRAFT SERVER IS SHUTTING DOWN!')
             self._time_left_until_up.value = self._expected_startup_time
 
         Timer(self._idle_time_until_shutdown, stop_empty_minecraft_server, ()).start()
 
     def player_left(self):
         self._players.dec()
-        print(f"A PLAYER LEFT THE SERVER! - {self._players.value} players remaining")
+        logger.info(f"A PLAYER LEFT THE SERVER! - {self._players.value} players remaining")
         self._recent_activity.inc()
         self.register_check_to_stop_empty_minecraft_server()
 
     def player_joined(self):
         self._players.inc()
-        print(f"A PLAYER JOINED THE SERVER! - {self._players.value} players online")
+        logger.info(f"A PLAYER JOINED THE SERVER! - {self._players.value} players online")
 
     @property
     def server_is_online(self):
