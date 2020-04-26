@@ -60,7 +60,7 @@ if __name__ == '__main__':
         listen_port=args.listen_port,
         server_host=args.server_host,
         server_port=args.server_port,
-        data_logging_interval=args.debug_data_usage_log_interval if args.debug else None
+        data_logging_interval=args.debug_data_usage_log_interval
     )
     logger = getLogger("Main")
     logger.info('minecraft-vanilla-server-hibernation v5.0 (Python)')
@@ -71,6 +71,6 @@ if __name__ == '__main__':
 
     while True:
         try:
-            handler.handle_connection(debug=args.debug)
+            handler.handle_connection()
         except Exception as e:
             logger.exception(e)

@@ -15,7 +15,7 @@ logger = getLogger(__name__)
 
 class ConnectionHandler:
     def __init__(self, controller: MinecraftServerController, data_monitor: DataUsageMonitor, listen_host: str,
-                 listen_port: int, server_host, server_port, data_logging_interval: Optional[int]):
+                 listen_port: int, server_host, server_port, data_logging_interval: int):
         self.data_monitor = data_monitor
         self.controller = controller
         self.listen_host = listen_host
@@ -23,11 +23,10 @@ class ConnectionHandler:
         self.server_host = server_host
         self.server_port = server_port
 
-        if data_logging_interval:
-            def log_data_usage():
-                logger.debug('{:.3f}KB/s'.format(self.data_monitor.kilobytes_per_second))
+        set_interval(self.log_data_usage, data_logging_interval, thread_name="DataUsageLogging")
 
-            set_interval(log_data_usage, data_logging_interval, thread_name="DataUsageLogging")
+    def log_data_usage(self):
+        logger.debug('{:.3f}KB/s'.format(self.data_monitor.kilobytes_per_second))
 
     def setup_player_counting_proxy(self, client: socket.socket, server: socket.socket):
         proxy = Proxy(server, client, self.data_monitor)
@@ -42,14 +41,13 @@ class ConnectionHandler:
 
         proxy.start()
 
-    def handle_connection(self, *, debug: bool):
+    def handle_connection(self):
         server_host = self.server_host
         server_port = self.server_port
         listen_port = self.listen_port
         logger.info('*** listening for new clients to connect...')
         client_socket, client_address = self.listen_socket.accept()  # blocking
-        if debug:
-            logger.debug(f'*** from {client_address[0]}:{listen_port} to {server_host}:{server_port}')
+        logger.debug(f'*** from {client_address[0]}:{listen_port} to {server_host}:{server_port}')
         if self.controller.server_is_online:
             server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             server_socket.connect((server_host, server_port))
