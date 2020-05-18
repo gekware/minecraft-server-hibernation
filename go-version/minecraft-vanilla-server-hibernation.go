@@ -1,14 +1,10 @@
 /*
 minecraft-vanilla_server_hibernation is used to start and stop automatically a vanilla minecraft server
 Copyright (C) 2020  gekigek99
-v1.1 (Go) - derived from v4.1 (Python)
-visit original creators github page: https://github.com/gekigek99
 
-If you like what he does consider having a cup of coffee with him at: https://www.buymeacoffee.com/gekigek99
-
-
-I modified this script slightly for docker usage. This was mainly for myself, but I wanted to make it available publicly as well.
-My github page can be found here: https://github.com/lubocode/
+v1.1 (Go)
+visit my github page: https://github.com/gekigek99
+Script slightly modified for Docker usage by github.com/lubocode
 */
 
 package main
@@ -51,13 +47,17 @@ var players int = 0
 var datacountbytestoserver, datacountbytestoclients float64 = 0, 0
 var serverstatus string = "offline"
 var timelefttillup int = minecraftserverstartuptime
+var stopinstances int = 0
 var mutex = &sync.Mutex{}
 
 //StopEmptyMinecraftServer stops the minecraft server
 func StopEmptyMinecraftServer() {
-	if players > 0 || serverstatus == "offline" {
+	mutex.Lock()
+	stopinstances--
+	if stopinstances > 0 || players > 0 || serverstatus == "offline" {
 		return
 	}
+	mutex.Unlock()
 	serverstatus = "offline"
 	err := exec.Command("/bin/bash", "-c", stopminecraftserver).Run()
 	if err != nil {
@@ -87,6 +87,9 @@ func StartMinecraftServer() {
 func SetServerStatusOnline() {
 	serverstatus = "online"
 	log.Print("*** MINECRAFT SERVER IS UP!")
+	mutex.Lock()
+	stopinstances++
+	mutex.Unlock()
 	go Timer(timebeforestoppingemptyserver, StopEmptyMinecraftServer)
 }
 
@@ -127,7 +130,7 @@ func main() {
 
 	startminecraftserver = "cd " + mcPath + "; screen -dmS minecraftSERVER nice -19 java " + minRAM + " " + maxRAM + " -jar " + mcFile
 
-	fmt.Println("minecraft-vanilla-server-hibernation v1.1 (Go) - derived from v4.1 (Python)")
+	fmt.Println("minecraft-vanilla-server-hibernation v1.1 (Go)")
 	fmt.Println("Copyright (C) 2020 gekigek99")
 	fmt.Println("Original creators github page: https://github.com/gekigek99")
 	fmt.Println("Modified for docker usage by: https://github.com/lubocode")
@@ -231,6 +234,9 @@ func ClientToServer(source, destination net.Conn) {
 	ForwardSync(source, destination, false)
 	players--
 	log.Printf("*** A PLAYER LEFT THE SERVER! - %d players online", players)
+	mutex.Lock()
+	stopinstances++
+	mutex.Unlock()
 	go Timer(timebeforestoppingemptyserver, StopEmptyMinecraftServer)
 }
 
