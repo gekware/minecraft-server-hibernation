@@ -25,7 +25,7 @@ const startminecraftserver = "systemctl start minecraft-server"
 const stopminecraftserver = "systemctl stop minecraft-server"
 
 const minecraftserverstartuptime = 20
-const timebeforestoppingemptyserver = 120
+const timebeforestoppingemptyserver = 60
 
 //-----------------------advanced------------------------------//
 
@@ -51,6 +51,7 @@ func StopEmptyMinecraftServer() {
 	mutex.Lock()
 	stopinstances--
 	if stopinstances > 0 || players > 0 || serverstatus == "offline" {
+		mutex.Unlock()
 		return
 	}
 	mutex.Unlock()
