@@ -26,4 +26,32 @@ TIME_BEFORE_STOPPING_EMPTY_SERVER = 120 #any parameter more than 60s is recommen
 ```
 You can change these parameters to fit your needs.
 
+### WINDOWS
+##### (soon an appropriate version will be released):
+windows does not support the command "screen" therefore you will need to
+#### add:
+```Python
+from subprocess import Popen, PIPE, STDOUT
+p = 0	#(in "do not modify" section)
+p	#(in stop_empty_minecraft_server's global parameters)
+p	#(in start_minecraft_server's global parameters)
+```
+#### replace:
+```Python
+os.system(START_MINECRAFT_SERVER)
+#with
+p = Popen(['java', '-Xmx1024M', '-Xms1024M', '-jar', 'server.jar', 'nogui'], stdout=PIPE, stdin=PIPE, stderr=STDOUT)
+```
+```Python
+os.system(STOP_MINECRAFT_SERVER)
+#with
+p.communicate(input=b'stop')[0]
+```
+#### remove:
+```Python
+START_MINECRAFT_SERVER	#(parameter)
+STOP_MINECRAFT_SERVER	#(parameter)
+```
+
+
 #### If you like what I do please consider having a cup of coffee with me at: https://www.buymeacoffee.com/gekigek99
