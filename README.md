@@ -32,20 +32,17 @@ windows does not support the command "screen" therefore you will need to
 #### add:
 ```Python
 from subprocess import Popen, PIPE, STDOUT
-p = 0	#(in "do not modify" section)
-p	#(in stop_empty_minecraft_server's global parameters)
-p	#(in start_minecraft_server's global parameters)
 ```
 #### replace:
 ```Python
 os.system(START_MINECRAFT_SERVER)
 #with
-p = Popen(['java', '-Xmx1024M', '-Xms1024M', '-jar', 'server.jar', 'nogui'], stdout=PIPE, stdin=PIPE, stderr=STDOUT)
+start_minecraft_server.p = Popen(['java', '-Xmx1024M', '-Xms1024M', '-jar', 'server.jar', 'nogui'], stdout=PIPE, stdin=PIPE, stderr=STDOUT)
 ```
 ```Python
 os.system(STOP_MINECRAFT_SERVER)
 #with
-p.communicate(input=b'stop')[0]
+start_minecraft_server.p.communicate(input=b'stop')[0]
 ```
 #### remove:
 ```Python
