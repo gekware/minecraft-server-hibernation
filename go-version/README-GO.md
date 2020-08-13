@@ -9,7 +9,4 @@ To compile run the command:
 go build minecraft-vanilla-server-hibernation.go
 ```
 
-## Configuration
-The same python-version setup configuration applyes to this version
-
 #### If you like what I do please consider having a cup of coffee with me at: https://www.buymeacoffee.com/gekigek99
