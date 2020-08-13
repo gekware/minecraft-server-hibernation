@@ -25,3 +25,5 @@ start_minecraft_server.p.communicate(input=b'stop')[0]
 START_MINECRAFT_SERVER	#(parameter)
 STOP_MINECRAFT_SERVER	#(parameter)
 ```
+
+#### If you like what I do please consider having a cup of coffee with me at: https://www.buymeacoffee.com/gekigek99
