@@ -18,8 +18,8 @@ How to use:
 ### DEFINITIONS:
 Commands to start and stop minecraft server:
 ```Python
-START_MINECRAFT_SERVER = "cd PATH/TO/SERVERFOLDER; screen -dmS minecraftSERVER nice -19 java -jar minecraft_server.jar"     #set command to start minecraft-server service
-STOP_MINECRAFT_SERVER = "screen -S minecraftSERVER -X stuff 'stop\\n'"      #set command to stop minecraft-server service
+START_MINECRAFT_SERVER = "cd PATH/TO/SERVERFOLDER; screen -dmS minecraftSERVER nice -19 java -jar minecraft_server.jar"
+STOP_MINECRAFT_SERVER = "screen -S minecraftSERVER -X stuff 'stop\\n'"
 ```
 Personally I set up a systemctl minecraft server service therfore I use:
 ```Python
