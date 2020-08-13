@@ -1,4 +1,4 @@
-### WINDOWS
+### WINDOWS COMPATIBILITY
 ##### (soon an appropriate version will be released):
 windows does not support the command "screen" therefore you will need to
 #### add:
