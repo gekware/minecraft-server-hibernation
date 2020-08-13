@@ -1,6 +1,6 @@
 # minecraft-vanilla-server-hibernation v1.1 (Go)
 version 1.1 (Go)<br/>
-written and translated by [gekigek99](https://github.com/gekigek99/minecraft-vanilla-server-hibernation)<br/>
+Copyright (C) 2020 [gekigek99](https://github.com/gekigek)<br/>
 
 ## Compile program:
 This version was successfully compiled in go-version 1.14
