@@ -1,6 +1,6 @@
 # minecraft-vanilla-server-hibernation v4.2 (Python)
 version 4.2 (Python)<br/>
-Copyright (C) 2020  gekigek99
+Copyright (C) 2020 [gekigek99](https://github.com/gekigek)<br/>
 
 ### WINDOWS COMPATIBILITY
 ##### (soon an appropriate version will be released):
