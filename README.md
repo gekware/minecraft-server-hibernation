@@ -15,40 +15,25 @@ How to use:
 5. run the script at reboot
 6. you can connect to the server through port 25555
 
-**IMPORTANT**	
-If you are the first to access to minecraft world you will *have to wait 30 seconds* and then try to connect again.
+### DEFINITIONS:
+Commands to start and stop minecraft server:
 ```Python
-MINECRAFT_SERVER_STARTUPTIME = 30       #any parameter more than 10s is recommended
+START_MINECRAFT_SERVER = "cd PATH/TO/SERVERFOLDER; screen -dmS minecraftSERVER nice -19 java -jar minecraft_server.jar"     #set command to start minecraft-server service
+STOP_MINECRAFT_SERVER = "screen -S minecraftSERVER -X stuff 'stop\\n'"      #set command to stop minecraft-server service
 ```
-After 120 seconds you have 120 to connect to the server before it is shutdown. 
+Personally I set up a systemctl minecraft server service therfore I use:
 ```Python
-TIME_BEFORE_STOPPING_EMPTY_SERVER = 120 #any parameter more than 60s is recommended
+START_MINECRAFT_SERVER = "sudo systemctl start minecraft-server"
+STOP_MINECRAFT_SERVER = "sudo systemctl stop minecraft-server"
+```
+If you are the first to access to minecraft world you will have to wait *30 seconds* and then try to connect again.
+```Python
+MINECRAFT_SERVER_STARTUPTIME = 30         #any parameter more than 10s is recommended
+```
+*120 seconds* is the time (after the last player disconnected) that the script waits before shutting down the minecraft server
+```Python
+TIME_BEFORE_STOPPING_EMPTY_SERVER = 120   #any parameter more than 60s is recommended
 ```
 You can change these parameters to fit your needs.
-
-### WINDOWS
-##### (soon an appropriate version will be released):
-windows does not support the command "screen" therefore (*on the python version*) you will need to
-#### add:
-```Python
-from subprocess import Popen, PIPE, STDOUT
-```
-#### replace:
-```Python
-os.system(START_MINECRAFT_SERVER)
-#with
-start_minecraft_server.p = Popen(['java', '-Xmx1024M', '-Xms1024M', '-jar', 'server.jar', 'nogui'], stdout=PIPE, stdin=PIPE, stderr=STDOUT)
-```
-```Python
-os.system(STOP_MINECRAFT_SERVER)
-#with
-start_minecraft_server.p.communicate(input=b'stop')[0]
-```
-#### remove:
-```Python
-START_MINECRAFT_SERVER	#(parameter)
-STOP_MINECRAFT_SERVER	#(parameter)
-```
-
 
 #### If you like what I do please consider having a cup of coffee with me at: https://www.buymeacoffee.com/gekigek99
