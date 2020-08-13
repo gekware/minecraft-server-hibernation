@@ -1,4 +1,4 @@
-# minecraft-vanilla-server-hibernation v1.1 (Go)
+# minecraft-vanilla-server-hibernation (Go)
 version 1.1 (Go)<br/>
 Copyright (C) 2020 [gekigek99](https://github.com/gekigek)<br/>
 
