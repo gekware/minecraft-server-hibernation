@@ -2,20 +2,24 @@
 '''
 minecraft-vanilla_server_hibernation.py is used to start and stop automatically a vanilla minecraft server
 Copyright (C) 2020  gekigek99
-v4.2 (Python)
+v4.3 (Python)
 visit my github page: https://github.com/gekigek99
 If you like what I do please consider having a cup of coffee with me at: https://www.buymeacoffee.com/gekigek99
 '''
 import psutil
 import socket
 import _thread
-import os
+import os, sys
 from threading import Timer, Lock
 from time import sleep
+from subprocess import Popen, PIPE, STDOUT
+import platform
 #------------------------modify-------------------------------#
 
-START_MINECRAFT_SERVER = 'cd PATH/TO/SERVERFOLDER; screen -dmS minecraftSERVER nice -19 java -jar minecraft_server.jar'    #set command to start minecraft-server service
-STOP_MINECRAFT_SERVER = "screen -S minecraftSERVER -X stuff 'stop\\n'"    #set command to stop minecraft-server service
+START_MINECRAFT_SERVER = "sudo systemctl start minecraft-server"    #set command to start minecraft-server service
+STOP_MINECRAFT_SERVER = "sudo systemctl stop minecraft-server"      #set command to stop minecraft-server service
+START_MINECRAFT_SERVER_win = ['java', '-Xmx1024M', '-Xms1024M', '-jar', 'server.jar', 'nogui']  #for win (commands need to be in an array)
+STOP_MINECRAFT_SERVER_win = b'stop'     #for win (needs to be in bytes)
 
 MINECRAFT_SERVER_STARTUPTIME = 20       #time the server needs until it is fully started
 TIME_BEFORE_STOPPING_EMPTY_SERVER = 60  #time the server waits for clients to connect then it issues the stop command to server
@@ -39,23 +43,20 @@ timelefttillup = MINECRAFT_SERVER_STARTUPTIME
 lock = Lock()
 stopinstances = 0
 
-def stop_empty_minecraft_server():
-    global server_status, STOP_MINECRAFT_SERVER, players, timelefttillup, stopinstances, lock
-    with lock:
-        stopinstances -= 1
-        if stopinstances > 0 or players > 0 or server_status == "offline":
-            return
-    server_status = "offline"
-    os.system(STOP_MINECRAFT_SERVER)
-    print('MINECRAFT SERVER IS SHUTTING DOWN!')
-    timelefttillup = MINECRAFT_SERVER_STARTUPTIME
-
 def start_minecraft_server():
     global server_status, START_MINECRAFT_SERVER, MINECRAFT_SERVER_STARTUPTIME, players, timelefttillup
     if server_status != "offline":
         return
     server_status = "starting"
-    os.system(START_MINECRAFT_SERVER)
+    
+    if platform.system() == 'Linux':
+        os.system(START_MINECRAFT_SERVER)
+    elif platform.system() == 'Windows':
+        start_minecraft_server.mine_serv_terminal = Popen(START_MINECRAFT_SERVER_win, stdout=PIPE, stdin=PIPE, stderr=STDOUT)
+    else:
+        print("OS not supported!")
+        sys.exit(0)
+    
     print ('MINECRAFT SERVER IS STARTING!')
     players = 0
     def _set_server_status_online():
@@ -72,6 +73,25 @@ def start_minecraft_server():
             Timer(1,_update_timeleft, ()).start()
     _update_timeleft()
     Timer(MINECRAFT_SERVER_STARTUPTIME, _set_server_status_online, ()).start()
+
+def stop_empty_minecraft_server():
+    global server_status, STOP_MINECRAFT_SERVER, players, timelefttillup, stopinstances, lock
+    with lock:
+        stopinstances -= 1
+        if stopinstances > 0 or players > 0 or server_status == "offline":
+            return
+    server_status = "offline"
+    
+    if platform.system() == 'Linux':
+        os.system(STOP_MINECRAFT_SERVER)
+    elif platform.system() == 'Windows':
+        start_minecraft_server.mine_serv_terminal.communicate(input=STOP_MINECRAFT_SERVER_win)[0]
+    else:
+        print("OS not supported!")
+        sys.exit(0)
+    
+    print('MINECRAFT SERVER IS SHUTTING DOWN!')
+    timelefttillup = MINECRAFT_SERVER_STARTUPTIME
 
 def printdatausage():
     global datacountbytes, lock
