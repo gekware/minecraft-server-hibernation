@@ -28,7 +28,7 @@ You can change these parameters to fit your needs.
 
 ### WINDOWS
 ##### (soon an appropriate version will be released):
-windows does not support the command "screen" therefore you will need to
+windows does not support the command "screen" therefore (*on the python version*) you will need to
 #### add:
 ```Python
 from subprocess import Popen, PIPE, STDOUT
