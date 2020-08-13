@@ -1,5 +1,5 @@
 # minecraft-server-hibernation (Python - Go)
-version 5.3 (Python - Go)
+version 5.4 (Python - Go)
 
 concept, early-code and lastest improvements by [gekigek99](https://github.com/gekigek99/minecraft-vanilla-server-hibernation)<br/>
 contributor (advanced-code) by [najtin](https://github.com/najtin/minecraft-server-hibernation)<br/>
@@ -20,6 +20,8 @@ Commands to start and stop minecraft server:
 ```Python
 START_MINECRAFT_SERVER = "cd PATH/TO/SERVERFOLDER; screen -dmS minecraftSERVER nice -19 java -jar minecraft_server.jar"
 STOP_MINECRAFT_SERVER = "screen -S minecraftSERVER -X stuff 'stop\\n'"
+START_MINECRAFT_SERVER_win = ['java', '-Xmx1024M', '-Xms1024M', '-jar', 'server.jar', 'nogui']  #for win (commands need to be in an array)
+STOP_MINECRAFT_SERVER_win = b'stop'     #for win (needs to be in bytes)
 ```
 Personally I set up a systemctl minecraft server service therfore I use:
 ```Python
