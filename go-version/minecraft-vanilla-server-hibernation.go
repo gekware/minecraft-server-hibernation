@@ -21,8 +21,6 @@ import (
 
 //------------------------modify-------------------------------//
 
-const EQUALorOVER_1_16_2 = true	// is the minecraft server >= 1.16.2?
-
 const startminecraftserver = "systemctl start minecraft-server"
 const stopminecraftserver = "systemctl stop minecraft-server"
 
@@ -276,13 +274,8 @@ func Timer(timeleft int, f func()) {
 
 //BuildMessage takes a string and returns a []byte
 func BuildMessage(message string) []byte {
-	if (EQUALorOVER_1_16_2) {
-		message = "{\"text\":\"" + message + "\"}"
-		encodedMessage := append([]byte{byte(len(message) + 2), byte(0), byte(len(message))}, []byte(message)...)
-	} else {
-		message = "{\"text\":\"" + PaddString(message, "\x0a", 88) + "\"}"
-		encodedMessage = append([]byte{byte(65), byte(0), byte(63)}, []byte(message)...)
-	}
+	message = "{\"text\":\"" + message + "\"}"
+	encodedMessage := append([]byte{byte(len(message) + 2), byte(0), byte(len(message))}, []byte(message)...)
 	return encodedMessage
 }
 
