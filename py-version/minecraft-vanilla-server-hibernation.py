@@ -191,7 +191,7 @@ def forwardsync(source, destination):
 
 def BuildMessage(message):
     if EQUALorOVER_1_16_2:
-	    message = "{\"text\":\"" + message + "\"}"
+	message = "{\"text\":\"" + message + "\"}"
         message = hex(len(message) + 2) + "\x00"+ hex(len(message)) + message
     else:
         #the padding to 88 chars is important, otherwise someclients will fail to interpret
