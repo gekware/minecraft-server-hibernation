@@ -16,8 +16,6 @@ from subprocess import Popen, PIPE, STDOUT
 import platform
 #------------------------modify-------------------------------#
 
-EQUALorOVER_1_16_2 = true	#is the minecraft server >= 1.16.2?
-
 START_MINECRAFT_SERVER = "sudo systemctl start minecraft-server"    #set command to start minecraft-server service
 STOP_MINECRAFT_SERVER = "sudo systemctl stop minecraft-server"      #set command to stop minecraft-server service
 START_MINECRAFT_SERVER_win = ['java', '-Xmx1024M', '-Xms1024M', '-jar', 'server.jar', 'nogui']  #for win (commands need to be in an array)
@@ -190,14 +188,9 @@ def forwardsync(source, destination):
         print('Exception in forward(): ' + str(e))
 
 def BuildMessage(message):
-    if EQUALorOVER_1_16_2:
-	message = "{\"text\":\"" + message + "\"}"
-        message = hex(len(message) + 2) + "\x00"+ hex(len(message)) + message
-    else:
-        #the padding to 88 chars is important, otherwise someclients will fail to interpret
-        #(byte 0x0a (equal to \n or new line) is used to put the phrase in the center of the screen)
-        message = "\x65\x00\x63{\"text\":\"" + message.ljust(88,'\x0a') + "\"}"
-	return message.encode()
+    message = "{\"text\":\"" + message + "\"}"
+    message = bytes([len(message) + 2]) + bytes([0]) + bytes([len(message)]) + message.encode()
+    return message
 
 if __name__ == '__main__':
     main()
