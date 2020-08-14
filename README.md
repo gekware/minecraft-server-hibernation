@@ -16,10 +16,6 @@ How to use:
 6. you can connect to the server through port 25555
 
 ### DEFINITIONS:
-Specify if the minecraft server version is equal or over 1.16.2:
-```Python
-EQUALorOVER_1_16_2 = true
-```
 Commands to start and stop minecraft server:
 ```Python
 START_MINECRAFT_SERVER = "cd PATH/TO/SERVERFOLDER; screen -dmS minecraftSERVER nice -19 java -jar minecraft_server.jar"
