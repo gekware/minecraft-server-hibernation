@@ -2,7 +2,7 @@
 '''
 minecraft-vanilla_server_hibernation.py is used to start and stop automatically a vanilla minecraft server
 Copyright (C) 2020  gekigek99
-v4.3 (Python)
+v4.4 (Python)
 visit my github page: https://github.com/gekigek99
 If you like what I do please consider having a cup of coffee with me at: https://www.buymeacoffee.com/gekigek99
 '''
@@ -16,7 +16,7 @@ from subprocess import Popen, PIPE, STDOUT
 import platform
 #------------------------modify-------------------------------#
 
-EQUALorOVER_1_16_2 = true
+EQUALorOVER_1_16_2 = true	#is the minecraft server >= 1.16.2?
 
 START_MINECRAFT_SERVER = "sudo systemctl start minecraft-server"    #set command to start minecraft-server service
 STOP_MINECRAFT_SERVER = "sudo systemctl stop minecraft-server"      #set command to stop minecraft-server service
