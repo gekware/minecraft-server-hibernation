@@ -14,6 +14,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -21,6 +22,9 @@ import (
 
 //------------------------modify-------------------------------//
 
+var startminecraftserverwin = []string{"java", "-Xmx1024M", "-Xms1024M", "-jar", "server.jar", "nogui"}
+
+const stopminecraftserverwin = "stop"
 const startminecraftserver = "systemctl start minecraft-server"
 const stopminecraftserver = "systemctl stop minecraft-server"
 
@@ -45,6 +49,34 @@ var serverstatus string = "offline"
 var timelefttillup int = minecraftserverstartuptime
 var stopinstances int = 0
 var mutex = &sync.Mutex{}
+var cmdIn io.WriteCloser
+
+//StartMinecraftServer starts the minecraft server
+func StartMinecraftServer() {
+	if serverstatus != "offline" {
+		return
+	}
+	serverstatus = "starting"
+
+	if runtime.GOOS == "linux" {
+		err := exec.Command("/bin/bash", "-c", startminecraftserver).Run()
+		if err != nil {
+			log.Printf("error starting minecraft server: %v\n", err)
+		}
+	} else if runtime.GOOS == "windows" {
+		cmd := exec.Command(startminecraftserverwin[0], startminecraftserverwin[1:]...)
+		cmdIn, _ = cmd.StdinPipe()
+		cmd.Start()
+	} else {
+		log.Print("error: OS not supported!")
+		os.Exit(1)
+	}
+
+	log.Print("*** MINECRAFT SERVER IS STARTING!")
+	players = 0
+	UpdateTimeleft()
+	go Timer(minecraftserverstartuptime, SetServerStatusOnline)
+}
 
 //StopEmptyMinecraftServer stops the minecraft server
 func StopEmptyMinecraftServer() {
@@ -56,28 +88,22 @@ func StopEmptyMinecraftServer() {
 	}
 	mutex.Unlock()
 	serverstatus = "offline"
-	err := exec.Command("/bin/bash", "-c", stopminecraftserver).Run()
-	if err != nil {
-		log.Printf("error stopping minecraft server: %v\n", err)
+
+	if runtime.GOOS == "linux" {
+		err := exec.Command("/bin/bash", "-c", stopminecraftserver).Run()
+		if err != nil {
+			log.Printf("error stopping minecraft server: %v\n", err)
+		}
+	} else if runtime.GOOS == "windows" {
+		cmdIn.Write([]byte(stopminecraftserverwin))
+		cmdIn.Close()
+	} else {
+		log.Print("error: OS not supported!")
+		os.Exit(1)
 	}
+
 	log.Print("*** MINECRAFT SERVER IS SHUTTING DOWN!")
 	timelefttillup = minecraftserverstartuptime
-}
-
-//StartMinecraftServer starts the minecraft server
-func StartMinecraftServer() {
-	if serverstatus != "offline" {
-		return
-	}
-	serverstatus = "starting"
-	err := exec.Command("/bin/bash", "-c", startminecraftserver).Run()
-	if err != nil {
-		log.Printf("error starting minecraft server: %v\n", err)
-	}
-	log.Print("*** MINECRAFT SERVER IS STARTING!")
-	players = 0
-	UpdateTimeleft()
-	go Timer(minecraftserverstartuptime, SetServerStatusOnline)
 }
 
 //SetServerStatusOnline sets the server status online
