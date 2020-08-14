@@ -1,7 +1,7 @@
 /*
 minecraft-vanilla_server_hibernation is used to start and stop automatically a vanilla minecraft server
 Copyright (C) 2020  gekigek99
-v1.2 (Go)
+v1.3 (Go)
 visit my github page: https://github.com/gekigek99
 */
 
