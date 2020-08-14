@@ -16,7 +16,7 @@ from subprocess import Popen, PIPE, STDOUT
 import platform
 #------------------------modify-------------------------------#
 
-OVER_1_16_2 = true
+EQUALorOVER_1_16_2 = true
 
 START_MINECRAFT_SERVER = "sudo systemctl start minecraft-server"    #set command to start minecraft-server service
 STOP_MINECRAFT_SERVER = "sudo systemctl stop minecraft-server"      #set command to stop minecraft-server service
@@ -190,7 +190,7 @@ def forwardsync(source, destination):
         print('Exception in forward(): ' + str(e))
 
 def BuildMessage(message):
-    if OVER_1_16_2:
+    if EQUALorOVER_1_16_2:
 	    message = "{\"text\":\"" + message + "\"}"
         message = hex(len(message) + 2) + "\x00"+ hex(len(message)) + message
     else:
