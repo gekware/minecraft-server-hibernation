@@ -16,6 +16,8 @@ from subprocess import Popen, PIPE, STDOUT
 import platform
 #------------------------modify-------------------------------#
 
+OVER_1_16_2 = true
+
 START_MINECRAFT_SERVER = "sudo systemctl start minecraft-server"    #set command to start minecraft-server service
 STOP_MINECRAFT_SERVER = "sudo systemctl stop minecraft-server"      #set command to stop minecraft-server service
 START_MINECRAFT_SERVER_win = ['java', '-Xmx1024M', '-Xms1024M', '-jar', 'server.jar', 'nogui']  #for win (commands need to be in an array)
@@ -44,7 +46,7 @@ lock = Lock()
 stopinstances = 0
 
 def start_minecraft_server():
-    global server_status, START_MINECRAFT_SERVER, MINECRAFT_SERVER_STARTUPTIME, players, timelefttillup
+    global server_status, START_MINECRAFT_SERVER, START_MINECRAFT_SERVER_win, MINECRAFT_SERVER_STARTUPTIME, players, timelefttillup
     if server_status != "offline":
         return
     server_status = "starting"
@@ -75,7 +77,7 @@ def start_minecraft_server():
     Timer(MINECRAFT_SERVER_STARTUPTIME, _set_server_status_online, ()).start()
 
 def stop_empty_minecraft_server():
-    global server_status, STOP_MINECRAFT_SERVER, players, timelefttillup, stopinstances, lock
+    global server_status, STOP_MINECRAFT_SERVER, STOP_MINECRAFT_SERVER_win, players, timelefttillup, stopinstances, lock
     with lock:
         stopinstances -= 1
         if stopinstances > 0 or players > 0 or server_status == "offline":
@@ -131,9 +133,7 @@ def main():
                         print(player_name, 'tryed to join from', client_address[0], 'during server startup')
                         sleep(0.01)     #necessary otherwise it could throw an error: 
                                         #Internal Exception: io.netty.handler.codec.Decoder.Exception java.lang.NullPointerException
-                        #the padding to 88 chars is important, otherwise someclients will fail to interpret
-                        #(byte 0x0a (equal to \n or new line) is used to put the phrase in the center of the screen)
-                        client_socket.sendall(("e\0c{\"text\":\"" + ("Server is starting. Please wait. Time left: " + str(timelefttillup) + " seconds").ljust(88,'\x0a')+"\"}").encode())
+                        client_socket.sendall(BuildMessage("Server is starting. Please wait. Time left: " + str(timelefttillup) + " seconds"))
                 else:
                     if connection_data_recv[-1] == 1:   #\x01 is the last byte of the first message when requesting server info
                         if server_status == "offline":
@@ -188,6 +188,16 @@ def forwardsync(source, destination):
         print('IOError in forward(): ' + str(e))
     except Exception as e:
         print('Exception in forward(): ' + str(e))
+
+def BuildMessage(message):
+    if OVER_1_16_2:
+	    message = "{\"text\":\"" + message + "\"}"
+        message = hex(len(message) + 2) + "\x00"+ hex(len(message)) + message
+    else:
+        #the padding to 88 chars is important, otherwise someclients will fail to interpret
+        #(byte 0x0a (equal to \n or new line) is used to put the phrase in the center of the screen)
+        message = "\x65\x00\x63{\"text\":\"" + message.ljust(88,'\x0a') + "\"}"
+	return message.encode()
 
 if __name__ == '__main__':
     main()
