@@ -1,6 +1,6 @@
 # minecraft-server-hibernation (Python - Go)
 
-![logo](https://i.ibb.co/0mHChnp/pause-dirt-block-snow.png)
+![logo](https://user-images.githubusercontent.com/53654579/90397372-09a9df80-e098-11ea-925c-29e9bdfc0b48.png)
 
 version 5.7 (Python - Go)
 
