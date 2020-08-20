@@ -23,18 +23,18 @@ stopMinecraftServerLin= "sudo systemctl stop minecraft-server"      #set command
 startMinecraftServerWin = "java -Xmx1024M -Xms1024M -jar server.jar nogui"
 stopMinecraftServerWin = "stop"
 
-minecraftServerStartupTime = 20       #time the server needs until it is fully started
-timeBeforeStoppingEmptyServer = 60  #time the server waits for clients to connect then it issues the stop command to server
+minecraftServerStartupTime = 20		#time the server needs until it is fully started
+timeBeforeStoppingEmptyServer = 60	#time the server waits for clients to connect then it issues the stop command to server
 
 ##--------------------------advanced--------------------------##
 
 listenHost = "0.0.0.0"
 listenPort = 25555         #the port you will connect to on minecraft client
 
-targetHost = "ribericloud-turin.duckdns.org"
-targetPort = 25555         #the port specified on server.properties
+targetHost = "127.0.0.1"
+targetPort = 25565         #the port specified on server.properties
 
-debug = True               #if true more additional information is printed
+debug = False              #if true more additional information is printed
 
 ##------------------------don't modify------------------------##
 
@@ -51,7 +51,7 @@ lock = Lock()
 
 logging.basicConfig(
 	level=logging.INFO,
-    format='%(asctime)s %(message)s',
+	format='%(asctime)s %(message)s',
 	datefmt='%d-%b-%y %H:%M:%S'
 )
 
