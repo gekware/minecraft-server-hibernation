@@ -1,196 +1,231 @@
 #!/usr/bin/env python3
-'''
-minecraft-vanilla_server_hibernation.py is used to start and stop automatically a vanilla minecraft server
-Copyright (C) 2020  gekigek99
-v4.4 (Python)
-visit my github page: https://github.com/gekigek99
-If you like what I do please consider having a cup of coffee with me at: https://www.buymeacoffee.com/gekigek99
-'''
-import psutil
+
 import socket
-import _thread
 import os, sys
-from threading import Timer, Lock
+from threading import Thread, Timer, Lock
 from time import sleep
 from subprocess import Popen, PIPE, STDOUT
 import platform
-#------------------------modify-------------------------------#
+import logging
 
-START_MINECRAFT_SERVER = "sudo systemctl start minecraft-server"    #set command to start minecraft-server service
-STOP_MINECRAFT_SERVER = "sudo systemctl stop minecraft-server"      #set command to stop minecraft-server service
-START_MINECRAFT_SERVER_win = ['java', '-Xmx1024M', '-Xms1024M', '-jar', 'server.jar', 'nogui']  #for win (commands need to be in an array)
-STOP_MINECRAFT_SERVER_win = b'stop'     #for win (needs to be in bytes)
+info = [
+	"Minecraft-Vanilla-Server-Hibernation is used to auto-start/stop a vanilla minecraft server",
+	"Copyright (C) 2019-2020 gekigek99",
+	"v4.5 (Python)",
+	"visit my github page: https://github.com/gekigek99",
+	"If you like what I do please consider having a cup of coffee with me at: https://www.buymeacoffee.com/gekigek99"
+]
 
-MINECRAFT_SERVER_STARTUPTIME = 20       #time the server needs until it is fully started
-TIME_BEFORE_STOPPING_EMPTY_SERVER = 60  #time the server waits for clients to connect then it issues the stop command to server
+##---------------------------modify---------------------------##
 
-#-----------------------advanced------------------------------#
+startMinecraftServerLin = "sudo systemctl start minecraft-server"    #set command to start minecraft-server service
+stopMinecraftServerLin= "sudo systemctl stop minecraft-server"      #set command to stop minecraft-server service
+startMinecraftServerWin = "java -Xmx1024M -Xms1024M -jar server.jar nogui"
+stopMinecraftServerWin = "stop"
 
-LISTEN_HOST = "0.0.0.0"
-LISTEN_PORT = 25555         #the port you will connect to on minecraft client
+minecraftServerStartupTime = 20       #time the server needs until it is fully started
+timeBeforeStoppingEmptyServer = 60  #time the server waits for clients to connect then it issues the stop command to server
 
-TARGET_HOST = "127.0.0.1"
-TARGET_PORT = 25565         #the port specified on server.properties
+##--------------------------advanced--------------------------##
 
-DEBUG = False               #if true more additional information is printed
+listenHost = "0.0.0.0"
+listenPort = 25555         #the port you will connect to on minecraft client
 
-#---------------------do not modify---------------------------#
+targetHost = "ribericloud-turin.duckdns.org"
+targetPort = 25555         #the port specified on server.properties
+
+debug = True               #if true more additional information is printed
+
+##------------------------don't modify------------------------##
 
 players = 0
-datacountbytes = 0
-server_status = "offline"
-timelefttillup = MINECRAFT_SERVER_STARTUPTIME
+dataCountBytesToServer, dataCountBytesToClients = 0, 0
+serverStatus = "offline"
+timeLeftUntilTp = minecraftServerStartupTime
+stopInstances = 0
 lock = Lock()
-stopinstances = 0
 
-def start_minecraft_server():
-    global server_status, START_MINECRAFT_SERVER, START_MINECRAFT_SERVER_win, MINECRAFT_SERVER_STARTUPTIME, players, timelefttillup
-    if server_status != "offline":
-        return
-    server_status = "starting"
-    
-    if platform.system() == 'Linux':
-        os.system(START_MINECRAFT_SERVER)
-    elif platform.system() == 'Windows':
-        start_minecraft_server.mine_serv_terminal = Popen(START_MINECRAFT_SERVER_win, stdout=PIPE, stdin=PIPE, stderr=STDOUT)
-    else:
-        print("OS not supported!")
-        sys.exit(0)
-    
-    print ('MINECRAFT SERVER IS STARTING!')
-    players = 0
-    def _set_server_status_online():
-        global server_status, stopinstances, lock
-        server_status = "online"
-        print ('MINECRAFT SERVER IS UP!')
-        with lock:
-            stopinstances += 1
-        Timer(TIME_BEFORE_STOPPING_EMPTY_SERVER, stop_empty_minecraft_server, ()).start()
-    def _update_timeleft():
-        global timelefttillup
-        if timelefttillup > 0:
-            timelefttillup-=1
-            Timer(1,_update_timeleft, ()).start()
-    _update_timeleft()
-    Timer(MINECRAFT_SERVER_STARTUPTIME, _set_server_status_online, ()).start()
+##------------------------py specific-------------------------##
 
-def stop_empty_minecraft_server():
-    global server_status, STOP_MINECRAFT_SERVER, STOP_MINECRAFT_SERVER_win, players, timelefttillup, stopinstances, lock
-    with lock:
-        stopinstances -= 1
-        if stopinstances > 0 or players > 0 or server_status == "offline":
-            return
-    server_status = "offline"
-    
-    if platform.system() == 'Linux':
-        os.system(STOP_MINECRAFT_SERVER)
-    elif platform.system() == 'Windows':
-        start_minecraft_server.mine_serv_terminal.communicate(input=STOP_MINECRAFT_SERVER_win)[0]
-    else:
-        print("OS not supported!")
-        sys.exit(0)
-    
-    print('MINECRAFT SERVER IS SHUTTING DOWN!')
-    timelefttillup = MINECRAFT_SERVER_STARTUPTIME
+##                            ...
 
-def printdatausage():
-    global datacountbytes, lock
-    with lock:
-        if datacountbytes != 0:
-            print('{:.3f}KB/s'.format(datacountbytes/1024/3))
-            datacountbytes = 0
-    Timer(3, printdatausage, ()).start()
+logging.basicConfig(
+	level=logging.INFO,
+    format='%(asctime)s %(message)s',
+	datefmt='%d-%b-%y %H:%M:%S'
+)
+
+def startMinecraftServer():
+	global serverStatus, players, timeLeftUntilTp
+	if serverStatus != "offline":
+		return
+	serverStatus = "starting"
+	
+	if platform.system() == "Linux":
+		os.system(startMinecraftServerLin)
+	elif platform.system() == "Windows":
+		startMinecraftServer.mineServTerminal = Popen(startMinecraftServerWin.split(), stdout=PIPE, stdin=PIPE, stderr=STDOUT)
+	else:
+		logging.info("OS not supported!")
+		sys.exit(0)
+	
+	logging.info("MINECRAFT SERVER IS STARTING!")
+	players = 0
+	def setServerStatusOnline():
+		global serverStatus, stopInstances, lock
+		serverStatus = "online"
+		logging.info("MINECRAFT SERVER IS UP!")
+		with lock:
+			stopInstances += 1
+		Timer(timeBeforeStoppingEmptyServer, stopEmptyMinecraftServer, ()).start()
+	def updatetTimeLeft():
+		global timeLeftUntilTp
+		if timeLeftUntilTp > 0:
+			timeLeftUntilTp-=1
+			Timer(1, updatetTimeLeft, ()).start()
+	updatetTimeLeft()
+	Timer(minecraftServerStartupTime, setServerStatusOnline, ()).start()
+
+def stopEmptyMinecraftServer():
+	global serverStatus, timeLeftUntilTp, stopInstances, lock
+	with lock:
+		stopInstances -= 1
+		if stopInstances > 0 or players > 0 or serverStatus == "offline":
+			return
+	serverStatus = "offline"
+	
+	if platform.system() == "Linux":
+		os.system(stopMinecraftServerLin)
+	elif platform.system() == "Windows":
+		startMinecraftServer.mineServTerminal.communicate(input=stopMinecraftServerWin.encode())[0]
+	else:
+		logging.info("OS not supported!")
+		sys.exit(0)
+	
+	logging.info("MINECRAFT SERVER IS SHUTTING DOWN!")
+	timeLeftUntilTp = minecraftServerStartupTime
+
+def printDataUsage():
+	global dataCountBytesToServer, dataCountBytesToClients, lock
+	with lock:
+		if dataCountBytesToServer != 0 or dataCountBytesToClients != 0:
+			logger("data/s: {:8.3f} KB/s to clients | {:8.3f} KB/s to server\n".format(dataCountBytesToClients/1024, dataCountBytesToServer/1024))
+			dataCountBytesToServer = 0
+			dataCountBytesToClients = 0
+	Timer(1, printDataUsage, ()).start()
 
 def main():
-    global players, START_MINECRAFT_SERVER, STOP_MINECRAFT_SERVER, server_status, timelefttillup
-    print('minecraft-vanilla-server-hibernation v4.2 (Python)')
-    print('Copyright (C) 2020 gekigek99')
-    print('visit my github page for updates: https://github.com/gekigek99')
-    dock_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    dock_socket.setblocking(1)
-    dock_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)   #to prevent errno 98 address already in use
-    dock_socket.bind((LISTEN_HOST, LISTEN_PORT))
-    dock_socket.listen(5)
-    print('*** listening for new clients to connect...')
-    if DEBUG == True:
-        printdatausage()
-    while True:
-        try:
-            client_socket, client_address = dock_socket.accept()        #blocking
-            if DEBUG == True:
-                print ('*** from {}:{} to {}:{}'.format(client_address[0], LISTEN_PORT, TARGET_HOST, TARGET_PORT))
-            if server_status == "offline" or server_status == "starting":
-                connection_data_recv = client_socket.recv(64)
-                if connection_data_recv[-1] == 2:       #\x02 is the last byte of the first message when player is trying to join the server
-                    player_data_recv = client_socket.recv(64)   #here it's reading an other packet containing the player name
-                    player_name = player_data_recv[3:].decode('utf-8', errors='replace')
-                    if server_status == "offline":
-                        print(player_name, 'tryed to join from', client_address[0])
-                        start_minecraft_server()
-                    if server_status == "starting":
-                        print(player_name, 'tryed to join from', client_address[0], 'during server startup')
-                        sleep(0.01)     #necessary otherwise it could throw an error: 
-                                        #Internal Exception: io.netty.handler.codec.Decoder.Exception java.lang.NullPointerException
-                        client_socket.sendall(BuildMessage("Server is starting. Please wait. Time left: " + str(timelefttillup) + " seconds"))
-                else:
-                    if connection_data_recv[-1] == 1:   #\x01 is the last byte of the first message when requesting server info
-                        if server_status == "offline":
-                            print('player unknown requested server info from', client_address[0])
-                        if server_status == "starting":
-                            print('player unknown requested server info from', client_address[0], 'during server startup')
-                client_socket.shutdown(1)   #sends FIN to client
-                client_socket.close()
-                continue
-            if server_status == "online":    
-                server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                server_socket.connect((TARGET_HOST, TARGET_PORT))
-                connectsocketsasync(client_socket,server_socket)
-        except Exception as e:
-            print ('Exception in main(): '+str(e))
+	print("\n".join(info[1:4]))
+	dockSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	dockSocket.setblocking(1)
+	dockSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)   #to prevent errno 98 address already in use
+	dockSocket.bind((listenHost, listenPort))
+	dockSocket.listen(5)
+	logging.info("*** listening for new clients to connect...")
+	printDataUsage()
+	while True:
+		try:
+			clientSocket, clientAddress = dockSocket.accept()        #blocking
+			Thread(target=handleClientSocket, args=(clientSocket, clientAddress, )).start()
+		except Exception as e:
+			logger("Exception in main(): "+str(e))
 
-def connectsocketsasync(client, server):
-    _thread.start_new_thread(clienttoserver, (client, server,))
-    _thread.start_new_thread(servertoclient, (server, client,))
+def handleClientSocket(clientSocket, clientAddress):
+	try:
+		logger("*** from {}:{} to {}:{}".format(clientAddress[0], listenPort, targetHost, targetPort))
+		if serverStatus == "offline" or serverStatus == "starting":
+			buffer = clientSocket.recv(1024)
+		
+			if buffer[-1] == 1:   #\x01 is the last byte of the first message when requesting server info
+				if serverStatus == "offline":
+					logging.info("player unknown requested server info from "+str(clientAddress[0]))
+				elif serverStatus == "starting":
+					logging.info("player unknown requested server info from "+str(clientAddress[0])+" during server startup")
+			
+			elif buffer[-1] == 2:                   #\x02 is the last byte of the first message when player is trying to join the server
+				buffer = clientSocket.recv(1024)    #here it"s reading an other packet containing the player name
+				playerName = buffer[3:].decode(errors="replace")
+				
+				if serverStatus == "offline":
+					startMinecraftServer()
+					logging.info(playerName, "tryed to join from", clientAddress[0])
+					clientSocket.sendall(BuildMessage("Server start command issued. Please wait... Time left: " + str(timeLeftUntilTp) + " seconds"))
+				elif serverStatus == "starting":
+					logging.info(playerName, "tryed to join from", clientAddress[0], "during server startup")
+					clientSocket.sendall(BuildMessage("Server is starting. Please wait... Time left: " + str(timeLeftUntilTp) + " seconds"))
+			
+			logger("closing connection for: "+clientAddress[0])
+			clientSocket.shutdown(1)   #sends FIN to client
+			clientSocket.close()
 
-def clienttoserver(source, destination):
-    global players, TIME_BEFORE_STOPPING_EMPTY_SERVER, stop_empty_minecraft_server, stopinstances, lock
-    players +=1
-    print ('A PLAYER JOINED THE SERVER! - '+str(players)+' players online')
-    forwardsync(source,destination)
-    players -= 1
-    print ('A PLAYER LEFT THE SERVER! - '+str(players)+' players remaining')
-    with lock:
-        stopinstances += 1
-    Timer(TIME_BEFORE_STOPPING_EMPTY_SERVER, stop_empty_minecraft_server, ()).start()
+		if serverStatus == "online":    
+			serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+			serverSocket.connect((targetHost, targetPort))
 
-def servertoclient(source, destination):
-    forwardsync(source, destination)
+			connectSocketsAsync(clientSocket, serverSocket)
 
-#this thread passes data between connections
-def forwardsync(source, destination):
-    global datacountbytes, lock
-    data = ' '
-    source.settimeout(60)
-    destination.settimeout(60)
-    try:
-        while True:
-            data = source.recv(1024)
-            if not data:                #if there is no data stop listening, this means the socket is closed
-                break
-            destination.sendall(data)
-            with lock:
-                datacountbytes += len(data) #to calculate the quantity of data per second
-    except IOError as e: 
-        if e.errno == 32:               #user/server disconnected normally. has to be catched, because there is a race condition
-            return                      #when trying to check if destination.recv does return data
-        print('IOError in forward(): ' + str(e))
-    except Exception as e:
-        print('Exception in forward(): ' + str(e))
+	except Exception as e:
+		logger("Exception in handleClientSocket(): "+str(e))
+
+def connectSocketsAsync(client, server):
+	Thread(target=clientToServer, args=(client, server, )).start()
+	Thread(target=serverToClient, args=(server, client, )).start()
+
+def clientToServer(source, destination):
+	global players, stopInstances, lock
+	players +=1
+	logging.info("A PLAYER JOINED THE SERVER! - "+str(players)+" players online")
+
+	forwardSync(source, destination, False)
+
+	players -= 1
+	logging.info("A PLAYER LEFT THE SERVER! - "+str(players)+" players remaining")
+
+	with lock:
+		stopInstances += 1
+
+	Timer(timeBeforeStoppingEmptyServer, stopEmptyMinecraftServer, ()).start()
+
+def serverToClient(source, destination):
+	forwardSync(source, destination, True)
+
+def forwardSync(source, destination, isServerToClient):
+	global dataCountBytesToServer, dataCountBytesToClients, lock
+	data = b" "
+	source.settimeout(timeBeforeStoppingEmptyServer)
+	destination.settimeout(timeBeforeStoppingEmptyServer)
+
+	try:
+		while True:
+			data = source.recv(1024)
+			if not data:                #if there is no data stop listening, this means the socket is closed
+				break
+			destination.sendall(data)
+
+			if debug:
+				with lock:
+					if isServerToClient:
+						dataCountBytesToClients = dataCountBytesToClients + len(data)
+					else:
+						dataCountBytesToServer = dataCountBytesToServer + len(data)
+	
+	except IOError as e:
+		if e.errno == 32:               #user/server disconnected normally. has to be catched, because there is a race condition
+			return                      #when trying to check if destination.recv does return data
+		logger("IOError in forward(): " + str(e))
+	except Exception as e:
+		logger("Exception in forward(): " + str(e))
+
+##---------------------------utils----------------------------##
 
 def BuildMessage(message):
-    message = "{\"text\":\"" + message + "\"}"
-    message = bytes([len(message) + 2]) + bytes([0]) + bytes([len(message)]) + message.encode()
-    return message
+	message = "{\"text\":\"" + message + "\"}"
+	message = bytes([len(message) + 2]) + bytes([0]) + bytes([len(message)]) + message.encode()
+	return message
 
-if __name__ == '__main__':
-    main()
+def logger(message):
+	if debug:
+		logging.debug(message, format="%(asctime)s - %(message)s")
+
+if __name__ == "__main__":
+	main()
