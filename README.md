@@ -16,7 +16,7 @@ How to use:
 3. Check the server-port parameter in "server.properties" (it should be 25565)
 4. Edit the paramters in the script as needed:
     - startMinecraftServerLin or startMinecraftServerWin
-    - stopMinecraftServerLin or stopMinecraftServerWin
+    - stopMinecraftServerLin or stopMinecraftServerWin (should already be good for most uses)
     - minecraftServerStartupTime
     - timeBeforeStoppingEmptyServer
 5. run the script at reboot
@@ -25,12 +25,13 @@ How to use:
 ### DEFINITIONS:
 Commands to start and stop minecraft server:
 ```Python
-startMinecraftServerLin = "cd {PATH/TO/SERVERFOLDER}; screen -dmS minecraftServer java -Xmx1024M -Xms1024M -jar {minecraftServerName.jar} nogui" #only text in parethesis needs to be modified
+#only text in parethesis needs to be modified
+startMinecraftServerLin = "cd {PATH/TO/SERVERFOLDER}; screen -dmS minecraftServer java -Xmx1024M -Xms1024M -jar {server.jar} nogui"
 stopMinecraftServerLin = "screen -S minecraftServer -X stuff 'stop\\n'"
-startMinecraftServerWin = ["java", "-Xmx1024M", "-Xms1024M", "-jar", "server.jar", "nogui"]
+startMinecraftServerWin = ["java", "{-Xmx1024M}", "{-Xms1024M}", "-jar", "{server.jar}", "nogui"]
 stopMinecraftServerWin = "stop"
 ```
-Personally I set up a systemctl minecraft server service therfore I use:
+Personally I set up a systemctl minecraft server service (called "minecraft-server") therefore I use:
 ```Python
 startMinecraftServerLin = "sudo systemctl start minecraft-server"
 stopMinecraftServerLin = "sudo systemctl stop minecraft-server"
