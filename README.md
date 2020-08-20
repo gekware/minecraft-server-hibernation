@@ -25,10 +25,10 @@ How to use:
 ### DEFINITIONS:
 Commands to start and stop minecraft server:
 ```Python
-#only text in parethesis needs to be modified
-startMinecraftServerLin = "cd {PATH/TO/SERVERFOLDER}; screen -dmS minecraftServer java -Xmx1024M -Xms1024M -jar {server.jar} nogui"
+# only text in parethesis needs to be modified
+startMinecraftServerLin = "cd {PATH/TO/SERVERFOLDER}; screen -dmS minecraftServer java {-Xmx1024M} {-Xms1024M} -jar {server.jar} nogui"
 stopMinecraftServerLin = "screen -S minecraftServer -X stuff 'stop\\n'"
-startMinecraftServerWin = ["java", "{-Xmx1024M}", "{-Xms1024M}", "-jar", "{server.jar}", "nogui"]
+startMinecraftServerWin = "java {-Xmx1024M} {-Xms1024M} -jar {server.jar} nogui"
 stopMinecraftServerWin = "stop"
 ```
 Personally I set up a systemctl minecraft server service (called "minecraft-server") therefore I use:
