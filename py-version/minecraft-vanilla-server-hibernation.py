@@ -53,7 +53,11 @@ lock = Lock()
 
 ##------------------------py specific-------------------------##
 
-##                            ...
+logging.basicConfig(
+	level=logging.INFO,
+	format="%(asctime)s %(message)s",
+	datefmt="%d-%b-%y %H:%M:%S"
+)
 
 def startMinecraftServer():
 	global serverStatus, players, timeLeftUntilUp
@@ -118,24 +122,21 @@ def printDataUsage():
 
 def main():
 	print("\n".join(info[1:4]))
-	
-	logging.basicConfig(
-		level=logging.INFO,
-		format="%(asctime)s %(message)s",
-		datefmt="%d-%b-%y %H:%M:%S"
-	)
 
 	dockSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	dockSocket.setblocking(1)
 	dockSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)   #to prevent errno 98 address already in use
 	dockSocket.bind((listenHost, listenPort))
 	dockSocket.listen(5)
+
 	logging.info("*** listening for new clients to connect...")
+
 	Thread(target=printDataUsage).start()
+	
 	while True:
 		try:
 			clientSocket, clientAddress = dockSocket.accept()        #blocking
-			Thread(target=handleClientSocket, args=(clientSocket, clientAddress, )).start()
+			handleClientSocket(clientSocket, clientAddress)
 		except Exception as e:
 			logger("Exception in main(): "+str(e))
 
@@ -269,10 +270,10 @@ def buildMessage(format, message):
 		return message
 
 	if format == "txt":
-		messageJson = ("{"
+		messageJSON = ("{"
 			"\"text\":\"" + message + "\""
 			"}")
-		messageHeader = mountHeader(messageJson, 0)
+		messageHeader = mountHeader(messageJSON, 0)
 
 	elif format == "info":
 		# captured example:
@@ -285,12 +286,12 @@ def buildMessage(format, message):
 		
 		messageAdapted = message.replace("\n", "&r\\n").replace("&", "\xa7")
 
-		messageJson = ("{"
+		messageJSON = ("{"
 			"\"description\":{\"text\":\"" + messageAdapted + "\"},"
 			"\"version\":{\"name\":\"" + serverVersion + "\",\"protocol\":" + str(serverProtocol) + "},"
 			"\"favicon\":\"" + serverIcon + "\""
 			"}")
-		messageHeader = mountHeader(messageJson, 11264)
+		messageHeader = mountHeader(messageJSON, 11264)
 
 	else:
 		logger("buildMessage: specified format invalid")
@@ -299,10 +300,15 @@ def buildMessage(format, message):
 	return messageHeader
 
 def answerPingReq(clientSocket):
-	res = clientSocket.recv(1024)
-	if res == b"\x01\x00":
-		res = clientSocket.recv(1024)
-	clientSocket.sendall(res)
+	req = clientSocket.recv(1024)
+	
+	if req == b"\x01\x00":
+		req = clientSocket.recv(1024)
+	# go specific:
+	# elif req[:2] == b"\x01\x00":
+	# 	req = req[2:]
+	
+	clientSocket.sendall(req)
 
 def logger(message):
 	if debug:
