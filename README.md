@@ -1,12 +1,17 @@
 # Minecraft Vanilla Server Hibernation (Python - Go)
 
-![logo](https://user-images.githubusercontent.com/53654579/90397372-09a9df80-e098-11ea-925c-29e9bdfc0b48.png)
+[![mvsh - license](https://img.shields.io/github/license/gekigek99/minecraft-vanilla-server-hibernation?color=6fff00)](https://github.com/gekigek99/minecraft-vanilla-server-hibernation)
+[![mvsh - stars](https://img.shields.io/github/stars/gekigek99/minecraft-vanilla-server-hibernation?color=ffbd19)](https://github.com/gekigek99/minecraft-vanilla-server-hibernation)
+[![mvsh - release](https://img.shields.io/github/release/gekigek99/minecraft-vanilla-server-hibernation?color=05aefc)](https://github.com/gekigek99/minecraft-vanilla-server-hibernation)  
 
-version 7.9 (Python - Go)
+[![mvsh - logo](https://user-images.githubusercontent.com/53654579/90397372-09a9df80-e098-11ea-925c-29e9bdfc0b48.png)](https://github.com/gekigek99/minecraft-vanilla-server-hibernation)  
 
-concept, early-code and lastest improvements by [gekigek99](https://github.com/gekigek99/minecraft-vanilla-server-hibernation)<br/>
-contributor (advanced-code) by [najtin](https://github.com/najtin/minecraft-server-hibernation)<br/>
-derived from [supernifty](https://github.com/supernifty/port-forwarder)<br/>
+Version 7.9 (Python - Go)
+
+Author: [gekigek99](https://github.com/gekigek99/minecraft-vanilla-server-hibernation)  
+Contributors: [najtin](https://github.com/najtin/minecraft-server-hibernation)  
+
+-----
 
 ### INSTRUCTIONS:
 This is a simple Python script to start a minecraft server on request and stop it when there are no player online.
