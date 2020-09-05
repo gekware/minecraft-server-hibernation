@@ -8,8 +8,9 @@
 
 Version 7.9 (Python - Go)
 
-Author: [gekigek99](https://github.com/gekigek99/minecraft-vanilla-server-hibernation)  
+Author: [gekigek99](https://github.com/gekigek99)  
 Contributors: [najtin](https://github.com/najtin/minecraft-server-hibernation)  
+Docker branch: [lubocode](https://github.com/gekigek99/minecraft-vanilla-server-hibernation/tree/docker)
 
 -----
 
