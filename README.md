@@ -14,15 +14,17 @@ Version 7.9 (Python - Go)
 This is a simple Python script to start a minecraft server on request and stop it when there are no player online.
 How to use:
 1. Install and run your desiered minecraft server
-2. The server jar file should be as specified in the script
-3. Check the server-port parameter in "server.properties" (it should be 25565)
-4. Edit the paramters in the script as needed:
+2. "server-port" parameter in "server.properties" should be 25565
+3. Edit the paramters in the script as needed (only text in parethesis needs to be modified):
     - startMinecraftServerLin or startMinecraftServerWin
-    - stopMinecraftServerLin or stopMinecraftServerWin (should already be good for most uses)
+    - stopMinecraftServerLin or stopMinecraftServerWin
     - minecraftServerStartupTime
-    - timeBeforeStoppingEmptyServer
-5. run the script at reboot
+    - timeBeforeStoppingEmptyServer 
+4. on the server: open port 25555 (example: [ufw](https://www.configserverfirewall.com/ufw-ubuntu-firewall/ubuntu-firewall-open-port/))
+5. on the router: forward port 25555 to server ([tutorial](https://www.wikihow.com/Open-Ports#Opening-Router-Firewall-Ports))
 6. you can connect to the server through port 25555
+
+(remember to run the script at reboot)
 
 ### DEFINITIONS:
 Commands to start and stop minecraft server:
@@ -32,6 +34,8 @@ startMinecraftServerLin = "cd {PATH/TO/SERVERFOLDER}; screen -dmS minecraftServe
 stopMinecraftServerLin = "screen -S minecraftServer -X stuff 'stop\\n'"
 startMinecraftServerWin = "java {-Xmx1024M} {-Xms1024M} -jar {server.jar} nogui"
 stopMinecraftServerWin = "stop"
+
+# if you are on linux you can access the minecraft server console with "sudo screen -r minecraftServer"
 ```
 Personally I set up a systemctl minecraft server service (called "minecraft-server") therefore I use:
 ```Python
@@ -40,11 +44,11 @@ stopMinecraftServerLin = "sudo systemctl stop minecraft-server"
 ```
 If you are the first to access to minecraft world you will have to wait *30 seconds* and then try to connect again.
 ```Python
-minecraftServerStartupTime = 30         #any parameter more than 10s is recommended
+minecraftServerStartupTime = {30}         #any parameter more than 10s is recommended
 ```
 *120 seconds* is the time (after the last player disconnected) that the script waits before shutting down the minecraft server
 ```Python
-timeBeforeStoppingEmptyServer = 120     #any parameter more than 60s is recommended
+timeBeforeStoppingEmptyServer = {120}     #any parameter more than 60s is recommended
 ```  
 
 -----
