@@ -44,11 +44,11 @@ stopMinecraftServerLin = "sudo systemctl stop minecraft-server"
 ```
 If you are the first to access to minecraft world you will have to wait *30 seconds* and then try to connect again.
 ```Python
-minecraftServerStartupTime = {30}         #any parameter more than 10s is recommended
+minecraftServerStartupTime = 30         #any parameter more than 10s is recommended
 ```
 *120 seconds* is the time (after the last player disconnected) that the script waits before shutting down the minecraft server
 ```Python
-timeBeforeStoppingEmptyServer = {120}     #any parameter more than 60s is recommended
+timeBeforeStoppingEmptyServer = 120     #any parameter more than 60s is recommended
 ```  
 
 -----
