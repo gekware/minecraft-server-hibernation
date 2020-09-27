@@ -13,14 +13,14 @@ Version 7.9 (Python - Go)
 ### INSTRUCTIONS:
 This is a simple Python script to start a minecraft server on request and stop it when there are no player online.
 How to use:
-1. Install and run your desiered minecraft server
+1. Install your desired minecraft server
 2. "server-port" parameter in "server.properties" should be 25565
-3. Edit the paramters in the script as needed (only text in parethesis needs to be modified):
+3. Edit the parameters in the script as needed (*check definitions*):
     - startMinecraftServerLin or startMinecraftServerWin
     - stopMinecraftServerLin or stopMinecraftServerWin
     - minecraftServerStartupTime
     - timeBeforeStoppingEmptyServer 
-4. on the server: open port 25555 (example: [ufw](https://www.configserverfirewall.com/ufw-ubuntu-firewall/ubuntu-firewall-open-port/))
+4. on the server: open port 25555 (example: [ufw firewall](https://www.configserverfirewall.com/ufw-ubuntu-firewall/ubuntu-firewall-open-port/))
 5. on the router: forward port 25555 to server ([tutorial](https://www.wikihow.com/Open-Ports#Opening-Router-Firewall-Ports))
 6. you can connect to the server through port 25555
 
