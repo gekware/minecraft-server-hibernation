@@ -15,7 +15,7 @@ This is a simple Python script to start a minecraft server on request and stop i
 How to use:
 1. Install your desired minecraft server
 2. "server-port" parameter in "server.properties" should be 25565
-3. Edit the parameters in the script as needed (*check definitions*):
+3. Edit the parameters in config.json as needed (*check definitions*):
     - startMinecraftServerLin or startMinecraftServerWin
     - stopMinecraftServerLin or stopMinecraftServerWin
     - minecraftServerStartupTime
@@ -28,27 +28,27 @@ How to use:
 
 ### DEFINITIONS:
 Commands to start and stop minecraft server:
-```Python
+```yaml
 # only text in parethesis needs to be modified
-startMinecraftServerLin = "cd {PATH/TO/SERVERFOLDER}; screen -dmS minecraftServer java {-Xmx1024M} {-Xms1024M} -jar {server.jar} nogui"
-stopMinecraftServerLin = "screen -S minecraftServer -X stuff 'stop\\n'"
-startMinecraftServerWin = "java {-Xmx1024M} {-Xms1024M} -jar {server.jar} nogui"
-stopMinecraftServerWin = "stop"
+"startMinecraftServerLin": "cd {PATH/TO/SERVERFOLDER}; screen -dmS minecraftServer java {-Xmx1024M} {-Xms1024M} -jar {server.jar} nogui"
+"stopMinecraftServerLin": "screen -S minecraftServer -X stuff 'stop\\n'"
+"startMinecraftServerWin": "java {-Xmx1024M} {-Xms1024M} -jar {server.jar} nogui"
+"stopMinecraftServerWin": "stop"
 
 # if you are on linux you can access the minecraft server console with "sudo screen -r minecraftServer"
 ```
 Personally I set up a systemctl minecraft server service (called "minecraft-server") therefore I use:
-```Python
-startMinecraftServerLin = "sudo systemctl start minecraft-server"
-stopMinecraftServerLin = "sudo systemctl stop minecraft-server"
+```yaml
+"startMinecraftServerLin": "sudo systemctl start minecraft-server"
+"stopMinecraftServerLin": "sudo systemctl stop minecraft-server"
 ```
 If you are the first to access to minecraft world you will have to wait *30 seconds* and then try to connect again.
-```Python
-minecraftServerStartupTime = 30         #any parameter more than 10s is recommended
+```yaml
+"minecraftServerStartupTime": 30         #any parameter more than 10s is recommended
 ```
 *120 seconds* is the time (after the last player disconnected) that the script waits before shutting down the minecraft server
-```Python
-timeBeforeStoppingEmptyServer = 120     #any parameter more than 60s is recommended
+```yaml
+"timeBeforeStoppingEmptyServer": 120     #any parameter more than 60s is recommended
 ```  
 
 -----
