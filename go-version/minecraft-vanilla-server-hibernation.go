@@ -321,7 +321,7 @@ func forwardSync(source, destination net.Conn, isServerToClient bool) {
 				config.Advanced.ServerVersion = newServerVersion
 				config.Advanced.ServerProtocol = newServerProtocol
 
-				logger("",
+				logger(
 					"server version found!",
 					"serverVersion:", config.Advanced.ServerVersion,
 					"serverProtocol:", config.Advanced.ServerProtocol)
