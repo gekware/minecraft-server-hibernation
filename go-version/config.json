@@ -1,0 +1,19 @@
+{
+  "tomodify": {
+    "startMinecraftServerLin": "sudo systemctl start minecraft-server",
+    "stopMinecraftServerLin": "sudo systemctl stop minecraft-server",
+    "startMinecraftServerWin": "java -Xmx1024M -Xms1024M -jar server.jar nogui",
+    "stopMinecraftServerWin": "stop",
+    "minecraftServerStartupTime": 20,
+    "timeBeforeStoppingEmptyServer": 60
+  },
+  "advanced": {
+    "listenHost": "0.0.0.0",
+    "listenPort": "25555",
+    "targetHost": "127.0.0.1",
+    "targetPort": "25565",
+    "debug": true,
+    "serverVersion": "1.16.3",
+    "serverProtocol": "753"
+  }
+}
