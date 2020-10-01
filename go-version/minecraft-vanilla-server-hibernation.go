@@ -232,10 +232,10 @@ func handleClientSocket(clientSocket net.Conn) {
 
 			if serverStatus == "offline" {
 				startMinecraftServer()
-				log.Printf("*** %s tryed to join from %s:%s to %s:%s\n", playerName, clientAddress, config.Advanced.ListenPort, config.Advanced.TargetHost, config.Advanced.TargetPort)
+				log.Printf("*** %s tried to join from %s:%s to %s:%s\n", playerName, clientAddress, config.Advanced.ListenPort, config.Advanced.TargetHost, config.Advanced.TargetPort)
 				clientSocket.Write(buildMessage("txt", fmt.Sprintf("Server start command issued. Please wait... Time left: %d seconds", timeLeftUntilUp)))
 			} else if serverStatus == "starting" {
-				log.Printf("*** %s tryed to join from %s:%s to %s:%s during server startup\n", playerName, clientAddress, config.Advanced.ListenPort, config.Advanced.TargetHost, config.Advanced.TargetPort)
+				log.Printf("*** %s tried to join from %s:%s to %s:%s during server startup\n", playerName, clientAddress, config.Advanced.ListenPort, config.Advanced.TargetHost, config.Advanced.TargetPort)
 				clientSocket.Write(buildMessage("txt", fmt.Sprintf("Server is starting. Please wait... Time left: %d seconds", timeLeftUntilUp)))
 			}
 		}
