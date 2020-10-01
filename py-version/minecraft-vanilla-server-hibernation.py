@@ -150,11 +150,11 @@ def handleClientSocket(clientSocket, clientAddress):
 				
 				if serverStatus == "offline":
 					startMinecraftServer()
-					logging.info(playerName + " tryed to join from " + clientAddress[0])
+					logging.info(playerName + " tried to join from " + clientAddress[0])
 					clientSocket.sendall(buildMessage("txt", "Server start command issued. Please wait... Time left: " + str(timeLeftUntilUp) + " seconds"))
 				
 				elif serverStatus == "starting":
-					logging.info(playerName + " tryed to join from " + clientAddress[0] + " during server startup")
+					logging.info(playerName + " tried to join from " + clientAddress[0] + " during server startup")
 					clientSocket.sendall(buildMessage("txt", "Server is starting. Please wait... Time left: " + str(timeLeftUntilUp) + " seconds"))
 
 			logger("closing connection for:", clientAddress[0])
