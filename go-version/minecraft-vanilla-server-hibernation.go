@@ -283,7 +283,7 @@ func serverToClient(source, destination net.Conn) {
 //forwardSync takes a source and a destination net.Conn and forwards them (plus takes a true or false to know what it is forwarding)
 func forwardSync(source, destination net.Conn, isServerToClient bool) {
 	data := make([]byte, 1024)
-	n := 0
+	foundServerVersion := false
 
 	for {
 		source.SetReadDeadline(time.Now().Add(time.Duration(config.Tomodify.TimeBeforeStoppingEmptyServer) * time.Second))
@@ -312,9 +312,9 @@ func forwardSync(source, destination net.Conn, isServerToClient bool) {
 			mutex.Unlock()
 		}
 
-		if isServerToClient && n < 5 && bytes.Contains(data[:dataLen], []byte("\"version\":")) {
-			n++
-			newServerVersion := string(bytes.Split(bytes.Split(data[:dataLen], []byte("{\"name\":\""))[1], []byte("\","))[0])
+		if isServerToClient && !foundServerVersion && bytes.Contains(data[:dataLen], []byte("\"version\":{\"name\":\"")) && bytes.Contains(data[:dataLen], []byte(",\"protocol\":")) {
+			foundServerVersion = true
+			newServerVersion := string(bytes.Split(bytes.Split(data[:dataLen], []byte("\"version\":{\"name\":\""))[1], []byte("\","))[0])
 			newServerProtocol := string(bytes.Split(bytes.Split(data[:dataLen], []byte(",\"protocol\":"))[1], []byte("}"))[0])
 
 			if newServerVersion != config.Advanced.ServerVersion || newServerProtocol != config.Advanced.ServerProtocol {
