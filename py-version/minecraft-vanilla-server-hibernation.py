@@ -195,7 +195,7 @@ def serverToClient(source, destination):
 def forwardSync(source, destination, isServerToClient):
 	global dataCountBytesToServer, dataCountBytesToClients, lock, config
 	data = b" "
-	n = 0
+	foundServerVersion = False
 	
 	source.settimeout(config["tomodify"]["timeBeforeStoppingEmptyServer"])
 	destination.settimeout(config["tomodify"]["timeBeforeStoppingEmptyServer"])
@@ -218,10 +218,10 @@ def forwardSync(source, destination, isServerToClient):
 					else:
 						dataCountBytesToServer = dataCountBytesToServer + len(data)
 
-			if isServerToClient and n < 5 and b"\"version\":" in data:
-				n += 1
+			if isServerToClient and not foundServerVersion and b"\"version\":{\"name\":\"" in data and b",\"protocol\":" in data:
+				foundServerVersion = True
 
-				newServerVersion = str(data).split("{\"name\":\"")[1].split("\",")[0]
+				newServerVersion = str(data).split("\"version\":{\"name\":\"")[1].split("\",")[0]
 				newServerProtocol = str(data).split(",\"protocol\":")[1].split("}")[0]
 
 				if newServerVersion != config["advanced"]["serverVersion"] or newServerProtocol != config["advanced"]["serverProtocol"]:
