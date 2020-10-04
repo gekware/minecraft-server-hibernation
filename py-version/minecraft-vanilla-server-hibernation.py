@@ -195,7 +195,7 @@ def serverToClient(source, destination):
 def forwardSync(source, destination, isServerToClient):
 	global dataCountBytesToServer, dataCountBytesToClients, lock, config
 	data = b" "
-	foundServerVersion = False
+	firstBuffer = True
 	
 	source.settimeout(config["tomodify"]["timeBeforeStoppingEmptyServer"])
 	destination.settimeout(config["tomodify"]["timeBeforeStoppingEmptyServer"])
@@ -217,10 +217,8 @@ def forwardSync(source, destination, isServerToClient):
 						dataCountBytesToClients = dataCountBytesToClients + len(data)
 					else:
 						dataCountBytesToServer = dataCountBytesToServer + len(data)
-
-			if isServerToClient and not foundServerVersion and b"\"version\":{\"name\":\"" in data and b",\"protocol\":" in data:
-				foundServerVersion = True
-
+            
+			if isServerToClient and firstBuffer and b"\"version\":{\"name\":\"" in data and b",\"protocol\":" in data:
 				newServerVersion = str(data).split("\"version\":{\"name\":\"")[1].split("\",")[0]
 				newServerProtocol = str(data).split(",\"protocol\":")[1].split("}")[0]
 
@@ -240,6 +238,8 @@ def forwardSync(source, destination, isServerToClient):
 							logger("saved to config.json")
 					except:
 						logger("could not update config.json")
+            
+			firstBuffer = False
 	
 	except IOError as e:
 		if e.errno == 32:               #user/server disconnected normally. has to be catched, because there is a race condition
