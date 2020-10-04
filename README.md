@@ -30,21 +30,21 @@ How to use:
 Commands to start and stop minecraft server:
 ```yaml
 # only text in parethesis needs to be modified
-"startMinecraftServerLin": "cd {PATH/TO/SERVERFOLDER}; screen -dmS minecraftServer java {-Xmx1024M} {-Xms1024M} -jar {server.jar} nogui"
-"stopMinecraftServerLin": "screen -S minecraftServer -X stuff 'stop\\n'"
-"startMinecraftServerWin": "java {-Xmx1024M} {-Xms1024M} -jar {server.jar} nogui"
-"stopMinecraftServerWin": "stop"
+"startMinecraftServerLin": "cd {PATH/TO/SERVERFOLDER}; screen -dmS minecraftServer java {-Xmx1024M} {-Xms1024M} -jar {server.jar} nogui",
+"stopMinecraftServerLin": "screen -S minecraftServer -X stuff 'stop\\n'",
+"startMinecraftServerWin": "java {-Xmx1024M} {-Xms1024M} -jar {server.jar} nogui",
+"stopMinecraftServerWin": "stop",
 
 # if you are on linux you can access the minecraft server console with "sudo screen -r minecraftServer"
 ```
 Personally I set up a systemctl minecraft server service (called "minecraft-server") therefore I use:
 ```yaml
-"startMinecraftServerLin": "sudo systemctl start minecraft-server"
-"stopMinecraftServerLin": "sudo systemctl stop minecraft-server"
+"startMinecraftServerLin": "sudo systemctl start minecraft-server",
+"stopMinecraftServerLin": "sudo systemctl stop minecraft-server",
 ```
 If you are the first to access to minecraft world you will have to wait *30 seconds* and then try to connect again.
 ```yaml
-"minecraftServerStartupTime": 30         #any parameter more than 10s is recommended
+"minecraftServerStartupTime": 30,         #any parameter more than 10s is recommended
 ```
 *120 seconds* is the time (after the last player disconnected) that the script waits before shutting down the minecraft server
 ```yaml
