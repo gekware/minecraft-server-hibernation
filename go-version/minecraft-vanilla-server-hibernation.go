@@ -323,7 +323,7 @@ func forwardSync(source, destination net.Conn, isServerToClient bool) {
 				logger(
 					"server version found!",
 					"serverVersion:", config.Advanced.ServerVersion,
-					"serverProtocol:", config.Advanced.ServerProtocol
+					"serverProtocol:", config.Advanced.ServerProtocol,
 				)
 
 				configData, err := json.MarshalIndent(config, "", "  ")
