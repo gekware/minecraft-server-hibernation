@@ -23,7 +23,7 @@ import (
 var info []string = []string{
 	"Minecraft-Vanilla-Server-Hibernation is used to auto-start/stop a vanilla minecraft server",
 	"Copyright (C) 2019-2020 gekigek99",
-	"v3.4 (Go)",
+	"v3.5 (Go)",
 	"visit my github page: https://github.com/gekigek99",
 	"if you like what I do please consider having a cup of coffee with me at: https://www.buymeacoffee.com/gekigek99",
 }
