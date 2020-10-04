@@ -283,7 +283,7 @@ func serverToClient(source, destination net.Conn) {
 //forwardSync takes a source and a destination net.Conn and forwards them (plus takes a true or false to know what it is forwarding)
 func forwardSync(source, destination net.Conn, isServerToClient bool) {
 	data := make([]byte, 1024)
-	foundServerVersion := false
+	firstBuffer := true
 
 	for {
 		source.SetReadDeadline(time.Now().Add(time.Duration(config.Tomodify.TimeBeforeStoppingEmptyServer) * time.Second))
@@ -312,8 +312,7 @@ func forwardSync(source, destination net.Conn, isServerToClient bool) {
 			mutex.Unlock()
 		}
 
-		if isServerToClient && !foundServerVersion && bytes.Contains(data[:dataLen], []byte("\"version\":{\"name\":\"")) && bytes.Contains(data[:dataLen], []byte(",\"protocol\":")) {
-			foundServerVersion = true
+		if isServerToClient && firstBuffer && bytes.Contains(data[:dataLen], []byte("\"version\":{\"name\":\"")) && bytes.Contains(data[:dataLen], []byte(",\"protocol\":")) {
 			newServerVersion := string(bytes.Split(bytes.Split(data[:dataLen], []byte("\"version\":{\"name\":\""))[1], []byte("\","))[0])
 			newServerProtocol := string(bytes.Split(bytes.Split(data[:dataLen], []byte(",\"protocol\":"))[1], []byte("}"))[0])
 
@@ -324,7 +323,8 @@ func forwardSync(source, destination net.Conn, isServerToClient bool) {
 				logger(
 					"server version found!",
 					"serverVersion:", config.Advanced.ServerVersion,
-					"serverProtocol:", config.Advanced.ServerProtocol)
+					"serverProtocol:", config.Advanced.ServerProtocol
+				)
 
 				configData, err := json.MarshalIndent(config, "", "  ")
 				if err != nil {
@@ -339,6 +339,8 @@ func forwardSync(source, destination net.Conn, isServerToClient bool) {
 				logger("saved to config.json")
 			}
 		}
+
+		firstBuffer = false
 	}
 }
 
