@@ -6,7 +6,7 @@
 
 [![mvsh - logo](https://user-images.githubusercontent.com/53654579/90397372-09a9df80-e098-11ea-925c-29e9bdfc0b48.png)](https://github.com/gekigek99/minecraft-vanilla-server-hibernation)  
 
-Version 9.10 (Python - Go)
+Version 9.11 (Python - Go)
 
 -----
 
