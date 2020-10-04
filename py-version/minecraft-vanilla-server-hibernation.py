@@ -9,24 +9,34 @@ import math
 import json
 import atexit
 
+## contains intro to script and program
 info = [
 	"Minecraft-Vanilla-Server-Hibernation is used to auto-start/stop a vanilla minecraft server",
 	"Copyright (C) 2019-2020 gekigek99",
-	"v6.5 (Python)",
+	"v6.6 (Python)",
 	"visit my github page: https://github.com/gekigek99",
 	"If you like what I do please consider having a cup of coffee with me at: https://www.buymeacoffee.com/gekigek99"
 ]
 
 ##------------------------don't modify------------------------##
 
+# loads config.json into config
 with open("config.json", "r") as f:
 	config = json.load(f)
 
+# to keep track of the minecraft server status ("offline", "starting", "online")
 serverStatus = "offline"
+
+# to keep track of players connected to the server
 players = 0
-dataCountBytesToServer, dataCountBytesToClients = 0, 0
+
+# to calculate the bytes/s from/to server
+dataCountBytesToClients, dataCountBytesToServer = 0, 0
+
+# to keep track of how many times stopEmptyMinecraftServer() has been called in the last {TimeBeforeStoppingEmptyServer} seconds
 stopInstances = 0
 
+# to keep track of how many seconds are still needed to reach serverStatus == "online"
 timeLeftUntilUp = config["tomodify"]["minecraftServerStartupTime"]
 lock = Lock()
 
@@ -34,10 +44,10 @@ lock = Lock()
 
 def startMinecraftServer():
 	global serverStatus, players, timeLeftUntilUp
-	if serverStatus != "offline":
-		return
+
 	serverStatus = "starting"
 	
+	# block that execute the correct start command depending on the OS
 	if platform.system() == "Linux":
 		os.system(config["tomodify"]["startMinecraftServerLin"])
 	elif platform.system() == "Windows":
@@ -47,8 +57,12 @@ def startMinecraftServer():
 		sys.exit(0)
 	
 	logging.info("MINECRAFT SERVER IS STARTING!")
+
+	# initialization of players
 	players = 0
 	
+	## sets serverStatus == "online"
+	## increases stopInstances by one. after {TimeBeforeStoppingEmptyServer} executes stopEmptyMinecraftServer(false)
 	def setServerStatusOnline():
 		global serverStatus, stopInstances, lock
 		serverStatus = "online"
@@ -56,21 +70,26 @@ def startMinecraftServer():
 		with lock:
 			stopInstances += 1
 		Timer(config["tomodify"]["timeBeforeStoppingEmptyServer"], stopEmptyMinecraftServer, ()).start()
+	# updates timeLeftUntilUp each second. if timeLeftUntilUp == 0 it executes setServerStatusOnline()
 	def updatetTimeLeft():
 		global timeLeftUntilUp
 		if timeLeftUntilUp > 0:
-			timeLeftUntilUp-=1
+			timeLeftUntilUp -= 1
 			Timer(1, updatetTimeLeft, ()).start()
+		elif timeLeftUntilUp == 0 :
+			setServerStatusOnline()
 
 	updatetTimeLeft()
-	Timer(config["tomodify"]["minecraftServerStartupTime"], setServerStatusOnline, ()).start()
 
 def stopEmptyMinecraftServer(forceExec=False):
 	global serverStatus, timeLeftUntilUp, stopInstances, lock
 	
 	if forceExec and serverStatus != "offline":
+		# skip some checks to issue the stop server command forcefully
 		pass
 	else:
+		# check that there is only one "stop server command" instance running and players <= 0 and serverStatus != "offline".
+		# on the contrary the server won't be stopped
 		with lock:
 			stopInstances -= 1
 			if stopInstances > 0 or players > 0 or serverStatus == "offline":
@@ -78,6 +97,7 @@ def stopEmptyMinecraftServer(forceExec=False):
 	
 	serverStatus = "offline"
 	
+	# block that execute the correct stop command depending on the OS
 	if platform.system() == "Linux":
 		os.system(config["tomodify"]["stopMinecraftServerLin"])
 	elif platform.system() == "Windows":
@@ -91,77 +111,95 @@ def stopEmptyMinecraftServer(forceExec=False):
 	else:
 		logging.info("MINECRAFT SERVER IS SHUTTING DOWN!")
 	
+	# reset timeLeftUntilUp to initial value
 	timeLeftUntilUp = config["tomodify"]["minecraftServerStartupTime"]
 
 def printDataUsage():
-	global dataCountBytesToServer, dataCountBytesToClients, lock
+	global dataCountBytesToClients, dataCountBytesToServer, lock
 	with lock:
-		if dataCountBytesToServer != 0 or dataCountBytesToClients != 0:
+		if dataCountBytesToClients != 0 or dataCountBytesToServer != 0:
 			logger("data/s: {:8.3f} KB/s to clients | {:8.3f} KB/s to server".format(dataCountBytesToClients/1024, dataCountBytesToServer/1024))
-			dataCountBytesToServer = 0
 			dataCountBytesToClients = 0
+			dataCountBytesToServer = 0
 	Timer(1, printDataUsage).start()
 
 def main():
+	# prints intro to program
 	print("\n".join(info[1:4]))
 
-	dockSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	dockSocket.setblocking(1)
-	dockSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)   #to prevent errno 98 address already in use
-	dockSocket.bind((config["advanced"]["listenHost"], int(config["advanced"]["listenPort"])))
-	dockSocket.listen(5)
+	# launch printDataUsage()
+	Thread(target=printDataUsage).start()
+
+	# open a listener on {config.Advanced.ListenHost}+":"+{config.Advanced.ListenPort}
+	listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	listener.setblocking(1)
+	listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)   #to prevent errno 98 address already in use
+	listener.bind((config["advanced"]["listenHost"], int(config["advanced"]["listenPort"])))
+	listener.listen(5)
 
 	logging.info("*** listening for new clients to connect...")
-
-	Thread(target=printDataUsage).start()
 	
+	# infinite cycle to accept clients. when a clients connects it is passed to handleClientSocket()
 	while True:
 		try:
-			clientSocket, clientAddress = dockSocket.accept()        #blocking
+			clientSocket, clientAddress = listener.accept()        #blocking
 			handleClientSocket(clientSocket, clientAddress)
 		except Exception as e:
 			logger("Exception in main():", str(e))
 
+# to handle a client that is connecting.
+# can handle a client that is requesting server info or trying to join.
 def handleClientSocket(clientSocket, clientAddress):
 	try:
 		logger("*** from {}:{} to {}:{}".format(clientAddress[0], config["advanced"]["listenPort"], config["advanced"]["targetHost"], config["advanced"]["targetPort"]))
+		
+		# block containing the case of serverStatus == "offline" or "starting"
 		if serverStatus == "offline" or serverStatus == "starting":
+			# read first packet
 			buffer = clientSocket.recv(1024)
 						
-			#\x00 or \x01 is the last byte of the first packet when requesting server info
-			#\xd3 as last byte is used when sending the first packet for the second time (after unsuccessful first packet reception)
-			#\xd3 could also be used when the player is trying to join!
+			# \x00 or \x01 is the last byte of the first packet when requesting server info
+			# \xd3 as last byte is used when sending the first packet for the second time (after unsuccessful first packet reception)
+			# \xd3 could also be used when the player is trying to join!
 			if buffer[-1] == 0 or buffer[-1] == 1:
 				if serverStatus == "offline":
 					logging.info("player unknown requested server info from "+str(clientAddress[0]))
+					# answer to client with emulated server info
 					clientSocket.sendall(buildMessage("info", "                   &fserver status:\n                   &b&lHIBERNATING"))
-					answerPingReq(clientSocket)
 		
 				elif serverStatus == "starting":
 					logging.info("player unknown requested server info from "+str(clientAddress[0])+" during server startup")
+					# answer to client with emulated server info
 					clientSocket.sendall(buildMessage("info", "                   &fserver status:\n                    &6&lWARMING UP"))
-					answerPingReq(clientSocket)
+				
+				# answer to client with ping
+				answerPingReq(clientSocket)
 			
-			#\x02 is the last byte of the first packet when player is trying to join the server
+			# the client first message is {data, \x02} --> the client is trying to join the server
 			if buffer[-1] == 2:
-				#here it"s reading the second packet containing the player name
+				# read second packet (contains the playerName)
 				buffer = clientSocket.recv(1024)
 				playerName = buffer[3:].decode(errors="replace")
 				
 				if serverStatus == "offline":
+					# client is trying to join the server and serverStatus == "offline" --> issue startMinecraftServer()
 					startMinecraftServer()
 					logging.info(playerName + " tried to join from " + clientAddress[0])
+					# answer to client with text in the loadscreen
 					clientSocket.sendall(buildMessage("txt", "Server start command issued. Please wait... Time left: " + str(timeLeftUntilUp) + " seconds"))
 				
 				elif serverStatus == "starting":
 					logging.info(playerName + " tried to join from " + clientAddress[0] + " during server startup")
 					clientSocket.sendall(buildMessage("txt", "Server is starting. Please wait... Time left: " + str(timeLeftUntilUp) + " seconds"))
 
+			# since the server is still not online, close the client connection
 			logger("closing connection for:", clientAddress[0])
 			clientSocket.shutdown(1)   #sends FIN to client
 			clientSocket.close()
 
-		if serverStatus == "online":    
+		# block containing the case of serverStatus == "online"
+		if serverStatus == "online":
+			# if the server is online, just open a connection with the server and connect it with the client
 			serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 			serverSocket.connect((config["advanced"]["targetHost"], int(config["advanced"]["targetPort"])))
 
@@ -170,6 +208,7 @@ def handleClientSocket(clientSocket, clientAddress):
 	except Exception as e:
 		logger("Exception in handleClientSocket():", str(e))
 
+# launches clientToServer() and serverToClient()
 def connectSocketsAsync(client, server):
 	Thread(target=clientToServer, args=(client, server, )).start()
 	Thread(target=serverToClient, args=(server, client, )).start()
@@ -179,38 +218,51 @@ def clientToServer(source, destination):
 	players +=1
 	logging.info("A PLAYER JOINED THE SERVER! - "+str(players)+" players online")
 
+	# exchanges data from client to server (isServerToClient == false)
 	forwardSync(source, destination, False)
 
 	players -= 1
 	logging.info("A PLAYER LEFT THE SERVER! - "+str(players)+" players remaining")
 
+	# this block increases stopInstances by one and starts the timer to execute stopEmptyMinecraftServer(false)
+	# (that will do nothing in case there are players online)
 	with lock:
 		stopInstances += 1
 
 	Timer(config["tomodify"]["timeBeforeStoppingEmptyServer"], stopEmptyMinecraftServer, ()).start()
 
 def serverToClient(source, destination):
+	# exchanges data from server to client (isServerToClient == true)
 	forwardSync(source, destination, True)
 
+# forwardSync takes a source and a destination net.Conn and forwards them.
+# (isServerToClient used to know the forward direction)
 def forwardSync(source, destination, isServerToClient):
 	global dataCountBytesToServer, dataCountBytesToClients, lock, config
+	
 	data = b" "
+
+	# set to false after the first for cycle
 	firstBuffer = True
 	
+	# set read and write timeout
 	source.settimeout(config["tomodify"]["timeBeforeStoppingEmptyServer"])
 	destination.settimeout(config["tomodify"]["timeBeforeStoppingEmptyServer"])
 	
 	try:
 		while True:
+			# read data from source
 			data = source.recv(1024)
-			if not data:                # if there is no data stop listening, this means the socket is closed
+			# if there is no data close the source
+			if not data:
 				source.shutdown(1)
 				source.close()
-				# destination.shutdown(1)
-				# destination.close()
 				break
+
+			# write data to destination
 			destination.sendall(data)
 
+			# if debug == true --> calculate bytes/s to client/server
 			if config["advanced"]["debug"]:
 				with lock:
 					if isServerToClient:
@@ -218,10 +270,14 @@ def forwardSync(source, destination, isServerToClient):
 					else:
 						dataCountBytesToServer = dataCountBytesToServer + len(data)
             
+			# this block is used to find the serverVersion and serverProtocol.
+			# these parameters are only found in serverToClient connection in the first buffer that is read
+			# if the above specified buffer contains "\"version\":{\"name\":\"" and ",\"protocol\":" --> extract the serverVersion and serverProtocol
 			if isServerToClient and firstBuffer and b"\"version\":{\"name\":\"" in data and b",\"protocol\":" in data:
 				newServerVersion = str(data).split("\"version\":{\"name\":\"")[1].split("\",")[0]
 				newServerProtocol = str(data).split(",\"protocol\":")[1].split("}")[0]
 
+				# if serverVersion or serverProtocol are different from the ones specified in config.json --> update them
 				if newServerVersion != config["advanced"]["serverVersion"] or newServerProtocol != config["advanced"]["serverProtocol"]:
 					config["advanced"]["serverVersion"] = newServerVersion
 					config["advanced"]["serverProtocol"] = newServerProtocol
@@ -234,11 +290,12 @@ def forwardSync(source, destination, isServerToClient):
 
 					try:
 						with open("config.json", "w") as f:
+							# write the struct config to config.json
 							json.dump(config, f, indent=2)
 							logger("saved to config.json")
 					except:
 						logger("could not update config.json")
-            
+            # first cycle is finished, set firstBuffer = false
 			firstBuffer = False
 	
 	except IOError as e:
@@ -250,32 +307,49 @@ def forwardSync(source, destination, isServerToClient):
 
 ##---------------------------utils----------------------------##
 
+# takes the format ("txt", "info") and a message to write to the client
 def buildMessage(format, message):
 	def mountHeader(message, const):
-		# mountHeader encodes the header, add the correct header and return
-		# the message ready for sending
+		# mountHeader: mounts the header to a specified message
+		# scheme: 			[header1 												|header2 	|header3 					|message]
+		# bytes used:		[1/2													|1			|1/2						|∞		]
+		# value calc: 		[len(header2) + len(header3) + len(message) + constant	|0			|len(message) + constant 	|message]
+		# possible values:	[1            + 1/2          + ∞            + 0/11264	|0			|∞            + 0/11264		|-------]
 		
-		message = message.encode()
+		def addHeader(message):
+			mesLen = len(message) + const
+			# calculate the bytes needed to store mesLen
+			# int(math.Ceil(log255(mesLen)))
+			byteNum = math.ceil(math.log(mesLen, 255))
+			return (mesLen).to_bytes(byteNum, byteorder="little") + message
 
-		mesLen = len(message) + const
-		byteNum = math.ceil(math.log(mesLen, 255))
-		message = (mesLen).to_bytes(byteNum, byteorder="little") + message
+		messageByte = message.encode()
+
+		# header3 calculation
+		messageByte = addHeader(messageByte)
 		
-		message = bytes([0]) + message
+		# header2 calculation
+		messageByte = bytes([0]) + messageByte
 
-		mesLen = len(message) + const
-		byteNum = math.ceil(math.log(mesLen, 255))
-		message = (mesLen).to_bytes(byteNum, byteorder="little") + message
+		# header1 calculation
+		messageByte = addHeader(messageByte)
 
-		return message
+		return messageByte
 
 	if format == "txt":
-		messageJSON = ("{"
-			"\"text\":\"" + message + "\""
-			"}")
+		# to display text in the loadscreen
+
+		messageJSON = "".join((
+			"{",
+			"\"text\":\"", message, "\"",
+			"}"))
+
+		# for txt the constant == 0
 		messageHeader = mountHeader(messageJSON, 0)
 
 	elif format == "info":
+		# to send server info
+
 		# captured examples:
 		# \xf8W\x00\xf5W{
 		# "description":{"text":"\xc2\xa7fServer status:\xc2\xa7r\\n                  \xc2\xa7b\xc2\xa7l\xc2\xa7oHIBERNATING"},
@@ -291,48 +365,56 @@ def buildMessage(format, message):
 		# "favicon":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAJE0lEQ ... mvCAAAAAElFTkSuQmCC
 		# }
 
+		# in message: "\n" -> "&r\\n" then "&" -> "\xa7"
+		# in py only \xa7 is replaced since the python .encode() metod (in mountHeader) adds the \xc2 byte
 		messageAdapted = message.replace("\n", "&r\\n").replace("&", "\xa7")
 
-		messageJSON = ("{"
-			"\"description\":{\"text\":\"" + messageAdapted + "\"},"
-			"\"version\":{\"name\":\"" + config["advanced"]["serverVersion"] + "\",\"protocol\":" + str(config["advanced"]["serverProtocol"]) + "},"
-			"\"favicon\":\"" + serverIcon + "\""
-			"}")
+		messageJSON = "".join(("{",
+			"\"description\":{\"text\":\"", messageAdapted, "\"},",
+			"\"version\":{\"name\":\"", config["advanced"]["serverVersion"], "\",\"protocol\":", str(config["advanced"]["serverProtocol"]), "},",
+			"\"favicon\":\"", serverIcon, "\"",
+			"}"))
+		
+		# for info the constant == 11264
 		messageHeader = mountHeader(messageJSON, 11264)
 
 	else:
 		logger("buildMessage: specified format invalid")
-		return ""
+		messageHeader = None
 
 	return messageHeader
 
 def answerPingReq(clientSocket):
+	# read the first packet
 	req = clientSocket.recv(1024)
 	
+	# if req == b"\x01\x00" --> read again (the correct ping byte array have still to arrive)
 	if req == b"\x01\x00":
 		req = clientSocket.recv(1024)
-	# go specific:
-	# elif req[:2] == b"\x01\x00":
-	# 	req = req[2:]
 	
+	# answer the ping request
 	clientSocket.sendall(req)
 
+# prints the args if debug option is set to true
 def logger(*args):
 	if config["advanced"]["debug"]:
 		logging.info(' '.join(args))
 
 ##------------------------py specific-------------------------##
 
+# specify default parameters for logging
 logging.basicConfig(
 	level=logging.INFO,
 	format="%(asctime)s %(message)s",
 	datefmt="%d-%b-%y %H:%M:%S"
 )
 
-atexit.register(stopEmptyMinecraftServer, forceExec=True)	# forcefully shuts down the minecraft server when msh is stopped
+# listen for interrupt signal and issue stopEmptyMinecraftServer(true) before exiting
+atexit.register(stopEmptyMinecraftServer, forceExec=True)
 
 ##---------------------------data-----------------------------##
 
+# contains is the captured picture data of the msh logo
 serverIcon = (
 	"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAgK0lEQVR42uV7CViV55l2kqbpdJqmm"
 	"WliXGJEURDZOez7DgcO+77KKgKKgvsSg1uioHFhURDTdNJOO1unaWI2474ioknTPY27UWQXBM456P3fz3uApNf/46TXzPyZdriu"
