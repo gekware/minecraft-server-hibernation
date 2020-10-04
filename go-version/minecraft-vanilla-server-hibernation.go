@@ -23,7 +23,7 @@ import (
 var info []string = []string{
 	"Minecraft-Vanilla-Server-Hibernation is used to auto-start/stop a vanilla minecraft server",
 	"Copyright (C) 2019-2020 gekigek99",
-	"v3.5 (Go)",
+	"v3.4 (Go)",
 	"visit my github page: https://github.com/gekigek99",
 	"if you like what I do please consider having a cup of coffee with me at: https://www.buymeacoffee.com/gekigek99",
 }
@@ -76,7 +76,7 @@ var mutex = &sync.Mutex{}
 func startMinecraftServer() {
 	serverStatus = "starting"
 
-	// block that execute the correct start command depending on the os
+	// block that execute the correct start command depending on the OS
 	if runtime.GOOS == "linux" {
 		err := exec.Command("/bin/bash", "-c", config.Tomodify.StartMinecraftServerLin).Run()
 		if err != nil {
@@ -139,7 +139,7 @@ func stopEmptyMinecraftServer(forceExec bool) {
 
 	serverStatus = "offline"
 
-	// block that execute the correct stop command depending on the os
+	// block that execute the correct stop command depending on the OS
 	if runtime.GOOS == "linux" {
 		err := exec.Command("/bin/bash", "-c", config.Tomodify.StopMinecraftServerLin).Run()
 		if err != nil {
