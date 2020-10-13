@@ -1,4 +1,4 @@
-# Minecraft Vanilla Server Hibernation (Python - Go)
+# Minecraft Server Hibernation (Python - Go)
 
 [![mvsh - license](https://img.shields.io/github/license/gekigek99/minecraft-vanilla-server-hibernation?color=6fff00)](https://github.com/gekigek99/minecraft-vanilla-server-hibernation)
 [![mvsh - stars](https://img.shields.io/github/stars/gekigek99/minecraft-vanilla-server-hibernation?color=ffbd19)](https://github.com/gekigek99/minecraft-vanilla-server-hibernation)
