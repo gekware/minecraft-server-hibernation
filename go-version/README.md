@@ -1,4 +1,4 @@
-# minecraft-vanilla-server-hibernation (Go)
+# Minecraft Server Hibernation (Go)
 version 3.5 (Go)<br/>
 Copyright (C) 2020 [gekigek99](https://github.com/gekigek)<br/>
 
