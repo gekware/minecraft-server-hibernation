@@ -1,4 +1,4 @@
-# minecraft-vanilla-server-hibernation (Python)
+# Minecraft Server Hibernation (Python)
 version 6.6 (Python)<br/>
 Copyright (C) 2020 [gekigek99](https://github.com/gekigek)<br/>
 
