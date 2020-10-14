@@ -23,7 +23,7 @@ import (
 var info []string = []string{
 	"Minecraft-Server-Hibernation is used to auto-start/stop a vanilla/modded minecraft server",
 	"Copyright (C) 2019-2020 gekigek99",
-	"v3.5 (Go)",
+	"v3.6 (Go)",
 	"visit my github page: https://github.com/gekigek99",
 	"if you like what I do please consider having a cup of coffee with me at: https://www.buymeacoffee.com/gekigek99",
 }
@@ -260,14 +260,31 @@ func handleClientSocket(clientSocket net.Conn) {
 
 			// answer to client with ping
 			answerPingReq(clientSocket)
-		} else if buffer[dataLen-1] == 2 { // the client first message is {data, 2} --> the client is trying to join the server
-			// read second packet (contains the playerName)
-			dataLen, err = clientSocket.Read(buffer)
-			if err != nil {
-				logger("handleClientSocket: error during clientSocket.Read() 2")
-				return
+		}
+
+		// the client first message is [data, 211, 2] or [data, 211, 2, playerNameData] --> the client is trying to join the server
+		if bytes.Contains(buffer[:dataLen], []byte{211, 2}) {
+			var playerName string
+
+			// if [211, 2] are the last bytes then there is only the join request
+			// read again the client socket to get the player name packet
+			if bytes.Index(buffer[:dataLen], []byte{211, 2}) == dataLen-2 {
+				dataLen, err = clientSocket.Read(buffer)
+				if err != nil {
+					logger("handleClientSocket: error during clientSocket.Read() 2")
+					return
+				}
+				playerName = string(buffer[3:dataLen])
+			} else {
+				// the packet contains the join request and the player name in the scheme:
+				// [... 211 2 (3 bytes) (player name) 0 0 0 0 0...]
+				//  ^-----------------------dataLen-^
+				//                                    ^-zerosLen-^
+				//            ^-playerNameBuffer-----------------^
+				zerosLen := len(buffer) - dataLen
+				playerNameBuffer := bytes.SplitAfter(buffer, []byte{211, 2})[1]
+				playerName = string(playerNameBuffer[3 : len(playerNameBuffer)-zerosLen])
 			}
-			playerName := string(buffer[3:dataLen])
 
 			if serverStatus == "offline" {
 				// client is trying to join the server and serverStatus == "offline" --> issue startMinecraftServer()
@@ -280,31 +297,6 @@ func handleClientSocket(clientSocket net.Conn) {
 				log.Printf("*** %s tried to join from %s:%s to %s:%s during server startup\n", playerName, clientAddress, config.Advanced.ListenPort, config.Advanced.TargetHost, config.Advanced.TargetPort)
 				// answer to client with text in the loadscreen
 				clientSocket.Write(buildMessage("txt", fmt.Sprintf("Server is starting. Please wait... Time left: %d seconds", timeLeftUntilUp)))
-			}
-		} else {
-			// Go probably entangled two packets again and player tried to join. Search for the two bytes 211 2 and split byte array after them.
-			// If no 211 2 in byte array, then ignore request and continue listening.
-			clientMessage := fmt.Sprintln(buffer[:dataLen])
-			logger("Message incomprehensible: \n" + clientMessage)
-			if bytes.Contains(buffer, []byte{211, 2}) {
-				logger("Disentangling join message.")
-				splitBuffer := bytes.SplitAfter(buffer, []byte{211, 2})
-				playerName := splitBuffer[1][3:dataLen]
-
-				if serverStatus == "offline" {
-					// client is trying to join the server and serverStatus == "offline" --> issue startMinecraftServer()
-					startMinecraftServer()
-					log.Printf("*** %s tried to join from %s:%s to %s:%s\n", playerName, clientAddress, config.Advanced.ListenPort, config.Advanced.TargetHost, config.Advanced.TargetPort)
-					// answer to client with text in the loadscreen
-					clientSocket.Write(buildMessage("txt", fmt.Sprintf("Server start command issued. Please wait... Time left: %d seconds", timeLeftUntilUp)))
-
-				} else if serverStatus == "starting" {
-					log.Printf("*** %s tried to join from %s:%s to %s:%s during server startup\n", playerName, clientAddress, config.Advanced.ListenPort, config.Advanced.TargetHost, config.Advanced.TargetPort)
-					// answer to client with text in the loadscreen
-					clientSocket.Write(buildMessage("txt", fmt.Sprintf("Server is starting. Please wait... Time left: %d seconds", timeLeftUntilUp)))
-				}
-			} else {
-				logger("Cannot interpret message. Will ignore and go on to listen for new messages.")
 			}
 		}
 
