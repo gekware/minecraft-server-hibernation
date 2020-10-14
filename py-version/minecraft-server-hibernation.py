@@ -11,7 +11,7 @@ import atexit
 
 ## contains intro to script and program
 info = [
-	"Minecraft-Vanilla-Server-Hibernation is used to auto-start/stop a vanilla minecraft server",
+	"Minecraft-Server-Hibernation is used to auto-start/stop a vanilla/modded minecraft server",
 	"Copyright (C) 2019-2020 gekigek99",
 	"v6.6 (Python)",
 	"visit my github page: https://github.com/gekigek99",
