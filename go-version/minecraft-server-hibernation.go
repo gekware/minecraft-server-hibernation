@@ -84,8 +84,9 @@ func startMinecraftServer() {
 			return
 		}
 	} else if runtime.GOOS == "windows" {
+		var err error
 		cmd := exec.Command(strings.Split(config.Tomodify.StartMinecraftServerWin, " ")[0], strings.Split(config.Tomodify.StartMinecraftServerWin, " ")[1:]...)
-		cmdIn, err := cmd.StdinPipe()
+		cmdIn, err = cmd.StdinPipe()
 		if err != nil {
 			log.Printf("stopEmptyMinecraftServer: error creating StdinPipe: %v\n", err)
 			return
