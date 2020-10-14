@@ -1,5 +1,5 @@
 # Minecraft Server Hibernation (Go)
-version 3.5 (Go)<br/>
+version 3.6 (Go)<br/>
 Copyright (C) 2020 [gekigek99](https://github.com/gekigek)<br/>
 
 ## Compile program:
