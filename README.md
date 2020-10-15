@@ -10,6 +10,11 @@ Release version: 9.12 (Python - Go)
 The program supports minecraft vanilla and modded on linux and windows!
 
 -----
+#### Vote for adding optional financial support possibilities:
+https://linkto.run/p/BXYKPR5Y \
+Results: https://linkto.run/r/BXYKPR5Y
+
+-----
 
 ### INSTRUCTIONS:
 This is a Golang script to start a minecraft server on request and stop it when there are no player online.
