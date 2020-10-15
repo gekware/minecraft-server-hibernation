@@ -1,4 +1,4 @@
-# Minecraft Server Hibernation (Python - Go)
+# Minecraft Server Hibernation (Golang)
 
 [![mvsh - license](https://img.shields.io/github/license/gekigek99/minecraft-server-hibernation?color=6fff00)](https://github.com/gekigek99/minecraft-vanilla-server-hibernation)
 [![mvsh - stars](https://img.shields.io/github/stars/gekigek99/minecraft-server-hibernation?color=ffbd19)](https://github.com/gekigek99/minecraft-vanilla-server-hibernation)
@@ -6,13 +6,13 @@
 
 [![mvsh - logo](https://user-images.githubusercontent.com/53654579/90397372-09a9df80-e098-11ea-925c-29e9bdfc0b48.png)](https://github.com/gekigek99/minecraft-server-hibernation)  
 
-Release version: 9.12 (Python - Go)  
+Release version: 9.12 (Go)  
 The program supports minecraft vanilla and modded on linux and windows!
 
 -----
 
 ### INSTRUCTIONS:
-This is a simple Python script to start a minecraft server on request and stop it when there are no player online.
+This is a Golang script to start a minecraft server on request and stop it when there are no player online.
 How to use:
 1. Install your desired minecraft server
 2. "server-port" parameter in "server.properties" should be 25565
