@@ -25,6 +25,7 @@ var info []string = []string{
 	"Copyright (C) 2019-2020 gekigek99",
 	"v3.6 (Go)",
 	"visit my github page: https://github.com/gekigek99",
+	"remember to give a star to this repository!",
 	"if you like what I do please consider having a cup of coffee with me at: https://www.buymeacoffee.com/gekigek99",
 }
 
@@ -183,7 +184,7 @@ func printDataUsage() {
 
 func main() {
 	// prints intro to program
-	fmt.Println(strings.Join(info[1:4], "\n"))
+	fmt.Println(strings.Join(info[1:5], "\n"))
 
 	loadConfig()
 
