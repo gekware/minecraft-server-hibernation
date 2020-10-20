@@ -4,6 +4,8 @@
     "stopMinecraftServerLin": "screen -S minecraftServer -X stuff 'stop\\n'",
     "startMinecraftServerWin": "java -Xmx1024M -Xms1024M -jar server.jar nogui",
     "stopMinecraftServerWin": "stop",
+    "hibernationInfo": "                   &fserver status:\n                   &b&lHIBERNATING",
+    "startingInfo": "                   &fserver status:\n                    &6&lWARMING UP",
     "minecraftServerStartupTime": 20,
     "timeBeforeStoppingEmptyServer": 60
   },

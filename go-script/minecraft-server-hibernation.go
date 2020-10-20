@@ -39,6 +39,8 @@ type tomodify struct {
 	StopMinecraftServerLin        string
 	StartMinecraftServerWin       string
 	StopMinecraftServerWin        string
+	hibernationInfo               string
+	startingInfo                  string
 	MinecraftServerStartupTime    int
 	TimeBeforeStoppingEmptyServer int
 }
@@ -252,12 +254,12 @@ func handleClientSocket(clientSocket net.Conn) {
 			if serverStatus == "offline" {
 				log.Printf("*** player unknown requested server info from %s:%s to %s:%s\n", clientAddress, config.Advanced.ListenPort, config.Advanced.TargetHost, config.Advanced.TargetPort)
 				// answer to client with emulated server info
-				clientSocket.Write(buildMessage("info", "                   &fserver status:\n                   &b&lHIBERNATING"))
+				clientSocket.Write(buildMessage("info", config.Tomodify.startingInfo))
 
 			} else if serverStatus == "starting" {
 				log.Printf("*** player unknown requested server info from %s:%s to %s:%s during server startup\n", clientAddress, config.Advanced.ListenPort, config.Advanced.TargetHost, config.Advanced.TargetPort)
 				// answer to client with emulated server info
-				clientSocket.Write(buildMessage("info", "                   &fserver status:\n                    &6&lWARMING UP"))
+				clientSocket.Write(buildMessage("info", config.Tomodify.startingInfo))
 			}
 
 			// answer to client with ping
