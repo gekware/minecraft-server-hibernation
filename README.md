@@ -6,7 +6,7 @@
 
 [![mvsh - logo](https://user-images.githubusercontent.com/53654579/90397372-09a9df80-e098-11ea-925c-29e9bdfc0b48.png)](https://github.com/gekigek99/minecraft-server-hibernation)  
 
-Release version: 9.12 (Python - Go)  
+Release version: ~~~ (Go)  
 The program supports minecraft vanilla and modded on linux and windows!
 
 -----
@@ -22,6 +22,7 @@ How to use:
 1. Install your desired minecraft server
 2. "server-port" parameter in "server.properties" should be 25565
 3. Edit the parameters in config.json as needed (*check definitions*):
+    - serverDirPath
     - startMinecraftServerLin or startMinecraftServerWin
     - stopMinecraftServerLin or stopMinecraftServerWin
     - minecraftServerStartupTime
@@ -36,9 +37,10 @@ How to use:
 Commands to start and stop minecraft server:
 ```yaml
 # only text in parethesis needs to be modified
-"startMinecraftServerLin": "cd {PATH/TO/SERVERFOLDER}; screen -dmS minecraftServer java {-Xmx1024M} {-Xms1024M} -jar {server.jar} nogui",
+"serverDirPath": "{path/to/server.jar/folder}",
+"startMinecraftServerLin": "screen -dmS minecraftServer java -Xmx1024M -Xms1024M -jar server.jar nogui",
 "stopMinecraftServerLin": "screen -S minecraftServer -X stuff 'stop\\n'",
-"startMinecraftServerWin": "java {-Xmx1024M} {-Xms1024M} -jar {server.jar} nogui",
+"startMinecraftServerWin": "java -Xmx1024M -Xms1024M -jar server.jar nogui",
 "stopMinecraftServerWin": "stop",
 
 # if you are on linux you can access the minecraft server console with "sudo screen -r minecraftServer"
@@ -55,8 +57,12 @@ If you are the first to access to minecraft world you will have to wait *30 seco
 *120 seconds* is the time (after the last player disconnected) that the script waits before shutting down the minecraft server
 ```yaml
 "timeBeforeStoppingEmptyServer": 120     #any parameter more than 60s is recommended
-```  
-
+```
+To specify a hibernation/warming up info message
+```yaml
+"hibernationInfo": "                   &fserver status:\n                   &b&lHIBERNATING",
+"startingInfo": "                   &fserver status:\n                    &6&lWARMING UP",
+```
 -----
 ### CREDITS:  
 

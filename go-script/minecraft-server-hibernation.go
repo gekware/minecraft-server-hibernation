@@ -31,10 +31,10 @@ var info []string = []string{
 
 // struct adapted to config.json
 type configuration struct {
-	Tomodify tomodify
+	Basic    basic
 	Advanced advanced
 }
-type tomodify struct {
+type basic struct {
 	ServerDirPath                 string
 	StartMinecraftServerLin       string
 	StopMinecraftServerLin        string
@@ -82,9 +82,9 @@ func startMinecraftServer() {
 
 	// block that execute the correct start command depending on the OS
 	if runtime.GOOS == "linux" {
-		command := strings.ReplaceAll(config.Tomodify.StartMinecraftServerLin, "server.jar", "\""+config.Tomodify.ServerDirPath+"\"")
+		command := strings.ReplaceAll(config.Basic.StartMinecraftServerLin, "server.jar", "\""+config.Basic.ServerDirPath+"\"")
 		cmd := exec.Command("/bin/bash", "-c", command)
-		cmd.Dir = config.Tomodify.ServerDirPath
+		cmd.Dir = config.Basic.ServerDirPath
 		err := cmd.Run()
 		if err != nil {
 			log.Printf("startMinecraftServer: error starting minecraft server: %v\n", err)
@@ -93,10 +93,10 @@ func startMinecraftServer() {
 	} else if runtime.GOOS == "windows" {
 		var err error
 
-		commandSplit := strings.Split(config.Tomodify.StartMinecraftServerWin, " ")
+		commandSplit := strings.Split(config.Basic.StartMinecraftServerWin, " ")
 
 		cmd := exec.Command(commandSplit[0], commandSplit[1:]...)
-		cmd.Dir = config.Tomodify.ServerDirPath
+		cmd.Dir = config.Basic.ServerDirPath
 		cmdIn, err = cmd.StdinPipe()
 		if err != nil {
 			log.Printf("startMinecraftServer: error creating StdinPipe: %v\n", err)
@@ -124,7 +124,7 @@ func startMinecraftServer() {
 		mutex.Lock()
 		stopInstances++
 		mutex.Unlock()
-		time.AfterFunc(time.Duration(config.Tomodify.TimeBeforeStoppingEmptyServer)*time.Second, func() { stopEmptyMinecraftServer(false) })
+		time.AfterFunc(time.Duration(config.Basic.TimeBeforeStoppingEmptyServer)*time.Second, func() { stopEmptyMinecraftServer(false) })
 	}
 	// updates timeLeftUntilUp each second. if timeLeftUntilUp == 0 it executes setServerStatusOnline()
 	var updateTimeleft func()
@@ -159,12 +159,12 @@ func stopEmptyMinecraftServer(forceExec bool) {
 
 	// block that execute the correct stop command depending on the OS
 	if runtime.GOOS == "linux" {
-		err := exec.Command("/bin/bash", "-c", config.Tomodify.StopMinecraftServerLin).Run()
+		err := exec.Command("/bin/bash", "-c", config.Basic.StopMinecraftServerLin).Run()
 		if err != nil {
 			log.Printf("stopEmptyMinecraftServer: error stopping minecraft server: %v\n", err)
 		}
 	} else if runtime.GOOS == "windows" {
-		cmdIn.Write([]byte(config.Tomodify.StopMinecraftServerWin))
+		cmdIn.Write([]byte(config.Basic.StopMinecraftServerWin))
 		cmdIn.Close()
 	} else {
 		log.Print("stopEmptyMinecraftServer: error: OS not supported!")
@@ -178,7 +178,7 @@ func stopEmptyMinecraftServer(forceExec bool) {
 	}
 
 	// reset timeLeftUntilUp to initial value
-	timeLeftUntilUp = config.Tomodify.MinecraftServerStartupTime
+	timeLeftUntilUp = config.Basic.MinecraftServerStartupTime
 }
 
 // to print each second bytes/s to clients and to server
@@ -263,12 +263,12 @@ func handleClientSocket(clientSocket net.Conn) {
 			if serverStatus == "offline" {
 				log.Printf("*** player unknown requested server info from %s:%s to %s:%s\n", clientAddress, config.Advanced.ListenPort, config.Advanced.TargetHost, config.Advanced.TargetPort)
 				// answer to client with emulated server info
-				clientSocket.Write(buildMessage("info", config.Tomodify.HibernationInfo))
+				clientSocket.Write(buildMessage("info", config.Basic.HibernationInfo))
 
 			} else if serverStatus == "starting" {
 				log.Printf("*** player unknown requested server info from %s:%s to %s:%s during server startup\n", clientAddress, config.Advanced.ListenPort, config.Advanced.TargetHost, config.Advanced.TargetPort)
 				// answer to client with emulated server info
-				clientSocket.Write(buildMessage("info", config.Tomodify.StartingInfo))
+				clientSocket.Write(buildMessage("info", config.Basic.StartingInfo))
 			}
 
 			// answer to client with ping
@@ -352,7 +352,7 @@ func clientToServer(source, destination net.Conn) {
 	mutex.Lock()
 	stopInstances++
 	mutex.Unlock()
-	time.AfterFunc(time.Duration(config.Tomodify.TimeBeforeStoppingEmptyServer)*time.Second, func() { stopEmptyMinecraftServer(false) })
+	time.AfterFunc(time.Duration(config.Basic.TimeBeforeStoppingEmptyServer)*time.Second, func() { stopEmptyMinecraftServer(false) })
 }
 
 func serverToClient(source, destination net.Conn) {
@@ -370,8 +370,8 @@ func forwardSync(source, destination net.Conn, isServerToClient bool) {
 
 	for {
 		// update read and write timeout
-		source.SetReadDeadline(time.Now().Add(time.Duration(config.Tomodify.TimeBeforeStoppingEmptyServer) * time.Second))
-		destination.SetWriteDeadline(time.Now().Add(time.Duration(config.Tomodify.TimeBeforeStoppingEmptyServer) * time.Second))
+		source.SetReadDeadline(time.Now().Add(time.Duration(config.Basic.TimeBeforeStoppingEmptyServer) * time.Second))
+		destination.SetWriteDeadline(time.Now().Add(time.Duration(config.Basic.TimeBeforeStoppingEmptyServer) * time.Second))
 
 		// read data from source
 		dataLen, err := source.Read(data)
@@ -586,7 +586,7 @@ func loadConfig() {
 
 // initializes some variables
 func initVariables() {
-	timeLeftUntilUp = config.Tomodify.MinecraftServerStartupTime
+	timeLeftUntilUp = config.Basic.MinecraftServerStartupTime
 }
 
 // checks different paramenters
@@ -600,9 +600,9 @@ func checkConfig() string {
 	}
 
 	// check if serverFile exists
-	_, err := os.Stat(config.Tomodify.ServerDirPath)
+	_, err := os.Stat(config.Basic.ServerDirPath)
 	if os.IsNotExist(err) {
-		return fmt.Sprintf("specified server directory does not exist: %s", config.Tomodify.ServerDirPath)
+		return fmt.Sprintf("specified server directory does not exist: %s", config.Basic.ServerDirPath)
 	}
 
 	// check if java is installed
