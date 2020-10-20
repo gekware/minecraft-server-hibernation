@@ -23,7 +23,7 @@ import (
 var info []string = []string{
 	"Minecraft-Server-Hibernation is used to auto-start/stop a vanilla/modded minecraft server",
 	"Copyright (C) 2019-2020 gekigek99",
-	"v3.6 (Go)",
+	"v~~~ (Go)",
 	"visit my github page: https://github.com/gekigek99",
 	"remember to give a star to this repository!",
 	"if you like what I do please consider having a cup of coffee with me at: https://www.buymeacoffee.com/gekigek99",
@@ -35,12 +35,13 @@ type configuration struct {
 	Advanced advanced
 }
 type tomodify struct {
+	ServerDirPath                 string
 	StartMinecraftServerLin       string
 	StopMinecraftServerLin        string
 	StartMinecraftServerWin       string
 	StopMinecraftServerWin        string
-	hibernationInfo               string
-	startingInfo                  string
+	HibernationInfo               string
+	StartingInfo                  string
 	MinecraftServerStartupTime    int
 	TimeBeforeStoppingEmptyServer int
 }
@@ -81,23 +82,31 @@ func startMinecraftServer() {
 
 	// block that execute the correct start command depending on the OS
 	if runtime.GOOS == "linux" {
-		err := exec.Command("/bin/bash", "-c", config.Tomodify.StartMinecraftServerLin).Run()
+		command := strings.ReplaceAll(config.Tomodify.StartMinecraftServerLin, "server.jar", "\""+config.Tomodify.ServerDirPath+"\"")
+		cmd := exec.Command("/bin/bash", "-c", command)
+		cmd.Dir = config.Tomodify.ServerDirPath
+		err := cmd.Run()
 		if err != nil {
 			log.Printf("startMinecraftServer: error starting minecraft server: %v\n", err)
 			return
 		}
 	} else if runtime.GOOS == "windows" {
 		var err error
-		cmd := exec.Command(strings.Split(config.Tomodify.StartMinecraftServerWin, " ")[0], strings.Split(config.Tomodify.StartMinecraftServerWin, " ")[1:]...)
+
+		commandSplit := strings.Split(config.Tomodify.StartMinecraftServerWin, " ")
+
+		cmd := exec.Command(commandSplit[0], commandSplit[1:]...)
+		cmd.Dir = config.Tomodify.ServerDirPath
 		cmdIn, err = cmd.StdinPipe()
 		if err != nil {
 			log.Printf("startMinecraftServer: error creating StdinPipe: %v\n", err)
 			return
 		}
-		cmd.Start()
-	} else {
-		log.Print("startMinecraftServer: error: OS not supported!")
-		os.Exit(1)
+		err = cmd.Start()
+		if err != nil {
+			log.Printf("startMinecraftServer: error starting minecraft server: %v\n", err)
+			return
+		}
 	}
 
 	log.Print("*** MINECRAFT SERVER IS STARTING!")
@@ -254,12 +263,12 @@ func handleClientSocket(clientSocket net.Conn) {
 			if serverStatus == "offline" {
 				log.Printf("*** player unknown requested server info from %s:%s to %s:%s\n", clientAddress, config.Advanced.ListenPort, config.Advanced.TargetHost, config.Advanced.TargetPort)
 				// answer to client with emulated server info
-				clientSocket.Write(buildMessage("info", config.Tomodify.startingInfo))
+				clientSocket.Write(buildMessage("info", config.Tomodify.HibernationInfo))
 
 			} else if serverStatus == "starting" {
 				log.Printf("*** player unknown requested server info from %s:%s to %s:%s during server startup\n", clientAddress, config.Advanced.ListenPort, config.Advanced.TargetHost, config.Advanced.TargetPort)
 				// answer to client with emulated server info
-				clientSocket.Write(buildMessage("info", config.Tomodify.startingInfo))
+				clientSocket.Write(buildMessage("info", config.Tomodify.StartingInfo))
 			}
 
 			// answer to client with ping
@@ -566,12 +575,52 @@ func loadConfig() {
 		os.Exit(1)
 	}
 
+	error := checkConfig()
+	if error != "" {
+		log.Println("loadConfig: config error:", error)
+		os.Exit(1)
+	}
+
 	initVariables()
 }
 
 // initializes some variables
 func initVariables() {
 	timeLeftUntilUp = config.Tomodify.MinecraftServerStartupTime
+}
+
+// checks different paramenters
+func checkConfig() string {
+	//------------- windows and linux -------------//
+
+	// check if OS is windows/linux
+	if runtime.GOOS != "linux" && runtime.GOOS != "windows" {
+		log.Print("checkConfig: error: OS not supported!")
+		os.Exit(1)
+	}
+
+	// check if serverFile exists
+	_, err := os.Stat(config.Tomodify.ServerDirPath)
+	if os.IsNotExist(err) {
+		return fmt.Sprintf("specified server directory does not exist: %s", config.Tomodify.ServerDirPath)
+	}
+
+	// check if java is installed
+	err = exec.Command("java", "-version").Run()
+	if err != nil {
+		return "java not installed!"
+	}
+
+	//------------------- linux -------------------//
+	if runtime.GOOS == "linux" {
+		// check if screen is installed
+		err = exec.Command("screen", "-v").Run()
+		if err != nil {
+			return "screen not installed!"
+		}
+	}
+
+	return ""
 }
 
 //---------------------------data-----------------------------//

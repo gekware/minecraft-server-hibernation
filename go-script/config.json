@@ -1,6 +1,7 @@
 {
   "tomodify": {
-    "startMinecraftServerLin": "cd {PATH/TO/SERVERFOLDER}; screen -dmS minecraftServer java {-Xmx1024M} {-Xms1024M} -jar {server.jar} nogui",
+    "serverDirPath": "C:\\Users\\Giacomo\\Desktop\\minecraft server",
+    "startMinecraftServerLin": "screen -dmS minecraftServer java {-Xmx1024M} {-Xms1024M} -jar server.jar nogui",
     "stopMinecraftServerLin": "screen -S minecraftServer -X stuff 'stop\\n'",
     "startMinecraftServerWin": "java -Xmx1024M -Xms1024M -jar server.jar nogui",
     "stopMinecraftServerWin": "stop",
