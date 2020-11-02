@@ -456,7 +456,7 @@ func buildMessage(format, message string) []byte {
 		// mountHeader: mounts the complete header to a specified message
 		//					┌----------------complete header----------------┐
 		// scheme: 			[sub-header1	|sub-header2 	|sub-header3	|message	]
-		// bytes used:		[2				|1				|2				|0 ... 16384]
+		// bytes used:		[2				|1				|2				|0 ... 16381]
 		// value range:		[131 0 - 255 127	|0				|128 0 - 252 127	|---		]
 
 		var addSubHeader = func(message []byte) []byte {
