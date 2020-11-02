@@ -9,7 +9,9 @@
 version: v2.0.0 (Go)  
 Copyright (C) 2019-2020 [gekigek99](https://github.com/gekigek99)  
 
-The program supports minecraft vanilla and modded on linux and windows!
+This program supports minecraft vanilla and modded on linux and windows!
+
+Check the [releases](https://github.com/gekigek99/minecraft-server-hibernation/releases) to download the binaries (for linux and windows)
 
 -----
 #### Vote for adding optional financial support possibilities:
@@ -17,7 +19,6 @@ https://linkto.run/p/BXYKPR5Y \
 Results: https://linkto.run/r/BXYKPR5Y
 
 -----
-
 ### INSTRUCTIONS:
 This is a Golang script to start a minecraft server on request and stop it when there are no players online.
 How to use:
