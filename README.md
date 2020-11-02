@@ -7,7 +7,7 @@
 [![mvsh - logo](https://user-images.githubusercontent.com/53654579/90397372-09a9df80-e098-11ea-925c-29e9bdfc0b48.png)](https://github.com/gekigek99/minecraft-server-hibernation)  
 
 version: v2.0.0 (Go)  
-Copyright (C) 2019-2020 [gekigek99](https://github.com/gekigek)  
+Copyright (C) 2019-2020 [gekigek99](https://github.com/gekigek99)  
 
 The program supports minecraft vanilla and modded on linux and windows!
 

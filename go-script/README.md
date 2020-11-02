@@ -1,6 +1,6 @@
 # Minecraft Server Hibernation (Go)
 version 2.0.0 (Go)  
-Copyright (C) 2019-2020 [gekigek99](https://github.com/gekigek)  
+Copyright (C) 2019-2020 [gekigek99](https://github.com/gekigek99)  
 
 ## Compile program:
 This version was successfully compiled in go version 1.15
