@@ -89,8 +89,7 @@ func startMinecraftServer() {
 
 	// block that execute the correct start command depending on the OS
 	if runtime.GOOS == "linux" {
-		command := strings.ReplaceAll(config.Basic.StartMinecraftServerLin, "server.jar", "\""+config.Basic.ServerDirPath+"\"")
-		cmd := exec.Command("/bin/bash", "-c", command)
+		cmd := exec.Command("/bin/bash", "-c", config.Basic.StartMinecraftServerLin)
 		cmd.Dir = config.Basic.ServerDirPath
 		err := cmd.Run()
 		if err != nil {
