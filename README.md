@@ -35,7 +35,7 @@ How to use:
 6. on the router: forward port 25555 to server ([tutorial](https://www.wikihow.com/Open-Ports#Opening-Router-Firewall-Ports))
 7. you can connect to the server through port 25555
 
-* = this step is NOT strictly necessary
+\* = this step is NOT strictly necessary
 
 (remember to run the script at reboot)
 
