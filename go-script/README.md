@@ -1,9 +1,9 @@
 # Minecraft Server Hibernation (Go)
-version ~~~ (Go)  
-Copyright (C) 2020 [gekigek99](https://github.com/gekigek)  
+version 2.0.0 (Go)  
+Copyright (C) 2019-2020 [gekigek99](https://github.com/gekigek)  
 
 ## Compile program:
-This version was successfully compiled in go-version 1.14
+This version was successfully compiled in go version 1.15
 To compile run the command:
 ```
 go build minecraft-server-hibernation.go

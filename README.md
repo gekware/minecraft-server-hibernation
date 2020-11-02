@@ -6,7 +6,9 @@
 
 [![mvsh - logo](https://user-images.githubusercontent.com/53654579/90397372-09a9df80-e098-11ea-925c-29e9bdfc0b48.png)](https://github.com/gekigek99/minecraft-server-hibernation)  
 
-Release version: ~~~ (Go)  
+version: v2.0.0 (Go)  
+Copyright (C) 2019-2020 [gekigek99](https://github.com/gekigek)  
+
 The program supports minecraft vanilla and modded on linux and windows!
 
 -----
@@ -17,7 +19,7 @@ Results: https://linkto.run/r/BXYKPR5Y
 -----
 
 ### INSTRUCTIONS:
-This is a Golang script to start a minecraft server on request and stop it when there are no player online.
+This is a Golang script to start a minecraft server on request and stop it when there are no players online.
 How to use:
 1. Install your desired minecraft server
 2. "server-port" parameter in "server.properties" should be 25565
@@ -25,11 +27,15 @@ How to use:
     - serverDirPath
     - startMinecraftServerLin or startMinecraftServerWin
     - stopMinecraftServerLin or stopMinecraftServerWin
-    - minecraftServerStartupTime
-    - timeBeforeStoppingEmptyServer 
-4. on the server: open port 25555 (example: [ufw firewall](https://www.configserverfirewall.com/ufw-ubuntu-firewall/ubuntu-firewall-open-port/))
-5. on the router: forward port 25555 to server ([tutorial](https://www.wikihow.com/Open-Ports#Opening-Router-Firewall-Ports))
-6. you can connect to the server through port 25555
+    - *hibernationInfo and startingInfo
+    - *minecraftServerStartupTime
+    - *timeBeforeStoppingEmptyServer
+4. *put the frozen icon you want in "path/to/server.jar/folder" (must be 64x64 and called "server-icon-frozen.png")
+5. on the server: open port 25555 (example: [ufw firewall](https://www.configserverfirewall.com/ufw-ubuntu-firewall/ubuntu-firewall-open-port/))
+6. on the router: forward port 25555 to server ([tutorial](https://www.wikihow.com/Open-Ports#Opening-Router-Firewall-Ports))
+7. you can connect to the server through port 25555
+
+* = this step is NOT strictly necessary
 
 (remember to run the script at reboot)
 
@@ -38,9 +44,9 @@ Commands to start and stop minecraft server:
 ```yaml
 # only text in parethesis needs to be modified
 "serverDirPath": "{path/to/server.jar/folder}",
-"startMinecraftServerLin": "screen -dmS minecraftServer java -Xmx1024M -Xms1024M -jar server.jar nogui",
+"startMinecraftServerLin": "screen -dmS minecraftServer java {-Xmx1024M -Xms1024M} -jar {server.jar} nogui",
 "stopMinecraftServerLin": "screen -S minecraftServer -X stuff 'stop\\n'",
-"startMinecraftServerWin": "java -Xmx1024M -Xms1024M -jar server.jar nogui",
+"startMinecraftServerWin": "java {-Xmx1024M -Xms1024M} -jar {server.jar} nogui",
 "stopMinecraftServerWin": "stop",
 
 # if you are on linux you can access the minecraft server console with "sudo screen -r minecraftServer"
@@ -50,18 +56,18 @@ Personally I set up a systemctl minecraft server service (called "minecraft-serv
 "startMinecraftServerLin": "sudo systemctl start minecraft-server",
 "stopMinecraftServerLin": "sudo systemctl stop minecraft-server",
 ```
-If you are the first to access to minecraft world you will have to wait *30 seconds* and then try to connect again.
-```yaml
-"minecraftServerStartupTime": 30,         #any parameter more than 10s is recommended
-```
-*120 seconds* is the time (after the last player disconnected) that the script waits before shutting down the minecraft server
-```yaml
-"timeBeforeStoppingEmptyServer": 120     #any parameter more than 60s is recommended
-```
-To specify a hibernation/warming up info message
+Hibernation and warming up server description
 ```yaml
 "hibernationInfo": "                   &fserver status:\n                   &b&lHIBERNATING",
 "startingInfo": "                   &fserver status:\n                    &6&lWARMING UP",
+```
+If you are the first to access to minecraft world you will have to wait *20 seconds* and then try to connect again.
+```yaml
+"minecraftServerStartupTime": 20,       #any parameter more than 10s is recommended
+```
+*60 seconds* is the time (after the last player disconnected) that the script waits before shutting down the minecraft server
+```yaml
+"timeBeforeStoppingEmptyServer": 60     #any parameter more than 30s is recommended
 ```
 -----
 ### CREDITS:  

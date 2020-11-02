@@ -2,9 +2,10 @@ package main
 
 import (
 	"bytes"
-	"encoding/binary"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"image/png"
 	"io"
 	"io/ioutil"
 	"log"
@@ -13,6 +14,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"sync"
@@ -22,8 +24,13 @@ import (
 // contains intro to script and program
 var info []string = []string{
 	"Minecraft-Server-Hibernation is used to auto-start/stop a vanilla/modded minecraft server",
+	"               _     ",
+	" _ __ ___  ___| |__  ",
+	"| '_ ` _ \\/ __| '_ \\ ",
+	"| | | | | \\__ \\ | | |",
+	"|_| |_| |_|___/_| |_|",
 	"Copyright (C) 2019-2020 gekigek99",
-	"v~~~ (Go)",
+	"v2.0.0 (Go)",
 	"visit my github page: https://github.com/gekigek99",
 	"remember to give a star to this repository!",
 	"if you like what I do please consider having a cup of coffee with me at: https://www.buymeacoffee.com/gekigek99",
@@ -195,7 +202,7 @@ func printDataUsage() {
 
 func main() {
 	// prints intro to program
-	fmt.Println(strings.Join(info[1:5], "\n"))
+	fmt.Println(strings.Join(info[1:10], "\n"))
 
 	loadConfig()
 
@@ -445,39 +452,36 @@ func forwardSync(source, destination net.Conn, isServerToClient bool) {
 
 // takes the format ("txt", "info") and a message to write to the client
 func buildMessage(format, message string) []byte {
-	var mountHeader = func(messageStr string, constant int) []byte {
-		// mountHeader: mounts the header to a specified message
-		// scheme: 			[header1 												|header2 	|header3 					|message]
-		// bytes used:		[1/2													|1			|1/2						|∞		]
-		// value calc: 		[len(header2) + len(header3) + len(message) + constant	|0			|len(message) + constant 	|message]
-		// possible values:	[1            + 1/2          + ∞            + 0/11264	|0			|∞            + 0/11264		|-------]
+	var mountHeader = func(messageStr string) []byte {
+		// mountHeader: mounts the complete header to a specified message
+		//					┌----------------complete header----------------┐
+		// scheme: 			[sub-header1	|sub-header2 	|sub-header3	|message	]
+		// bytes used:		[2				|1				|2				|0 ... 16384]
+		// value range:		[3 0 - 255 127	|0				|0 0 - 252 127	|---		]
 
-		var addHeader = func(message []byte) []byte {
-			mesLen := len(message) + constant
-			// calculate the bytes needed to store mesLen
-			// int(math.Ceil(log255(mesLen)))
-			byteNum := int(math.Ceil(math.Log(float64(mesLen)) / math.Log(255)))
-			header := make([]byte, byteNum)
-			if byteNum > 1 {
-				// 2 bytes are needed to store the mesLen --> order them as LittleEndian and store them in header3
-				binary.LittleEndian.PutUint16(header[:], uint16(mesLen))
-			} else {
-				// 1 byte is needed to store the mesLen --> no need to order it
-				header = []byte{byte(mesLen)}
-			}
-			return append(header, message...)
+		var addSubHeader = func(message []byte) []byte {
+			// addSubHeader: mounts 1 sub-header to a specified message
+			//				┌sub-header1/sub-header3┐
+			// scheme:		[firstByte	|secondByte	|data	]
+			// value range:	[128-255	|0-127		|---	]
+			// it's a number composed of 2 digits in base-128 (firstByte is least significant byte)
+			// sub-header represents the lenght of the following data
+
+			firstByte := len(message)%128 + 128
+			secondByte := math.Floor(float64(len(message) / 128))
+			return append([]byte{byte(firstByte), byte(secondByte)}, message...)
 		}
 
 		messageByte := []byte(messageStr)
 
-		// header3 calculation
-		messageByte = addHeader(messageByte)
+		// sub-header3 calculation
+		messageByte = addSubHeader(messageByte)
 
-		// header2 calculation
+		// sub-header2 calculation
 		messageByte = append([]byte{0}, messageByte...)
 
-		// header1 calculation
-		messageByte = addHeader(messageByte)
+		// sub-header1 calculation
+		messageByte = addSubHeader(messageByte)
 
 		return messageByte
 	}
@@ -493,8 +497,7 @@ func buildMessage(format, message string) []byte {
 			"}",
 		)
 
-		// for txt the constant == 0
-		messageHeader = mountHeader(messageJSON, 0)
+		messageHeader = mountHeader(messageJSON)
 
 	} else if format == "info" {
 		// to send server info
@@ -504,22 +507,19 @@ func buildMessage(format, message string) []byte {
 
 		messageJSON := fmt.Sprint("{",
 			"\"description\":{\"text\":\"", messageAdapted, "\"},",
+			"\"players\":{\"max\":0,\"online\":0},",
 			"\"version\":{\"name\":\"", config.Advanced.ServerVersion, "\",\"protocol\":", fmt.Sprint(config.Advanced.ServerProtocol), "},",
 			"\"favicon\":\"data:image/png;base64,", serverIcon, "\"",
 			"}",
 		)
 
-		// for info the constant == 11264
-		messageHeader = mountHeader(messageJSON, 11264)
-
-	} else {
-		logger("buildMessage: specified format invalid")
-		messageHeader = nil
+		messageHeader = mountHeader(messageJSON)
 	}
 
 	return messageHeader
 }
 
+// responds to the ping request
 func answerPingReq(clientSocket net.Conn) {
 	req := make([]byte, 1024)
 
@@ -584,9 +584,44 @@ func loadConfig() {
 	initVariables()
 }
 
+func loadIcon(userIconPath string) {
+	// this function loads userIconPath image (base-64 encoded and compressed)
+	// into serverIcon variable
+
+	buff := &bytes.Buffer{}
+	enc := &png.Encoder{CompressionLevel: -3} // -3: best compression
+
+	f, err := os.Open(userIconPath)
+	if err != nil {
+		logger("initVariables:", err.Error())
+		return
+	}
+	defer f.Close()
+
+	// using an encoder to compress the image data
+	pngIm, err := png.Decode(f)
+	if err != nil {
+		logger("initVariables:", err.Error())
+		return
+	}
+	err = enc.Encode(buff, pngIm)
+	if err != nil {
+		logger("initVariables:", err.Error())
+		return
+	}
+
+	serverIcon = base64.RawStdEncoding.EncodeToString(buff.Bytes())
+}
+
 // initializes some variables
 func initVariables() {
 	timeLeftUntilUp = config.Basic.MinecraftServerStartupTime
+
+	// if server-icon-frozen.png is in ServerDirPath folder then load this icon
+	userIconPath := filepath.Join(config.Basic.ServerDirPath, "server-icon-frozen.png")
+	if _, err := os.Stat(userIconPath); !os.IsNotExist(err) {
+		loadIcon(userIconPath)
+	}
 }
 
 // checks different paramenters
@@ -625,7 +660,7 @@ func checkConfig() string {
 
 //---------------------------data-----------------------------//
 
-// contains is the captured picture data of the msh logo
+// msh logo base-64 encoded
 var serverIcon string = "" +
 	"iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAgK0lEQVR42uV7CViV55l2kqbpdJqmmWliXGJEURDZOez7DgcO+77" +
 	"KKgKKgvsSg1uioHFhURDTdNJOO1unaWI2474ioknTPY27UWQXBM456P3fz3uApNf/46TXzPyZdriu9zrbd77vfe7nfu7nfj7gkU" +
