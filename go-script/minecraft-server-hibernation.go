@@ -592,20 +592,31 @@ func loadIcon(userIconPath string) {
 
 	f, err := os.Open(userIconPath)
 	if err != nil {
-		logger("initVariables:", err.Error())
+		logger("opening icon file:", err.Error())
 		return
 	}
 	defer f.Close()
 
+	// Check for correct image dimensions
+	im, err := png.DecodeConfig(f)
+	if err != nil {
+		logger("decoding config of icon:", err.Error())
+		return
+	}
+	if im.Width != 64 || im.Height != 64 {
+		log.Printf("Incorrect server-icon-frozen.png size. Current size: %dx%d", im.Width, im.Height)
+		return
+	}
+
 	// using an encoder to compress the image data
 	pngIm, err := png.Decode(f)
 	if err != nil {
-		logger("initVariables:", err.Error())
+		logger("decoding icon:", err.Error())
 		return
 	}
 	err = enc.Encode(buff, pngIm)
 	if err != nil {
-		logger("initVariables:", err.Error())
+		logger("encoding icon:", err.Error())
 		return
 	}
 
@@ -634,6 +645,7 @@ func checkConfig() string {
 	}
 
 	// check if serverFolder exists
+	config.Basic.ServerDirPath = filepath.Join(config.Basic.ServerDirPath, "")
 	logger("Checking for " + config.Basic.ServerDirPath)
 	_, err := os.Stat(config.Basic.ServerDirPath)
 	if os.IsNotExist(err) {
@@ -649,8 +661,8 @@ func checkConfig() string {
 		var startString []string = strings.Split(config.Basic.StartMinecraftServerWin, " ")
 		serverFileName = startString[len(startString)-2]
 	}
-	logger("Checking for " + config.Basic.ServerDirPath + serverFileName)
-	_, err = os.Stat(config.Basic.ServerDirPath + serverFileName)
+	logger("Checking for " + filepath.Join(config.Basic.ServerDirPath, serverFileName))
+	_, err = os.Stat(filepath.Join(config.Basic.ServerDirPath, serverFileName))
 	if os.IsNotExist(err) {
 		return fmt.Sprintf("specified server file does not exist: %s", serverFileName)
 	}
