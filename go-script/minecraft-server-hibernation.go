@@ -64,7 +64,7 @@ type advanced struct {
 	ServerProtocol string
 }
 
-//------------------------don't modify------------------------//
+//-------------------------technical--------------------------//
 
 var config configuration
 
@@ -82,7 +82,11 @@ var stopInstances int = 0
 
 // to keep track of how many seconds are still needed to reach serverStatus == "online"
 var timeLeftUntilUp int
+
 var mutex = &sync.Mutex{}
+
+// used to start/stop server on windows
+var cmdIn io.WriteCloser
 
 //--------------------------PROGRAM---------------------------//
 
@@ -558,9 +562,7 @@ func logger(args ...string) {
 	}
 }
 
-//------------------------go specific-------------------------//
-
-var cmdIn io.WriteCloser
+//----------------------loading functions---------------------//
 
 // loads json data from config.json into config
 func loadConfig() {
@@ -584,6 +586,54 @@ func loadConfig() {
 	}
 
 	initVariables()
+}
+
+// checks different paramenters
+func checkConfig() string {
+	//------------- windows and linux -------------//
+
+	// check if OS is windows/linux
+	if runtime.GOOS != "linux" && runtime.GOOS != "windows" {
+		log.Print("checkConfig: error: OS not supported!")
+		os.Exit(1)
+	}
+
+	// check if serverFile/serverFolder exists
+	// (if config.Basic.ServerFileName == "", then it will just check if the server folder exist)
+	serverFileFolderPath := filepath.Join(config.Basic.ServerDirPath, config.Basic.ServerFileName)
+	logger("Checking for " + serverFileFolderPath)
+	_, err = os.Stat(serverFileFolderPath)
+	if os.IsNotExist(err) {
+		return fmt.Sprintf("specified server file/folder does not exist: %s", serverFileFolderPath)
+	}
+
+	// check if java is installed
+	err = exec.Command("java", "-version").Run()
+	if err != nil {
+		return "java not installed!"
+	}
+
+	//------------------- linux -------------------//
+	if runtime.GOOS == "linux" {
+		// check if screen is installed
+		err = exec.Command("screen", "-v").Run()
+		if err != nil {
+			return "screen not installed!"
+		}
+	}
+
+	return ""
+}
+
+// initializes some variables
+func initVariables() {
+	timeLeftUntilUp = config.Basic.MinecraftServerStartupTime
+
+	// if server-icon-frozen.png is in ServerDirPath folder then load this icon
+	userIconPath := filepath.Join(config.Basic.ServerDirPath, "server-icon-frozen.png")
+	if _, err := os.Stat(userIconPath); !os.IsNotExist(err) {
+		loadIcon(userIconPath)
+	}
 }
 
 func loadIcon(userIconPath string) {
@@ -621,61 +671,6 @@ func loadIcon(userIconPath string) {
 	} else {
 		log.Printf("loadIcon: incorrect server-icon-frozen.png size. Current size: %dx%d", pngIm.Bounds().Max.X, pngIm.Bounds().Max.Y)
 	}
-}
-
-// initializes some variables
-func initVariables() {
-	timeLeftUntilUp = config.Basic.MinecraftServerStartupTime
-
-	// if server-icon-frozen.png is in ServerDirPath folder then load this icon
-	userIconPath := filepath.Join(config.Basic.ServerDirPath, "server-icon-frozen.png")
-	if _, err := os.Stat(userIconPath); !os.IsNotExist(err) {
-		loadIcon(userIconPath)
-	}
-}
-
-// checks different paramenters
-func checkConfig() string {
-	//------------- windows and linux -------------//
-
-	// check if OS is windows/linux
-	if runtime.GOOS != "linux" && runtime.GOOS != "windows" {
-		log.Print("checkConfig: error: OS not supported!")
-		os.Exit(1)
-	}
-
-	// check if serverFolder exists
-	serverDirPath := filepath.Join(config.Basic.ServerDirPath, "")
-	logger("Checking for " + serverDirPath)
-	_, err := os.Stat(serverDirPath)
-	if os.IsNotExist(err) {
-		return fmt.Sprintf("specified server directory does not exist: %s", serverDirPath)
-	}
-
-	// check if serverFile exists
-	serverFilePath := filepath.Join(config.Basic.ServerDirPath, config.Basic.ServerFileName)
-	logger("Checking for " + serverFilePath)
-	_, err = os.Stat(serverFilePath)
-	if os.IsNotExist(err) {
-		return fmt.Sprintf("specified server file does not exist: %s", config.Basic.ServerFileName)
-	}
-
-	// check if java is installed
-	err = exec.Command("java", "-version").Run()
-	if err != nil {
-		return "java not installed!"
-	}
-
-	//------------------- linux -------------------//
-	if runtime.GOOS == "linux" {
-		// check if screen is installed
-		err = exec.Command("screen", "-v").Run()
-		if err != nil {
-			return "screen not installed!"
-		}
-	}
-
-	return ""
 }
 
 //---------------------------data-----------------------------//
