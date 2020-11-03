@@ -26,6 +26,7 @@ How to use:
 2. "server-port" parameter in "server.properties" should be 25565
 3. Edit the parameters in config.json as needed (*check definitions*):
     - serverDirPath
+    - serverFileName
     - startMinecraftServerLin or startMinecraftServerWin
     - stopMinecraftServerLin or stopMinecraftServerWin
     - *hibernationInfo and startingInfo
@@ -44,10 +45,11 @@ How to use:
 Commands to start and stop minecraft server:
 ```yaml
 # only text in parethesis needs to be modified
-"serverDirPath": "{path/to/server.jar/folder}",
-"startMinecraftServerLin": "screen -dmS minecraftServer java {-Xmx1024M -Xms1024M} -jar {server.jar} nogui",
+"serverDirPath": "{path/to/server/folder}",
+"serverFileName": "{server.jar}",
+"startMinecraftServerLin": "screen -dmS minecraftServer java {-Xmx1024M -Xms1024M} -jar serverFileName nogui",
 "stopMinecraftServerLin": "screen -S minecraftServer -X stuff 'stop\\n'",
-"startMinecraftServerWin": "java {-Xmx1024M -Xms1024M} -jar {server.jar} nogui",
+"startMinecraftServerWin": "java {-Xmx1024M -Xms1024M} -jar serverFileName nogui",
 "stopMinecraftServerWin": "stop",
 
 # if you are on linux you can access the minecraft server console with "sudo screen -r minecraftServer"

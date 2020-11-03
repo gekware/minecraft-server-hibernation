@@ -43,6 +43,7 @@ type configuration struct {
 }
 type basic struct {
 	ServerDirPath                 string
+	ServerFileName                string
 	StartMinecraftServerLin       string
 	StopMinecraftServerLin        string
 	StartMinecraftServerWin       string
@@ -89,7 +90,8 @@ func startMinecraftServer() {
 
 	// block that execute the correct start command depending on the OS
 	if runtime.GOOS == "linux" {
-		cmd := exec.Command("/bin/bash", "-c", config.Basic.StartMinecraftServerLin)
+		command := strings.ReplaceAll(config.Basic.StartMinecraftServerLin, "serverFileName", config.Basic.ServerFileName)
+		cmd := exec.Command("/bin/bash", "-c", command)
 		cmd.Dir = config.Basic.ServerDirPath
 		err := cmd.Run()
 		if err != nil {
@@ -99,8 +101,8 @@ func startMinecraftServer() {
 	} else if runtime.GOOS == "windows" {
 		var err error
 
-		commandSplit := strings.Split(config.Basic.StartMinecraftServerWin, " ")
-
+		command := strings.ReplaceAll(config.Basic.StartMinecraftServerWin, "serverFileName", config.Basic.ServerFileName)
+		commandSplit := strings.Split(command, " ")
 		cmd := exec.Command(commandSplit[0], commandSplit[1:]...)
 		cmd.Dir = config.Basic.ServerDirPath
 		cmdIn, err = cmd.StdinPipe()
@@ -655,26 +657,19 @@ func checkConfig() string {
 	}
 
 	// check if serverFolder exists
-	config.Basic.ServerDirPath = filepath.Join(config.Basic.ServerDirPath, "")
-	logger("Checking for " + config.Basic.ServerDirPath)
-	_, err := os.Stat(config.Basic.ServerDirPath)
+	serverDirPath := filepath.Join(config.Basic.ServerDirPath, "")
+	logger("Checking for " + serverDirPath)
+	_, err := os.Stat(serverDirPath)
 	if os.IsNotExist(err) {
-		return fmt.Sprintf("specified server directory does not exist: %s", config.Basic.ServerDirPath)
+		return fmt.Sprintf("specified server directory does not exist: %s", serverDirPath)
 	}
 
 	// check if serverFile exists
-	var serverFileName string = ""
-	if runtime.GOOS == "linux" {
-		var startString []string = strings.Split(config.Basic.StartMinecraftServerLin, " ")
-		serverFileName = startString[len(startString)-2]
-	} else if runtime.GOOS == "windows" {
-		var startString []string = strings.Split(config.Basic.StartMinecraftServerWin, " ")
-		serverFileName = startString[len(startString)-2]
-	}
-	logger("Checking for " + filepath.Join(config.Basic.ServerDirPath, serverFileName))
-	_, err = os.Stat(filepath.Join(config.Basic.ServerDirPath, serverFileName))
+	serverFilePath := filepath.Join(config.Basic.ServerDirPath, config.Basic.ServerFileName)
+	logger("Checking for " + serverFilePath)
+	_, err = os.Stat(serverFilePath)
 	if os.IsNotExist(err) {
-		return fmt.Sprintf("specified server file does not exist: %s", serverFileName)
+		return fmt.Sprintf("specified server file does not exist: %s", config.Basic.ServerFileName)
 	}
 
 	// check if java is installed
