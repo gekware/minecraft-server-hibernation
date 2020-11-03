@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"image"
 	"image/png"
 	"io"
 	"io/ioutil"
@@ -592,47 +593,34 @@ func loadIcon(userIconPath string) {
 	buff := &bytes.Buffer{}
 	enc := &png.Encoder{CompressionLevel: -3} // -3: best compression
 
-	// Check for correct image dimensions
+	// Using a decoder to read and then an encoder to compress the image data
+
 	// Open file
 	f, err := os.Open(userIconPath)
 	if err != nil {
-		logger("opening icon file:", err.Error())
-		return
-	}
-	// Decode image information
-	im, err := png.DecodeConfig(f)
-	if err != nil {
-		logger("decoding config of icon:", err.Error())
-		return
-	}
-	if im.Width != 64 || im.Height != 64 {
-		log.Printf("Incorrect server-icon-frozen.png size. Current size: %dx%d", im.Width, im.Height)
-		return
-	}
-	f.Close()
-
-	// Using a decoder to read and then an encoder to compress the image data
-	// Open file
-	f, err = os.Open(userIconPath)
-	if err != nil {
-		logger("opening icon file:", err.Error())
+		logger("loadIcon: error opening icon file:", err.Error())
 		return
 	}
 	defer f.Close()
+
 	// Decode
 	pngIm, err := png.Decode(f)
 	if err != nil {
-		logger("decoding icon:", err.Error())
-		return
-	}
-	// Encode
-	err = enc.Encode(buff, pngIm)
-	if err != nil {
-		logger("encoding icon:", err.Error())
+		logger("loadIcon: error decoding icon:", err.Error())
 		return
 	}
 
-	serverIcon = base64.RawStdEncoding.EncodeToString(buff.Bytes())
+	// Encode if image is 64x64
+	if pngIm.Bounds().Max == image.Pt(64, 64) {
+		err = enc.Encode(buff, pngIm)
+		if err != nil {
+			logger("loadIcon: error encoding icon:", err.Error())
+			return
+		}
+		serverIcon = base64.RawStdEncoding.EncodeToString(buff.Bytes())
+	} else {
+		log.Printf("loadIcon: incorrect server-icon-frozen.png size. Current size: %dx%d", pngIm.Bounds().Max.X, pngIm.Bounds().Max.Y)
+	}
 }
 
 // initializes some variables
