@@ -633,10 +633,26 @@ func checkConfig() string {
 		os.Exit(1)
 	}
 
-	// check if serverFile exists
+	// check if serverFolder exists
+	logger("Checking for " + config.Basic.ServerDirPath)
 	_, err := os.Stat(config.Basic.ServerDirPath)
 	if os.IsNotExist(err) {
 		return fmt.Sprintf("specified server directory does not exist: %s", config.Basic.ServerDirPath)
+	}
+
+	// check if serverFile exists
+	var serverFileName string = ""
+	if runtime.GOOS == "linux" {
+		var startString []string = strings.Split(config.Basic.StartMinecraftServerLin, " ")
+		serverFileName = startString[len(startString)-2]
+	} else if runtime.GOOS == "windows" {
+		var startString []string = strings.Split(config.Basic.StartMinecraftServerWin, " ")
+		serverFileName = startString[len(startString)-2]
+	}
+	logger("Checking for " + config.Basic.ServerDirPath + serverFileName)
+	_, err = os.Stat(config.Basic.ServerDirPath + serverFileName)
+	if os.IsNotExist(err) {
+		return fmt.Sprintf("specified server file does not exist: %s", serverFileName)
 	}
 
 	// check if java is installed
