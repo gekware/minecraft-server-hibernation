@@ -590,14 +590,14 @@ func loadIcon(userIconPath string) {
 	buff := &bytes.Buffer{}
 	enc := &png.Encoder{CompressionLevel: -3} // -3: best compression
 
+	// Check for correct image dimensions
+	// Open file
 	f, err := os.Open(userIconPath)
 	if err != nil {
 		logger("opening icon file:", err.Error())
 		return
 	}
-	defer f.Close()
-
-	// Check for correct image dimensions
+	// Decode image information
 	im, err := png.DecodeConfig(f)
 	if err != nil {
 		logger("decoding config of icon:", err.Error())
@@ -607,13 +607,23 @@ func loadIcon(userIconPath string) {
 		log.Printf("Incorrect server-icon-frozen.png size. Current size: %dx%d", im.Width, im.Height)
 		return
 	}
+	f.Close()
 
-	// using an encoder to compress the image data
+	// Using a decoder to read and then an encoder to compress the image data
+	// Open file
+	f, err = os.Open(userIconPath)
+	if err != nil {
+		logger("opening icon file:", err.Error())
+		return
+	}
+	defer f.Close()
+	// Decode
 	pngIm, err := png.Decode(f)
 	if err != nil {
 		logger("decoding icon:", err.Error())
 		return
 	}
+	// Encode
 	err = enc.Encode(buff, pngIm)
 	if err != nil {
 		logger("encoding icon:", err.Error())
