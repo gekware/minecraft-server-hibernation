@@ -602,7 +602,7 @@ func checkConfig() string {
 	// (if config.Basic.ServerFileName == "", then it will just check if the server folder exist)
 	serverFileFolderPath := filepath.Join(config.Basic.ServerDirPath, config.Basic.ServerFileName)
 	logger("Checking for " + serverFileFolderPath)
-	_, err = os.Stat(serverFileFolderPath)
+	_, err := os.Stat(serverFileFolderPath)
 	if os.IsNotExist(err) {
 		return fmt.Sprintf("specified server file/folder does not exist: %s", serverFileFolderPath)
 	}
