@@ -22,6 +22,9 @@ import (
 	"time"
 )
 
+// version
+var version string = "v2.0.0 (Go)"
+
 // contains intro to script and program
 var info []string = []string{
 	"Minecraft-Server-Hibernation is used to auto-start/stop a vanilla/modded minecraft server",
@@ -31,7 +34,7 @@ var info []string = []string{
 	"| | | | | \\__ \\ | | |",
 	"|_| |_| |_|___/_| |_|",
 	"Copyright (C) 2019-2020 gekigek99",
-	"v2.0.0 (Go)",
+	version,
 	"visit my github page: https://github.com/gekigek99",
 	"remember to give a star to this repository!",
 	"if you like what I do please consider having a cup of coffee with me at: https://www.buymeacoffee.com/gekigek99",
