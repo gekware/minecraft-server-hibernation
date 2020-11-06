@@ -19,7 +19,7 @@ https://linkto.run/p/BXYKPR5Y \
 Results: https://linkto.run/r/BXYKPR5Y
 
 -----
-## Compile program:
+### PROGRAM COMPILATION:
 This version was successfully compiled in go version 1.15
 To compile run the command:
 ```
