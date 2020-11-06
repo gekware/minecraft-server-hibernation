@@ -19,6 +19,14 @@ https://linkto.run/p/BXYKPR5Y \
 Results: https://linkto.run/r/BXYKPR5Y
 
 -----
+## Compile program:
+This version was successfully compiled in go version 1.15
+To compile run the command:
+```
+go build minecraft-server-hibernation.go
+```
+
+-----
 ### INSTRUCTIONS:
 This is a Golang script to start a minecraft server on request and stop it when there are no players online.
 How to use:
