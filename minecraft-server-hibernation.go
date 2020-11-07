@@ -27,7 +27,6 @@ var version string = "v2.0.0 (Go)"
 
 // contains intro to script and program
 var info []string = []string{
-	"Minecraft-Server-Hibernation is used to auto-start/stop a vanilla/modded minecraft server",
 	"               _     ",
 	" _ __ ___  ___| |__  ",
 	"| '_ ` _ \\/ __| '_ \\ ",
@@ -37,7 +36,6 @@ var info []string = []string{
 	version,
 	"visit my github page: https://github.com/gekigek99",
 	"remember to give a star to this repository!",
-	"if you like what I do please consider having a cup of coffee with me at: https://www.buymeacoffee.com/gekigek99",
 }
 
 // struct adapted to config.json
@@ -211,7 +209,7 @@ func printDataUsage() {
 
 func main() {
 	// prints intro to program
-	fmt.Println(strings.Join(info[1:10], "\n"))
+	fmt.Println(strings.Join(info, "\n"))
 
 	loadConfig()
 
