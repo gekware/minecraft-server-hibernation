@@ -15,11 +15,6 @@ Copyright (C) 2019-2020 [gekigek99](https://github.com/gekigek99)
 Check the [releases](https://github.com/gekigek99/minecraft-server-hibernation/releases) to download the binaries (for linux and windows)
 
 -----
-#### Vote for adding optional financial support possibilities:
-https://linkto.run/p/BXYKPR5Y \
-Results: https://linkto.run/r/BXYKPR5Y
-
------
 ### PROGRAM COMPILATION:
 This version was successfully compiled in go version 1.15
 To compile run the command:
@@ -41,6 +36,7 @@ How to use:
     - *hibernationInfo and startingInfo
     - *minecraftServerStartupTime
     - *timeBeforeStoppingEmptyServer
+    - *checkForUpdates
 4. *put the frozen icon you want in "path/to/server.jar/folder" (must be 64x64 and called "server-icon-frozen.png")
 5. on the server: open port 25555 (example: [ufw firewall](https://www.configserverfirewall.com/ufw-ubuntu-firewall/ubuntu-firewall-open-port/))
 6. on the router: forward port 25555 to server ([tutorial](https://www.wikihow.com/Open-Ports#Opening-Router-Firewall-Ports))
@@ -92,10 +88,10 @@ Author: [gekigek99](https://github.com/gekigek99)
 Contributors: [najtin](https://github.com/najtin/minecraft-server-hibernation)  
 Docker branch: [lubocode](https://github.com/gekigek99/minecraft-server-hibernation/tree/docker)  
 
-#### If you like what I do please consider having a cup of coffee with me at:  
+<a href="https://www.buymeacoffee.com/gekigek99" >
+    <img src="https://user-images.githubusercontent.com/53654579/98535501-81963900-2286-11eb-94a4-359adb64afe2.png">
+</a>
 
-<a href="https://www.buymeacoffee.com/gekigek99" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: 41px !important;width: 174px !important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" ></a>
-
-#### Remember to give a star to this repository [here](https://github.com/gekigek99/minecraft-server-hibernation)!  
+#### Give a star to this repository [here](https://github.com/gekigek99/minecraft-server-hibernation)!  
 
 [![Stargazers for @gekigek99/minecraft-server-hibernation](https://reporoster.com/stars/gekigek99/minecraft-server-hibernation)](https://github.com/gekigek99/minecraft-server-hibernation/stargazers)
