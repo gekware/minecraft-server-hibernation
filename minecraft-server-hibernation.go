@@ -373,14 +373,10 @@ func handleClientSocket(clientSocket net.Conn) {
 			return
 		}
 
-		connectSocketsAsync(clientSocket, serverSocket)
+		// launch clientToServer() and serverToClient()
+		go clientToServer(clientSocket, serverSocket)
+		go serverToClient(serverSocket, clientSocket)
 	}
-}
-
-// launches clientToServer() and serverToClient()
-func connectSocketsAsync(client net.Conn, server net.Conn) {
-	go clientToServer(client, server)
-	go serverToClient(server, client)
 }
 
 func clientToServer(source, destination net.Conn) {
