@@ -67,7 +67,7 @@ type advanced struct {
 	ServerProtocol string
 }
 
-//-------------------------technical--------------------------//
+//----------------------global variables----------------------//
 
 var config configuration
 
@@ -92,6 +92,99 @@ var mutex = &sync.Mutex{}
 var cmdIn io.WriteCloser
 
 //--------------------------PROGRAM---------------------------//
+
+func main() {
+	// print program intro
+	fmt.Println(strings.Join(info, "\n"))
+
+	// load configuration from config file
+	// load server-icon-frozen.png if present
+	loadConfig()
+
+	// check for updates
+	if config.Basic.CheckForUpdates {
+		updateChecker()
+	}
+
+	// listen for interrupt signal and issue stopEmptyMinecraftServer(true) before exiting
+	interruptListener()
+
+	// launch printDataUsage()
+	go printDataUsage()
+
+	// open a listener on {config.Advanced.ListenHost}+":"+{config.Advanced.ListenPort}
+	listener, err := net.Listen("tcp", config.Advanced.ListenHost+":"+config.Advanced.ListenPort)
+	if err != nil {
+		log.Printf("main: Fatal error: %s", err.Error())
+		time.Sleep(time.Duration(5) * time.Second)
+		os.Exit(1)
+	}
+
+	defer func() {
+		logger("Closing connection for: listener")
+		listener.Close()
+	}()
+
+	log.Println("*** listening for new clients to connect...")
+
+	// infinite cycle to accept clients. when a clients connects it is passed to handleClientSocket()
+	for {
+		clientSocket, err := listener.Accept()
+		if err != nil {
+			logger("main:", err.Error())
+			continue
+		}
+		handleClientSocket(clientSocket)
+	}
+}
+
+//---------------------program management---------------------//
+
+func updateChecker() {
+	v := "1"
+	// latest-version.php protocol version number: 1
+	// connection every 4 hours
+	// parameters passed to php: v, version
+	// response: "latest version: $latestVersion"
+
+	var latestVersion string
+
+	resp, err := http.Get("https://minecraft-server-hibernation.000webhostapp.com/latest-version.php?v=" + v + "&version=" + version)
+	if err != nil {
+		time.AfterFunc(1*time.Minute, func() { updateChecker() })
+		return
+	}
+	respByte, err := ioutil.ReadAll(resp.Body)
+	if err == nil && strings.Contains(string(respByte), "latest version: ") {
+		// no error and contains "latest version: "
+		latestVersion = strings.ReplaceAll(string(respByte), "latest version: ", "")
+	} else {
+		// error happened, suppose that the actual version is updated
+		latestVersion = version
+	}
+
+	if version != latestVersion {
+		fmt.Println("***", latestVersion, "is now available: visit github to update!", "***")
+	}
+
+	time.AfterFunc(4*time.Hour, func() { updateChecker() })
+}
+
+func interruptListener() {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	go func() {
+		for {
+			select {
+			case <-c:
+				stopEmptyMinecraftServer(true)
+				os.Exit(0)
+			}
+		}
+	}()
+}
+
+//---------------------server management----------------------//
 
 func startMinecraftServer() {
 	serverStatus = "starting"
@@ -197,92 +290,7 @@ func stopEmptyMinecraftServer(forceExec bool) {
 	timeLeftUntilUp = config.Basic.MinecraftServerStartupTime
 }
 
-// to print each second bytes/s to clients and to server
-func printDataUsage() {
-	mutex.Lock()
-	if dataCountBytesToClients != 0 || dataCountBytesToServer != 0 {
-		logger(fmt.Sprintf("data/s: %8.3f KB/s to clients | %8.3f KB/s to server", dataCountBytesToClients/1024, dataCountBytesToServer/1024))
-		dataCountBytesToClients = 0
-		dataCountBytesToServer = 0
-	}
-	mutex.Unlock()
-	time.AfterFunc(1*time.Second, func() { printDataUsage() })
-}
-
-func updateChecker() {
-	v := "1"
-	// latest-version.php protocol version number: 1
-	// connection every 4 hours
-	// parameters passed to php: v, version
-	// response: "latest version: $latestVersion"
-
-	var latestVersion string
-
-	resp, err := http.Get("https://minecraft-server-hibernation.000webhostapp.com/latest-version.php?v=" + v + "&version=" + version)
-	if err != nil {
-		time.AfterFunc(1*time.Minute, func() { updateChecker() })
-		return
-	}
-	respByte, err := ioutil.ReadAll(resp.Body)
-	if err == nil && strings.Contains(string(respByte), "latest version: ") {
-		// no error and contains "latest version: "
-		latestVersion = strings.ReplaceAll(string(respByte), "latest version: ", "")
-	} else {
-		// error happened, suppose that the actual version is updated
-		latestVersion = version
-	}
-
-	if version != latestVersion {
-		fmt.Println("***", latestVersion, "is now available: visit github to update!", "***")
-	}
-
-	time.AfterFunc(4*time.Hour, func() { updateChecker() })
-}
-
-func main() {
-	// print program intro
-	fmt.Println(strings.Join(info, "\n"))
-
-	// load configuration from config file
-	// load server-icon-frozen.png if present
-	loadConfig()
-
-	// check for updates
-	if config.Basic.CheckForUpdates {
-		updateChecker()
-	}
-
-	// listen for interrupt signal and issue stopEmptyMinecraftServer(true) before exiting
-	interruptListener()
-
-	// launch printDataUsage()
-	go printDataUsage()
-
-	// open a listener on {config.Advanced.ListenHost}+":"+{config.Advanced.ListenPort}
-	listener, err := net.Listen("tcp", config.Advanced.ListenHost+":"+config.Advanced.ListenPort)
-	if err != nil {
-		log.Printf("main: Fatal error: %s", err.Error())
-		time.Sleep(time.Duration(5) * time.Second)
-		os.Exit(1)
-	}
-
-	defer func() {
-		logger("Closing connection for: listener")
-		listener.Close()
-	}()
-
-	log.Println("*** listening for new clients to connect...")
-
-	// infinite cycle to accept clients. when a clients connects it is passed to handleClientSocket()
-	for {
-		clientSocket, err := listener.Accept()
-		if err != nil {
-			logger("main:", err.Error())
-			continue
-		}
-		handleClientSocket(clientSocket)
-	}
-}
+//---------------------connection management------------------//
 
 // to handle a client that is connecting.
 // can handle a client that is requesting server info or trying to join.
@@ -483,7 +491,28 @@ func forwardSync(source, destination net.Conn, isServerToClient bool) {
 	}
 }
 
-//---------------------------utils----------------------------//
+//---------------------------logging--------------------------//
+
+// to print each second bytes/s to clients and to server
+func printDataUsage() {
+	mutex.Lock()
+	if dataCountBytesToClients != 0 || dataCountBytesToServer != 0 {
+		logger(fmt.Sprintf("data/s: %8.3f KB/s to clients | %8.3f KB/s to server", dataCountBytesToClients/1024, dataCountBytesToServer/1024))
+		dataCountBytesToClients = 0
+		dataCountBytesToServer = 0
+	}
+	mutex.Unlock()
+	time.AfterFunc(1*time.Second, func() { printDataUsage() })
+}
+
+// prints the args if debug option is set to true
+func logger(args ...string) {
+	if config.Advanced.Debug {
+		log.Println(strings.Join(args, " "))
+	}
+}
+
+//-----------------server connection protocol-----------------//
 
 // takes the format ("txt", "info") and a message to write to the client
 func buildMessage(format, message string) []byte {
@@ -583,28 +612,7 @@ func answerPingReq(clientSocket net.Conn) {
 	clientSocket.Write(req[:dataLen])
 }
 
-// prints the args if debug option is set to true
-func logger(args ...string) {
-	if config.Advanced.Debug {
-		log.Println(strings.Join(args, " "))
-	}
-}
-
-func interruptListener() {
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-	go func() {
-		for {
-			select {
-			case <-c:
-				stopEmptyMinecraftServer(true)
-				os.Exit(0)
-			}
-		}
-	}()
-}
-
-//----------------------loading functions---------------------//
+//---------------------loading management---------------------//
 
 // loads json data from config.json into config
 func loadConfig() {
