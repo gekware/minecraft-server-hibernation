@@ -598,9 +598,12 @@ func interruptListener() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	go func() {
-		for range c {
-			stopEmptyMinecraftServer(true)
-			os.Exit(0)
+		for {
+			select {
+			case <-c:
+				stopEmptyMinecraftServer(true)
+				os.Exit(0)
+			}
 		}
 	}()
 }
