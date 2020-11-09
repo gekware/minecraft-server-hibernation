@@ -20,6 +20,7 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 )
 
@@ -172,14 +173,12 @@ func updateChecker() {
 
 func interruptListener() {
 	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
+	signal.Notify(c, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	go func() {
-		for {
-			select {
-			case <-c:
-				stopEmptyMinecraftServer(true)
-				os.Exit(0)
-			}
+		select {
+		case <-c:
+			stopEmptyMinecraftServer(true)
+			os.Exit(0)
 		}
 	}()
 }
