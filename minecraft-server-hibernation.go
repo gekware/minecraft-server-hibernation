@@ -12,6 +12,7 @@ import (
 	"log"
 	"math"
 	"net"
+	"net/http"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -22,8 +23,8 @@ import (
 	"time"
 )
 
-// version
-var version string = "v2.0.0 (Go)"
+// script version
+var version string = "v2.0.0"
 
 // contains intro to script and program
 var info []string = []string{
@@ -54,6 +55,7 @@ type basic struct {
 	StartingInfo                  string
 	MinecraftServerStartupTime    int
 	TimeBeforeStoppingEmptyServer int
+	CheckForUpdates               bool
 }
 type advanced struct {
 	ListenHost     string
@@ -207,21 +209,51 @@ func printDataUsage() {
 	time.AfterFunc(1*time.Second, func() { printDataUsage() })
 }
 
+func updateChecker() {
+	v := "1"
+	// latest-version.php protocol version number: 1
+	// connection every 4 hours
+	// parameters passed to php: v, version
+	// response: "latest version: $latestVersion"
+
+	var latestVersion string
+
+	resp, err := http.Get("https://minecraft-server-hibernation.000webhostapp.com/latest-version.php?v=" + v + "&version=" + version)
+	if err != nil {
+		time.AfterFunc(1*time.Minute, func() { updateChecker() })
+		return
+	}
+	respByte, err := ioutil.ReadAll(resp.Body)
+	if err == nil && strings.Contains(string(respByte), "latest version: ") {
+		// no error and contains "latest version: "
+		latestVersion = strings.ReplaceAll(string(respByte), "latest version: ", "")
+	} else {
+		// error happened, suppose that the actual version is updated
+		latestVersion = version
+	}
+
+	if version != latestVersion {
+		fmt.Println("***", latestVersion, "is now available: visit github to update!", "***")
+	}
+
+	time.AfterFunc(4*time.Hour, func() { updateChecker() })
+}
+
 func main() {
-	// prints intro to program
+	// print program intro
 	fmt.Println(strings.Join(info, "\n"))
 
+	// load configuration from config file
+	// load server-icon-frozen.png if present
 	loadConfig()
 
-	// block that listen for interrupt signal and issue stopEmptyMinecraftServer(true) before exiting
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-	go func() {
-		for range c {
-			stopEmptyMinecraftServer(true)
-			os.Exit(0)
-		}
-	}()
+	// check for updates
+	if config.Basic.CheckForUpdates {
+		updateChecker()
+	}
+
+	// listen for interrupt signal and issue stopEmptyMinecraftServer(true) before exiting
+	interruptListener()
 
 	// launch printDataUsage()
 	go printDataUsage()
@@ -255,7 +287,7 @@ func main() {
 // to handle a client that is connecting.
 // can handle a client that is requesting server info or trying to join.
 func handleClientSocket(clientSocket net.Conn) {
-	// to handle also ipv6 addresses
+	// handling of ipv6 addresses
 	var lastIndex int = strings.LastIndex(clientSocket.RemoteAddr().String(), ":")
 	clientAddress := clientSocket.RemoteAddr().String()[:lastIndex]
 
@@ -545,7 +577,6 @@ func answerPingReq(clientSocket net.Conn) {
 			return
 		}
 	} else if bytes.Equal(req[:2], []byte{1, 0}) {
-		// this if is go specific!
 		// sometimes the [1 0] is at the beginning and needs to be removed.
 		// Example: [1 0 9 1 0 0 0 0 0 89 73 114] -> [9 1 0 0 0 0 0 89 73 114]
 		req = req[2:dataLen]
@@ -561,6 +592,17 @@ func logger(args ...string) {
 	if config.Advanced.Debug {
 		log.Println(strings.Join(args, " "))
 	}
+}
+
+func interruptListener() {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	go func() {
+		for range c {
+			stopEmptyMinecraftServer(true)
+			os.Exit(0)
+		}
+	}()
 }
 
 //----------------------loading functions---------------------//

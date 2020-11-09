@@ -9,7 +9,7 @@ _(for vanilla/modded on linux/windows)_
 
 [![mvsh - logo](https://user-images.githubusercontent.com/53654579/90397372-09a9df80-e098-11ea-925c-29e9bdfc0b48.png)](https://github.com/gekigek99/minecraft-server-hibernation)  
 
-version: v2.0.0 (Go)  
+version: v2.0.0  
 Copyright (C) 2019-2020 [gekigek99](https://github.com/gekigek99)  
 
 Check the [releases](https://github.com/gekigek99/minecraft-server-hibernation/releases) to download the binaries (for linux and windows)
@@ -81,6 +81,10 @@ If you are the first to access to minecraft world you will have to wait *20 seco
 ```yaml
 "timeBeforeStoppingEmptyServer": 60     #any parameter more than 30s is recommended
 ```
+set to false if you don't want to check for updates
+```yaml
+"checkForUpdates": true
+```
 -----
 ### CREDITS:  
 
@@ -92,6 +96,6 @@ Docker branch: [lubocode](https://github.com/gekigek99/minecraft-server-hibernat
 
 <a href="https://www.buymeacoffee.com/gekigek99" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: 41px !important;width: 174px !important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" ></a>
 
-#### And remember to give a star to this repository [here](https://github.com/gekigek99/minecraft-server-hibernation)!  
+#### Remember to give a star to this repository [here](https://github.com/gekigek99/minecraft-server-hibernation)!  
 
 [![Stargazers for @gekigek99/minecraft-server-hibernation](https://reporoster.com/stars/gekigek99/minecraft-server-hibernation)](https://github.com/gekigek99/minecraft-server-hibernation/stargazers)

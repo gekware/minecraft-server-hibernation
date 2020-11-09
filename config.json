@@ -9,7 +9,8 @@
     "hibernationInfo": "                   &fserver status:\n                   &b&lHIBERNATING",
     "startingInfo": "                   &fserver status:\n                    &6&lWARMING UP",
     "minecraftServerStartupTime": 20,
-    "timeBeforeStoppingEmptyServer": 60
+    "timeBeforeStoppingEmptyServer": 60,
+    "checkForUpdates": true
   },
   "advanced": {
     "listenHost": "0.0.0.0",
