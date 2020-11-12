@@ -659,18 +659,21 @@ func checkConfig() string {
 	}
 
 	// check if java is installed
-	err = exec.Command("java", "-version").Run()
+	_, err = exec.LookPath("java")
 	if err != nil {
 		return "java not installed!"
 	}
 
 	//------------------- linux -------------------//
 	if runtime.GOOS == "linux" {
-		// check if screen is installed
-		err = exec.Command("screen", "-v").Run()
-		if err != nil {
-			return "screen not installed!"
+		// check if screen is installed (only if it is contained in StartMinecraftServerLin)
+		if strings.Contains(config.Basic.StartMinecraftServerLin, "screen") {
+			_, err = exec.LookPath("screen")
+			if err != nil {
+				return "screen not installed!"
+			}
 		}
+
 	}
 
 	return ""
