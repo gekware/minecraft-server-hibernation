@@ -155,6 +155,8 @@ func updateChecker() {
 		time.AfterFunc(1*time.Minute, func() { updateChecker() })
 		return
 	}
+	defer resp.Body.Close()
+
 	respByte, err := ioutil.ReadAll(resp.Body)
 	if err == nil && strings.Contains(string(respByte), "latest version: ") {
 		// no error and contains "latest version: "
