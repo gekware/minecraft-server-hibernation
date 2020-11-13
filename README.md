@@ -1,13 +1,17 @@
 # Minecraft Server Hibernation  
 
-[![mvsh - license](https://img.shields.io/github/license/gekigek99/minecraft-server-hibernation?color=6fff00)](https://github.com/gekigek99/minecraft-vanilla-server-hibernation)
-[![mvsh - stars](https://img.shields.io/github/stars/gekigek99/minecraft-server-hibernation?color=ffbd19)](https://github.com/gekigek99/minecraft-vanilla-server-hibernation)
-[![mvsh - release](https://img.shields.io/github/release/gekigek99/minecraft-server-hibernation?color=05aefc)](https://github.com/gekigek99/minecraft-vanilla-server-hibernation)  
+[![msh - license](https://img.shields.io/github/license/gekigek99/minecraft-server-hibernation?color=6fff00)](https://github.com/gekigek99/minecraft-vanilla-server-hibernation)
+[![msh - stars](https://img.shields.io/github/stars/gekigek99/minecraft-server-hibernation?color=ffbd19)](https://github.com/gekigek99/minecraft-vanilla-server-hibernation)
+[![msh - release](https://img.shields.io/github/release/gekigek99/minecraft-server-hibernation?color=05aefc)](https://github.com/gekigek99/minecraft-vanilla-server-hibernation)  
 
 Avoid wasting of resources by **automatically start** your minecraft server when a player join **and stop** it when no one is online  
 _(for vanilla/modded on linux/windows)_  
 
-[![mvsh - logo](https://user-images.githubusercontent.com/53654579/90397372-09a9df80-e098-11ea-925c-29e9bdfc0b48.png)](https://github.com/gekigek99/minecraft-server-hibernation)  
+<p align="center">
+    <a href="https://github.com/gekigek99/minecraft-server-hibernation" >
+        <img src="https://user-images.githubusercontent.com/53654579/90397372-09a9df80-e098-11ea-925c-29e9bdfc0b48.png">
+    </a>
+</p>
 
 version: v2.0.0  
 Copyright (C) 2019-2020 [gekigek99](https://github.com/gekigek99)  
@@ -88,10 +92,16 @@ Author: [gekigek99](https://github.com/gekigek99)
 Contributors: [najtin](https://github.com/najtin/minecraft-server-hibernation)  
 Docker branch: [lubocode](https://github.com/gekigek99/minecraft-server-hibernation/tree/docker)  
 
-<a href="https://www.buymeacoffee.com/gekigek99" >
-    <img src="https://user-images.githubusercontent.com/53654579/98535501-81963900-2286-11eb-94a4-359adb64afe2.png">
-</a>
+<p align="center">
+    <a href="https://www.buymeacoffee.com/gekigek99" >
+        <img src="https://user-images.githubusercontent.com/53654579/98535501-81963900-2286-11eb-94a4-359adb64afe2.png">
+    </a>
+</p>
 
 #### Give a star to this repository [here](https://github.com/gekigek99/minecraft-server-hibernation)!  
 
-[![Stargazers for @gekigek99/minecraft-server-hibernation](https://reporoster.com/stars/gekigek99/minecraft-server-hibernation)](https://github.com/gekigek99/minecraft-server-hibernation/stargazers)
+<p align="center">
+    <a href="https://github.com/gekigek99/minecraft-server-hibernation/stargazers" >
+        <img src="https://reporoster.com/stars/gekigek99/minecraft-server-hibernation">
+    </a>
+</p>
