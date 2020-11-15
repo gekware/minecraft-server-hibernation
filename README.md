@@ -9,7 +9,7 @@ _(for vanilla/modded on linux/windows)_
 
 <p align="center">
     <a href="https://github.com/gekigek99/minecraft-server-hibernation" >
-        <img src="https://user-images.githubusercontent.com/53654579/90397372-09a9df80-e098-11ea-925c-29e9bdfc0b48.png">
+        <img src="https://user-images.githubusercontent.com/53654579/90397372-09a9df80-e098-11ea-925c-29e9bdfc0b48.png" >
     </a>
 </p>
 
@@ -92,16 +92,20 @@ Author: [gekigek99](https://github.com/gekigek99)
 Contributors: [najtin](https://github.com/najtin/minecraft-server-hibernation)  
 Docker branch: [lubocode](https://github.com/gekigek99/minecraft-server-hibernation/tree/docker)  
 
+-----
+
 <p align="center">
     <a href="https://www.buymeacoffee.com/gekigek99" >
-        <img src="https://user-images.githubusercontent.com/53654579/98535501-81963900-2286-11eb-94a4-359adb64afe2.png">
+        <img src="https://user-images.githubusercontent.com/53654579/98535501-81963900-2286-11eb-94a4-359adb64afe2.png" height="70" width="70">
     </a>
 </p>
 
-#### Give a star to this repository [here](https://github.com/gekigek99/minecraft-server-hibernation)!  
+<h4 align="center">
+    Give a star to this repository <a href="https://github.com/gekigek99/minecraft-server-hibernation">here</a>!
+</h4>
 
 <p align="center">
     <a href="https://github.com/gekigek99/minecraft-server-hibernation/stargazers" >
-        <img src="https://reporoster.com/stars/gekigek99/minecraft-server-hibernation">
+        <img src="https://reporoster.com/stars/gekigek99/minecraft-server-hibernation" >
     </a>
 </p>
