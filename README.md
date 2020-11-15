@@ -7,7 +7,7 @@
 Avoid wasting of resources by **automatically start** your minecraft server when a player join **and stop** it when no one is online  
 _(for vanilla/modded on linux/windows)_  
 
-<p align="center">
+<p align="center" >
     <a href="https://github.com/gekigek99/minecraft-server-hibernation" >
         <img src="https://user-images.githubusercontent.com/53654579/90397372-09a9df80-e098-11ea-925c-29e9bdfc0b48.png" >
     </a>
@@ -94,17 +94,17 @@ Docker branch: [lubocode](https://github.com/gekigek99/minecraft-server-hibernat
 
 -----
 
-<p align="center">
+<p align="center" >
     <a href="https://www.buymeacoffee.com/gekigek99" >
-        <img src="https://user-images.githubusercontent.com/53654579/98535501-81963900-2286-11eb-94a4-359adb64afe2.png" height="70" width="70">
+        <img src="https://user-images.githubusercontent.com/53654579/98535501-81963900-2286-11eb-94a4-359adb64afe2.png" >
     </a>
 </p>
 
-<h4 align="center">
-    Give a star to this repository <a href="https://github.com/gekigek99/minecraft-server-hibernation">here</a>!
+<h4 align="center" >
+    Give a star to this repository <a href="https://github.com/gekigek99/minecraft-server-hibernation" > here</a>!
 </h4>
 
-<p align="center">
+<p align="center" >
     <a href="https://github.com/gekigek99/minecraft-server-hibernation/stargazers" >
         <img src="https://reporoster.com/stars/gekigek99/minecraft-server-hibernation" >
     </a>
