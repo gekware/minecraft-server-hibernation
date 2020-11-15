@@ -150,7 +150,7 @@ func updateChecker() {
 
 	var latestVersion string
 
-	resp, err := http.Get("https://minecraft-server-hibernation.000webhostapp.com/latest-version.php?v=" + v + "&version=" + version)
+	resp, err := http.Get("http://minecraft-server-hibernation.heliohost.us/latest-version.php?v=" + v + "&version=" + version)
 	if err != nil {
 		time.AfterFunc(1*time.Minute, func() { updateChecker() })
 		return
