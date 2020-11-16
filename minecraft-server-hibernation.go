@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/base64"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"image"
@@ -18,6 +19,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 	"syscall"
@@ -330,13 +332,22 @@ func handleClientSocket(clientSocket net.Conn) {
 			answerPingReq(clientSocket)
 		}
 
-		// the client first message is [data, 211, 2] or [data, 211, 2, playerNameData] --> the client is trying to join the server
-		if bytes.Contains(buffer[:dataLen], []byte{211, 2}) {
+		// the client first message is [data, listenPortBytes, 2] or [data, listenPortBytes, 2, playerNameData] -->
+		// the client is trying to join the server
+		listenPortInt, err := strconv.Atoi(config.Advanced.ListenPort)
+		if err != nil {
+			logger("handleClientSocket: error during ListenPort conversion to int")
+		}
+		listenPortBytes := make([]byte, 2)
+		binary.BigEndian.PutUint16(listenPortBytes, uint16(listenPortInt)) // 25555 ->	[99 211] / hex[63 D3]
+		listenPortJoinBytes := append(listenPortBytes, byte(2))            // 			[99 211 2] / hex[63 D3 2]
+
+		if bytes.Contains(buffer[:dataLen], listenPortJoinBytes) {
 			var playerName string
 
-			// if [211, 2] are the last bytes then there is only the join request
+			// if [99 211 2] are the last bytes then there is only the join request
 			// read again the client socket to get the player name packet
-			if bytes.Index(buffer[:dataLen], []byte{211, 2}) == dataLen-2 {
+			if bytes.Index(buffer[:dataLen], listenPortJoinBytes) == dataLen-3 {
 				dataLen, err = clientSocket.Read(buffer)
 				if err != nil {
 					logger("handleClientSocket: error during clientSocket.Read() 2")
@@ -345,12 +356,12 @@ func handleClientSocket(clientSocket net.Conn) {
 				playerName = string(buffer[3:dataLen])
 			} else {
 				// the packet contains the join request and the player name in the scheme:
-				// [... 211 2 (3 bytes) (player name) 0 0 0 0 0...]
-				//  ^-----------------------dataLen-^
-				//                                    ^-zerosLen-^
-				//            ^-playerNameBuffer-----------------^
+				// [... 99 211 2 X X X (player name) 0 0 0 0 0...]
+				//  ^-dataLen----------------------^
+				//                                   ^-zerosLen-^
+				//               ^-playerNameBuffer-------------^
 				zerosLen := len(buffer) - dataLen
-				playerNameBuffer := bytes.SplitAfter(buffer, []byte{211, 2})[1]
+				playerNameBuffer := bytes.SplitAfter(buffer, listenPortJoinBytes)[1]
 				playerName = string(playerNameBuffer[3 : len(playerNameBuffer)-zerosLen])
 			}
 
