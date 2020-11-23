@@ -61,6 +61,7 @@ Commands to start and stop minecraft server:
 "startMinecraftServerWin": "java {-Xmx1024M -Xms1024M} -jar serverFileName nogui",
 "stopMinecraftServerWin": "stop",
 
+# you must launch the program as root, otherwise the screen command won't be executed successfully
 # if you are on linux you can access the minecraft server console with "sudo screen -r minecraftServer"
 ```
 Personally I set up a systemctl minecraft server service (called "minecraft-server") therefore I use:
