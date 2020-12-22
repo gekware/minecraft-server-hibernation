@@ -27,7 +27,7 @@ import (
 )
 
 // script version
-var version string = "v2.0.0"
+var version string = "v2.0.1"
 
 // contains intro to script and program
 var info []string = []string{
@@ -390,6 +390,8 @@ func handleClientSocket(clientSocket net.Conn) {
 		serverSocket, err := net.Dial("tcp", config.Advanced.TargetHost+":"+config.Advanced.TargetPort)
 		if err != nil {
 			logger("handleClientSocket: error during serverSocket.Dial()")
+			// report dial error to client with text in the loadscreen
+			clientSocket.Write(buildMessage("txt", fmt.Sprintf("can't connect to server... is the minecraft server running?")))
 			return
 		}
 
