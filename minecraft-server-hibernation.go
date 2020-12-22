@@ -391,7 +391,7 @@ func handleClientSocket(clientSocket net.Conn) {
 		if err != nil {
 			logger("handleClientSocket: error during serverSocket.Dial()")
 			// report dial error to client with text in the loadscreen
-			clientSocket.Write(buildMessage("txt", fmt.Sprintf("can't connect to server... is the minecraft server running?")))
+			clientSocket.Write(buildMessage("txt", fmt.Sprintf("can't connect to server... check if minecraft server is running and set the correct targetPort")))
 			return
 		}
 
