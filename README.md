@@ -53,7 +53,7 @@ How to use:
 ### DEFINITIONS:
 Commands to start and stop minecraft server:
 ```yaml
-# only text in parethesis needs to be modified
+# only text in braces needs to be modified (remember to remove all braces)
 "serverDirPath": "{path/to/server/folder}",
 "serverFileName": "{server.jar}",
 "startMinecraftServerLin": "screen -dmS minecraftServer java {-Xmx1024M -Xms1024M} -jar serverFileName nogui",
