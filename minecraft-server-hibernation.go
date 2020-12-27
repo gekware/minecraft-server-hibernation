@@ -608,7 +608,7 @@ func answerPingReq(clientSocket net.Conn) {
 		return
 	}
 
-	// if req == [1, 0] --> read again (the correct ping byte array have still to arrive)
+	// if req == [1, 0] --> read again (the correct ping byte array has still to arrive)
 	if bytes.Equal(req[:dataLen], []byte{1, 0}) {
 		dataLen, err = clientSocket.Read(req)
 		if err != nil {
