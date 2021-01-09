@@ -1,0 +1,26 @@
+{
+  "basic": {
+    "serverDirPath": "{path/to/server/folder}",
+    "serverFileName": "{server.jar}",
+    "startMinecraftServerMac": "screen -dmS minecraftServer java {-Xmx1024M -Xms1024M} -jar serverFileName nogui",
+    "stopMinecraftServerMac": "screen -S minecraftServer -X stuff 'stop\\n'",
+    "startMinecraftServerLin": "screen -dmS minecraftServer java {-Xmx1024M -Xms1024M} -jar serverFileName nogui",
+    "stopMinecraftServerLin": "screen -S minecraftServer -X stuff 'stop\\n'",
+    "startMinecraftServerWin": "java {-Xmx1024M -Xms1024M} -jar serverFileName nogui",
+    "stopMinecraftServerWin": "stop",
+    "hibernationInfo": "                   &fserver status:\n                   &b&lHIBERNATING",
+    "startingInfo": "                   &fserver status:\n                    &6&lWARMING UP",
+    "minecraftServerStartupTime": 20,
+    "timeBeforeStoppingEmptyServer": 60,
+    "checkForUpdates": true
+  },
+  "advanced": {
+    "listenHost": "0.0.0.0",
+    "listenPort": "25555",
+    "targetHost": "127.0.0.1",
+    "targetPort": "25565",
+    "debug": false,
+    "serverVersion": "1.16.4",
+    "serverProtocol": "754"
+  }
+}
