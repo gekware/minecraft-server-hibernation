@@ -96,9 +96,6 @@ var mutex = &sync.Mutex{}
 // used to start/stop server on windows
 var cmdIn io.WriteCloser
 
-var start_cmd string
-var stop_cmd string
-
 //--------------------------PROGRAM---------------------------//
 
 func main() {
@@ -198,41 +195,29 @@ func startMinecraftServer() {
 	serverStatus = "starting"
 
 	// block that execute the correct start command depending on the OS
-	if runtime.GOOS == "linux" || runtime.GOOS == "darwin"{
-
-		if runtime.GOOS == "linux" {
-			start_cmd = config.Basic.StartMinecraftServerLin
-			stop_cmd = config.Basic.StopMinecraftServerLin
-		} else if runtime.GOOS == "darwin" {
-			start_cmd = config.Basic.StartMinecraftServerMac
-			stop_cmd = config.Basic.StopMinecraftServerMac
-		}
-
-		command := strings.ReplaceAll(start_cmd, "serverFileName", config.Basic.ServerFileName)
+	var err error
+	if runtime.GOOS == "linux" {
+		command := strings.ReplaceAll(config.Basic.StartMinecraftServerLin, "serverFileName", config.Basic.ServerFileName)
 		cmd := exec.Command("/bin/bash", "-c", command)
 		cmd.Dir = config.Basic.ServerDirPath
-		err := cmd.Run()
-		if err != nil {
-			log.Printf("startMinecraftServer: error starting minecraft server: %v\n", err)
-			return
-		}
+		err = cmd.Run()
+	} else if runtime.GOOS == "darwin" {
+		command := strings.ReplaceAll(config.Basic.StartMinecraftServerMac, "serverFileName", config.Basic.ServerFileName)
+		cmd := exec.Command("/bin/bash", "-c", command)
+		cmd.Dir = config.Basic.ServerDirPath
+		err = cmd.Run()
 	} else if runtime.GOOS == "windows" {
-		var err error
-
 		command := strings.ReplaceAll(config.Basic.StartMinecraftServerWin, "serverFileName", config.Basic.ServerFileName)
 		commandSplit := strings.Split(command, " ")
 		cmd := exec.Command(commandSplit[0], commandSplit[1:]...)
 		cmd.Dir = config.Basic.ServerDirPath
-		cmdIn, err = cmd.StdinPipe()
-		if err != nil {
-			log.Printf("startMinecraftServer: error creating StdinPipe: %v\n", err)
-			return
-		}
+		cmdIn, _ = cmd.StdinPipe()
 		err = cmd.Start()
-		if err != nil {
-			log.Printf("startMinecraftServer: error starting minecraft server: %v\n", err)
-			return
-		}
+	}
+
+	if err != nil {
+		log.Printf("startMinecraftServer: error starting minecraft server: %v\n", err)
+		return
 	}
 
 	log.Print("*** MINECRAFT SERVER IS STARTING!")
@@ -284,17 +269,18 @@ func stopEmptyMinecraftServer(forceExec bool) {
 	serverStatus = "offline"
 
 	// block that execute the correct stop command depending on the OS
-	if runtime.GOOS == "linux" || runtime.GOOS == "darwin"{
-	  err := exec.Command("/bin/bash", "-c", stop_cmd).Run()
-		if err != nil {
-			log.Printf("stopEmptyMinecraftServer: error stopping minecraft server: %v\n", err)
-		}
+	var err error
+	if runtime.GOOS == "linux" {
+		err = exec.Command("/bin/bash", "-c", config.Basic.StartMinecraftServerLin).Run()
+	} else if runtime.GOOS == "darwin" {
+		err = exec.Command("/bin/bash", "-c", config.Basic.StartMinecraftServerMac).Run()
 	} else if runtime.GOOS == "windows" {
-		cmdIn.Write([]byte(config.Basic.StopMinecraftServerWin))
+		_, err = cmdIn.Write([]byte(config.Basic.StopMinecraftServerWin))
 		cmdIn.Close()
-	} else {
-		log.Print("stopEmptyMinecraftServer: error: OS not supported!")
-		os.Exit(1)
+	}
+
+	if err != nil {
+		log.Printf("stopEmptyMinecraftServer: error stopping minecraft server: %v\n", err)
 	}
 
 	if forceExec {
@@ -668,10 +654,10 @@ func loadConfig() {
 
 // checks different paramenters
 func checkConfig() string {
-	//------------- windows and linux -------------//
+	//------------- windows linux macos -------------//
 
 	// check if OS is windows/linux
-	if runtime.GOOS != "linux" && runtime.GOOS != "windows" && runtime.GOOS != "darwin"{
+	if runtime.GOOS != "linux" && runtime.GOOS != "windows" && runtime.GOOS != "darwin" {
 		log.Print("checkConfig: error: OS not supported!")
 		os.Exit(1)
 	}
@@ -692,15 +678,23 @@ func checkConfig() string {
 	}
 
 	//------------------- linux -------------------//
-	if runtime.GOOS == "linux" || runtime.GOOS == "darwin" {
-		// check if screen is installed (only if it is contained in StartMinecraftServerLin or StartMinecraftServerMac)
-		if strings.Contains(start_cmd, "screen") {
+	if runtime.GOOS == "linux" {
+		if strings.Contains(config.Basic.StartMinecraftServerLin, "screen") {
 			_, err = exec.LookPath("screen")
 			if err != nil {
 				return "screen not installed!"
 			}
 		}
+	}
 
+	//------------------- macos -------------------//
+	if runtime.GOOS == "darwin" {
+		if strings.Contains(config.Basic.StartMinecraftServerWin, "screen") {
+			_, err = exec.LookPath("screen")
+			if err != nil {
+				return "screen not installed!"
+			}
+		}
 	}
 
 	return ""
