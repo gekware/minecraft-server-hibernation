@@ -2,6 +2,8 @@
   "basic": {
     "serverDirPath": "{path/to/server/folder}",
     "serverFileName": "{server.jar}",
+    "startMinecraftServerMac": "screen -dmS minecraftServer java {-Xmx1024M -Xms1024M} -jar serverFileName nogui",
+    "stopMinecraftServerMac": "screen -S minecraftServer -X stuff 'stop\\n'",
     "startMinecraftServerLin": "screen -dmS minecraftServer java {-Xmx1024M -Xms1024M} -jar serverFileName nogui",
     "stopMinecraftServerLin": "screen -S minecraftServer -X stuff 'stop\\n'",
     "startMinecraftServerWin": "java {-Xmx1024M -Xms1024M} -jar serverFileName nogui",
