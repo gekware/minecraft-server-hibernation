@@ -5,7 +5,7 @@
 [![msh - release](https://img.shields.io/github/release/gekigek99/minecraft-server-hibernation?color=05aefc)](https://github.com/gekigek99/minecraft-vanilla-server-hibernation)  
 
 Avoid wasting of resources by **automatically start** your minecraft server when a player join **and stop** it when no one is online  
-_(for vanilla/modded on linux/windows)_  
+_(for vanilla/modded on linux/windows/macos)_  
 
 <p align="center" >
     <a href="https://github.com/gekigek99/minecraft-server-hibernation" >
