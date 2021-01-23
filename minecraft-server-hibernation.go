@@ -437,6 +437,7 @@ func forwardSync(source, destination net.Conn, isServerToClient bool, stopSig *b
 
 	for {
 		if *stopSig {
+			// if stopSig is true, close the source connection
 			source.Close()
 			break
 		}
