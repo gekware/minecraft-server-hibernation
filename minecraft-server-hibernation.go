@@ -395,18 +395,21 @@ func handleClientSocket(clientSocket net.Conn) {
 			return
 		}
 
+		// stopSig is used to close serv->client and client->serv at the same time
+		stopSig := false
+
 		// launch clientToServer() and serverToClient()
-		go clientToServer(clientSocket, serverSocket)
-		go serverToClient(serverSocket, clientSocket)
+		go clientToServer(clientSocket, serverSocket, &stopSig)
+		go serverToClient(serverSocket, clientSocket, &stopSig)
 	}
 }
 
-func clientToServer(source, destination net.Conn) {
+func clientToServer(source, destination net.Conn, stopSig *bool) {
 	players++
 	log.Printf("*** A PLAYER JOINED THE SERVER! - %d players online", players)
 
 	// exchanges data from client to server (isServerToClient == false)
-	forwardSync(source, destination, false)
+	forwardSync(source, destination, false, stopSig)
 
 	players--
 	log.Printf("*** A PLAYER LEFT THE SERVER! - %d players online", players)
@@ -419,20 +422,25 @@ func clientToServer(source, destination net.Conn) {
 	time.AfterFunc(time.Duration(config.Basic.TimeBeforeStoppingEmptyServer)*time.Second, func() { stopEmptyMinecraftServer(false) })
 }
 
-func serverToClient(source, destination net.Conn) {
+func serverToClient(source, destination net.Conn, stopSig *bool) {
 	// exchanges data from server to client (isServerToClient == true)
-	forwardSync(source, destination, true)
+	forwardSync(source, destination, true, stopSig)
 }
 
 // forwardSync takes a source and a destination net.Conn and forwards them.
 // (isServerToClient used to know the forward direction)
-func forwardSync(source, destination net.Conn, isServerToClient bool) {
+func forwardSync(source, destination net.Conn, isServerToClient bool, stopSig *bool) {
 	data := make([]byte, 1024)
 
 	// set to false after the first for cycle
 	firstBuffer := true
 
 	for {
+		if *stopSig {
+			source.Close()
+			break
+		}
+
 		// update read and write timeout
 		source.SetReadDeadline(time.Now().Add(time.Duration(config.Basic.TimeBeforeStoppingEmptyServer) * time.Second))
 		destination.SetWriteDeadline(time.Now().Add(time.Duration(config.Basic.TimeBeforeStoppingEmptyServer) * time.Second))
@@ -441,13 +449,16 @@ func forwardSync(source, destination net.Conn, isServerToClient bool) {
 		dataLen, err := source.Read(data)
 		if err != nil {
 			// case in which the connection is closed by the source or closed by target
-			if err == io.EOF || strings.Contains(err.Error(), "use of closed network connection") {
+			if err == io.EOF {
 				logger(fmt.Sprintf("closing %s --> %s because of: %s", strings.Split(source.RemoteAddr().String(), ":")[0], strings.Split(destination.RemoteAddr().String(), ":")[0], err.Error()))
 			} else {
 				logger(fmt.Sprintf("forwardSync: error in forward(): %v\n%s --> %s", err, strings.Split(source.RemoteAddr().String(), ":")[0], strings.Split(destination.RemoteAddr().String(), ":")[0]))
 			}
 
 			// close the source connection
+			mutex.Lock()
+			*stopSig = true
+			mutex.Unlock()
 			source.Close()
 			break
 		}
