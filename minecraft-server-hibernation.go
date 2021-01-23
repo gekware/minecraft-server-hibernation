@@ -302,7 +302,7 @@ func handleClientSocket(clientSocket net.Conn) {
 	var lastIndex int = strings.LastIndex(clientSocket.RemoteAddr().String(), ":")
 	clientAddress := clientSocket.RemoteAddr().String()[:lastIndex]
 
-	logger(fmt.Sprintf("*** from %s:%s to %s:%s", clientAddress, config.Advanced.ListenPort, config.Advanced.TargetHost, config.Advanced.TargetPort))
+	logger(fmt.Sprintf("*** start proxy from %s:%s to %s:%s", clientAddress, config.Advanced.ListenPort, config.Advanced.TargetHost, config.Advanced.TargetPort))
 
 	// block containing the case of serverStatus == "offline" or "starting"
 	if serverStatus == "offline" || serverStatus == "starting" {
