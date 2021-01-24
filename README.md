@@ -90,7 +90,7 @@ set to false if you don't want to check for updates
 ### CREDITS:  
 
 Author: [gekigek99](https://github.com/gekigek99)  
-Contributors: [najtin](https://github.com/najtin/minecraft-server-hibernation) [f8ith](https://github.com/f8ith/minecraft-server-hibernation)  
+Contributors: [najtin](https://github.com/najtin/minecraft-server-hibernation) [f8ith](https://github.com/f8ith/minecraft-server-hibernation) [Br31zh](https://github.com/Br31zh/minecraft-server-hibernation)  
 Docker branch: [lubocode](https://github.com/gekigek99/minecraft-server-hibernation/tree/docker)  
 
 -----
