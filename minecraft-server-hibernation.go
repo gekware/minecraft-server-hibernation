@@ -36,7 +36,7 @@ var info []string = []string{
 	"| '_ ` _ \\/ __| '_ \\ ",
 	"| | | | | \\__ \\ | | |",
 	"|_| |_| |_|___/_| |_|",
-	"Copyright (C) 2019-2020 gekigek99",
+	"Copyright (C) 2019-2021 gekigek99",
 	version,
 	"visit my github page: https://github.com/gekigek99",
 	"remember to give a star to this repository!",
