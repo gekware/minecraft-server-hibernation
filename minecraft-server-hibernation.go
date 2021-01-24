@@ -271,9 +271,9 @@ func stopEmptyMinecraftServer(forceExec bool) {
 	// block that execute the correct stop command depending on the OS
 	var err error
 	if runtime.GOOS == "linux" {
-		err = exec.Command("/bin/bash", "-c", config.Basic.StartMinecraftServerLin).Run()
+		err = exec.Command("/bin/bash", "-c", config.Basic.StopMinecraftServerLin).Run()
 	} else if runtime.GOOS == "darwin" {
-		err = exec.Command("/bin/bash", "-c", config.Basic.StartMinecraftServerMac).Run()
+		err = exec.Command("/bin/bash", "-c", config.Basic.StopMinecraftServerMac).Run()
 	} else if runtime.GOOS == "windows" {
 		_, err = cmdIn.Write([]byte(config.Basic.StopMinecraftServerWin))
 		cmdIn.Close()
