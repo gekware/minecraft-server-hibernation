@@ -52,10 +52,13 @@ type basic struct {
 	ServerFileName                string
 	StartMinecraftServerLin       string
 	StopMinecraftServerLin        string
+	ForceStopMinecraftServerLin   string
 	StartMinecraftServerWin       string
 	StopMinecraftServerWin        string
+	ForceStopMinecraftServerWin   string
 	StartMinecraftServerMac       string
 	StopMinecraftServerMac        string
+	ForceStopMinecraftServerMac   string
 	HibernationInfo               string
 	StartingInfo                  string
 	MinecraftServerStartupTime    int
@@ -271,11 +274,23 @@ func stopEmptyMinecraftServer(forceExec bool) {
 	// block that execute the correct stop command depending on the OS
 	var err error
 	if runtime.GOOS == "linux" {
-		err = exec.Command("/bin/bash", "-c", config.Basic.StopMinecraftServerLin).Run()
+		if forceExec {
+			err = exec.Command("/bin/bash", "-c", config.Basic.ForceStopMinecraftServerLin).Run()
+		} else {
+			err = exec.Command("/bin/bash", "-c", config.Basic.StopMinecraftServerLin).Run()
+		}
 	} else if runtime.GOOS == "darwin" {
-		err = exec.Command("/bin/bash", "-c", config.Basic.StopMinecraftServerMac).Run()
+		if forceExec {
+			err = exec.Command("/bin/bash", "-c", config.Basic.ForceStopMinecraftServerMac).Run()
+		} else {
+			err = exec.Command("/bin/bash", "-c", config.Basic.StopMinecraftServerMac).Run()
+		}
 	} else if runtime.GOOS == "windows" {
-		_, err = cmdIn.Write([]byte(config.Basic.StopMinecraftServerWin))
+		if forceExec {
+			_, err = cmdIn.Write([]byte(config.Basic.ForceStopMinecraftServerWin))
+		} else {
+			_, err = cmdIn.Write([]byte(config.Basic.StopMinecraftServerWin))
+		}
 		cmdIn.Close()
 	}
 
