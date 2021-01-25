@@ -736,6 +736,17 @@ func initVariables() {
 	if _, err := os.Stat(userIconPath); !os.IsNotExist(err) {
 		loadIcon(userIconPath)
 	}
+
+	// Set force command to normal stop command if undefined
+	if config.Basic.ForceStopMinecraftServerLin == "" {
+		config.Basic.ForceStopMinecraftServerLin = config.Basic.StopMinecraftServerLin
+	}
+	if config.Basic.ForceStopMinecraftServerMac == "" {
+		config.Basic.ForceStopMinecraftServerMac = config.Basic.StopMinecraftServerMac
+	}
+	if config.Basic.ForceStopMinecraftServerWin == "" {
+		config.Basic.ForceStopMinecraftServerWin = config.Basic.StopMinecraftServerWin
+	}
 }
 
 func loadIcon(userIconPath string) {
