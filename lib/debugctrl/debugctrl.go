@@ -3,9 +3,10 @@ package debugctrl
 import (
 	"fmt"
 	"log"
-	"msh/lib/asyncctrl"
 	"strings"
 	"time"
+
+	"msh/lib/asyncctrl"
 )
 
 // DataCountBytesToClients tracks bytes/s server->clients

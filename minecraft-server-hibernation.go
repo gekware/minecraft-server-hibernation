@@ -327,7 +327,7 @@ func buildMessage(format, message string) []byte {
 			// scheme:		[firstByte	|secondByte	|data	]
 			// value range:	[128-255	|0-127		|---	]
 			// it's a number composed of 2 digits in base-128 (firstByte is least significant byte)
-			// sub-header represents the lenght of the following data
+			// sub-header represents the length of the following data
 
 			firstByte := len(message)%128 + 128
 			secondByte := math.Floor(float64(len(message) / 128))
