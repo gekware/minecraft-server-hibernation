@@ -3,10 +3,8 @@ package connctrl
 import (
 	"bytes"
 	"encoding/binary"
-	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net"
 	"strconv"
@@ -222,28 +220,16 @@ func searchVersionProtocol(data []byte) {
 
 		// if serverVersion or serverProtocol are different from the ones specified in config.json --> update them
 		if newServerVersion != confctrl.Config.Advanced.ServerVersion || newServerProtocol != confctrl.Config.Advanced.ServerProtocol {
+			debugctrl.Logger(
+				"server version found!",
+				"serverVersion:", newServerVersion,
+				"serverProtocol:", newServerProtocol,
+			)
+
 			confctrl.Config.Advanced.ServerVersion = newServerVersion
 			confctrl.Config.Advanced.ServerProtocol = newServerProtocol
 
-			debugctrl.Logger(
-				"server version found!",
-				"serverVersion:", confctrl.Config.Advanced.ServerVersion,
-				"serverProtocol:", confctrl.Config.Advanced.ServerProtocol,
-			)
-
-			// write the struct config to json data
-			configData, err := json.MarshalIndent(confctrl.Config, "", "  ")
-			if err != nil {
-				debugctrl.Logger("forwardSync: could not marshal configuration")
-				return
-			}
-			// write json data to config.json
-			err = ioutil.WriteFile("config.json", configData, 0644)
-			if err != nil {
-				debugctrl.Logger("forwardSync: could not update config.json")
-				return
-			}
-			debugctrl.Logger("saved to config.json")
+			confctrl.SaveConfig()
 		}
 	}
 }

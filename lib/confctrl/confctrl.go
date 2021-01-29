@@ -82,6 +82,25 @@ func LoadConfig() {
 	initVariables()
 }
 
+// SaveConfig saves the config struct to the config file
+func SaveConfig() {
+	// write the struct config to json data
+	configData, err := json.MarshalIndent(Config, "", "  ")
+	if err != nil {
+		debugctrl.Logger("forwardSync: could not marshal configuration")
+		return
+	}
+
+	// write json data to config.json
+	err = ioutil.WriteFile("config.json", configData, 0644)
+	if err != nil {
+		debugctrl.Logger("forwardSync: could not update config.json")
+		return
+	}
+
+	debugctrl.Logger("saved to config.json")
+}
+
 // checks different paramenters
 func checkConfig() string {
 	//------------- windows linux macos -------------//
