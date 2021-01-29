@@ -85,13 +85,6 @@ func LoadConfig() {
 // checks different paramenters
 func checkConfig() string {
 	//------------- windows linux macos -------------//
-
-	// check if OS is windows/linux
-	if runtime.GOOS != "linux" && runtime.GOOS != "windows" && runtime.GOOS != "darwin" {
-		log.Print("checkConfig: error: OS not supported!")
-		os.Exit(1)
-	}
-
 	// check if serverFile/serverFolder exists
 	// (if config.Basic.ServerFileName == "", then it will just check if the server folder exist)
 	serverFileFolderPath := filepath.Join(Config.Basic.ServerDirPath, Config.Basic.ServerFileName)

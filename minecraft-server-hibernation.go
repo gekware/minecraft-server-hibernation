@@ -36,6 +36,9 @@ func main() {
 	// print program intro
 	fmt.Println(strings.Join(info, "\n"))
 
+	// check is os is supported
+	progctrl.CheckOsSupport()
+
 	// load configuration from config file
 	// load server-icon-frozen.png if present
 	confctrl.LoadConfig()
