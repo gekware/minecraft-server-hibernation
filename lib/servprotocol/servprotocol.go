@@ -109,3 +109,26 @@ func AnswerPingReq(clientSocket net.Conn) {
 	// answer the ping request
 	clientSocket.Write(req[:dataLen])
 }
+
+// SearchVersionProtocol finds the serverVersion and serverProtocol in (data []byte) and writes them in the config file
+func SearchVersionProtocol(data []byte) {
+	// if the above specified buffer contains "\"version\":{\"name\":\"" and ",\"protocol\":" --> extract the serverVersion and serverProtocol
+	if bytes.Contains(data, []byte("\"version\":{\"name\":\"")) && bytes.Contains(data, []byte(",\"protocol\":")) {
+		newServerVersion := string(bytes.Split(bytes.Split(data, []byte("\"version\":{\"name\":\""))[1], []byte("\","))[0])
+		newServerProtocol := string(bytes.Split(bytes.Split(data, []byte(",\"protocol\":"))[1], []byte("}"))[0])
+
+		// if serverVersion or serverProtocol are different from the ones specified in config.json --> update them
+		if newServerVersion != confctrl.Config.Advanced.ServerVersion || newServerProtocol != confctrl.Config.Advanced.ServerProtocol {
+			debugctrl.Logger(
+				"server version found!",
+				"serverVersion:", newServerVersion,
+				"serverProtocol:", newServerProtocol,
+			)
+
+			confctrl.Config.Advanced.ServerVersion = newServerVersion
+			confctrl.Config.Advanced.ServerProtocol = newServerProtocol
+
+			confctrl.SaveConfig()
+		}
+	}
+}
