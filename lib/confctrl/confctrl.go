@@ -1,12 +1,8 @@
 package confctrl
 
 import (
-	"bytes"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"image"
-	"image/png"
 	"io/ioutil"
 	"log"
 	"os"
@@ -76,6 +72,8 @@ func LoadConfig() {
 		os.Exit(1)
 	}
 
+	data.LoadIcon(Config.Basic.ServerDirPath)
+
 	initVariables()
 }
 
@@ -141,12 +139,6 @@ func checkConfig() string {
 
 // initializes some variables
 func initVariables() {
-	// if server-icon-frozen.png is in ServerDirPath folder then load this icon
-	userIconPath := filepath.Join(Config.Basic.ServerDirPath, "server-icon-frozen.png")
-	if _, err := os.Stat(userIconPath); !os.IsNotExist(err) {
-		loadIcon(userIconPath)
-	}
-
 	// Set force command to normal stop command if undefined
 	if Config.Basic.ForceStopMinecraftServerLin == "" {
 		Config.Basic.ForceStopMinecraftServerLin = Config.Basic.StopMinecraftServerLin
@@ -156,42 +148,5 @@ func initVariables() {
 	}
 	if Config.Basic.ForceStopMinecraftServerWin == "" {
 		Config.Basic.ForceStopMinecraftServerWin = Config.Basic.StopMinecraftServerWin
-	}
-}
-
-func loadIcon(userIconPath string) {
-	// this function loads userIconPath image (base-64 encoded and compressed)
-	// into serverIcon variable
-
-	buff := &bytes.Buffer{}
-	enc := &png.Encoder{CompressionLevel: -3} // -3: best compression
-
-	// Using a decoder to read and then an encoder to compress the image data
-
-	// Open file
-	f, err := os.Open(userIconPath)
-	if err != nil {
-		debugctrl.Logger("loadIcon: error opening icon file:", err.Error())
-		return
-	}
-	defer f.Close()
-
-	// Decode
-	pngIm, err := png.Decode(f)
-	if err != nil {
-		debugctrl.Logger("loadIcon: error decoding icon:", err.Error())
-		return
-	}
-
-	// Encode if image is 64x64
-	if pngIm.Bounds().Max == image.Pt(64, 64) {
-		err = enc.Encode(buff, pngIm)
-		if err != nil {
-			debugctrl.Logger("loadIcon: error encoding icon:", err.Error())
-			return
-		}
-		data.ServerIcon = base64.RawStdEncoding.EncodeToString(buff.Bytes())
-	} else {
-		log.Printf("loadIcon: incorrect server-icon-frozen.png size. Current size: %dx%d", pngIm.Bounds().Max.X, pngIm.Bounds().Max.Y)
 	}
 }
