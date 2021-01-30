@@ -22,9 +22,6 @@ import (
 // Config contains the configuration parameters
 var Config configuration
 
-// TimeLeftUntilUp keeps track of how many seconds are still needed to reach serverStatus == "online"
-var TimeLeftUntilUp int
-
 // struct adapted to config.json
 type configuration struct {
 	Basic    basic
@@ -144,8 +141,6 @@ func checkConfig() string {
 
 // initializes some variables
 func initVariables() {
-	TimeLeftUntilUp = Config.Basic.MinecraftServerStartupTime
-
 	// if server-icon-frozen.png is in ServerDirPath folder then load this icon
 	userIconPath := filepath.Join(Config.Basic.ServerDirPath, "server-icon-frozen.png")
 	if _, err := os.Stat(userIconPath); !os.IsNotExist(err) {

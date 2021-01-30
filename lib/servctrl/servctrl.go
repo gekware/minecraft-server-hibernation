@@ -21,9 +21,14 @@ var Players int = 0
 // StopInstances keeps track of how many times stopEmptyMinecraftServer() has been called in the last {TimeBeforeStoppingEmptyServer} seconds
 var StopInstances int = 0
 
+// TimeLeftUntilUp keeps track of how many seconds are still needed to reach serverStatus == "online"
+var TimeLeftUntilUp int
+
 // StartMinecraftServer starts the minecraft server
 func StartMinecraftServer() {
 	ServerStatus = "starting"
+
+	TimeLeftUntilUp = confctrl.Config.Basic.MinecraftServerStartupTime
 
 	// block that execute the correct start command depending on the OS
 	var err error
@@ -56,9 +61,8 @@ func StartMinecraftServer() {
 	// initialization of players
 	Players = 0
 
-	// sets serverStatus == "online"
-	//
-	// increases stopInstances by one. after {TimeBeforeStoppingEmptyServer} executes stopEmptyMinecraftServer(false)
+	// sets serverStatus == "online".
+	// After {TimeBeforeStoppingEmptyServer} executes stopEmptyMinecraftServer(false)
 	var setServerStatusOnline = func() {
 		ServerStatus = "online"
 		log.Print("*** MINECRAFT SERVER IS UP!")
@@ -69,10 +73,10 @@ func StartMinecraftServer() {
 	// updates TimeLeftUntilUp each second. if TimeLeftUntilUp == 0 it executes setServerStatusOnline()
 	var updateTimeleft func()
 	updateTimeleft = func() {
-		if confctrl.TimeLeftUntilUp > 0 {
-			confctrl.TimeLeftUntilUp--
+		if TimeLeftUntilUp > 0 {
+			TimeLeftUntilUp--
 			time.AfterFunc(1*time.Second, func() { updateTimeleft() })
-		} else if confctrl.TimeLeftUntilUp == 0 {
+		} else if TimeLeftUntilUp == 0 {
 			setServerStatusOnline()
 		}
 	}
@@ -128,7 +132,4 @@ func StopEmptyMinecraftServer(forceExec bool) {
 	} else {
 		log.Print("*** MINECRAFT SERVER IS SHUTTING DOWN!")
 	}
-
-	// reset TimeLeftUntilUp to initial value
-	confctrl.TimeLeftUntilUp = confctrl.Config.Basic.MinecraftServerStartupTime
 }
