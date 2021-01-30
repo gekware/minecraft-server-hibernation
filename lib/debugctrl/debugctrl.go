@@ -15,6 +15,9 @@ var DataCountBytesToClients float64 = 0
 // DataCountBytesToServer tracks bytes/s clients->server
 var DataCountBytesToServer float64 = 0
 
+// Debug specify if debug should be printed or not
+var Debug bool = false
+
 // PrintDataUsage prints each second bytes/s to clients and to server
 func PrintDataUsage() {
 	asyncctrl.WithLock(func() {
@@ -29,5 +32,7 @@ func PrintDataUsage() {
 
 // Logger prints the args if debug option is set to true
 func Logger(args ...string) {
-	log.Println(strings.Join(args, " "))
+	if Debug {
+		log.Println(strings.Join(args, " "))
+	}
 }

@@ -74,6 +74,8 @@ func LoadConfig() {
 
 	data.LoadIcon(Config.Basic.ServerDirPath)
 
+	debugctrl.Debug = Config.Advanced.Debug
+
 	initVariables()
 }
 
