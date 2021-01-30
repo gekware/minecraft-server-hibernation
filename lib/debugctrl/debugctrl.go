@@ -17,13 +17,13 @@ var DataCountBytesToServer float64 = 0
 
 // PrintDataUsage prints each second bytes/s to clients and to server
 func PrintDataUsage() {
-	asyncctrl.Mutex.Lock()
-	if DataCountBytesToClients != 0 || DataCountBytesToServer != 0 {
-		Logger(fmt.Sprintf("data/s: %8.3f KB/s to clients | %8.3f KB/s to server", DataCountBytesToClients/1024, DataCountBytesToServer/1024))
-		DataCountBytesToClients = 0
-		DataCountBytesToServer = 0
-	}
-	asyncctrl.Mutex.Unlock()
+	asyncctrl.WithLock(func() {
+		if DataCountBytesToClients != 0 || DataCountBytesToServer != 0 {
+			Logger(fmt.Sprintf("data/s: %8.3f KB/s to clients | %8.3f KB/s to server", DataCountBytesToClients/1024, DataCountBytesToServer/1024))
+			DataCountBytesToClients = 0
+			DataCountBytesToServer = 0
+		}
+	})
 	time.AfterFunc(1*time.Second, func() { PrintDataUsage() })
 }
 

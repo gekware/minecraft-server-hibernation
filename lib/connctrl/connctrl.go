@@ -139,9 +139,7 @@ func clientToServer(source, destination net.Conn, stopSig *bool) {
 
 	// this block increases stopInstances by one and starts the timer to execute stopEmptyMinecraftServer(false)
 	// (that will do nothing in case there are players online)
-	asyncctrl.Mutex.Lock()
-	servctrl.StopInstances++
-	asyncctrl.Mutex.Unlock()
+	asyncctrl.WithLock(func() { servctrl.StopInstances++ })
 	time.AfterFunc(time.Duration(confctrl.Config.Basic.TimeBeforeStoppingEmptyServer)*time.Second, func() { servctrl.StopEmptyMinecraftServer(false) })
 }
 

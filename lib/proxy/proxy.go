@@ -43,9 +43,7 @@ func Forward(source, destination net.Conn, isServerToClient bool, stopSig *bool)
 			}
 
 			// close the source connection
-			asyncctrl.Mutex.Lock()
-			*stopSig = true
-			asyncctrl.Mutex.Unlock()
+			asyncctrl.WithLock(func() { *stopSig = true })
 			source.Close()
 			break
 		}
@@ -55,13 +53,13 @@ func Forward(source, destination net.Conn, isServerToClient bool, stopSig *bool)
 
 		// calculate bytes/s to client/server
 		if confctrl.Config.Advanced.Debug {
-			asyncctrl.Mutex.Lock()
-			if isServerToClient {
-				debugctrl.DataCountBytesToClients = debugctrl.DataCountBytesToClients + float64(dataLen)
-			} else {
-				debugctrl.DataCountBytesToServer = debugctrl.DataCountBytesToServer + float64(dataLen)
-			}
-			asyncctrl.Mutex.Unlock()
+			asyncctrl.WithLock(func() {
+				if isServerToClient {
+					debugctrl.DataCountBytesToClients = debugctrl.DataCountBytesToClients + float64(dataLen)
+				} else {
+					debugctrl.DataCountBytesToServer = debugctrl.DataCountBytesToServer + float64(dataLen)
+				}
+			})
 		}
 
 		// version/protocol are only found in serverToClient connection in the first buffer that is read
