@@ -2,25 +2,22 @@
   "basic": {
     "serverDirPath": "{path/to/server/folder}",
     "serverFileName": "{server.jar}",
-    "startMinecraftServerMac": "screen -dmS minecraftServer java {-Xmx1024M -Xms1024M} -jar serverFileName nogui",
-    "stopMinecraftServerMac": "screen -S minecraftServer -X stuff 'stop\\n'",
-    "startMinecraftServerLin": "screen -dmS minecraftServer java {-Xmx1024M -Xms1024M} -jar serverFileName nogui",
-    "stopMinecraftServerLin": "screen -S minecraftServer -X stuff 'stop\\n'",
-    "startMinecraftServerWin": "java {-Xmx1024M -Xms1024M} -jar serverFileName nogui",
-    "stopMinecraftServerWin": "stop",
-    "hibernationInfo": "                   &fserver status:\n                   &b&lHIBERNATING",
-    "startingInfo": "                   &fserver status:\n                    &6&lWARMING UP",
-    "minecraftServerStartupTime": 20,
-    "timeBeforeStoppingEmptyServer": 60,
-    "checkForUpdates": true
+    "StartMinecraftServer": "java {-Xmx1024M} {-Xms1024M} -jar serverFileName nogui",
+    "StopMinecraftServer": "stop",
+    "StopMinecraftServerForce": "",
+    "HibernationInfo": "                   \u0026fserver status:\n                   \u0026b\u0026lHIBERNATING",
+    "StartingInfo": "                   \u0026fserver status:\n                    \u00266\u0026lWARMING UP",
+    "MinecraftServerStartupTime": 20,
+    "TimeBeforeStoppingEmptyServer": 60,
+    "CheckForUpdates": true
   },
   "advanced": {
-    "listenHost": "0.0.0.0",
-    "listenPort": "25555",
-    "targetHost": "127.0.0.1",
-    "targetPort": "25565",
-    "debug": false,
-    "serverVersion": "1.16.4",
-    "serverProtocol": "754"
+    "ListenHost": "0.0.0.0",
+    "ListenPort": "25555",
+    "TargetHost": "127.0.0.1",
+    "TargetPort": "25565",
+    "Debug": false,
+    "ServerVersion": "1.16.4",
+    "ServerProtocol": "754"
   }
 }

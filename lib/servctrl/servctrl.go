@@ -2,15 +2,16 @@ package servctrl
 
 import (
 	"log"
-	"os/exec"
-	"runtime"
 	"strings"
 	"time"
 
 	"msh/lib/asyncctrl"
 	"msh/lib/cmdctrl"
 	"msh/lib/confctrl"
+	"msh/lib/debugctrl"
 )
+
+var servTerm *cmdctrl.ServTerm
 
 // ServerStatus represent the status of the minecraft server ("offline", "starting", "online")
 var ServerStatus = "offline"
@@ -26,40 +27,22 @@ var TimeLeftUntilUp int
 
 // StartMinecraftServer starts the minecraft server
 func StartMinecraftServer() {
-	ServerStatus = "starting"
-
-	TimeLeftUntilUp = confctrl.Config.Basic.MinecraftServerStartupTime
-
-	// block that execute the correct start command depending on the OS
 	var err error
-	if runtime.GOOS == "linux" {
-		command := strings.ReplaceAll(confctrl.Config.Basic.StartMinecraftServerLin, "serverFileName", confctrl.Config.Basic.ServerFileName)
-		cmd := exec.Command("/bin/bash", "-c", command)
-		cmd.Dir = confctrl.Config.Basic.ServerDirPath
-		err = cmd.Run()
-	} else if runtime.GOOS == "darwin" {
-		command := strings.ReplaceAll(confctrl.Config.Basic.StartMinecraftServerMac, "serverFileName", confctrl.Config.Basic.ServerFileName)
-		cmd := exec.Command("/bin/bash", "-c", command)
-		cmd.Dir = confctrl.Config.Basic.ServerDirPath
-		err = cmd.Run()
-	} else if runtime.GOOS == "windows" {
-		command := strings.ReplaceAll(confctrl.Config.Basic.StartMinecraftServerWin, "serverFileName", confctrl.Config.Basic.ServerFileName)
-		commandSplit := strings.Split(command, " ")
-		cmd := exec.Command(commandSplit[0], commandSplit[1:]...)
-		cmd.Dir = confctrl.Config.Basic.ServerDirPath
-		cmdctrl.In, _ = cmd.StdinPipe()
-		err = cmd.Start()
-	}
 
+	// start server terminal
+	command := strings.ReplaceAll(confctrl.Config.Basic.StartMinecraftServer, "serverFileName", confctrl.Config.Basic.ServerFileName)
+	servTerm, err = cmdctrl.Start(confctrl.Config.Basic.ServerDirPath, command)
 	if err != nil {
-		log.Printf("startMinecraftServer: error starting minecraft server: %v\n", err)
+		log.Printf("StartMinecraftServer: error starting minecraft server: %v\n", err)
 		return
 	}
 
-	log.Print("*** MINECRAFT SERVER IS STARTING!")
-
-	// initialization of players
+	// initialization
+	ServerStatus = "starting"
+	TimeLeftUntilUp = confctrl.Config.Basic.MinecraftServerStartupTime
 	Players = 0
+
+	log.Print("*** MINECRAFT SERVER IS STARTING!")
 
 	// sets serverStatus == "online".
 	// After {TimeBeforeStoppingEmptyServer} executes stopEmptyMinecraftServer(false)
@@ -85,8 +68,8 @@ func StartMinecraftServer() {
 }
 
 // StopEmptyMinecraftServer stops the minecraft server
-func StopEmptyMinecraftServer(forceExec bool) {
-	if forceExec && ServerStatus != "offline" {
+func StopEmptyMinecraftServer(force bool) {
+	if force && ServerStatus != "offline" {
 		// skip some checks to issue the stop server command forcefully
 	} else {
 		// check that there is only one "stop server command" instance running and players <= 0 and ServerStatus != "offline".
@@ -98,36 +81,28 @@ func StopEmptyMinecraftServer(forceExec bool) {
 		}
 	}
 
+	// execute stop command
+	if force && confctrl.Config.Basic.StopMinecraftServerForce != "" {
+		err := servTerm.Execute(confctrl.Config.Basic.StopMinecraftServerForce)
+		if err != nil {
+			log.Printf("stopEmptyMinecraftServer: error stopping minecraft server: %v\n", err)
+			return
+		}
+		// waits for the terminal to exit
+		debugctrl.Logger("waiting for server terminal to exit")
+		servTerm.Wg.Wait()
+		debugctrl.Logger("server terminal exited")
+	} else {
+		err := servTerm.Execute(confctrl.Config.Basic.StopMinecraftServer)
+		if err != nil {
+			log.Printf("stopEmptyMinecraftServer: error stopping minecraft server: %v\n", err)
+			return
+		}
+	}
+
 	ServerStatus = "offline"
 
-	// block that execute the correct stop command depending on the OS
-	var err error
-	if runtime.GOOS == "linux" {
-		if forceExec {
-			err = exec.Command("/bin/bash", "-c", confctrl.Config.Basic.ForceStopMinecraftServerLin).Run()
-		} else {
-			err = exec.Command("/bin/bash", "-c", confctrl.Config.Basic.StopMinecraftServerLin).Run()
-		}
-	} else if runtime.GOOS == "darwin" {
-		if forceExec {
-			err = exec.Command("/bin/bash", "-c", confctrl.Config.Basic.ForceStopMinecraftServerMac).Run()
-		} else {
-			err = exec.Command("/bin/bash", "-c", confctrl.Config.Basic.StopMinecraftServerMac).Run()
-		}
-	} else if runtime.GOOS == "windows" {
-		if forceExec {
-			_, err = cmdctrl.In.Write([]byte(confctrl.Config.Basic.ForceStopMinecraftServerWin))
-		} else {
-			_, err = cmdctrl.In.Write([]byte(confctrl.Config.Basic.StopMinecraftServerWin))
-		}
-		cmdctrl.In.Close()
-	}
-
-	if err != nil {
-		log.Printf("stopEmptyMinecraftServer: error stopping minecraft server: %v\n", err)
-	}
-
-	if forceExec {
+	if force {
 		log.Print("*** MINECRAFT SERVER IS FORCEFULLY SHUTTING DOWN!")
 	} else {
 		log.Print("*** MINECRAFT SERVER IS SHUTTING DOWN!")

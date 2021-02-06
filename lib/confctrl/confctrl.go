@@ -8,7 +8,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 
 	"msh/lib/data"
@@ -26,15 +25,9 @@ type configuration struct {
 type basic struct {
 	ServerDirPath                 string
 	ServerFileName                string
-	StartMinecraftServerLin       string
-	StopMinecraftServerLin        string
-	ForceStopMinecraftServerLin   string
-	StartMinecraftServerWin       string
-	StopMinecraftServerWin        string
-	ForceStopMinecraftServerWin   string
-	StartMinecraftServerMac       string
-	StopMinecraftServerMac        string
-	ForceStopMinecraftServerMac   string
+	StartMinecraftServer          string
+	StopMinecraftServer           string
+	StopMinecraftServerForce      string
 	HibernationInfo               string
 	StartingInfo                  string
 	MinecraftServerStartupTime    int
@@ -75,8 +68,6 @@ func LoadConfig() {
 	data.LoadIcon(Config.Basic.ServerDirPath)
 
 	debugctrl.Debug = Config.Advanced.Debug
-
-	initVariables()
 }
 
 // SaveConfig saves the config struct to the config file
@@ -116,39 +107,12 @@ func checkConfig() string {
 		return "java not installed!"
 	}
 
-	//------------------- linux -------------------//
-	if runtime.GOOS == "linux" {
-		if strings.Contains(Config.Basic.StartMinecraftServerLin, "screen") {
-			_, err = exec.LookPath("screen")
-			if err != nil {
-				return "screen not installed!"
-			}
-		}
-	}
-
-	//------------------- macos -------------------//
-	if runtime.GOOS == "darwin" {
-		if strings.Contains(Config.Basic.StartMinecraftServerWin, "screen") {
-			_, err = exec.LookPath("screen")
-			if err != nil {
-				return "screen not installed!"
-			}
+	if strings.Contains(Config.Basic.StartMinecraftServer, "screen") {
+		_, err = exec.LookPath("screen")
+		if err != nil {
+			return "screen not installed!"
 		}
 	}
 
 	return ""
-}
-
-// initializes some variables
-func initVariables() {
-	// Set force command to normal stop command if undefined
-	if Config.Basic.ForceStopMinecraftServerLin == "" {
-		Config.Basic.ForceStopMinecraftServerLin = Config.Basic.StopMinecraftServerLin
-	}
-	if Config.Basic.ForceStopMinecraftServerMac == "" {
-		Config.Basic.ForceStopMinecraftServerMac = Config.Basic.StopMinecraftServerMac
-	}
-	if Config.Basic.ForceStopMinecraftServerWin == "" {
-		Config.Basic.ForceStopMinecraftServerWin = Config.Basic.StopMinecraftServerWin
-	}
 }

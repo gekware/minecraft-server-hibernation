@@ -24,7 +24,7 @@ Check the [releases](https://github.com/gekigek99/minecraft-server-hibernation/r
 This version was successfully compiled in go version 1.15
 To compile run the command:
 ```
-go build minecraft-server-hibernation.go
+go build
 ```
 
 -----
@@ -36,13 +36,14 @@ How to use:
 3. Edit the parameters in config.json as needed (*check definitions*):
     - serverDirPath
     - serverFileName
-    - startMinecraftServerLin or startMinecraftServerWin
-    - stopMinecraftServerLin or stopMinecraftServerWin
-    - *hibernationInfo and startingInfo
-    - *minecraftServerStartupTime
-    - *timeBeforeStoppingEmptyServer
+    - startMinecraftServer
+    - stopMinecraftServer
+    - * stopMinecraftServerForce
+    - * hibernationInfo and startingInfo
+    - * minecraftServerStartupTime
+    - * timeBeforeStoppingEmptyServer
     - *checkForUpdates
-4. *put the frozen icon you want in "path/to/server.jar/folder" (must be 64x64 and called "server-icon-frozen.png")
+4. * put the frozen icon you want in "path/to/server.jar/folder" (must be 64x64 and called "server-icon-frozen.png")
 5. on the server: open port 25555 (example: [ufw firewall](https://www.configserverfirewall.com/ufw-ubuntu-firewall/ubuntu-firewall-open-port/))
 6. on the router: forward port 25555 to server ([tutorial](https://www.wikihow.com/Open-Ports#Opening-Router-Firewall-Ports))
 7. you can connect to the server through port 25555
@@ -55,37 +56,30 @@ How to use:
 Commands to start and stop minecraft server:
 ```yaml
 # only text in braces needs to be modified (remember to remove all braces)
-"serverDirPath": "{path/to/server/folder}",
-"serverFileName": "{server.jar}",
-"startMinecraftServerLin": "screen -dmS minecraftServer java {-Xmx1024M -Xms1024M} -jar serverFileName nogui",
-"stopMinecraftServerLin": "screen -S minecraftServer -X stuff 'stop\\n'",
-"startMinecraftServerWin": "java {-Xmx1024M -Xms1024M} -jar serverFileName nogui",
-"stopMinecraftServerWin": "stop",
+"ServerDirPath": "{path/to/server/folder}",
+"ServerFileName": "{server.jar}",
+"StartMinecraftServer": "java {-Xmx1024M -Xms1024M} -jar serverFileName nogui",
+"StopMinecraftServer": "stop",
+"StopMinecraftServerForce": ""
 
-# you must launch the program as root, otherwise the screen command won't be executed successfully
-# if you are on linux you can access the minecraft server console with "sudo screen -r minecraftServer"
-```
-Personally I set up a systemctl minecraft server service (called "minecraft-server") therefore I use:
-```yaml
-"startMinecraftServerLin": "sudo systemctl start minecraft-server",
-"stopMinecraftServerLin": "sudo systemctl stop minecraft-server",
+# the StopMinecraftServerForce parameter is used to execute special commands when a forced shutdown happens
 ```
 Hibernation and warming up server description
 ```yaml
-"hibernationInfo": "                   &fserver status:\n                   &b&lHIBERNATING",
-"startingInfo": "                   &fserver status:\n                    &6&lWARMING UP",
+"HibernationInfo": "                   &fserver status:\n                   &b&lHIBERNATING",
+"StartingInfo": "                   &fserver status:\n                    &6&lWARMING UP",
 ```
 If you are the first to access to minecraft world you will have to wait *20 seconds* and then try to connect again.
 ```yaml
-"minecraftServerStartupTime": 20,       #any parameter more than 10s is recommended
+"SinecraftServerStartupTime": 20,       #any parameter more than 10s is recommended
 ```
 *60 seconds* is the time (after the last player disconnected) that the script waits before shutting down the minecraft server
 ```yaml
-"timeBeforeStoppingEmptyServer": 60     #any parameter more than 30s is recommended
+"TimeBeforeStoppingEmptyServer": 60     #any parameter more than 30s is recommended
 ```
 set to false if you don't want to check for updates
 ```yaml
-"checkForUpdates": true
+"CheckForUpdates": true
 ```
 -----
 ### CREDITS:  
