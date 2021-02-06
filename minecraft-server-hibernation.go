@@ -15,7 +15,7 @@ import (
 )
 
 // script version
-var version string = "v2.1.2"
+var version string = "v2.2.0"
 
 // contains intro to script and program
 var info []string = []string{
