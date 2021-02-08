@@ -28,7 +28,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 	debugctrl.Logger(fmt.Sprintf("*** start proxy from %s:%s to %s:%s", clientAddress, confctrl.Config.Advanced.ListenPort, confctrl.Config.Advanced.TargetHost, confctrl.Config.Advanced.TargetPort))
 
 	// block containing the case of serverStatus == "offline" or "starting"
-	if servctrl.ServerStatus == "offline" || servctrl.ServerStatus == "starting" {
+	if servctrl.ServStats.Status == "offline" || servctrl.ServStats.Status == "starting" {
 		buffer := make([]byte, 1024)
 
 		// read first packet
@@ -40,12 +40,12 @@ func HandleClientSocket(clientSocket net.Conn) {
 
 		// the client first packet is {data, 1, 1, 0} or {data, 1} --> the client is requesting server info and ping
 		if buffer[dataLen-1] == 0 || buffer[dataLen-1] == 1 {
-			if servctrl.ServerStatus == "offline" {
+			if servctrl.ServStats.Status == "offline" {
 				log.Printf("*** player unknown requested server info from %s:%s to %s:%s\n", clientAddress, confctrl.Config.Advanced.ListenPort, confctrl.Config.Advanced.TargetHost, confctrl.Config.Advanced.TargetPort)
 				// answer to client with emulated server info
 				clientSocket.Write(servprotocol.BuildMessage("info", confctrl.Config.Basic.HibernationInfo))
 
-			} else if servctrl.ServerStatus == "starting" {
+			} else if servctrl.ServStats.Status == "starting" {
 				log.Printf("*** player unknown requested server info from %s:%s to %s:%s during server startup\n", clientAddress, confctrl.Config.Advanced.ListenPort, confctrl.Config.Advanced.TargetHost, confctrl.Config.Advanced.TargetPort)
 				// answer to client with emulated server info
 				clientSocket.Write(servprotocol.BuildMessage("info", confctrl.Config.Basic.StartingInfo))
@@ -88,17 +88,17 @@ func HandleClientSocket(clientSocket net.Conn) {
 				playerName = string(playerNameBuffer[3 : len(playerNameBuffer)-zerosLen])
 			}
 
-			if servctrl.ServerStatus == "offline" {
+			if servctrl.ServStats.Status == "offline" {
 				// client is trying to join the server and serverStatus == "offline" --> issue startMinecraftServer()
 				servctrl.StartMinecraftServer()
 				log.Printf("*** %s tried to join from %s:%s to %s:%s\n", playerName, clientAddress, confctrl.Config.Advanced.ListenPort, confctrl.Config.Advanced.TargetHost, confctrl.Config.Advanced.TargetPort)
 				// answer to client with text in the loadscreen
-				clientSocket.Write(servprotocol.BuildMessage("txt", fmt.Sprintf("Server start command issued. Please wait... Time left: %d seconds", servctrl.TimeLeftUntilUp)))
+				clientSocket.Write(servprotocol.BuildMessage("txt", fmt.Sprintf("Server start command issued. Please wait... Time left: %d seconds", servctrl.ServStats.TimeLeftUntilUp)))
 
-			} else if servctrl.ServerStatus == "starting" {
+			} else if servctrl.ServStats.Status == "starting" {
 				log.Printf("*** %s tried to join from %s:%s to %s:%s during server startup\n", playerName, clientAddress, confctrl.Config.Advanced.ListenPort, confctrl.Config.Advanced.TargetHost, confctrl.Config.Advanced.TargetPort)
 				// answer to client with text in the loadscreen
-				clientSocket.Write(servprotocol.BuildMessage("txt", fmt.Sprintf("Server is starting. Please wait... Time left: %d seconds", servctrl.TimeLeftUntilUp)))
+				clientSocket.Write(servprotocol.BuildMessage("txt", fmt.Sprintf("Server is starting. Please wait... Time left: %d seconds", servctrl.ServStats.TimeLeftUntilUp)))
 			}
 		}
 
@@ -108,7 +108,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 	}
 
 	// block containing the case of serverStatus == "online"
-	if servctrl.ServerStatus == "online" {
+	if servctrl.ServStats.Status == "online" {
 		// if the server is online, just open a connection with the server and connect it with the client
 		serverSocket, err := net.Dial("tcp", confctrl.Config.Advanced.TargetHost+":"+confctrl.Config.Advanced.TargetPort)
 		if err != nil {
@@ -128,18 +128,18 @@ func HandleClientSocket(clientSocket net.Conn) {
 }
 
 func clientToServer(source, destination net.Conn, stopSig *bool) {
-	servctrl.Players++
-	log.Printf("*** A PLAYER JOINED THE SERVER! - %d players online", servctrl.Players)
+	servctrl.ServStats.Players++
+	log.Printf("*** A PLAYER JOINED THE SERVER! - %d players online", servctrl.ServStats.Players)
 
 	// exchanges data from client to server (isServerToClient == false)
 	proxy.Forward(source, destination, false, stopSig)
 
-	servctrl.Players--
-	log.Printf("*** A PLAYER LEFT THE SERVER! - %d players online", servctrl.Players)
+	servctrl.ServStats.Players--
+	log.Printf("*** A PLAYER LEFT THE SERVER! - %d players online", servctrl.ServStats.Players)
 
 	// this block increases stopInstances by one and starts the timer to execute stopEmptyMinecraftServer(false)
 	// (that will do nothing in case there are players online)
-	asyncctrl.WithLock(func() { servctrl.StopInstances++ })
+	asyncctrl.WithLock(func() { servctrl.ServStats.StopInstances++ })
 	time.AfterFunc(time.Duration(confctrl.Config.Basic.TimeBeforeStoppingEmptyServer)*time.Second, func() { servctrl.StopEmptyMinecraftServer(false) })
 }
 
