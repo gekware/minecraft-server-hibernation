@@ -38,12 +38,12 @@ How to use:
     - serverFileName
     - startMinecraftServer
     - stopMinecraftServer
-    - * stopMinecraftServerForce
-    - * hibernationInfo and startingInfo
-    - * minecraftServerStartupTime
-    - * timeBeforeStoppingEmptyServer
-    - *checkForUpdates
-4. * put the frozen icon you want in "path/to/server.jar/folder" (must be 64x64 and called "server-icon-frozen.png")
+    - \* stopMinecraftServerForce
+    - \* hibernationInfo and startingInfo
+    - \* minecraftServerStartupTime
+    - \* timeBeforeStoppingEmptyServer
+    - \* checkForUpdates
+4. \* put the frozen icon you want in "path/to/server.jar/folder" (must be 64x64 and called "server-icon-frozen.png")
 5. on the server: open port 25555 (example: [ufw firewall](https://www.configserverfirewall.com/ufw-ubuntu-firewall/ubuntu-firewall-open-port/))
 6. on the router: forward port 25555 to server ([tutorial](https://www.wikihow.com/Open-Ports#Opening-Router-Firewall-Ports))
 7. you can connect to the server through port 25555
