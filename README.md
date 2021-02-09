@@ -71,7 +71,7 @@ Hibernation and warming up server description
 ```
 If you are the first to access to minecraft world you will have to wait *20 seconds* and then try to connect again.
 ```yaml
-"SinecraftServerStartupTime": 20,       #any parameter more than 10s is recommended
+"MinecraftServerStartupTime": 20,       #any parameter more than 10s is recommended
 ```
 *60 seconds* is the time (after the last player disconnected) that the script waits before shutting down the minecraft server
 ```yaml
