@@ -64,9 +64,9 @@ func StopEmptyMinecraftServer(force bool) {
 		// on the contrary the server won't be stopped
 		asyncctrl.WithLock(func() { ServStats.StopInstances-- })
 
-		if asyncctrl.WithLockBool(func() bool {
+		if asyncctrl.WithLock(func() interface{} {
 			return ServStats.StopInstances > 0 || ServStats.Players > 0 || ServStats.Status == "offline"
-		}) {
+		}).(bool) {
 			return
 		}
 	}
