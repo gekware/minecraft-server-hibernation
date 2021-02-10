@@ -1,4 +1,4 @@
-package cmdctrl
+package servctrl
 
 import (
 	"bufio"
@@ -22,8 +22,8 @@ type ServTerm struct {
 	err      io.ReadCloser
 }
 
-// Start starts a new terminal (non-blocking) and returns a servTerm object
-func Start(dir, command string) (*ServTerm, error) {
+// CmdStart starts a new terminal (non-blocking) and returns a servTerm object
+func CmdStart(dir, command string) (*ServTerm, error) {
 	var err error
 
 	term := &ServTerm{}

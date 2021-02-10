@@ -6,12 +6,11 @@ import (
 	"time"
 
 	"msh/lib/asyncctrl"
-	"msh/lib/cmdctrl"
 	"msh/lib/confctrl"
 	"msh/lib/debugctrl"
 )
 
-var servTerm *cmdctrl.ServTerm
+var servTerm *ServTerm
 
 // StartMinecraftServer starts the minecraft server
 func StartMinecraftServer() {
@@ -19,7 +18,7 @@ func StartMinecraftServer() {
 
 	// start server terminal
 	command := strings.ReplaceAll(confctrl.Config.Basic.StartMinecraftServer, "serverFileName", confctrl.Config.Basic.ServerFileName)
-	servTerm, err = cmdctrl.Start(confctrl.Config.Basic.ServerDirPath, command)
+	servTerm, err = CmdStart(confctrl.Config.Basic.ServerDirPath, command)
 	if err != nil {
 		log.Printf("StartMinecraftServer: error starting minecraft server: %v\n", err)
 		return
