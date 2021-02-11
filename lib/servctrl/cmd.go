@@ -17,37 +17,35 @@ type ServTerm struct {
 	IsActive bool
 	Wg       sync.WaitGroup
 	cmd      *exec.Cmd
-	in       io.WriteCloser
-	out      io.ReadCloser
-	err      io.ReadCloser
+	in       wc
+	out      rc
+	err      rc
+}
+
+// rc inherits io.ReadCloser and a string is used to indentify it as "out" or "err"
+type rc struct {
+	io.ReadCloser
+	string
+}
+
+// wc inherits io.WriteCloser
+type wc struct {
+	io.WriteCloser
 }
 
 // CmdStart starts a new terminal (non-blocking) and returns a servTerm object
 func CmdStart(dir, command string) (*ServTerm, error) {
-	var err error
-
 	term := &ServTerm{}
 
-	commandSplit := strings.Split(command, " ")
+	term.loadCmd(dir, command)
 
-	term.cmd = exec.Command(commandSplit[0], commandSplit[1:]...)
-	term.cmd.Dir = dir
-
-	term.out, err = term.cmd.StdoutPipe()
-	if err != nil {
-		return nil, err
-	}
-	term.err, err = term.cmd.StderrPipe()
-	if err != nil {
-		return nil, err
-	}
-	term.in, err = term.cmd.StdinPipe()
+	err := term.loadStdPipes()
 	if err != nil {
 		return nil, err
 	}
 
-	go term.printOut()
-	go term.printErr()
+	go term.out.printer()
+	go term.err.printer()
 
 	err = term.cmd.Start()
 	if err != nil {
@@ -83,28 +81,32 @@ func (term *ServTerm) Execute(command string) error {
 	return nil
 }
 
-func (term *ServTerm) printOut() {
-	var line string
+func (term *ServTerm) loadCmd(dir, command string) {
+	cSplit := strings.Split(command, " ")
 
-	scanner := bufio.NewScanner(term.out)
-
-	for scanner.Scan() {
-		line = scanner.Text()
-
-		fmt.Println(line)
-	}
+	term.cmd = exec.Command(cSplit[0], cSplit[1:]...)
+	term.cmd.Dir = dir
 }
 
-func (term *ServTerm) printErr() {
-	var line string
-
-	scanner := bufio.NewScanner(term.err)
-
-	for scanner.Scan() {
-		line = scanner.Text()
-
-		fmt.Println(line)
+func (term *ServTerm) loadStdPipes() error {
+	stdOut, err := term.cmd.StdoutPipe()
+	if err != nil {
+		return err
 	}
+	stdErr, err := term.cmd.StderrPipe()
+	if err != nil {
+		return err
+	}
+	stdIn, err := term.cmd.StdinPipe()
+	if err != nil {
+		return err
+	}
+
+	term.out = rc{stdOut, "out"}
+	term.err = rc{stdErr, "err"}
+	term.in = wc{stdIn}
+
+	return nil
 }
 
 func (term *ServTerm) waitForExit() {
@@ -122,4 +124,20 @@ func (term *ServTerm) waitForExit() {
 	term.out.Close()
 	term.err.Close()
 	term.in.Close()
+}
+
+func (stdOutErr *rc) printer() {
+	var line string
+
+	scanner := bufio.NewScanner(stdOutErr)
+
+	for scanner.Scan() {
+		line = scanner.Text()
+
+		fmt.Println(line)
+
+		if stdOutErr.string == "out" {
+			// look for signal strings in stdout
+		}
+	}
 }
