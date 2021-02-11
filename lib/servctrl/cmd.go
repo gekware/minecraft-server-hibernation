@@ -17,19 +17,19 @@ type ServTerm struct {
 	IsActive bool
 	Wg       sync.WaitGroup
 	cmd      *exec.Cmd
-	in       wc
-	out      rc
-	err      rc
+	out      readcl
+	err      readcl
+	in       writecl
 }
 
-// rc inherits io.ReadCloser and a string is used to indentify it as "out" or "err"
-type rc struct {
+// readcl inherits io.ReadCloser and a string is used to indentify it as "out" or "err"
+type readcl struct {
 	io.ReadCloser
-	string
+	typ string
 }
 
-// wc inherits io.WriteCloser
-type wc struct {
+// writecl inherits io.WriteCloser
+type writecl struct {
 	io.WriteCloser
 }
 
@@ -102,9 +102,9 @@ func (term *ServTerm) loadStdPipes() error {
 		return err
 	}
 
-	term.out = rc{stdOut, "out"}
-	term.err = rc{stdErr, "err"}
-	term.in = wc{stdIn}
+	term.out = readcl{stdOut, "out"}
+	term.err = readcl{stdErr, "err"}
+	term.in = writecl{stdIn}
 
 	return nil
 }
@@ -126,18 +126,18 @@ func (term *ServTerm) waitForExit() {
 	term.in.Close()
 }
 
-func (stdOutErr *rc) printer() {
+func (outErrReader *readcl) printer() {
 	var line string
 
-	scanner := bufio.NewScanner(stdOutErr)
+	scanner := bufio.NewScanner(outErrReader)
 
 	for scanner.Scan() {
 		line = scanner.Text()
 
 		fmt.Println(line)
 
-		if stdOutErr.string == "out" {
-			// look for signal strings in stdout
+		if outErrReader.typ == "out" {
+			// look for flag strings in stdout
 		}
 	}
 }
