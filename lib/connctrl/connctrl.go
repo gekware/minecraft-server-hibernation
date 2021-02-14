@@ -25,8 +25,6 @@ func HandleClientSocket(clientSocket net.Conn) {
 	var lastIndex int = strings.LastIndex(clientSocket.RemoteAddr().String(), ":")
 	clientAddress := clientSocket.RemoteAddr().String()[:lastIndex]
 
-	debugctrl.Logger(fmt.Sprintf("*** start proxy from %s:%s to %s:%s", clientAddress, confctrl.Config.Advanced.ListenPort, confctrl.Config.Advanced.TargetHost, confctrl.Config.Advanced.TargetPort))
-
 	// block containing the case of serverStatus == "offline" or "starting"
 	if servctrl.ServStats.Status == "offline" || servctrl.ServStats.Status == "starting" {
 		buffer := make([]byte, 1024)
