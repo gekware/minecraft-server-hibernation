@@ -21,7 +21,7 @@ Check the [releases](https://github.com/gekigek99/minecraft-server-hibernation/r
 
 -----
 ### PROGRAM COMPILATION:
-This version was successfully compiled in go version 1.15
+This version was successfully compiled in go version 1.15  
 To compile run the command:
 ```
 go build
