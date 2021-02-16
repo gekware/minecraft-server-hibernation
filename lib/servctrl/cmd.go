@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"os"
 	"os/exec"
 	"strings"
 	"sync"
@@ -46,6 +47,7 @@ func CmdStart(dir, command string) (*ServTerm, error) {
 
 	go term.out.printer()
 	go term.err.printer()
+	go term.in.scanner()
 
 	err = term.cmd.Start()
 	if err != nil {
@@ -126,18 +128,35 @@ func (term *ServTerm) waitForExit() {
 	term.in.Close()
 }
 
-func (outErrReader *readcl) printer() {
+func (cmdOutErrReader *readcl) printer() {
 	var line string
 
-	scanner := bufio.NewScanner(outErrReader)
+	scanner := bufio.NewScanner(cmdOutErrReader)
 
 	for scanner.Scan() {
 		line = scanner.Text()
 
 		fmt.Println(line)
 
-		if outErrReader.typ == "out" {
+		if cmdOutErrReader.typ == "out" {
 			// look for flag strings in stdout
 		}
+	}
+}
+
+func (cmdInWriter *writecl) scanner() {
+	var line string
+	var err error
+
+	reader := bufio.NewReader(os.Stdin)
+
+	for {
+		line, err = reader.ReadString('\n')
+		if err != nil {
+			debugctrl.Logger("cmdInWriter scanner:", err.Error())
+			continue
+		}
+
+		cmdInWriter.Write([]byte(line))
 	}
 }
