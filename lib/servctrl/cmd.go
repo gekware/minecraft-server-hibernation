@@ -34,6 +34,9 @@ type writecl struct {
 	io.WriteCloser
 }
 
+var colRes string = "\033[0m"
+var colCya string = "\033[36m"
+
 // CmdStart starts a new terminal (non-blocking) and returns a servTerm object
 func CmdStart(dir, command string) (*ServTerm, error) {
 	term := &ServTerm{}
@@ -126,6 +129,8 @@ func (term *ServTerm) waitForExit() {
 	term.out.Close()
 	term.err.Close()
 	term.in.Close()
+
+	fmt.Println("terminal exited correctly")
 }
 
 func (cmdOutErrReader *readcl) printer() {
@@ -136,7 +141,7 @@ func (cmdOutErrReader *readcl) printer() {
 	for scanner.Scan() {
 		line = scanner.Text()
 
-		fmt.Println(line)
+		fmt.Println(colCya + line + colRes)
 
 		if cmdOutErrReader.typ == "out" {
 			// look for flag strings in stdout
