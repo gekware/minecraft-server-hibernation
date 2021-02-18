@@ -113,5 +113,10 @@ func checkConfig() string {
 		}
 	}
 
+	// if StopMinecraftServerForce is not set, set it equal to StopMinecraftServer
+	if Config.Basic.StopMinecraftServerForce == "" {
+		Config.Basic.StopMinecraftServerForce = Config.Basic.StopMinecraftServer
+	}
+
 	return ""
 }

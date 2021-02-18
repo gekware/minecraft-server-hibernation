@@ -27,7 +27,9 @@ func StartMinecraftServer() {
 
 // StopMinecraftServer stops the minecraft server. When force == true, it bypasses checks for StopInstancesa/Players and orders the server shutdown
 func StopMinecraftServer(force bool) {
-	// wait for the starting server to become online
+	var err error
+
+	// wait for the starting server to go online
 	for ServStats.Status != "starting" {
 		time.Sleep(1 * time.Second)
 	}
@@ -37,26 +39,20 @@ func StopMinecraftServer(force bool) {
 		return
 	}
 
-	// if force == false, bypass checks for StopInstancesa/Players and order the server shutdown
-	if !force {
-		// check that there is only one "stop server command" instance running and players <= 0, if so proceed with the shutdown
+	// execute stop command
+	if force {
+		// if force == true, bypass checks for StopInstances/Players and proceed with server shutdown
+		_, err = servTerm.Execute(confctrl.Config.Basic.StopMinecraftServerForce)
+	} else {
+		// if force == false, check that there is only one "stop server command" instance running and players <= 0,
+		// if so proceed with server shutdown
 		asyncctrl.WithLock(func() { ServStats.StopInstances-- })
-
 		if asyncctrl.WithLock(func() interface{} { return ServStats.StopInstances > 0 || ServStats.Players > 0 }).(bool) {
 			return
 		}
-	}
 
-	// execute stop command
-	var stopCom string
-	stopCom = confctrl.Config.Basic.StopMinecraftServer
-	if force {
-		if confctrl.Config.Basic.StopMinecraftServerForce != "" {
-			stopCom = confctrl.Config.Basic.StopMinecraftServerForce
-		}
+		_, err = servTerm.Execute(confctrl.Config.Basic.StopMinecraftServer)
 	}
-
-	_, err := servTerm.Execute(stopCom)
 	if err != nil {
 		log.Printf("stopEmptyMinecraftServer: error stopping minecraft server: %s\n", err.Error())
 		return
@@ -68,8 +64,7 @@ func StopMinecraftServer(force bool) {
 			debugctrl.Logger("waiting for server terminal to exit")
 			servTerm.Wg.Wait()
 		} else {
-			log.Println()
-			debugctrl.Logger("server does not seem to be stopping, is the StopMinecraftServerForce command correct?")
+			debugctrl.Logger("server was not stopped by StopMinecraftServerForce command, world save might be compromised")
 		}
 	}
 }
