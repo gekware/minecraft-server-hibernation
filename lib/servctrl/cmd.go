@@ -9,13 +9,17 @@ import (
 	"os/exec"
 	"strings"
 	"sync"
+	"syscall"
+	"time"
 
+	"msh/lib/asyncctrl"
+	"msh/lib/confctrl"
 	"msh/lib/debugctrl"
 )
 
 // ServTerm is the minecraft server terminal
 type ServTerm struct {
-	IsActive bool
+	isActive bool
 	Wg       sync.WaitGroup
 	cmd      *exec.Cmd
 	out      readcl
@@ -34,6 +38,9 @@ type writecl struct {
 	io.WriteCloser
 }
 
+// lastLine is a channel used to communicate the last line got from the printer function
+var lastLine = make(chan string)
+
 var colRes string = "\033[0m"
 var colCya string = "\033[36m"
 
@@ -48,9 +55,10 @@ func CmdStart(dir, command string) (*ServTerm, error) {
 		return nil, err
 	}
 
-	go term.out.printer()
-	go term.err.printer()
-	go term.in.scanner()
+	term.Wg.Add(2)
+	go term.out.printer(term)
+	go term.err.printer(term)
+	go term.scanner()
 
 	err = term.cmd.Start()
 	if err != nil {
@@ -59,31 +67,38 @@ func CmdStart(dir, command string) (*ServTerm, error) {
 
 	go term.waitForExit()
 
+	// initialization
+	ServStats.Status = "starting"
+	ServStats.LoadProgress = "0%"
+	ServStats.Players = 0
+	log.Print("*** MINECRAFT SERVER IS STARTING!")
+
 	return term, nil
 }
 
 // Execute executes a command on the specified term
-func (term *ServTerm) Execute(command string) error {
-	if !term.IsActive {
-		return fmt.Errorf("terminal is not active")
+func (term *ServTerm) Execute(command string) (string, error) {
+	if !term.isActive {
+		return "", fmt.Errorf("servctrl-cmd: Execute: terminal not active")
 	}
 
 	commands := strings.Split(command, "\n")
 
 	for _, com := range commands {
-		// needs to be added otherwise the virtual "enter" button is not pressed
-		com += "\n"
+		if ServStats.Status == "online" {
+			debugctrl.Logger("sending", com, "to terminal")
 
-		log.Print("terminal execute: ", com)
-
-		// write to cmd
-		_, err := term.in.Write([]byte(com))
-		if err != nil {
-			return err
+			// write to cmd (\n indicates the enter key)
+			_, err := term.in.Write([]byte(com + "\n"))
+			if err != nil {
+				return "", err
+			}
+		} else {
+			return "", fmt.Errorf("servctrl-cmd: Execute: server not online")
 		}
 	}
 
-	return nil
+	return <-lastLine, nil
 }
 
 func (term *ServTerm) loadCmd(dir, command string) {
@@ -91,6 +106,14 @@ func (term *ServTerm) loadCmd(dir, command string) {
 
 	term.cmd = exec.Command(cSplit[0], cSplit[1:]...)
 	term.cmd.Dir = dir
+
+	// launch as new process group so that signals (ex: SIGINT) are not sent also the the child process
+	term.cmd.SysProcAttr = &syscall.SysProcAttr{
+		// windows	//
+		CreationFlags: syscall.CREATE_NEW_PROCESS_GROUP,
+		// linux	//
+		// Setpgid: true,
+	}
 }
 
 func (term *ServTerm) loadStdPipes() error {
@@ -114,27 +137,28 @@ func (term *ServTerm) loadStdPipes() error {
 	return nil
 }
 
+// waitForExit manages term.isActive parameter and set ServStats.Status = "offline" when it exits
 func (term *ServTerm) waitForExit() {
-	term.IsActive = true
+	term.isActive = true
 
-	term.Wg.Add(1)
-	err := term.cmd.Wait()
-	if err != nil {
-		debugctrl.Logger("waitForExit: error while waiting for cmd exit")
-	}
-	term.Wg.Done()
-
-	term.IsActive = false
+	// wait for printer (out-err) to exit
+	term.Wg.Wait()
 
 	term.out.Close()
 	term.err.Close()
 	term.in.Close()
 
-	fmt.Println("terminal exited correctly")
+	term.isActive = false
+	debugctrl.Logger("cmd: waitForExit: terminal exited")
+
+	ServStats.Status = "offline"
+	log.Print("*** MINECRAFT SERVER IS OFFLINE!")
 }
 
-func (cmdOutErrReader *readcl) printer() {
+func (cmdOutErrReader *readcl) printer(term *ServTerm) {
 	var line string
+
+	defer term.Wg.Done()
 
 	scanner := bufio.NewScanner(cmdOutErrReader)
 
@@ -144,12 +168,41 @@ func (cmdOutErrReader *readcl) printer() {
 		fmt.Println(colCya + line + colRes)
 
 		if cmdOutErrReader.typ == "out" {
-			// look for flag strings in stdout
+
+			// case where the server is starting
+			if ServStats.Status == "starting" {
+				if strings.Contains(line, "Preparing spawn area: ") {
+					ServStats.LoadProgress = strings.Split(strings.Split(line, "Preparing spawn area: ")[1], "\n")[0]
+				}
+				if strings.Contains(line, "[Server thread/INFO]: Done") {
+					ServStats.Status = "online"
+					log.Print("*** MINECRAFT SERVER IS ONLINE!")
+
+					// launch a stopInstance so that if no players connect the server will shutdown
+					asyncctrl.WithLock(func() { ServStats.StopInstances++ })
+					time.AfterFunc(time.Duration(confctrl.Config.Basic.TimeBeforeStoppingEmptyServer)*time.Second, func() { StopEmptyMinecraftServer(false) })
+				}
+			}
+
+			// case where the server is online
+			if ServStats.Status == "online" {
+				// if the terminal contains "Stopping" this means that the minecraft server is stopping
+				if strings.Contains(line, "[Server thread/INFO]: Stopping") {
+					ServStats.Status = "stopping"
+					log.Print("*** MINECRAFT SERVER IS STOPPING!")
+				}
+			}
+		}
+
+		// communicate to lastLine so that Execute function can return the first line after the command
+		select {
+		case lastLine <- line:
+		default:
 		}
 	}
 }
 
-func (cmdInWriter *writecl) scanner() {
+func (term *ServTerm) scanner() {
 	var line string
 	var err error
 
@@ -158,10 +211,14 @@ func (cmdInWriter *writecl) scanner() {
 	for {
 		line, err = reader.ReadString('\n')
 		if err != nil {
-			debugctrl.Logger("cmdInWriter scanner:", err.Error())
+			debugctrl.Logger("servTerm scanner:", err.Error())
 			continue
 		}
 
-		cmdInWriter.Write([]byte(line))
+		_, err = term.Execute(line)
+		if err != nil {
+			debugctrl.Logger("servTerm scanner:", err.Error())
+			continue
+		}
 	}
 }

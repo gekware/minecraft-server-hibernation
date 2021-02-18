@@ -1,23 +1,22 @@
 {
-  "basic": {
-    "serverDirPath": "{path/to/server/folder}",
-    "serverFileName": "{server.jar}",
+  "Basic": {
+    "ServerDirPath": "{path/to/server/folder}",
+    "ServerFileName": "{server.jar}",
     "StartMinecraftServer": "java {-Xmx1024M} {-Xms1024M} -jar serverFileName nogui",
     "StopMinecraftServer": "stop",
     "StopMinecraftServerForce": "",
     "HibernationInfo": "                   \u0026fserver status:\n                   \u0026b\u0026lHIBERNATING",
     "StartingInfo": "                   \u0026fserver status:\n                    \u00266\u0026lWARMING UP",
-    "MinecraftServerStartupTime": 20,
     "TimeBeforeStoppingEmptyServer": 60,
     "CheckForUpdates": true
   },
-  "advanced": {
+  "Advanced": {
     "ListenHost": "0.0.0.0",
     "ListenPort": "25555",
     "TargetHost": "127.0.0.1",
     "TargetPort": "25565",
     "Debug": false,
-    "ServerVersion": "1.16.4",
+    "ServerVersion": "1.16.5",
     "ServerProtocol": "754"
   }
 }

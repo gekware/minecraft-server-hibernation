@@ -25,75 +25,56 @@ func StartMinecraftServer() {
 	}
 
 	// initialization
-	ServStats.Status = "starting"
-	ServStats.TimeLeftUntilUp = confctrl.Config.Basic.MinecraftServerStartupTime
 	ServStats.Players = 0
-
-	log.Print("*** MINECRAFT SERVER IS STARTING!")
-
-	// sets serverStatus == "online".
-	// After {TimeBeforeStoppingEmptyServer} executes stopEmptyMinecraftServer(false)
-	var setServerStatusOnline = func() {
-		ServStats.Status = "online"
-		log.Print("*** MINECRAFT SERVER IS UP!")
-
-		asyncctrl.WithLock(func() { ServStats.StopInstances++ })
-		time.AfterFunc(time.Duration(confctrl.Config.Basic.TimeBeforeStoppingEmptyServer)*time.Second, func() { StopEmptyMinecraftServer(false) })
-	}
-	// updates TimeLeftUntilUp each second. if TimeLeftUntilUp == 0 it executes setServerStatusOnline()
-	var updateTimeleft func()
-	updateTimeleft = func() {
-		if ServStats.TimeLeftUntilUp > 0 {
-			ServStats.TimeLeftUntilUp--
-			time.AfterFunc(1*time.Second, func() { updateTimeleft() })
-		} else if ServStats.TimeLeftUntilUp == 0 {
-			setServerStatusOnline()
-		}
-	}
-
-	time.AfterFunc(1*time.Second, func() { updateTimeleft() })
 }
 
 // StopEmptyMinecraftServer stops the minecraft server
 func StopEmptyMinecraftServer(force bool) {
-	if force && ServStats.Status != "offline" {
-		// skip some checks to issue the stop server command forcefully
+	// wait for the starting server to become online
+	for ServStats.Status != "starting" {
+		time.Sleep(1 * time.Second)
+	}
+	// if server is not online return
+	if ServStats.Status != "online" {
+		debugctrl.Logger("servctrl: StopEmptyMinecraftServer: server is not online")
+		return
+	}
+
+	if force {
+		// skip checks to issue the stop server command forcefully
 	} else {
-		// check that there is only one "stop server command" instance running and players <= 0 and ServerStatus != "offline".
+		// check that there is only one "stop server command" instance running and players <= 0.
 		// on the contrary the server won't be stopped
 		asyncctrl.WithLock(func() { ServStats.StopInstances-- })
 
-		if asyncctrl.WithLock(func() interface{} {
-			return ServStats.StopInstances > 0 || ServStats.Players > 0 || ServStats.Status == "offline"
-		}).(bool) {
+		if asyncctrl.WithLock(func() interface{} { return ServStats.StopInstances > 0 || ServStats.Players > 0 }).(bool) {
 			return
 		}
 	}
 
 	// execute stop command
-	if force && confctrl.Config.Basic.StopMinecraftServerForce != "" {
-		err := servTerm.Execute(confctrl.Config.Basic.StopMinecraftServerForce)
-		if err != nil {
-			log.Printf("stopEmptyMinecraftServer: error stopping minecraft server: %v\n", err)
-			return
-		}
-		// waits for the terminal to exit
-		debugctrl.Logger("waiting for server terminal to exit")
-		servTerm.Wg.Wait()
-		debugctrl.Logger("server terminal exited")
-	} else {
-		err := servTerm.Execute(confctrl.Config.Basic.StopMinecraftServer)
-		if err != nil {
-			log.Printf("stopEmptyMinecraftServer: error stopping minecraft server: %v\n", err)
-			return
+	var stopCom string
+	stopCom = confctrl.Config.Basic.StopMinecraftServer
+	if force {
+		if confctrl.Config.Basic.StopMinecraftServerForce != "" {
+			stopCom = confctrl.Config.Basic.StopMinecraftServerForce
 		}
 	}
 
-	ServStats.Status = "offline"
+	_, err := servTerm.Execute(stopCom)
+	if err != nil {
+		log.Printf("stopEmptyMinecraftServer: error stopping minecraft server: %s\n", err.Error())
+		return
+	}
 
 	if force {
-		log.Print("*** MINECRAFT SERVER IS FORCEFULLY SHUTTING DOWN!")
-	} else {
-		log.Print("*** MINECRAFT SERVER IS SHUTTING DOWN!")
+		if ServStats.Status == "stopping" {
+			// wait for the terminal to exit
+			debugctrl.Logger("waiting for server terminal to exit")
+			servTerm.Wg.Wait()
+		} else {
+			log.Println()
+			debugctrl.Logger("server does not seem to be stopping, is the stopForce command correct?")
+		}
 	}
 }

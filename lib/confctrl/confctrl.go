@@ -30,7 +30,6 @@ type basic struct {
 	StopMinecraftServerForce      string
 	HibernationInfo               string
 	StartingInfo                  string
-	MinecraftServerStartupTime    int
 	TimeBeforeStoppingEmptyServer int
 	CheckForUpdates               bool
 }
