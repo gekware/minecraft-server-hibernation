@@ -25,8 +25,8 @@ func StartMinecraftServer() {
 	}
 }
 
-// StopEmptyMinecraftServer stops the minecraft server
-func StopEmptyMinecraftServer(force bool) {
+// StopMinecraftServer stops the minecraft server. When force == true, it bypasses checks for StopInstancesa/Players and orders the server shutdown
+func StopMinecraftServer(force bool) {
 	// wait for the starting server to become online
 	for ServStats.Status != "starting" {
 		time.Sleep(1 * time.Second)
@@ -37,11 +37,9 @@ func StopEmptyMinecraftServer(force bool) {
 		return
 	}
 
-	if force {
-		// skip checks to issue the stop server command forcefully
-	} else {
-		// check that there is only one "stop server command" instance running and players <= 0.
-		// on the contrary the server won't be stopped
+	// if force == false, bypass checks for StopInstancesa/Players and order the server shutdown
+	if !force {
+		// check that there is only one "stop server command" instance running and players <= 0, if so proceed with the shutdown
 		asyncctrl.WithLock(func() { ServStats.StopInstances-- })
 
 		if asyncctrl.WithLock(func() interface{} { return ServStats.StopInstances > 0 || ServStats.Players > 0 }).(bool) {
@@ -76,8 +74,8 @@ func StopEmptyMinecraftServer(force bool) {
 	}
 }
 
-// AddStopEmptyServerInstance increases stopInstances by one and starts the timer to execute stopEmptyMinecraftServer(false)
-func AddStopEmptyServerInstance() {
+// RequestStopMinecraftServer increases stopInstances by one and starts the timer to execute stopEmptyMinecraftServer(false)
+func RequestStopMinecraftServer() {
 	asyncctrl.WithLock(func() { ServStats.StopInstances++ })
-	time.AfterFunc(time.Duration(confctrl.Config.Basic.TimeBeforeStoppingEmptyServer)*time.Second, func() { StopEmptyMinecraftServer(false) })
+	time.AfterFunc(time.Duration(confctrl.Config.Basic.TimeBeforeStoppingEmptyServer)*time.Second, func() { StopMinecraftServer(false) })
 }

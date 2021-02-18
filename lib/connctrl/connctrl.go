@@ -133,7 +133,7 @@ func clientToServer(source, destination net.Conn, stopSig *bool) {
 	servctrl.ServStats.Players--
 	log.Printf("*** A PLAYER LEFT THE SERVER! - %d players online", servctrl.ServStats.Players)
 
-	servctrl.AddStopEmptyServerInstance()
+	servctrl.RequestStopMinecraftServer()
 }
 
 func serverToClient(source, destination net.Conn, stopSig *bool) {

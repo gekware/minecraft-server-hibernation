@@ -176,7 +176,7 @@ func (cmdOutErrReader *readcl) printer(term *ServTerm) {
 					log.Print("*** MINECRAFT SERVER IS ONLINE!")
 
 					// launch a stopInstance so that if no players connect the server will shutdown
-					AddStopEmptyServerInstance()
+					RequestStopMinecraftServer()
 				}
 			}
 

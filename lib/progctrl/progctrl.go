@@ -64,7 +64,7 @@ func InterruptListener() {
 	go func() {
 		select {
 		case <-c:
-			servctrl.StopEmptyMinecraftServer(true)
+			servctrl.StopMinecraftServer(true)
 			os.Exit(0)
 		}
 	}()
