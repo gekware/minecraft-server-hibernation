@@ -8,9 +8,7 @@ import (
 	"net"
 	"strconv"
 	"strings"
-	"time"
 
-	"msh/lib/asyncctrl"
 	"msh/lib/confctrl"
 	"msh/lib/debugctrl"
 	"msh/lib/proxy"
@@ -135,10 +133,7 @@ func clientToServer(source, destination net.Conn, stopSig *bool) {
 	servctrl.ServStats.Players--
 	log.Printf("*** A PLAYER LEFT THE SERVER! - %d players online", servctrl.ServStats.Players)
 
-	// this block increases stopInstances by one and starts the timer to execute stopEmptyMinecraftServer(false)
-	// (that will do nothing in case there are players online)
-	asyncctrl.WithLock(func() { servctrl.ServStats.StopInstances++ })
-	time.AfterFunc(time.Duration(confctrl.Config.Basic.TimeBeforeStoppingEmptyServer)*time.Second, func() { servctrl.StopEmptyMinecraftServer(false) })
+	servctrl.AddStopEmptyServerInstance()
 }
 
 func serverToClient(source, destination net.Conn, stopSig *bool) {

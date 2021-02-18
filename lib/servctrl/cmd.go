@@ -10,10 +10,7 @@ import (
 	"strings"
 	"sync"
 	"syscall"
-	"time"
 
-	"msh/lib/asyncctrl"
-	"msh/lib/confctrl"
 	"msh/lib/debugctrl"
 )
 
@@ -179,8 +176,7 @@ func (cmdOutErrReader *readcl) printer(term *ServTerm) {
 					log.Print("*** MINECRAFT SERVER IS ONLINE!")
 
 					// launch a stopInstance so that if no players connect the server will shutdown
-					asyncctrl.WithLock(func() { ServStats.StopInstances++ })
-					time.AfterFunc(time.Duration(confctrl.Config.Basic.TimeBeforeStoppingEmptyServer)*time.Second, func() { StopEmptyMinecraftServer(false) })
+					AddStopEmptyServerInstance()
 				}
 			}
 

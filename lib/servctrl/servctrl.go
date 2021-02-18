@@ -75,3 +75,9 @@ func StopEmptyMinecraftServer(force bool) {
 		}
 	}
 }
+
+// AddStopEmptyServerInstance increases stopInstances by one and starts the timer to execute stopEmptyMinecraftServer(false)
+func AddStopEmptyServerInstance() {
+	asyncctrl.WithLock(func() { ServStats.StopInstances++ })
+	time.AfterFunc(time.Duration(confctrl.Config.Basic.TimeBeforeStoppingEmptyServer)*time.Second, func() { StopEmptyMinecraftServer(false) })
+}
