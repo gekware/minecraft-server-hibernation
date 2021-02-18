@@ -23,9 +23,6 @@ func StartMinecraftServer() {
 		log.Printf("StartMinecraftServer: error starting minecraft server: %v\n", err)
 		return
 	}
-
-	// initialization
-	ServStats.Players = 0
 }
 
 // StopEmptyMinecraftServer stops the minecraft server
@@ -74,7 +71,7 @@ func StopEmptyMinecraftServer(force bool) {
 			servTerm.Wg.Wait()
 		} else {
 			log.Println()
-			debugctrl.Logger("server does not seem to be stopping, is the stopForce command correct?")
+			debugctrl.Logger("server does not seem to be stopping, is the StopMinecraftServerForce command correct?")
 		}
 	}
 }
