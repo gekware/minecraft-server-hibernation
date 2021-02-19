@@ -98,6 +98,7 @@ func (term *ServTerm) Execute(command string) (string, error) {
 	return <-lastLine, nil
 }
 
+// loadCmd loads cmd into server terminal
 func (term *ServTerm) loadCmd(dir, command string) {
 	cSplit := strings.Split(command, " ")
 
@@ -113,6 +114,7 @@ func (term *ServTerm) loadCmd(dir, command string) {
 	}
 }
 
+// loadStdPipes loads stdpipes into server terminal
 func (term *ServTerm) loadStdPipes() error {
 	stdOut, err := term.cmd.StdoutPipe()
 	if err != nil {
@@ -152,6 +154,7 @@ func (term *ServTerm) waitForExit() {
 	log.Print("*** MINECRAFT SERVER IS OFFLINE!")
 }
 
+// printer manages the printing of stdpipe out/err
 func (cmdOutErrReader *readcl) printer(term *ServTerm) {
 	var line string
 
@@ -198,6 +201,7 @@ func (cmdOutErrReader *readcl) printer(term *ServTerm) {
 	}
 }
 
+// scanner manages the input to stdpipe in
 func (term *ServTerm) scanner() {
 	var line string
 	var err error
