@@ -52,10 +52,7 @@ func CmdStart(dir, command string) (*ServTerm, error) {
 		return nil, err
 	}
 
-	term.Wg.Add(2)
-	go term.out.printer(term)
-	go term.err.printer(term)
-	go term.scanner()
+	term.startInteraction()
 
 	err = term.cmd.Start()
 	if err != nil {
@@ -140,7 +137,7 @@ func (term *ServTerm) loadStdPipes() error {
 func (term *ServTerm) waitForExit() {
 	term.isActive = true
 
-	// wait for printer (out-err) to exit
+	// wait for printer out/err to exit
 	term.Wg.Wait()
 
 	term.out.Close()
@@ -154,26 +151,31 @@ func (term *ServTerm) waitForExit() {
 	log.Print("*** MINECRAFT SERVER IS OFFLINE!")
 }
 
-// printer manages the printing of stdpipe out/err
-func (cmdOutErrReader *readcl) printer(term *ServTerm) {
-	var line string
+// startInteraction manages the communication from term.out/term.err and input to term.in (non-blocking)
+func (term *ServTerm) startInteraction() {
+	// add printer-out + printer-err to waitgroup
+	term.Wg.Add(2)
 
-	defer term.Wg.Done()
+	// print term.out
+	go func() {
+		var line string
 
-	scanner := bufio.NewScanner(cmdOutErrReader)
+		defer term.Wg.Done()
 
-	for scanner.Scan() {
-		line = scanner.Text()
+		scanner := bufio.NewScanner(term.out)
 
-		fmt.Println(colCya + line + colRes)
+		for scanner.Scan() {
+			line = scanner.Text()
 
-		if cmdOutErrReader.typ == "out" {
+			fmt.Println(colCya + line + colRes)
 
 			// case where the server is starting
 			if ServStats.Status == "starting" {
-				if strings.Contains(line, "Preparing spawn area: ") {
+				// if the terminal contains "Preparing spawn area:", update ServStats.LoadProgress
+				if strings.Contains(line, "Preparing spawn area:") {
 					ServStats.LoadProgress = strings.Split(strings.Split(line, "Preparing spawn area: ")[1], "\n")[0]
 				}
+				// if the terminal contains "[Server thread/INFO]: Done", the minecraft server is online
 				if strings.Contains(line, "[Server thread/INFO]: Done") {
 					ServStats.Status = "online"
 					log.Print("*** MINECRAFT SERVER IS ONLINE!")
@@ -185,40 +187,55 @@ func (cmdOutErrReader *readcl) printer(term *ServTerm) {
 
 			// case where the server is online
 			if ServStats.Status == "online" {
-				// if the terminal contains "Stopping" this means that the minecraft server is stopping
+				// if the terminal contains "Stopping", the minecraft server is stopping
 				if strings.Contains(line, "[Server thread/INFO]: Stopping") {
 					ServStats.Status = "stopping"
 					log.Print("*** MINECRAFT SERVER IS STOPPING!")
 				}
 			}
+
+			// communicate to lastLine so that func Execute() can return the first line after the command
+			select {
+			case lastLine <- line:
+			default:
+			}
 		}
+	}()
 
-		// communicate to lastLine so that Execute function can return the first line after the command
-		select {
-		case lastLine <- line:
-		default:
+	// print term.err
+	go func() {
+		var line string
+
+		defer term.Wg.Done()
+
+		scanner := bufio.NewScanner(term.err)
+
+		for scanner.Scan() {
+			line = scanner.Text()
+
+			fmt.Println(colCya + line + colRes)
 		}
-	}
-}
+	}()
 
-// scanner manages the input to stdpipe in
-func (term *ServTerm) scanner() {
-	var line string
-	var err error
+	// input from os.Stdin
+	go func() {
+		var line string
+		var err error
 
-	reader := bufio.NewReader(os.Stdin)
+		reader := bufio.NewReader(os.Stdin)
 
-	for {
-		line, err = reader.ReadString('\n')
-		if err != nil {
-			debugctrl.Logger("servTerm scanner:", err.Error())
-			continue
+		for {
+			line, err = reader.ReadString('\n')
+			if err != nil {
+				debugctrl.Logger("servTerm scanner:", err.Error())
+				continue
+			}
+
+			_, err = term.Execute(line)
+			if err != nil {
+				debugctrl.Logger("servTerm scanner:", err.Error())
+				continue
+			}
 		}
-
-		_, err = term.Execute(line)
-		if err != nil {
-			debugctrl.Logger("servTerm scanner:", err.Error())
-			continue
-		}
-	}
+	}()
 }
