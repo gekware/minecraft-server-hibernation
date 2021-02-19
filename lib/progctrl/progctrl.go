@@ -62,10 +62,8 @@ func InterruptListener() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	go func() {
-		select {
-		case <-c:
-			servctrl.StopMinecraftServer(true)
-			os.Exit(0)
-		}
+		<-c
+		servctrl.StopMinecraftServer(true)
+		os.Exit(0)
 	}()
 }
