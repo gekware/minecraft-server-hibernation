@@ -19,20 +19,9 @@ type ServTerm struct {
 	isActive bool
 	Wg       sync.WaitGroup
 	cmd      *exec.Cmd
-	out      readcl
-	err      readcl
-	in       writecl
-}
-
-// readcl inherits io.ReadCloser and a string is used to indentify it as "out" or "err"
-type readcl struct {
-	io.ReadCloser
-	typ string
-}
-
-// writecl inherits io.WriteCloser
-type writecl struct {
-	io.WriteCloser
+	out      io.ReadCloser
+	err      io.ReadCloser
+	in       io.WriteCloser
 }
 
 // lastLine is a channel used to communicate the last line got from the printer function
@@ -113,22 +102,22 @@ func (term *ServTerm) loadCmd(dir, command string) {
 
 // loadStdPipes loads stdpipes into server terminal
 func (term *ServTerm) loadStdPipes() error {
-	stdOut, err := term.cmd.StdoutPipe()
+	outPipe, err := term.cmd.StdoutPipe()
 	if err != nil {
 		return err
 	}
-	stdErr, err := term.cmd.StderrPipe()
+	errPipe, err := term.cmd.StderrPipe()
 	if err != nil {
 		return err
 	}
-	stdIn, err := term.cmd.StdinPipe()
+	inPipe, err := term.cmd.StdinPipe()
 	if err != nil {
 		return err
 	}
 
-	term.out = readcl{stdOut, "out"}
-	term.err = readcl{stdErr, "err"}
-	term.in = writecl{stdIn}
+	term.out = outPipe
+	term.err = errPipe
+	term.in = inPipe
 
 	return nil
 }
