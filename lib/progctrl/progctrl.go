@@ -3,26 +3,15 @@ package progctrl
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
-	"runtime"
 	"strings"
 	"syscall"
 	"time"
 
 	"msh/lib/servctrl"
 )
-
-// CheckOsSupport checks if OS is supported and exit if it's not
-func CheckOsSupport() {
-	// check if OS is windows/linux/macos
-	if runtime.GOOS != "linux" && runtime.GOOS != "windows" && runtime.GOOS != "darwin" {
-		log.Print("checkConfig: error: OS not supported!")
-		os.Exit(1)
-	}
-}
 
 // UpdateChecker checks for updates and notify the user is case there is a new version
 func UpdateChecker(version string) {

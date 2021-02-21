@@ -11,6 +11,7 @@ import (
 	"msh/lib/confctrl"
 	"msh/lib/connctrl"
 	"msh/lib/debugctrl"
+	"msh/lib/osctrl"
 	"msh/lib/progctrl"
 )
 
@@ -37,7 +38,7 @@ func main() {
 	fmt.Println(strings.Join(info, "\n"))
 
 	// check is os is supported
-	progctrl.CheckOsSupport()
+	osctrl.CheckOsSupport()
 
 	// load configuration from config file
 	// load server-icon-frozen.png if present
