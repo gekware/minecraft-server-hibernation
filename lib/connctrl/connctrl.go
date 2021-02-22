@@ -20,8 +20,8 @@ import (
 // Can handle a client that is requesting server info or trying to join.
 func HandleClientSocket(clientSocket net.Conn) {
 	// handling of ipv6 addresses
-	var lastIndex int = strings.LastIndex(clientSocket.RemoteAddr().String(), ":")
-	clientAddress := clientSocket.RemoteAddr().String()[:lastIndex]
+	li := strings.LastIndex(clientSocket.RemoteAddr().String(), ":")
+	clientAddress := clientSocket.RemoteAddr().String()[:li]
 
 	// block containing the case of serverStatus == "offline" or "starting"
 	if servctrl.ServStats.Status == "offline" || servctrl.ServStats.Status == "starting" {
