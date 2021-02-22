@@ -9,8 +9,9 @@ import (
 // CheckOsSupport checks if OS is supported and exit if it's not
 func CheckOsSupport() {
 	// check if OS is windows/linux/macos
-	if runtime.GOOS != "linux" && runtime.GOOS != "windows" && runtime.GOOS != "darwin" {
-		log.Print("checkConfig: error: OS not supported!")
+	ros := runtime.GOOS
+	if ros != "linux" && ros != "windows" && ros != "darwin" {
+		log.Print("osctrl: CheckOsSupport: OS not supported!")
 		os.Exit(1)
 	}
 }

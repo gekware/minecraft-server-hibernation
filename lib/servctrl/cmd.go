@@ -9,9 +9,9 @@ import (
 	"os/exec"
 	"strings"
 	"sync"
-	"syscall"
 
 	"msh/lib/debugctrl"
+	"msh/lib/osctrl"
 )
 
 // ServTerm is the minecraft server terminal
@@ -92,12 +92,7 @@ func (term *ServTerm) loadCmd(dir, command string) {
 	term.cmd.Dir = dir
 
 	// launch as new process group so that signals (ex: SIGINT) are not sent also the the child process
-	term.cmd.SysProcAttr = &syscall.SysProcAttr{
-		// windows	//
-		CreationFlags: syscall.CREATE_NEW_PROCESS_GROUP,
-		// linux	//
-		// Setpgid: true,
-	}
+	term.cmd.SysProcAttr = osctrl.GetSyscallNewProcessGroup()
 }
 
 // loadStdPipes loads stdpipes into server terminal
