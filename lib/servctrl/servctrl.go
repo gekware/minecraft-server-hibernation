@@ -30,7 +30,7 @@ func StopMinecraftServer(force bool) {
 	var err error
 
 	// wait for the starting server to go online
-	for ServStats.Status != "starting" {
+	for ServStats.Status == "starting" {
 		time.Sleep(1 * time.Second)
 	}
 	// if server is not online return
