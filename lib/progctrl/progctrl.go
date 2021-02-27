@@ -6,45 +6,14 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"runtime"
 	"strings"
 	"syscall"
 	"time"
 
+	"msh/lib/debugctrl"
 	"msh/lib/servctrl"
 )
-
-// UpdateChecker checks for updates and notify the user is case there is a new version
-func UpdateChecker(version string) {
-	v := "1"
-	// latest-version.php protocol version number: 1
-	// connection every 4 hours
-	// parameters passed to php: v, version
-	// response: "latest version: $latestVersion"
-
-	var latestVersion string
-
-	resp, err := http.Get("http://minecraft-server-hibernation.heliohost.us/latest-version.php?v=" + v + "&version=" + version)
-	if err != nil {
-		time.AfterFunc(1*time.Minute, func() { UpdateChecker(version) })
-		return
-	}
-	defer resp.Body.Close()
-
-	respByte, err := ioutil.ReadAll(resp.Body)
-	if err == nil && strings.Contains(string(respByte), "latest version: ") {
-		// no error and contains "latest version: "
-		latestVersion = strings.ReplaceAll(string(respByte), "latest version: ", "")
-	} else {
-		// error happened, suppose that the actual version is updated
-		latestVersion = version
-	}
-
-	if version != latestVersion {
-		fmt.Println("***", latestVersion, "is now available: visit github to update!", "***")
-	}
-
-	time.AfterFunc(4*time.Hour, func() { UpdateChecker(version) })
-}
 
 // InterruptListener listen for interrupt signals and forcefully stop the minecraft server before exiting msh
 func InterruptListener() {
@@ -55,4 +24,57 @@ func InterruptListener() {
 		servctrl.StopMinecraftServer(true)
 		os.Exit(0)
 	}()
+}
+
+// UpdateChecker checks for updates and notify the user is case there is a new version
+func UpdateChecker(clientVersion string) {
+	v := "1"
+	// protocol version number:		1
+	// connection every:			4 hours
+	// parameters passed to php:	v, clientVersion
+	// response:					"latest version: $onlineVersion"
+
+	// after UpdateChecker has returned (for error or completion), launch an other UpdateChecker instance
+	defer time.AfterFunc(4*time.Hour, func() { UpdateChecker(clientVersion) })
+
+	userAgentOs := "osNotSupported"
+	switch runtime.GOOS {
+	case "windows":
+		userAgentOs = "windows"
+	case "linux":
+		userAgentOs = "linux"
+	case "darwin":
+		userAgentOs = "macintosh"
+	}
+
+	// build http request
+	url := "http://minecraft-server-hibernation.heliohost.us/latest-version.php?v=" + v + "&version=" + clientVersion
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		debugctrl.Logger("progctrl: UpdateChecker:", err.Error())
+		return
+	}
+	req.Header.Add("User-Agent", "msh ("+userAgentOs+") msh/"+clientVersion)
+
+	// execute http request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		debugctrl.Logger("progctrl: UpdateChecker:", err.Error())
+		return
+	}
+	defer resp.Body.Close()
+
+	// read http response
+	respByte, err := ioutil.ReadAll(resp.Body)
+	if err != nil || !strings.Contains(string(respByte), "latest version: ") {
+		debugctrl.Logger("progctrl: UpdateChecker: error reading http response")
+		return
+	}
+
+	// no error and respByte contains "latest version: "
+	onlineVersion := strings.ReplaceAll(string(respByte), "latest version: ", "")
+	if clientVersion != onlineVersion {
+		fmt.Println("***", onlineVersion, "is now available: visit github to update!", "***")
+	}
 }
