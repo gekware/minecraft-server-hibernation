@@ -89,12 +89,12 @@ func HandleClientSocket(clientSocket net.Conn) {
 				servctrl.StartMinecraftServer()
 				log.Printf("*** %s tried to join from %s:%s to %s:%s\n", playerName, clientAddress, confctrl.Config.Advanced.ListenPort, confctrl.Config.Advanced.TargetHost, confctrl.Config.Advanced.TargetPort)
 				// answer to client with text in the loadscreen
-				clientSocket.Write(servprotocol.BuildMessage("txt", fmt.Sprintf("Server start command issued. Please wait...")))
+				clientSocket.Write(servprotocol.BuildMessage("txt", "Server start command issued. Please wait... "+servctrl.ServStats.LoadProgress))
 
 			} else if servctrl.ServStats.Status == "starting" {
 				log.Printf("*** %s tried to join from %s:%s to %s:%s during server startup\n", playerName, clientAddress, confctrl.Config.Advanced.ListenPort, confctrl.Config.Advanced.TargetHost, confctrl.Config.Advanced.TargetPort)
 				// answer to client with text in the loadscreen
-				clientSocket.Write(servprotocol.BuildMessage("txt", fmt.Sprintf("Server is starting. Please wait...")))
+				clientSocket.Write(servprotocol.BuildMessage("txt", "Server is starting. Please wait... "+servctrl.ServStats.LoadProgress))
 			}
 		}
 
