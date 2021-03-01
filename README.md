@@ -24,7 +24,7 @@ Check the [releases](https://github.com/gekigek99/minecraft-server-hibernation/r
 This version was successfully compiled in go version 1.15  
 To compile run the command:
 ```
-go build
+go build .
 ```
 
 -----
@@ -40,7 +40,6 @@ How to use:
     - stopMinecraftServer
     - \* stopMinecraftServerForce
     - \* hibernationInfo and startingInfo
-    - \* minecraftServerStartupTime
     - \* timeBeforeStoppingEmptyServer
     - \* checkForUpdates
 4. \* put the frozen icon you want in "path/to/server.jar/folder" (must be 64x64 and called "server-icon-frozen.png")
@@ -48,7 +47,7 @@ How to use:
 6. on the router: forward port 25555 to server ([tutorial](https://www.wikihow.com/Open-Ports#Opening-Router-Firewall-Ports))
 7. you can connect to the server through port 25555
 
-\* = this step is NOT strictly necessary
+\* = it's not compulsory to modify this parameter
 
 (remember to run the script at reboot)
 
@@ -68,10 +67,6 @@ Hibernation and warming up server description
 ```yaml
 "HibernationInfo": "                   &fserver status:\n                   &b&lHIBERNATING",
 "StartingInfo": "                   &fserver status:\n                    &6&lWARMING UP",
-```
-If you are the first to access to minecraft world you will have to wait *20 seconds* and then try to connect again.
-```yaml
-"MinecraftServerStartupTime": 20,       #any parameter more than 10s is recommended
 ```
 *60 seconds* is the time (after the last player disconnected) that the script waits before shutting down the minecraft server
 ```yaml
