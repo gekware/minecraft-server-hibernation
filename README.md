@@ -14,7 +14,7 @@ _(for vanilla/modded on linux/windows/macos)_
     </a>
 </p>
 
-version: v2.2.1  
+version: v2.3.0  
 Copyright (C) 2019-2021 [gekigek99](https://github.com/gekigek99)  
 
 Check the [releases](https://github.com/gekigek99/minecraft-server-hibernation/releases) to download the binaries (for linux and windows)
