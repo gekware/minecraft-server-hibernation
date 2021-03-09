@@ -68,7 +68,7 @@ func main() {
 		listener.Close()
 	}()
 
-	log.Println("*** listening for new clients to connect...")
+	log.Println("*** listening for new clients to connect on " + confctrl.Config.Advanced.ListenHost + ":" + confctrl.Config.Advanced.ListenPort + " ...")
 
 	// infinite cycle to accept clients. when a clients connects it is passed to handleClientSocket()
 	for {
