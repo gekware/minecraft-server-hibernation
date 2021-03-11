@@ -153,16 +153,19 @@ func (term *ServTerm) startInteraction() {
 
 			fmt.Println(colCya + line + colRes)
 
+			// split line into a header (lineSplit[0]) and message contents (lineSplit[1]) for more robust parsing
+			var lineSplit = strings.SplitN(line, ": ", 2)
+
 			// case where the server is starting
 			if ServStats.Status == "starting" {
 				// for modded server terminal compatibility, use separate check for "[Server thread/INFO]" and flag-word
 
 				// if the terminal contains flag-word "Preparing spawn area:", update ServStats.LoadProgress
-				if strings.Contains(line, "[Server thread/INFO]") && strings.Contains(line, "Preparing spawn area:") {
-					ServStats.LoadProgress = strings.Split(strings.Split(line, "Preparing spawn area: ")[1], "\n")[0]
+				if strings.Contains(lineSplit[0], "[Server thread/INFO]") && strings.HasPrefix(lineSplit[1], "Preparing spawn area:") {
+					ServStats.LoadProgress = strings.Split(strings.Split(lineSplit[1], "Preparing spawn area: ")[1], "\n")[0]
 				}
 				// if the terminal contains flag-word "Done", the minecraft server is online
-				if strings.Contains(line, "[Server thread/INFO]") && strings.Contains(line, ": Done") {
+				if strings.Contains(lineSplit[0], "[Server thread/INFO]") && strings.HasPrefix(lineSplit[1], "Done") {
 					ServStats.Status = "online"
 					log.Print("*** MINECRAFT SERVER IS ONLINE!")
 
@@ -174,7 +177,7 @@ func (term *ServTerm) startInteraction() {
 			// case where the server is online
 			if ServStats.Status == "online" {
 				// if the terminal contains "Stopping", the minecraft server is stopping
-				if strings.Contains(line, "[Server thread/INFO]") && strings.Contains(line, ": Stopping") {
+				if strings.Contains(lineSplit[0], "[Server thread/INFO]") && strings.HasPrefix(lineSplit[1], "Stopping") {
 					ServStats.Status = "stopping"
 					log.Print("*** MINECRAFT SERVER IS STOPPING!")
 				}
