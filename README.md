@@ -92,7 +92,7 @@ Docker branch: [lubocode](https://github.com/gekigek99/minecraft-server-hibernat
 </p>
 
 <h4 align="center" >
-    Give a star to this repository <a href="https://github.com/gekigek99/minecraft-server-hibernation" > here</a>!
+    Give a star to this repository on <a href="https://github.com/gekigek99/minecraft-server-hibernation" > github</a>!
 </h4>
 
 <p align="center" >
