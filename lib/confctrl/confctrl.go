@@ -19,28 +19,26 @@ var Config configuration
 
 // struct adapted to config.json
 type configuration struct {
-	Basic    basic
-	Advanced advanced
-}
-type basic struct {
-	ServerDirPath                 string
-	ServerFileName                string
-	StartMinecraftServer          string
-	StopMinecraftServer           string
-	StopMinecraftServerForce      string
-	HibernationInfo               string
-	StartingInfo                  string
-	TimeBeforeStoppingEmptyServer int
-	CheckForUpdates               bool
-}
-type advanced struct {
-	ListenHost     string
-	ListenPort     string
-	TargetHost     string
-	TargetPort     string
-	Debug          bool
-	ServerVersion  string
-	ServerProtocol string
+	Basic struct {
+		ServerDirPath                 string `json:"ServerDirPath"`
+		ServerFileName                string `json:"ServerFileName"`
+		StartMinecraftServer          string `json:"StartMinecraftServer"`
+		StopMinecraftServer           string `json:"StopMinecraftServer"`
+		StopMinecraftServerForce      string `json:"StopMinecraftServerForce"`
+		HibernationInfo               string `json:"HibernationInfo"`
+		StartingInfo                  string `json:"StartingInfo"`
+		TimeBeforeStoppingEmptyServer int    `json:"TimeBeforeStoppingEmptyServer"`
+		CheckForUpdates               bool   `json:"CheckForUpdates"`
+	} `json:"Basic"`
+	Advanced struct {
+		ListenHost     string `json:"ListenHost"`
+		ListenPort     string `json:"ListenPort"`
+		TargetHost     string `json:"TargetHost"`
+		TargetPort     string `json:"TargetPort"`
+		Debug          bool   `json:"Debug"`
+		ServerVersion  string `json:"ServerVersion"`
+		ServerProtocol string `json:"ServerProtocol"`
+	} `json:"Advanced"`
 }
 
 // LoadConfig loads json data from config.json into config
