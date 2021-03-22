@@ -17,6 +17,10 @@ import (
 // Config contains the configuration parameters
 var Config configuration
 
+var ListenHost string
+var TargetHost string
+var TargetPort string
+
 // struct adapted to config.json
 type configuration struct {
 	Basic struct {
@@ -31,10 +35,7 @@ type configuration struct {
 		CheckForUpdates               bool   `json:"CheckForUpdates"`
 	} `json:"Basic"`
 	Advanced struct {
-		ListenHost     string `json:"ListenHost"`
 		ListenPort     string `json:"ListenPort"`
-		TargetHost     string `json:"TargetHost"`
-		TargetPort     string `json:"TargetPort"`
 		Debug          bool   `json:"Debug"`
 		ServerVersion  string `json:"ServerVersion"`
 		ServerProtocol string `json:"ServerProtocol"`
@@ -56,15 +57,39 @@ func LoadConfig() {
 		os.Exit(1)
 	}
 
-	error := checkConfig()
-	if error != "" {
-		log.Println("loadConfig: config error:", error)
-		os.Exit(1)
-	}
+	// as soon the config is loaded, set debug level for debugctrl
+	debugctrl.Debug = Config.Advanced.Debug
+
+	setIpPorts()
 
 	data.LoadIcon(Config.Basic.ServerDirPath)
 
-	debugctrl.Debug = Config.Advanced.Debug
+	errStr := checkConfig()
+	if errStr != "" {
+		log.Println("loadConfig: config error:", errStr)
+		os.Exit(1)
+	}
+}
+
+func setIpPorts() {
+	ListenHost = "0.0.0.0"
+	TargetHost = "127.0.0.1"
+
+	serverPropertiesFilePath := filepath.Join(Config.Basic.ServerDirPath, "server.properties")
+	data, err := ioutil.ReadFile(serverPropertiesFilePath)
+	if err != nil {
+		debugctrl.Logger("confctrl: setIpPorts:", err.Error())
+	}
+
+	dataStr := string(data)
+	dataStr = strings.ReplaceAll(dataStr, "\r", "")
+	TargetPort = strings.Split(strings.Split(dataStr, "server-port=")[1], "\n")[0]
+
+	if TargetPort == Config.Advanced.ListenPort {
+		log.Fatalln("TargetPort and ListenPort appear to be the same, please change one of them")
+	}
+
+	debugctrl.Logger("targeting server address:", TargetHost+":"+TargetPort)
 }
 
 // SaveConfig saves the config struct to the config file
@@ -86,13 +111,11 @@ func SaveConfig() {
 	debugctrl.Logger("saved to config.json")
 }
 
-// checks different paramenters
+// checks different parameters
 func checkConfig() string {
-	//------------- windows linux macos -------------//
 	// check if serverFile/serverFolder exists
 	// (if config.Basic.ServerFileName == "", then it will just check if the server folder exist)
 	serverFileFolderPath := filepath.Join(Config.Basic.ServerDirPath, Config.Basic.ServerFileName)
-	debugctrl.Logger("Checking for " + serverFileFolderPath)
 	_, err := os.Stat(serverFileFolderPath)
 	if os.IsNotExist(err) {
 		return fmt.Sprintf("specified server file/folder does not exist: %s", serverFileFolderPath)

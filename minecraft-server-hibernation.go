@@ -56,7 +56,7 @@ func main() {
 	go debugctrl.PrintDataUsage()
 
 	// open a listener on {config.Advanced.ListenHost}+":"+{config.Advanced.ListenPort}
-	listener, err := net.Listen("tcp", confctrl.Config.Advanced.ListenHost+":"+confctrl.Config.Advanced.ListenPort)
+	listener, err := net.Listen("tcp", confctrl.ListenHost+":"+confctrl.Config.Advanced.ListenPort)
 	if err != nil {
 		log.Printf("main: Fatal error: %s", err.Error())
 		time.Sleep(time.Duration(5) * time.Second)
@@ -68,7 +68,7 @@ func main() {
 		listener.Close()
 	}()
 
-	log.Println("*** listening for new clients to connect on " + confctrl.Config.Advanced.ListenHost + ":" + confctrl.Config.Advanced.ListenPort + " ...")
+	log.Println("*** listening for new clients to connect on " + confctrl.ListenHost + ":" + confctrl.Config.Advanced.ListenPort + " ...")
 
 	// infinite cycle to accept clients. when a clients connects it is passed to handleClientSocket()
 	for {

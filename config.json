@@ -11,10 +11,7 @@
     "CheckForUpdates": true
   },
   "Advanced": {
-    "ListenHost": "0.0.0.0",
     "ListenPort": "25555",
-    "TargetHost": "127.0.0.1",
-    "TargetPort": "25565",
     "Debug": false,
     "ServerVersion": "1.16.5",
     "ServerProtocol": "754"
