@@ -128,7 +128,10 @@ func SearchVersionProtocol(data []byte) {
 			confctrl.Config.Advanced.ServerVersion = newServerVersion
 			confctrl.Config.Advanced.ServerProtocol = newServerProtocol
 
-			confctrl.SaveConfig()
+			err := confctrl.SaveConfig()
+			if err != nil {
+				debugctrl.Logger("SearchVersionProtocol:", err.Error())
+			}
 		}
 	}
 }

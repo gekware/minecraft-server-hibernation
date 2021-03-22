@@ -60,25 +60,46 @@ func LoadConfig() {
 	// as soon the config is loaded, set debug level for debugctrl
 	debugctrl.Debug = Config.Advanced.Debug
 
-	setIpPorts()
+	err = setIpPorts()
+	if err != nil {
+		log.Fatalln("confctrl: loadConfig:", err.Error())
+	}
 
 	data.LoadIcon(Config.Basic.ServerDirPath)
 
-	errStr := checkConfig()
-	if errStr != "" {
-		log.Println("loadConfig: config error:", errStr)
-		os.Exit(1)
+	err = checkConfig()
+	if err != nil {
+		log.Fatalln("confctrl: loadConfig: checkConfig:", err.Error())
 	}
 }
 
-func setIpPorts() {
+// SaveConfig saves the config struct to the config file
+func SaveConfig() error {
+	// write the struct config to json data
+	configData, err := json.MarshalIndent(Config, "", "  ")
+	if err != nil {
+		return fmt.Errorf("SaveConfig: could not marshal from config.json")
+	}
+
+	// write json data to config.json
+	err = ioutil.WriteFile("config.json", configData, 0644)
+	if err != nil {
+		return fmt.Errorf("SaveConfig: could not write to config.json")
+	}
+
+	debugctrl.Logger("SaveConfig: saved to config.json")
+
+	return nil
+}
+
+func setIpPorts() error {
 	ListenHost = "0.0.0.0"
 	TargetHost = "127.0.0.1"
 
 	serverPropertiesFilePath := filepath.Join(Config.Basic.ServerDirPath, "server.properties")
 	data, err := ioutil.ReadFile(serverPropertiesFilePath)
 	if err != nil {
-		debugctrl.Logger("confctrl: setIpPorts:", err.Error())
+		return fmt.Errorf("setIpPorts: %v", err.Error())
 	}
 
 	dataStr := string(data)
@@ -86,45 +107,28 @@ func setIpPorts() {
 	TargetPort = strings.Split(strings.Split(dataStr, "server-port=")[1], "\n")[0]
 
 	if TargetPort == Config.Advanced.ListenPort {
-		log.Fatalln("TargetPort and ListenPort appear to be the same, please change one of them")
+		return fmt.Errorf("setIpPorts: TargetPort and ListenPort appear to be the same, please change one of them")
 	}
 
 	debugctrl.Logger("targeting server address:", TargetHost+":"+TargetPort)
-}
 
-// SaveConfig saves the config struct to the config file
-func SaveConfig() {
-	// write the struct config to json data
-	configData, err := json.MarshalIndent(Config, "", "  ")
-	if err != nil {
-		debugctrl.Logger("forwardSync: could not marshal configuration")
-		return
-	}
-
-	// write json data to config.json
-	err = ioutil.WriteFile("config.json", configData, 0644)
-	if err != nil {
-		debugctrl.Logger("forwardSync: could not update config.json")
-		return
-	}
-
-	debugctrl.Logger("saved to config.json")
+	return nil
 }
 
 // checks different parameters
-func checkConfig() string {
+func checkConfig() error {
 	// check if serverFile/serverFolder exists
 	// (if config.Basic.ServerFileName == "", then it will just check if the server folder exist)
 	serverFileFolderPath := filepath.Join(Config.Basic.ServerDirPath, Config.Basic.ServerFileName)
 	_, err := os.Stat(serverFileFolderPath)
 	if os.IsNotExist(err) {
-		return fmt.Sprintf("specified server file/folder does not exist: %s", serverFileFolderPath)
+		return fmt.Errorf("checkConfig: specified server file/folder does not exist: %s", serverFileFolderPath)
 	}
 
 	// check if java is installed
 	_, err = exec.LookPath("java")
 	if err != nil {
-		return "java not installed!"
+		return fmt.Errorf("checkConfig: java not installed")
 	}
 
 	// if StopMinecraftServerForce is not set, set it equal to StopMinecraftServer
@@ -132,5 +136,5 @@ func checkConfig() string {
 		Config.Basic.StopMinecraftServerForce = Config.Basic.StopMinecraftServer
 	}
 
-	return ""
+	return nil
 }
