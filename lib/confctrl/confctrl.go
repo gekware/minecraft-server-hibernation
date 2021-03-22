@@ -127,13 +127,6 @@ func checkConfig() string {
 		return "java not installed!"
 	}
 
-	if strings.Contains(Config.Basic.StartMinecraftServer, "screen") {
-		_, err = exec.LookPath("screen")
-		if err != nil {
-			return "screen not installed!"
-		}
-	}
-
 	// if StopMinecraftServerForce is not set, set it equal to StopMinecraftServer
 	if Config.Basic.StopMinecraftServerForce == "" {
 		Config.Basic.StopMinecraftServerForce = Config.Basic.StopMinecraftServer
