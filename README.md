@@ -14,7 +14,7 @@ _(for vanilla/modded on linux/windows/macos)_
     </a>
 </p>
 
-version: v2.3.1  
+version: v2.3.2  
 Copyright (C) 2019-2021 [gekigek99](https://github.com/gekigek99)  
 
 Check the [releases](https://github.com/gekigek99/minecraft-server-hibernation/releases) to download the binaries (for linux and windows)
@@ -32,8 +32,7 @@ go build .
 This is a Golang script to start a minecraft server on request and stop it when there are no players online.
 How to use:
 1. Install your desired minecraft server
-2. "server-port" parameter in "server.properties" should be 25565
-3. Edit the parameters in config.json as needed (*check definitions*):
+2. Edit the parameters in config.json as needed (*check definitions*):
     - serverDirPath
     - serverFileName
     - startMinecraftServer
@@ -42,10 +41,10 @@ How to use:
     - \* hibernationInfo and startingInfo
     - \* timeBeforeStoppingEmptyServer
     - \* checkForUpdates
-4. \* put the frozen icon you want in "path/to/server.jar/folder" (must be 64x64 and called "server-icon-frozen.png")
-5. on the server: open port 25555 (example: [ufw firewall](https://www.configserverfirewall.com/ufw-ubuntu-firewall/ubuntu-firewall-open-port/))
-6. on the router: forward port 25555 to server ([tutorial](https://www.wikihow.com/Open-Ports#Opening-Router-Firewall-Ports))
-7. you can connect to the server through port 25555
+3. \* put the frozen icon you want in "path/to/server.jar/folder" (must be 64x64 and called "server-icon-frozen.png")
+4. on the server: open port 25555 (example: [ufw firewall](https://www.configserverfirewall.com/ufw-ubuntu-firewall/ubuntu-firewall-open-port/))
+5. on the router: forward port 25555 to server ([tutorial](https://www.wikihow.com/Open-Ports#Opening-Router-Firewall-Ports))
+6. you can connect to the server through port 25555
 
 \* = it's not compulsory to modify this parameter
 
