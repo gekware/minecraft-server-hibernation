@@ -29,8 +29,8 @@ func Forward(source, destination net.Conn, isServerToClient bool, stopSig *bool)
 		}
 
 		// update read and write timeout
-		source.SetReadDeadline(time.Now().Add(time.Duration(confctrl.Config.Basic.TimeBeforeStoppingEmptyServer) * time.Second))
-		destination.SetWriteDeadline(time.Now().Add(time.Duration(confctrl.Config.Basic.TimeBeforeStoppingEmptyServer) * time.Second))
+		source.SetReadDeadline(time.Now().Add(time.Duration(confctrl.Config.Msh.TimeBeforeStoppingEmptyServer) * time.Second))
+		destination.SetWriteDeadline(time.Now().Add(time.Duration(confctrl.Config.Msh.TimeBeforeStoppingEmptyServer) * time.Second))
 
 		// read data from source
 		dataLen, err := source.Read(data)
@@ -52,7 +52,7 @@ func Forward(source, destination net.Conn, isServerToClient bool, stopSig *bool)
 		destination.Write(data[:dataLen])
 
 		// calculate bytes/s to client/server
-		if confctrl.Config.Advanced.Debug {
+		if confctrl.Config.Msh.Debug {
 			asyncctrl.WithLock(func() {
 				if isServerToClient {
 					debugctrl.DataCountBytesToClients = debugctrl.DataCountBytesToClients + float64(dataLen)

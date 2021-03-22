@@ -70,7 +70,7 @@ func BuildMessage(format, message string) []byte {
 		messageJSON := fmt.Sprint("{",
 			"\"description\":{\"text\":\"", messageAdapted, "\"},",
 			"\"players\":{\"max\":0,\"online\":0},",
-			"\"version\":{\"name\":\"", confctrl.Config.Advanced.ServerVersion, "\",\"protocol\":", fmt.Sprint(confctrl.Config.Advanced.ServerProtocol), "},",
+			"\"version\":{\"name\":\"", confctrl.Config.Server.Version, "\",\"protocol\":", fmt.Sprint(confctrl.Config.Server.Protocol), "},",
 			"\"favicon\":\"data:image/png;base64,", data.ServerIcon, "\"",
 			"}",
 		)
@@ -118,15 +118,15 @@ func SearchVersionProtocol(data []byte) {
 		newServerProtocol := string(bytes.Split(bytes.Split(data, []byte(",\"protocol\":"))[1], []byte("}"))[0])
 
 		// if serverVersion or serverProtocol are different from the ones specified in config.json --> update them
-		if newServerVersion != confctrl.Config.Advanced.ServerVersion || newServerProtocol != confctrl.Config.Advanced.ServerProtocol {
+		if newServerVersion != confctrl.Config.Server.Version || newServerProtocol != confctrl.Config.Server.Protocol {
 			debugctrl.Logger(
 				"server version found!",
 				"serverVersion:", newServerVersion,
 				"serverProtocol:", newServerProtocol,
 			)
 
-			confctrl.Config.Advanced.ServerVersion = newServerVersion
-			confctrl.Config.Advanced.ServerProtocol = newServerProtocol
+			confctrl.Config.Server.Version = newServerVersion
+			confctrl.Config.Server.Protocol = newServerProtocol
 
 			err := confctrl.SaveConfig()
 			if err != nil {

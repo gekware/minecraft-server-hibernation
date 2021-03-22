@@ -33,14 +33,14 @@ This is a Golang script to start a minecraft server on request and stop it when 
 How to use:
 1. Install your desired minecraft server
 2. Edit the parameters in config.json as needed (*check definitions*):
-    - serverDirPath
-    - serverFileName
-    - startMinecraftServer
-    - stopMinecraftServer
-    - \* stopMinecraftServerForce
-    - \* hibernationInfo and startingInfo
-    - \* timeBeforeStoppingEmptyServer
-    - \* checkForUpdates
+    - Folder
+    - FileName
+    - StartServer
+    - StopServer
+    - \* StopServerForce
+    - \* HibernationInfo and StartingInfo
+    - \* TimeBeforeStoppingEmptyServer
+    - \* CheckForUpdates
 3. \* put the frozen icon you want in "path/to/server.jar/folder" (must be 64x64 and called "server-icon-frozen.png")
 4. on the server: open port 25555 (example: [ufw firewall](https://www.configserverfirewall.com/ufw-ubuntu-firewall/ubuntu-firewall-open-port/))
 5. on the router: forward port 25555 to server ([tutorial](https://www.wikihow.com/Open-Ports#Opening-Router-Firewall-Ports))
@@ -54,18 +54,24 @@ How to use:
 Commands to start and stop minecraft server:
 ```yaml
 # only text in braces needs to be modified (remember to remove all braces)
-"ServerDirPath": "{path/to/server/folder}",
-"ServerFileName": "{server.jar}",
-"StartMinecraftServer": "java {-Xmx1024M -Xms1024M} -jar serverFileName nogui",
-"StopMinecraftServer": "stop",
-"StopMinecraftServerForce": ""
+"Server":{
+    "Folder": "{path/to/server/folder}",
+    "FileName": "{server.jar}",
+    "Version": "1.16.5",
+    "Protocol": "754"
+  },
+  "Commands":{
+    "StartServer": "java {-Xmx1024M} {-Xms1024M} -jar serverFileName nogui",
+    "StopServer": "{stop}",
+    "StopServerForce": ""
+  }
 
 # the StopMinecraftServerForce parameter is used to execute special commands when a forced shutdown happens
 ```
 Hibernation and warming up server description
 ```yaml
-"HibernationInfo": "                   &fserver status:\n                   &b&lHIBERNATING",
-"StartingInfo": "                   &fserver status:\n                    &6&lWARMING UP",
+"HibernationInfo": "                   \u0026fserver status:\n                   \u0026b\u0026lHIBERNATING",
+"StartingInfo": "                   \u0026fserver status:\n                    \u00266\u0026lWARMING UP"
 ```
 *60 seconds* is the time (after the last player disconnected) that the script waits before shutting down the minecraft server
 ```yaml

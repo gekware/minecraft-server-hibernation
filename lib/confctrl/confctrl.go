@@ -23,23 +23,25 @@ var TargetPort string
 
 // struct adapted to config.json
 type configuration struct {
-	Basic struct {
-		ServerDirPath                 string `json:"ServerDirPath"`
-		ServerFileName                string `json:"ServerFileName"`
-		StartMinecraftServer          string `json:"StartMinecraftServer"`
-		StopMinecraftServer           string `json:"StopMinecraftServer"`
-		StopMinecraftServerForce      string `json:"StopMinecraftServerForce"`
-		HibernationInfo               string `json:"HibernationInfo"`
-		StartingInfo                  string `json:"StartingInfo"`
-		TimeBeforeStoppingEmptyServer int    `json:"TimeBeforeStoppingEmptyServer"`
+	Server struct {
+		Folder   string `json:"Folder"`
+		FileName string `json:"FileName"`
+		Protocol string `json:"Protocol"`
+		Version  string `json:"Version"`
+	} `json:"Server"`
+	Commands struct {
+		StartServer     string `json:"StartServer"`
+		StopServer      string `json:"StopServer"`
+		StopServerForce string `json:"StopServerForce"`
+	} `json:"Commands"`
+	Msh struct {
 		CheckForUpdates               bool   `json:"CheckForUpdates"`
-	} `json:"Basic"`
-	Advanced struct {
-		ListenPort     string `json:"ListenPort"`
-		Debug          bool   `json:"Debug"`
-		ServerVersion  string `json:"ServerVersion"`
-		ServerProtocol string `json:"ServerProtocol"`
-	} `json:"Advanced"`
+		Debug                         bool   `json:"Debug"`
+		HibernationInfo               string `json:"HibernationInfo"`
+		Port                          string `json:"Port"`
+		StartingInfo                  string `json:"StartingInfo"`
+		TimeBeforeStoppingEmptyServer int64  `json:"TimeBeforeStoppingEmptyServer"`
+	} `json:"Msh"`
 }
 
 // LoadConfig loads json data from config.json into config
@@ -58,14 +60,14 @@ func LoadConfig() {
 	}
 
 	// as soon the config is loaded, set debug level for debugctrl
-	debugctrl.Debug = Config.Advanced.Debug
+	debugctrl.Debug = Config.Msh.Debug
 
 	err = setIpPorts()
 	if err != nil {
 		log.Fatalln("confctrl: loadConfig:", err.Error())
 	}
 
-	data.LoadIcon(Config.Basic.ServerDirPath)
+	data.LoadIcon(Config.Server.Folder)
 
 	err = checkConfig()
 	if err != nil {
@@ -96,7 +98,7 @@ func setIpPorts() error {
 	ListenHost = "0.0.0.0"
 	TargetHost = "127.0.0.1"
 
-	serverPropertiesFilePath := filepath.Join(Config.Basic.ServerDirPath, "server.properties")
+	serverPropertiesFilePath := filepath.Join(Config.Server.Folder, "server.properties")
 	data, err := ioutil.ReadFile(serverPropertiesFilePath)
 	if err != nil {
 		return fmt.Errorf("setIpPorts: %v", err.Error())
@@ -106,7 +108,7 @@ func setIpPorts() error {
 	dataStr = strings.ReplaceAll(dataStr, "\r", "")
 	TargetPort = strings.Split(strings.Split(dataStr, "server-port=")[1], "\n")[0]
 
-	if TargetPort == Config.Advanced.ListenPort {
+	if TargetPort == Config.Msh.Port {
 		return fmt.Errorf("setIpPorts: TargetPort and ListenPort appear to be the same, please change one of them")
 	}
 
@@ -119,7 +121,7 @@ func setIpPorts() error {
 func checkConfig() error {
 	// check if serverFile/serverFolder exists
 	// (if config.Basic.ServerFileName == "", then it will just check if the server folder exist)
-	serverFileFolderPath := filepath.Join(Config.Basic.ServerDirPath, Config.Basic.ServerFileName)
+	serverFileFolderPath := filepath.Join(Config.Server.Folder, Config.Server.FileName)
 	_, err := os.Stat(serverFileFolderPath)
 	if os.IsNotExist(err) {
 		return fmt.Errorf("checkConfig: specified server file/folder does not exist: %s", serverFileFolderPath)
@@ -132,8 +134,8 @@ func checkConfig() error {
 	}
 
 	// if StopMinecraftServerForce is not set, set it equal to StopMinecraftServer
-	if Config.Basic.StopMinecraftServerForce == "" {
-		Config.Basic.StopMinecraftServerForce = Config.Basic.StopMinecraftServer
+	if Config.Commands.StopServerForce == "" {
+		Config.Commands.StopServerForce = Config.Commands.StopServer
 	}
 
 	return nil

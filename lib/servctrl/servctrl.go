@@ -17,8 +17,8 @@ func StartMinecraftServer() {
 	var err error
 
 	// start server terminal
-	command := strings.ReplaceAll(confctrl.Config.Basic.StartMinecraftServer, "serverFileName", confctrl.Config.Basic.ServerFileName)
-	servTerm, err = CmdStart(confctrl.Config.Basic.ServerDirPath, command)
+	command := strings.ReplaceAll(confctrl.Config.Commands.StartServer, "serverFileName", confctrl.Config.Server.FileName)
+	servTerm, err = CmdStart(confctrl.Config.Server.Folder, command)
 	if err != nil {
 		log.Printf("StartMinecraftServer: error starting minecraft server: %v\n", err)
 		return
@@ -42,7 +42,7 @@ func StopMinecraftServer(force bool) {
 	// execute stop command
 	if force {
 		// if force == true, bypass checks for StopInstances/Players and proceed with server shutdown
-		_, err = servTerm.Execute(confctrl.Config.Basic.StopMinecraftServerForce)
+		_, err = servTerm.Execute(confctrl.Config.Commands.StopServerForce)
 	} else {
 		// if force == false, check that there is only one "stop server command" instance running and players <= 0,
 		// if so proceed with server shutdown
@@ -51,7 +51,7 @@ func StopMinecraftServer(force bool) {
 			return
 		}
 
-		_, err = servTerm.Execute(confctrl.Config.Basic.StopMinecraftServer)
+		_, err = servTerm.Execute(confctrl.Config.Commands.StopServer)
 	}
 	if err != nil {
 		log.Printf("stopEmptyMinecraftServer: error stopping minecraft server: %s\n", err.Error())
@@ -72,5 +72,5 @@ func StopMinecraftServer(force bool) {
 // RequestStopMinecraftServer increases stopInstances by one and starts the timer to execute stopEmptyMinecraftServer(false)
 func RequestStopMinecraftServer() {
 	asyncctrl.WithLock(func() { ServStats.StopInstances++ })
-	time.AfterFunc(time.Duration(confctrl.Config.Basic.TimeBeforeStoppingEmptyServer)*time.Second, func() { StopMinecraftServer(false) })
+	time.AfterFunc(time.Duration(confctrl.Config.Msh.TimeBeforeStoppingEmptyServer)*time.Second, func() { StopMinecraftServer(false) })
 }
