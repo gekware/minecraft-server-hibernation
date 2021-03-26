@@ -153,16 +153,17 @@ func (term *ServTerm) startInteraction() {
 
 			fmt.Println(colCya + line + colRes)
 
-			// case where the server is starting
 			if ServStats.Status == "starting" {
-				// for modded server terminal compatibility, use separate check for "[Server thread/INFO]" and flag-word
+				// for modded server terminal compatibility, use separate check for "INFO" and flag-word
+				// using only "INFO" and not "[Server thread/INFO]"" because paper minecraft servers don't use "[Server thread/INFO]"
 
-				// if the terminal contains flag-word "Preparing spawn area:", update ServStats.LoadProgress
-				if strings.Contains(line, "[Server thread/INFO]") && strings.Contains(line, "Preparing spawn area: ") {
+				// "Preparing spawn area: " -> update ServStats.LoadProgress
+				if strings.Contains(line, "INFO") && strings.Contains(line, "Preparing spawn area: ") {
 					ServStats.LoadProgress = strings.Split(strings.Split(line, "Preparing spawn area: ")[1], "\n")[0]
 				}
-				// if the terminal contains flag-word "Done", the minecraft server is online
-				if strings.Contains(line, "[Server thread/INFO]") && strings.Contains(line, "Done") {
+
+				// "Done" -> set ServStats.Status = "online"
+				if strings.Contains(line, "INFO") && strings.Contains(line, "Done") {
 					ServStats.Status = "online"
 					log.Print("*** MINECRAFT SERVER IS ONLINE!")
 
@@ -171,7 +172,7 @@ func (term *ServTerm) startInteraction() {
 				}
 			}
 
-			/* 
+			/*
 			 * It is possible that a player could send a message that contains text similar to server output:
 			 *		[14:08:43] [Server thread/INFO]: <player> : Stopping
 			 * 		[14:09:12] [Server thread/INFO]: <player> ]: Stopping
@@ -181,25 +182,27 @@ func (term *ServTerm) startInteraction() {
 			 * When these variations are actually the server logging its shutdown:
 			 * 		[14:09:46] [Server thread/INFO]: Stopping the server
 			 *		[15Mar2021 14:09:46.581] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Stopping the server
-			
-			 * One way to handle this is to split the line in two parts:	*/
+			 *
+			 * One way to handle this is to split the line in two parts:
+			 */
 
 			var lineSplit = strings.SplitN(line, ": ", 2)
 
 			/*
-			 * Where lineSplit[0] is the log's "header" (e.g. "[14:09:46] [Server thread/INFO]")
-			 * and lineSplit[1] is the log's "content" (e.g. "<player> ciao" or "Stopping the server")
-			 * Since lineSplit[1] starts immediately after ": ", this permits comparison using Strings.HasPrefix
-			 * or even direct '==' comparison.
-			 * If line does not contain ": ", there is no reason to check it as it does not adhere to
-			 * expected log format (or it is a multiline java exception). This is enforced via
-			 * checking that len(lineSplit) == 2.
+			 * lineSplit[0] is the log's "header" (e.g. "[14:09:46] [Server thread/INFO]")
+			 * lineSplit[1] is the log's "content" (e.g. "<player> ciao" or "Stopping the server")
+			 *
+			 * Since lineSplit[1] starts immediately after ": ",
+			 * comparison can be done using Strings.HasPrefix (or even direct '==' comparison)
+			 *
+			 * If line does not contain ": ", there is no reason to check it
+			 * (it does not adhere to expected log format or it is a multiline java exception)
+			 * This is enforced via checking that len(lineSplit) == 2
 			 */
 
-			// case where the server is online
 			if ServStats.Status == "online" && len(lineSplit) == 2 {
-				// if the terminal contains "Stopping", the minecraft server is stopping
-				if strings.Contains(lineSplit[0], "[Server thread/INFO]") && strings.HasPrefix(lineSplit[1], "Stopping") {
+				// "Stopping" -> set ServStats.Status = "stopping"
+				if strings.Contains(lineSplit[0], "INFO") && strings.HasPrefix(lineSplit[1], "Stopping") {
 					ServStats.Status = "stopping"
 					log.Print("*** MINECRAFT SERVER IS STOPPING!")
 				}
