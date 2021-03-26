@@ -22,10 +22,13 @@ Check the [releases](https://github.com/gekigek99/minecraft-server-hibernation/r
 -----
 ### PROGRAM COMPILATION:
 This version was successfully compiled in go version 1.15  
-To compile run the command:
+Compilation procedure:
 ```
+git clone https://github.com/gekigek99/minecraft-server-hibernation.git  
+cd minecraft-server-hibernation/  
 go build .
 ```
+now you can run the msh executable
 
 -----
 ### INSTRUCTIONS:
@@ -42,13 +45,14 @@ How to use:
     - \* TimeBeforeStoppingEmptyServer
     - \* CheckForUpdates
 3. \* put the frozen icon you want in "path/to/server.jar/folder" (must be 64x64 and called "server-icon-frozen.png")
-4. on the server: open port 25555 (example: [ufw firewall](https://www.configserverfirewall.com/ufw-ubuntu-firewall/ubuntu-firewall-open-port/))
-5. on the router: forward port 25555 to server ([tutorial](https://www.wikihow.com/Open-Ports#Opening-Router-Firewall-Ports))
-6. you can connect to the server through port 25555
+4. on the router: forward port 25555 to server ([tutorial](https://www.wikihow.com/Open-Ports#Opening-Router-Firewall-Ports))
+5. on the server: open port 25555 (example: [ufw firewall](https://www.configserverfirewall.com/ufw-ubuntu-firewall/ubuntu-firewall-open-port/))
+6. run the msh executable
+7. you can connect to the server through port 25555
 
 \* = it's not compulsory to modify this parameter
 
-(remember to run the script at reboot)
+(remember to run the set msh to run at reboot)
 
 ### DEFINITIONS:
 Commands to start and stop minecraft server:
