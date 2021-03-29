@@ -56,21 +56,24 @@ How to use:
 
 (remember to run the set msh to run at reboot)
 
+-----
 ### DEFINITIONS:
+_only text in braces needs to be modified (remember to remove all braces)_
+
+Location of server folder and executable:
+```yaml
+"Server":{
+  "Folder": "{path/to/server/folder}",
+  "FileName": "{server.jar}"
+}
+```
 Commands to start and stop minecraft server:
 ```yaml
-# only text in braces needs to be modified (remember to remove all braces)
-"Server":{
-    "Folder": "{path/to/server/folder}",
-    "FileName": "{server.jar}",
-    "Version": "1.16.5",
-    "Protocol": "754"
-  },
-  "Commands":{
-    "StartServer": "java {-Xmx1024M} {-Xms1024M} -jar serverFileName nogui",
-    "StopServer": "{stop}",
-    "StopServerForce": ""
-  }
+"Commands":{
+  "StartServer": "java {-Xmx1024M} {-Xms1024M} -jar serverFileName nogui",
+  "StopServer": "{stop}",
+  "StopServerForce": ""
+}
 
 # the StopMinecraftServerForce parameter is used to execute special commands when a forced shutdown happens
 ```
@@ -83,7 +86,7 @@ Hibernation and warming up server description
 ```yaml
 "TimeBeforeStoppingEmptyServer": 60     #any parameter more than 30s is recommended
 ```
-set to false if you don't want to check for updates
+Set to false if you don't want to check for updates
 ```yaml
 "CheckForUpdates": true
 ```
