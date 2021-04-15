@@ -3,7 +3,6 @@ package servprotocol
 import (
 	"bytes"
 	"fmt"
-	"math"
 	"net"
 	"strings"
 
@@ -30,7 +29,7 @@ func BuildMessage(format, message string) []byte {
 			// sub-header represents the length of the following data
 
 			firstByte := len(message)%128 + 128
-			secondByte := math.Floor(float64(len(message) / 128))
+			secondByte := float64(len(message) / 128)
 			return append([]byte{byte(firstByte), byte(secondByte)}, message...)
 		}
 
