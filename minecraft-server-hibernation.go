@@ -6,7 +6,6 @@ import (
 	"net"
 	"os"
 	"strings"
-	"time"
 
 	"msh/lib/confctrl"
 	"msh/lib/connctrl"
@@ -40,7 +39,7 @@ func main() {
 	// check is os is supported
 	err := osctrl.OsSupported()
 	if err != nil {
-		log.Print(err.Error())
+		log.Print("main:", err.Error())
 		os.Exit(1)
 	}
 
@@ -48,7 +47,7 @@ func main() {
 	// load server-icon-frozen.png if present
 	err = confctrl.LoadConfig()
 	if err != nil {
-		log.Print(err.Error())
+		log.Print("main:", err.Error())
 		os.Exit(1)
 	}
 
@@ -66,8 +65,7 @@ func main() {
 	// open a listener on {confctrl.ListenHost}+":"+{Config.Msh.Port}
 	listener, err := net.Listen("tcp", confctrl.ListenHost+":"+confctrl.Config.Msh.Port)
 	if err != nil {
-		log.Printf("main: Fatal error: %s", err.Error())
-		time.Sleep(time.Duration(5) * time.Second)
+		log.Println("main:", err.Error())
 		os.Exit(1)
 	}
 
@@ -85,6 +83,7 @@ func main() {
 			debugctrl.Log("main:", err.Error())
 			continue
 		}
+
 		connctrl.HandleClientSocket(clientSocket)
 	}
 }
