@@ -37,9 +37,9 @@ func Forward(source, destination net.Conn, isServerToClient bool, stopSig *bool)
 		if err != nil {
 			// case in which the connection is closed by the source or closed by target
 			if err == io.EOF {
-				debugctrl.Logger(fmt.Sprintf("closing %s --> %s because of: %s", strings.Split(source.RemoteAddr().String(), ":")[0], strings.Split(destination.RemoteAddr().String(), ":")[0], err.Error()))
+				debugctrl.Log(fmt.Sprintf("closing %s --> %s because of: %s", strings.Split(source.RemoteAddr().String(), ":")[0], strings.Split(destination.RemoteAddr().String(), ":")[0], err.Error()))
 			} else {
-				debugctrl.Logger(fmt.Sprintf("forwardSync: error in forward(): %v\n%s --> %s", err, strings.Split(source.RemoteAddr().String(), ":")[0], strings.Split(destination.RemoteAddr().String(), ":")[0]))
+				debugctrl.Log(fmt.Sprintf("forwardSync: error in forward(): %v\n%s --> %s", err, strings.Split(source.RemoteAddr().String(), ":")[0], strings.Split(destination.RemoteAddr().String(), ":")[0]))
 			}
 
 			// close the source connection

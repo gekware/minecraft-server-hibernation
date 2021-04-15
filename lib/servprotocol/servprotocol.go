@@ -88,7 +88,7 @@ func AnswerPingReq(clientSocket net.Conn) {
 	// read the first packet
 	dataLen, err := clientSocket.Read(req)
 	if err != nil {
-		debugctrl.Logger("answerPingReq: error while reading [1] ping request:", err.Error())
+		debugctrl.Log("answerPingReq: error while reading [1] ping request:", err.Error())
 		return
 	}
 
@@ -96,7 +96,7 @@ func AnswerPingReq(clientSocket net.Conn) {
 	if bytes.Equal(req[:dataLen], []byte{1, 0}) {
 		dataLen, err = clientSocket.Read(req)
 		if err != nil {
-			debugctrl.Logger("answerPingReq: error while reading [2] ping request:", err.Error())
+			debugctrl.Log("answerPingReq: error while reading [2] ping request:", err.Error())
 			return
 		}
 	} else if bytes.Equal(req[:2], []byte{1, 0}) {
@@ -119,7 +119,7 @@ func SearchVersionProtocol(data []byte) {
 
 		// if serverVersion or serverProtocol are different from the ones specified in config.json --> update them
 		if newServerVersion != confctrl.Config.Server.Version || newServerProtocol != confctrl.Config.Server.Protocol {
-			debugctrl.Logger(
+			debugctrl.Log(
 				"server version found!",
 				"serverVersion:", newServerVersion,
 				"serverProtocol:", newServerProtocol,
@@ -130,7 +130,7 @@ func SearchVersionProtocol(data []byte) {
 
 			err := confctrl.SaveConfig()
 			if err != nil {
-				debugctrl.Logger("SearchVersionProtocol:", err.Error())
+				debugctrl.Log("SearchVersionProtocol:", err.Error())
 			}
 		}
 	}

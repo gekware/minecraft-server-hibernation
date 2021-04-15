@@ -41,7 +41,7 @@ func UpdateManager(clientVersion string) {
 
 	updateAvailable, onlineVersion, err := checkUpdate(v, clientVersion, respHeader)
 	if err != nil {
-		debugctrl.Logger("progctrl: UpdateManager:", err.Error())
+		debugctrl.Log("progctrl: UpdateManager:", err.Error())
 		return
 	}
 
@@ -110,7 +110,7 @@ func notifyEveryFor(deltaNotification, deltaToEnd time.Duration, notificationStr
 		if servctrl.ServTerminal.IsActive {
 			_, err := servctrl.ServTerminal.Execute("/say " + notificationString)
 			if err != nil {
-				debugctrl.Logger("progctrl: notifyEveryFor:", err.Error())
+				debugctrl.Log("progctrl: notifyEveryFor:", err.Error())
 			}
 		}
 

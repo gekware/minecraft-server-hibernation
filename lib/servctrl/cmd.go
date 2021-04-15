@@ -69,7 +69,7 @@ func (term *ServTerm) Execute(command string) (string, error) {
 
 	for _, com := range commands {
 		if ServStats.Status == "online" {
-			debugctrl.Logger("sending", com, "to terminal")
+			debugctrl.Log("sending", com, "to terminal")
 
 			// write to cmd (\n indicates the enter key)
 			_, err := term.in.Write([]byte(com + "\n"))
@@ -129,7 +129,7 @@ func (term *ServTerm) waitForExit() {
 	term.in.Close()
 
 	term.IsActive = false
-	debugctrl.Logger("cmd: waitForExit: terminal exited")
+	debugctrl.Log("cmd: waitForExit: terminal exited")
 
 	ServStats.Status = "offline"
 	log.Print("*** MINECRAFT SERVER IS OFFLINE!")
@@ -241,13 +241,13 @@ func (term *ServTerm) startInteraction() {
 		for {
 			line, err = reader.ReadString('\n')
 			if err != nil {
-				debugctrl.Logger("servTerm scanner:", err.Error())
+				debugctrl.Log("servTerm scanner:", err.Error())
 				continue
 			}
 
 			_, err = term.Execute(line)
 			if err != nil {
-				debugctrl.Logger("servTerm scanner:", err.Error())
+				debugctrl.Log("servTerm scanner:", err.Error())
 				continue
 			}
 		}

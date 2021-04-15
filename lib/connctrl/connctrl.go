@@ -30,7 +30,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 		// read first packet
 		dataLen, err := clientSocket.Read(buffer)
 		if err != nil {
-			debugctrl.Logger("handleClientSocket: error during clientSocket.Read() 1")
+			debugctrl.Log("handleClientSocket: error during clientSocket.Read() 1")
 			return
 		}
 
@@ -55,7 +55,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 		// the client is trying to join the server
 		listenPortInt, err := strconv.Atoi(confctrl.Config.Msh.Port)
 		if err != nil {
-			debugctrl.Logger("handleClientSocket: error during ListenPort conversion to int")
+			debugctrl.Log("handleClientSocket: error during ListenPort conversion to int")
 		}
 		listenPortBytes := make([]byte, 2)
 		binary.BigEndian.PutUint16(listenPortBytes, uint16(listenPortInt)) // 25555 ->	[99 211] / hex[63 D3]
@@ -69,7 +69,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 			if bytes.Index(buffer[:dataLen], listenPortJoinBytes) == dataLen-3 {
 				dataLen, err = clientSocket.Read(buffer)
 				if err != nil {
-					debugctrl.Logger("handleClientSocket: error during clientSocket.Read() 2")
+					debugctrl.Log("handleClientSocket: error during clientSocket.Read() 2")
 					return
 				}
 				playerName = string(buffer[3:dataLen])
@@ -99,7 +99,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 		}
 
 		// since the server is still not online, close the client connection
-		debugctrl.Logger(fmt.Sprintf("closing connection for: %s", clientAddress))
+		debugctrl.Log(fmt.Sprintf("closing connection for: %s", clientAddress))
 		clientSocket.Close()
 	}
 
@@ -108,7 +108,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 		// if the server is online, just open a connection with the server and connect it with the client
 		serverSocket, err := net.Dial("tcp", confctrl.TargetHost+":"+confctrl.TargetPort)
 		if err != nil {
-			debugctrl.Logger("handleClientSocket: error during serverSocket.Dial()")
+			debugctrl.Log("handleClientSocket: error during serverSocket.Dial()")
 			// report dial error to client with text in the loadscreen
 			clientSocket.Write(servprotocol.BuildMessage("txt", "can't connect to server... check if minecraft server is running and set the correct targetPort"))
 			return

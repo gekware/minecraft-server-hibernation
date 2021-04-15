@@ -72,7 +72,7 @@ func main() {
 	}
 
 	defer func() {
-		debugctrl.Logger("Closing connection for: listener")
+		debugctrl.Log("Closing connection for: listener")
 		listener.Close()
 	}()
 
@@ -82,7 +82,7 @@ func main() {
 	for {
 		clientSocket, err := listener.Accept()
 		if err != nil {
-			debugctrl.Logger("main:", err.Error())
+			debugctrl.Log("main:", err.Error())
 			continue
 		}
 		connctrl.HandleClientSocket(clientSocket)

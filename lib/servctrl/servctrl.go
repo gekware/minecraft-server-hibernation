@@ -33,7 +33,7 @@ func StopMinecraftServer(force bool) {
 	}
 	// if server is not online return
 	if ServStats.Status != "online" {
-		debugctrl.Logger("servctrl: StopEmptyMinecraftServer: server is not online")
+		debugctrl.Log("servctrl: StopEmptyMinecraftServer: server is not online")
 		return
 	}
 
@@ -59,10 +59,10 @@ func StopMinecraftServer(force bool) {
 	if force {
 		if ServStats.Status == "stopping" {
 			// wait for the terminal to exit
-			debugctrl.Logger("waiting for server terminal to exit")
+			debugctrl.Log("waiting for server terminal to exit")
 			ServTerminal.Wg.Wait()
 		} else {
-			debugctrl.Logger("server was not stopped by StopMinecraftServerForce command, world save might be compromised")
+			debugctrl.Log("server was not stopped by StopMinecraftServerForce command, world save might be compromised")
 		}
 	}
 }
