@@ -10,15 +10,13 @@ import (
 	"msh/lib/debugctrl"
 )
 
-var servTerm *ServTerm
-
 // StartMinecraftServer starts the minecraft server
 func StartMinecraftServer() {
 	var err error
 
 	// start server terminal
 	command := strings.ReplaceAll(confctrl.Config.Commands.StartServer, "serverFileName", confctrl.Config.Server.FileName)
-	servTerm, err = CmdStart(confctrl.Config.Server.Folder, command)
+	err = CmdStart(confctrl.Config.Server.Folder, command)
 	if err != nil {
 		log.Printf("StartMinecraftServer: error starting minecraft server: %v\n", err)
 		return
@@ -42,7 +40,7 @@ func StopMinecraftServer(force bool) {
 	// execute stop command
 	if force {
 		// if force == true, bypass checks for StopInstances/Players and proceed with server shutdown
-		_, err = servTerm.Execute(confctrl.Config.Commands.StopServerForce)
+		_, err = ServTerminal.Execute(confctrl.Config.Commands.StopServerForce)
 	} else {
 		// if force == false, check that there is only one "stop server command" instance running and players <= 0,
 		// if so proceed with server shutdown
@@ -51,7 +49,7 @@ func StopMinecraftServer(force bool) {
 			return
 		}
 
-		_, err = servTerm.Execute(confctrl.Config.Commands.StopServer)
+		_, err = ServTerminal.Execute(confctrl.Config.Commands.StopServer)
 	}
 	if err != nil {
 		log.Printf("stopEmptyMinecraftServer: error stopping minecraft server: %s\n", err.Error())
@@ -62,7 +60,7 @@ func StopMinecraftServer(force bool) {
 		if ServStats.Status == "stopping" {
 			// wait for the terminal to exit
 			debugctrl.Logger("waiting for server terminal to exit")
-			servTerm.Wg.Wait()
+			ServTerminal.Wg.Wait()
 		} else {
 			debugctrl.Logger("server was not stopped by StopMinecraftServerForce command, world save might be compromised")
 		}

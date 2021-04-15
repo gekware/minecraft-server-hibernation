@@ -46,7 +46,7 @@ func main() {
 
 	// check for updates
 	if confctrl.Config.Msh.CheckForUpdates {
-		progctrl.UpdateChecker(version)
+		progctrl.UpdateManager(version)
 	}
 
 	// listen for interrupt signals

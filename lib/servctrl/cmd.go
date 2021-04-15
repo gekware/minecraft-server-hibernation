@@ -16,13 +16,15 @@ import (
 
 // ServTerm is the minecraft server terminal
 type ServTerm struct {
-	isActive bool
+	IsActive bool
 	Wg       sync.WaitGroup
 	cmd      *exec.Cmd
 	out      io.ReadCloser
 	err      io.ReadCloser
 	in       io.WriteCloser
 }
+
+var ServTerminal *ServTerm = &ServTerm{}
 
 // lastLine is a channel used to communicate the last line got from the printer function
 var lastLine = make(chan string)
@@ -31,24 +33,22 @@ var colRes string = "\033[0m"
 var colCya string = "\033[36m"
 
 // CmdStart starts a new terminal (non-blocking) and returns a servTerm object
-func CmdStart(dir, command string) (*ServTerm, error) {
-	term := &ServTerm{}
+func CmdStart(dir, command string) error {
+	ServTerminal.loadCmd(dir, command)
 
-	term.loadCmd(dir, command)
-
-	err := term.loadStdPipes()
+	err := ServTerminal.loadStdPipes()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	term.startInteraction()
+	ServTerminal.startInteraction()
 
-	err = term.cmd.Start()
+	err = ServTerminal.cmd.Start()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	go term.waitForExit()
+	go ServTerminal.waitForExit()
 
 	// initialization
 	ServStats.Status = "starting"
@@ -56,12 +56,12 @@ func CmdStart(dir, command string) (*ServTerm, error) {
 	ServStats.Players = 0
 	log.Print("*** MINECRAFT SERVER IS STARTING!")
 
-	return term, nil
+	return nil
 }
 
 // Execute executes a command on the specified term
 func (term *ServTerm) Execute(command string) (string, error) {
-	if !term.isActive {
+	if !term.IsActive {
 		return "", fmt.Errorf("servctrl-cmd: Execute: terminal not active")
 	}
 
@@ -119,7 +119,7 @@ func (term *ServTerm) loadStdPipes() error {
 
 // waitForExit manages term.isActive parameter and set ServStats.Status = "offline" when it exits
 func (term *ServTerm) waitForExit() {
-	term.isActive = true
+	term.IsActive = true
 
 	// wait for printer out/err to exit
 	term.Wg.Wait()
@@ -128,7 +128,7 @@ func (term *ServTerm) waitForExit() {
 	term.err.Close()
 	term.in.Close()
 
-	term.isActive = false
+	term.IsActive = false
 	debugctrl.Logger("cmd: waitForExit: terminal exited")
 
 	ServStats.Status = "offline"

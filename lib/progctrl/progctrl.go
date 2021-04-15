@@ -26,17 +26,38 @@ func InterruptListener() {
 	}()
 }
 
-// UpdateChecker checks for updates and notify the user is case there is a new version
-func UpdateChecker(clientVersion string) {
-	v := "1"
+func UpdateManager(clientVersion string) {
 	// protocol version number:		1
 	// connection every:			4 hours
 	// parameters passed to php:	v, clientVersion
 	// response:					"latest version: $onlineVersion"
 
-	// after UpdateChecker has returned (for error or completion), launch an other UpdateChecker instance
-	defer time.AfterFunc(4*time.Hour, func() { UpdateChecker(clientVersion) })
+	v := "1"
+	deltaT := 4 * time.Hour
+	respHeader := "latest version: "
 
+	// after UpdateChecker has returned (for error or completion), launch an other UpdateChecker instance
+	defer time.AfterFunc(deltaT, func() { UpdateManager(clientVersion) })
+
+	updateAvailable, onlineVersion, err := checkUpdate(v, clientVersion, respHeader)
+	if err != nil {
+		debugctrl.Logger("progctrl: UpdateManager:", err.Error())
+		return
+	}
+
+	if updateAvailable {
+		notificationString := "*** msh " + onlineVersion + " is now available: visit github to update! ***"
+
+		// notify on msh terminal
+		fmt.Println(notificationString)
+
+		// notify to game chat
+		go notifyEveryFor(20*time.Minute, deltaT, notificationString)
+	}
+}
+
+// checkUpdate checks for updates. Returns (update available, online version, error)
+func checkUpdate(v, clientVersion, respHeader string) (bool, string, error) {
 	userAgentOs := "osNotSupported"
 	switch runtime.GOOS {
 	case "windows":
@@ -51,8 +72,7 @@ func UpdateChecker(clientVersion string) {
 	url := "http://minecraft-server-hibernation.heliohost.us/latest-version.php?v=" + v + "&version=" + clientVersion
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		debugctrl.Logger("progctrl: UpdateChecker:", err.Error())
-		return
+		return false, "", fmt.Errorf("checkUpdate: %v", err)
 	}
 	req.Header.Add("User-Agent", "msh ("+userAgentOs+") msh/"+clientVersion)
 
@@ -60,21 +80,40 @@ func UpdateChecker(clientVersion string) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		debugctrl.Logger("progctrl: UpdateChecker:", err.Error())
-		return
+		return false, "", fmt.Errorf("checkUpdate: %v", err)
 	}
 	defer resp.Body.Close()
 
 	// read http response
 	respByte, err := ioutil.ReadAll(resp.Body)
-	if err != nil || !strings.Contains(string(respByte), "latest version: ") {
-		debugctrl.Logger("progctrl: UpdateChecker: error reading http response")
-		return
+	if err != nil || !strings.Contains(string(respByte), respHeader) {
+		return false, "", fmt.Errorf("checkUpdate: (error reading http response) %v", err)
 	}
 
-	// no error and respByte contains "latest version: "
-	onlineVersion := strings.ReplaceAll(string(respByte), "latest version: ", "")
-	if clientVersion != onlineVersion {
-		fmt.Println("***", onlineVersion, "is now available: visit github to update!", "***")
+	// no error and respByte contains respHeader
+	onlineVersion := strings.ReplaceAll(string(respByte), respHeader, "")
+	if clientVersion == onlineVersion {
+		// no update available, return updateAvailable == false
+		return false, onlineVersion, nil
+	}
+
+	// an update is available, return updateAvailable == false
+	return true, onlineVersion, nil
+}
+
+// notifyEveryFor sends a string with the command "/say"
+// every specified amount of time for a specified amount of time
+func notifyEveryFor(deltaNotification, deltaToEnd time.Duration, notificationString string) {
+	endT := time.Now().Add(deltaToEnd)
+
+	for time.Now().Before(endT) {
+		if servctrl.ServTerminal.IsActive {
+			_, err := servctrl.ServTerminal.Execute("/say " + notificationString)
+			if err != nil {
+				debugctrl.Logger("progctrl: notifyEveryFor:", err.Error())
+			}
+		}
+
+		time.Sleep(deltaNotification)
 	}
 }
