@@ -3,22 +3,19 @@ package data
 import (
 	"bytes"
 	"encoding/base64"
+	"fmt"
 	"image"
 	"image/png"
-	"log"
 	"os"
 	"path/filepath"
-
-	"msh/lib/debugctrl"
 )
 
 // ServerIcon represents the minecraft server icon
-var ServerIcon string
+var ServerIcon string = defaultServerIcon
 
-// LoadIcon loads userIconPath image (base-64 encoded and compressed) into serverIcon variable
-func LoadIcon(serverDirPath string) {
-	ServerIcon = defaultServerIcon
-
+// LoadIcon loads userIconPath image (base-64 encoded and compressed) into serverIcon variable.
+// Errors are non blocking
+func LoadIcon(serverDirPath string) error {
 	// get the path of the user specified server icon
 	userIconPath := filepath.Join(serverDirPath, "server-icon-frozen.png")
 
@@ -32,34 +29,33 @@ func LoadIcon(serverDirPath string) {
 		// Open file
 		f, err := os.Open(userIconPath)
 		if err != nil {
-			debugctrl.Logger("loadIcon: error opening icon file:", err.Error())
-			return
+			return fmt.Errorf("loadIcon: %v", err)
 		}
 		defer f.Close()
 
 		// Decode
 		pngIm, err := png.Decode(f)
 		if err != nil {
-			debugctrl.Logger("loadIcon: error decoding icon:", err.Error())
-			return
+			return fmt.Errorf("loadIcon: %v", err)
 		}
 
 		// Encode if image is 64x64
 		if pngIm.Bounds().Max == image.Pt(64, 64) {
 			err = enc.Encode(buff, pngIm)
 			if err != nil {
-				debugctrl.Logger("loadIcon: error encoding icon:", err.Error())
-				return
+				return fmt.Errorf("loadIcon: %v", err)
 			}
 			ServerIcon = base64.RawStdEncoding.EncodeToString(buff.Bytes())
 		} else {
-			log.Printf("loadIcon: incorrect server-icon-frozen.png size. Current size: %dx%d", pngIm.Bounds().Max.X, pngIm.Bounds().Max.Y)
+			return fmt.Errorf("loadIcon: incorrect server-icon-frozen.png size. Current size: %dx%d", pngIm.Bounds().Max.X, pngIm.Bounds().Max.Y)
 		}
 	}
+
+	return nil
 }
 
 // defaultServerIcon is the msh logo base-64 encoded
-var defaultServerIcon string = "" +
+const defaultServerIcon string = "" +
 	"iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAgK0lEQVR42uV7CViV55l2kqbpdJqmmWliXGJEURDZOez7DgcO+77" +
 	"KKgKKgvsSg1uioHFhURDTdNJOO1unaWI2474ioknTPY27UWQXBM456P3fz3uApNf/46TXzPyZdriu9zrbd77vfe7nfu7nfj7gkU" +
 	"e+ph/jsPFpo9G4ymAwrBkeHn76kf8tP4PG4UlG4/2tBr2xlwCAAMi6y+fVfJz8Vxv40ODQrM7BocZ2vX7orp6B6++PBv/lNcTVO" +

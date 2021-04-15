@@ -38,11 +38,19 @@ func main() {
 	fmt.Println(strings.Join(info, "\n"))
 
 	// check is os is supported
-	osctrl.CheckOsSupport()
+	err := osctrl.OsSupported()
+	if err != nil {
+		log.Print(err.Error())
+		os.Exit(1)
+	}
 
 	// load configuration from config file
 	// load server-icon-frozen.png if present
-	confctrl.LoadConfig()
+	err = confctrl.LoadConfig()
+	if err != nil {
+		log.Print(err.Error())
+		os.Exit(1)
+	}
 
 	// check for updates
 	if confctrl.Config.Msh.CheckForUpdates {

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -45,18 +44,17 @@ type configuration struct {
 }
 
 // LoadConfig loads json data from config.json into config
-func LoadConfig() {
+func LoadConfig() error {
 	// read config.json
 	configData, err := ioutil.ReadFile("config.json")
 	if err != nil {
-		log.Println("loadConfig:", err.Error())
-		os.Exit(1)
+		return fmt.Errorf("loadConfig: %v", err)
 	}
+
 	// write read data into struct config
 	err = json.Unmarshal(configData, &Config)
 	if err != nil {
-		log.Println("loadConfig:", err.Error())
-		os.Exit(1)
+		return fmt.Errorf("loadConfig: %v", err)
 	}
 
 	// as soon the config is loaded, set debug level for debugctrl
@@ -64,15 +62,22 @@ func LoadConfig() {
 
 	err = setIpPorts()
 	if err != nil {
-		log.Fatalln("confctrl: loadConfig:", err.Error())
+		return fmt.Errorf("loadConfig: %v", err)
 	}
 
-	data.LoadIcon(Config.Server.Folder)
+	err = data.LoadIcon(Config.Server.Folder)
+	if err != nil {
+		// it's enough to log it without returning
+		// since the default icon is loaded by default
+		debugctrl.Logger("loadConfig:", err.Error())
+	}
 
 	err = checkConfig()
 	if err != nil {
-		log.Fatalln("confctrl: loadConfig: checkConfig:", err.Error())
+		return fmt.Errorf("loadConfig: %v", err)
 	}
+
+	return nil
 }
 
 // SaveConfig saves the config struct to the config file
@@ -101,7 +106,7 @@ func setIpPorts() error {
 	serverPropertiesFilePath := filepath.Join(Config.Server.Folder, "server.properties")
 	data, err := ioutil.ReadFile(serverPropertiesFilePath)
 	if err != nil {
-		return fmt.Errorf("setIpPorts: %v", err.Error())
+		return fmt.Errorf("setIpPorts: %v", err)
 	}
 
 	dataStr := string(data)
