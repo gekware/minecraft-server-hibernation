@@ -38,14 +38,14 @@ func CmdStart(dir, command string) error {
 
 	err := ServTerminal.loadStdPipes()
 	if err != nil {
-		return err
+		return fmt.Errorf("CmdStart: %v", err)
 	}
 
-	ServTerminal.startInteraction()
+	go ServTerminal.startInteraction()
 
 	err = ServTerminal.cmd.Start()
 	if err != nil {
-		return err
+		return fmt.Errorf("CmdStart: %v", err)
 	}
 
 	go ServTerminal.waitForExit()
@@ -99,15 +99,15 @@ func (term *ServTerm) loadCmd(dir, command string) {
 func (term *ServTerm) loadStdPipes() error {
 	outPipe, err := term.cmd.StdoutPipe()
 	if err != nil {
-		return err
+		return fmt.Errorf("loadStdPipes: %v", err)
 	}
 	errPipe, err := term.cmd.StderrPipe()
 	if err != nil {
-		return err
+		return fmt.Errorf("loadStdPipes: %v", err)
 	}
 	inPipe, err := term.cmd.StdinPipe()
 	if err != nil {
-		return err
+		return fmt.Errorf("loadStdPipes: %v", err)
 	}
 
 	term.out = outPipe
@@ -117,7 +117,8 @@ func (term *ServTerm) loadStdPipes() error {
 	return nil
 }
 
-// waitForExit manages term.isActive parameter and set ServStats.Status = "offline" when it exits
+// waitForExit manages term.isActive parameter and set ServStats.Status = "offline" when it exits.
+// [goroutine]
 func (term *ServTerm) waitForExit() {
 	term.IsActive = true
 
@@ -129,18 +130,20 @@ func (term *ServTerm) waitForExit() {
 	term.in.Close()
 
 	term.IsActive = false
-	debugctrl.Log("cmd: waitForExit: terminal exited")
+	debugctrl.Log("waitForExit: terminal exited")
 
 	ServStats.Status = "offline"
 	log.Print("*** MINECRAFT SERVER IS OFFLINE!")
 }
 
-// startInteraction manages the communication from term.out/term.err and input to term.in (non-blocking)
+// startInteraction manages the communication from term.out/term.err and input to term.in
+// [goroutine]
 func (term *ServTerm) startInteraction() {
 	// add printer-out + printer-err to waitgroup
 	term.Wg.Add(2)
 
 	// print term.out
+	// [goroutine]
 	go func() {
 		var line string
 
@@ -217,6 +220,7 @@ func (term *ServTerm) startInteraction() {
 	}()
 
 	// print term.err
+	// [goroutine]
 	go func() {
 		var line string
 
@@ -232,6 +236,7 @@ func (term *ServTerm) startInteraction() {
 	}()
 
 	// input from os.Stdin
+	// [goroutine]
 	go func() {
 		var line string
 		var err error

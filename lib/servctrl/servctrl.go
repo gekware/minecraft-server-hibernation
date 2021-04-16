@@ -1,7 +1,7 @@
 package servctrl
 
 import (
-	"log"
+	"fmt"
 	"strings"
 	"time"
 
@@ -11,20 +11,21 @@ import (
 )
 
 // StartMinecraftServer starts the minecraft server
-func StartMinecraftServer() {
+func StartMinecraftServer() error {
 	var err error
 
 	// start server terminal
 	command := strings.ReplaceAll(confctrl.Config.Commands.StartServer, "serverFileName", confctrl.Config.Server.FileName)
 	err = CmdStart(confctrl.Config.Server.Folder, command)
 	if err != nil {
-		log.Printf("StartMinecraftServer: error starting minecraft server: %v\n", err)
-		return
+		return fmt.Errorf("StartMinecraftServer: error starting minecraft server: %v", err)
 	}
+
+	return nil
 }
 
 // StopMinecraftServer stops the minecraft server. When force == true, it bypasses checks for StopInstancesa/Players and orders the server shutdown
-func StopMinecraftServer(force bool) {
+func StopMinecraftServer(force bool) error {
 	var err error
 
 	// wait for the starting server to go online
@@ -33,8 +34,7 @@ func StopMinecraftServer(force bool) {
 	}
 	// if server is not online return
 	if ServStats.Status != "online" {
-		debugctrl.Log("servctrl: StopEmptyMinecraftServer: server is not online")
-		return
+		return fmt.Errorf("StopEmptyMinecraftServer: server is not online")
 	}
 
 	// execute stop command
@@ -45,15 +45,20 @@ func StopMinecraftServer(force bool) {
 		// if force == false, check that there is only one "stop server command" instance running and players <= 0,
 		// if so proceed with server shutdown
 		asyncctrl.WithLock(func() { ServStats.StopInstances-- })
-		if asyncctrl.WithLock(func() interface{} { return ServStats.StopInstances > 0 || ServStats.Players > 0 }).(bool) {
-			return
+
+		// check if there are players online
+		if asyncctrl.WithLock(func() interface{} { return ServStats.Players > 0 }).(bool) {
+			return fmt.Errorf("StopEmptyMinecraftServer: server is not empty")
+		}
+		// check if enough time has passed since last player disconnected
+		if asyncctrl.WithLock(func() interface{} { return ServStats.StopInstances > 0 }).(bool) {
+			return fmt.Errorf("StopEmptyMinecraftServer: not enough time has passed since last player disconnected")
 		}
 
 		_, err = ServTerminal.Execute(confctrl.Config.Commands.StopServer)
 	}
 	if err != nil {
-		log.Printf("stopEmptyMinecraftServer: error stopping minecraft server: %s\n", err.Error())
-		return
+		return fmt.Errorf("stopEmptyMinecraftServer: error executing minecraft server stop command: %v", err)
 	}
 
 	if force {
@@ -65,6 +70,8 @@ func StopMinecraftServer(force bool) {
 			debugctrl.Log("server was not stopped by StopMinecraftServerForce command, world save might be compromised")
 		}
 	}
+
+	return nil
 }
 
 // RequestStopMinecraftServer increases stopInstances by one and starts the timer to execute stopEmptyMinecraftServer(false)
