@@ -55,9 +55,9 @@ func Forward(source, destination net.Conn, isServerToClient bool, stopSig *bool)
 		if confctrl.Config.Msh.Debug {
 			asyncctrl.WithLock(func() {
 				if isServerToClient {
-					debugctrl.DataCountBytesToClients = debugctrl.DataCountBytesToClients + float64(dataLen)
+					debugctrl.BytesToClients = debugctrl.BytesToClients + float64(dataLen)
 				} else {
-					debugctrl.DataCountBytesToServer = debugctrl.DataCountBytesToServer + float64(dataLen)
+					debugctrl.BytesToServer = debugctrl.BytesToServer + float64(dataLen)
 				}
 			})
 		}

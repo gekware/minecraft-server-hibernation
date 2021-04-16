@@ -9,11 +9,11 @@ import (
 	"msh/lib/asyncctrl"
 )
 
-// DataCountBytesToClients tracks bytes/s server->clients
-var DataCountBytesToClients float64 = 0
+// BytesToClients tracks bytes/s server->clients
+var BytesToClients float64 = 0
 
-// DataCountBytesToServer tracks bytes/s clients->server
-var DataCountBytesToServer float64 = 0
+// BytesToServer tracks bytes/s clients->server
+var BytesToServer float64 = 0
 
 // Debug specify if debug should be printed or not
 var Debug bool = false
@@ -22,10 +22,10 @@ var Debug bool = false
 // [goroutine]
 func PrintDataUsage() {
 	asyncctrl.WithLock(func() {
-		if DataCountBytesToClients != 0 || DataCountBytesToServer != 0 {
-			Log(fmt.Sprintf("data/s: %8.3f KB/s to clients | %8.3f KB/s to server", DataCountBytesToClients/1024, DataCountBytesToServer/1024))
-			DataCountBytesToClients = 0
-			DataCountBytesToServer = 0
+		if BytesToClients != 0 || BytesToServer != 0 {
+			Log(fmt.Sprintf("data/s: %8.3f KB/s to clients | %8.3f KB/s to server", BytesToClients/1024, BytesToServer/1024))
+			BytesToClients = 0
+			BytesToServer = 0
 		}
 	})
 
@@ -33,9 +33,9 @@ func PrintDataUsage() {
 }
 
 // Log prints the args if debug option is set to true
-func Log(args ...string) {
+func Log(args ...interface{}) {
 	if Debug {
-		log.Println(strings.Join(args, " "))
+		log.Println(args...)
 	}
 }
 
