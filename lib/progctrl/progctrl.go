@@ -11,21 +11,30 @@ import (
 	"syscall"
 	"time"
 
+	"msh/lib/confctrl"
 	"msh/lib/debugctrl"
 	"msh/lib/servctrl"
 )
 
-// InterruptListener listen for interrupt signals and forcefully stop the minecraft server before exiting msh
+// InterruptListener listen for interrupt signals and forcefully stop the minecraft server before exiting msh.
+// [goroutine]
 func InterruptListener() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
-	go func() {
-		<-c
-		servctrl.StopMinecraftServer(true)
-		os.Exit(0)
-	}()
+
+	// wait for termination signal
+	<-c
+
+	// stop forcefully the minecraft server
+	servctrl.StopMinecraftServer(true)
+
+	// exit
+	fmt.Print("exiting msh")
+	os.Exit(0)
 }
 
+// UpdateManager checks for updates and notify the user via terminal/gamechat
+// [goroutine]
 func UpdateManager(clientVersion string) {
 	// protocol version number:		1
 	// connection every:			4 hours
@@ -36,23 +45,26 @@ func UpdateManager(clientVersion string) {
 	deltaT := 4 * time.Hour
 	respHeader := "latest version: "
 
-	// after UpdateChecker has returned (for error or completion), launch an other UpdateChecker instance
-	defer time.AfterFunc(deltaT, func() { UpdateManager(clientVersion) })
+	for {
+		if confctrl.Config.Msh.CheckForUpdates {
+			updateAvailable, onlineVersion, err := checkUpdate(v, clientVersion, respHeader)
+			if err != nil {
+				debugctrl.Log("UpdateManager:", err.Error())
+				return
+			}
 
-	updateAvailable, onlineVersion, err := checkUpdate(v, clientVersion, respHeader)
-	if err != nil {
-		debugctrl.Log("progctrl: UpdateManager:", err.Error())
-		return
-	}
+			if updateAvailable {
+				notificationString := "*** msh " + onlineVersion + " is now available: visit github to update! ***"
 
-	if updateAvailable {
-		notificationString := "*** msh " + onlineVersion + " is now available: visit github to update! ***"
+				// notify on msh terminal
+				fmt.Println(notificationString)
 
-		// notify on msh terminal
-		fmt.Println(notificationString)
+				// notify to game chat
+				go notifyGameChat(20*time.Minute, deltaT, notificationString)
+			}
+		}
 
-		// notify to game chat
-		go notifyEveryFor(20*time.Minute, deltaT, notificationString)
+		time.Sleep(deltaT)
 	}
 }
 
@@ -101,16 +113,16 @@ func checkUpdate(v, clientVersion, respHeader string) (bool, string, error) {
 	return true, onlineVersion, nil
 }
 
-// notifyEveryFor sends a string with the command "/say"
+// notifyGameChat sends a string with the command "/say"
 // every specified amount of time for a specified amount of time
-func notifyEveryFor(deltaNotification, deltaToEnd time.Duration, notificationString string) {
+func notifyGameChat(deltaNotification, deltaToEnd time.Duration, notificationString string) {
 	endT := time.Now().Add(deltaToEnd)
 
 	for time.Now().Before(endT) {
 		if servctrl.ServTerminal.IsActive {
 			_, err := servctrl.ServTerminal.Execute("/say " + notificationString)
 			if err != nil {
-				debugctrl.Log("progctrl: notifyEveryFor:", err.Error())
+				debugctrl.Log("notifyEveryFor:", err.Error())
 			}
 		}
 
