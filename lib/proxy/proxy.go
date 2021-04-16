@@ -14,7 +14,8 @@ import (
 )
 
 // Forward takes a source and a destination net.Conn and forwards them.
-// (isServerToClient used to know the forward direction)
+// (isServerToClient used to know the forward direction).
+// [blocking]
 func Forward(source, destination net.Conn, isServerToClient bool, stopSig *bool) {
 	data := make([]byte, 1024)
 
