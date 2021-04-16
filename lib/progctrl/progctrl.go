@@ -33,6 +33,8 @@ func InterruptListener() {
 	os.Exit(0)
 }
 
+var CheckedUpdateC chan bool = make(chan bool, 1)
+
 // UpdateManager checks for updates and notify the user via terminal/gamechat
 // [goroutine]
 func UpdateManager(clientVersion string) {
@@ -50,7 +52,8 @@ func UpdateManager(clientVersion string) {
 			updateAvailable, onlineVersion, err := checkUpdate(v, clientVersion, respHeader)
 			if err != nil {
 				debugctrl.Log("UpdateManager:", err.Error())
-				return
+				time.Sleep(deltaT)
+				continue
 			}
 
 			if updateAvailable {
@@ -59,9 +62,14 @@ func UpdateManager(clientVersion string) {
 				// notify on msh terminal
 				fmt.Println(notificationString)
 
-				// notify to game chat
+				// notify to game chat every 20 minutes for deltaT time
 				go notifyGameChat(20*time.Minute, deltaT, notificationString)
 			}
+		}
+
+		select {
+		case CheckedUpdateC <- true:
+		default:
 		}
 
 		time.Sleep(deltaT)
@@ -119,6 +127,7 @@ func notifyGameChat(deltaNotification, deltaToEnd time.Duration, notificationStr
 	endT := time.Now().Add(deltaToEnd)
 
 	for time.Now().Before(endT) {
+		// check if terminal is active to avoid Execute() returning an error
 		if servctrl.ServTerminal.IsActive {
 			_, err := servctrl.ServTerminal.Execute("/say " + notificationString)
 			if err != nil {

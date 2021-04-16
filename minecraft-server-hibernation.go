@@ -5,7 +5,6 @@ import (
 	"log"
 	"net"
 	"os"
-	"strings"
 
 	"msh/lib/confctrl"
 	"msh/lib/connctrl"
@@ -18,25 +17,22 @@ import (
 var version string = "v2.3.4"
 
 // contains intro to script and program
-var info []string = []string{
-	"               _     ",
+var intro []string = []string{
 	" _ __ ___  ___| |__  ",
 	"| '_ ` _ \\/ __| '_ \\ ",
 	"| | | | | \\__ \\ | | |",
-	"|_| |_| |_|___/_| |_|",
+	"|_| |_| |_|___/_| |_| " + version,
 	"Copyright (C) 2019-2021 gekigek99",
-	version,
-	"visit my github page: https://github.com/gekigek99",
+	"github: https://github.com/gekigek99",
 	"remember to give a star to this repository!",
 }
 
-//--------------------------PROGRAM---------------------------//
-
 func main() {
 	// print program intro
-	fmt.Println(strings.Join(info, "\n"))
+	fmt.Println(debugctrl.Boxify(intro))
 
-	// check is os is supported
+	// check is os is supported.
+	// OsSupported is the first function to be called
 	err := osctrl.OsSupported()
 	if err != nil {
 		log.Println("main:", err.Error())
@@ -45,6 +41,7 @@ func main() {
 
 	// load configuration from config file
 	// load server-icon-frozen.png if present
+	// LoadConfig is the second function to be called
 	err = confctrl.LoadConfig()
 	if err != nil {
 		log.Println("main:", err.Error())
@@ -53,6 +50,8 @@ func main() {
 
 	// launch update manager to check for updates
 	go progctrl.UpdateManager(version)
+	// wait for the initial update check
+	<-progctrl.CheckedUpdateC
 
 	// listen for interrupt signals
 	go progctrl.InterruptListener()

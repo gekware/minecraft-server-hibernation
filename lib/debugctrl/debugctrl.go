@@ -18,7 +18,8 @@ var DataCountBytesToServer float64 = 0
 // Debug specify if debug should be printed or not
 var Debug bool = false
 
-// PrintDataUsage prints each second bytes/s to clients and to server
+// PrintDataUsage prints each second bytes/s to clients and to server.
+// [goroutine]
 func PrintDataUsage() {
 	asyncctrl.WithLock(func() {
 		if DataCountBytesToClients != 0 || DataCountBytesToServer != 0 {
@@ -27,6 +28,7 @@ func PrintDataUsage() {
 			DataCountBytesToServer = 0
 		}
 	})
+
 	time.AfterFunc(1*time.Second, func() { PrintDataUsage() })
 }
 
@@ -35,4 +37,24 @@ func Log(args ...string) {
 	if Debug {
 		log.Println(strings.Join(args, " "))
 	}
+}
+
+func Boxify(strList []string) string {
+	// find longest string in list
+	max := 0
+	for _, l := range strList {
+		if len(l) > max {
+			max = len(l)
+		}
+	}
+
+	// text box generation
+	textBox := ""
+	textBox += "╔═" + strings.Repeat("═", max) + "═╗" + "\n"
+	for _, l := range strList {
+		textBox += "║ " + l + strings.Repeat(" ", max-len(l)) + " ║" + "\n"
+	}
+	textBox += "╚═" + strings.Repeat("═", max) + "═╝"
+
+	return textBox
 }
