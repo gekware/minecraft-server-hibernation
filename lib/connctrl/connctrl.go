@@ -18,6 +18,7 @@ import (
 
 // HandleClientSocket handles a client that is connecting.
 // Can handle a client that is requesting server info or trying to join.
+// [goroutine]
 func HandleClientSocket(clientSocket net.Conn) {
 	// handling of ipv6 addresses
 	li := strings.LastIndex(clientSocket.RemoteAddr().String(), ":")

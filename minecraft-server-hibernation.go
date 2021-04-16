@@ -39,7 +39,7 @@ func main() {
 	// check is os is supported
 	err := osctrl.OsSupported()
 	if err != nil {
-		log.Print("main:", err.Error())
+		log.Println("main:", err.Error())
 		os.Exit(1)
 	}
 
@@ -47,17 +47,15 @@ func main() {
 	// load server-icon-frozen.png if present
 	err = confctrl.LoadConfig()
 	if err != nil {
-		log.Print("main:", err.Error())
+		log.Println("main:", err.Error())
 		os.Exit(1)
 	}
 
-	// check for updates
-	if confctrl.Config.Msh.CheckForUpdates {
-		progctrl.UpdateManager(version)
-	}
+	// launch update manager to check for updates
+	go progctrl.UpdateManager(version)
 
 	// listen for interrupt signals
-	progctrl.InterruptListener()
+	go progctrl.InterruptListener()
 
 	// launch printDataUsage()
 	go debugctrl.PrintDataUsage()
@@ -70,7 +68,6 @@ func main() {
 	}
 
 	defer func() {
-		debugctrl.Log("Closing connection for: listener")
 		listener.Close()
 	}()
 
@@ -84,6 +81,6 @@ func main() {
 			continue
 		}
 
-		connctrl.HandleClientSocket(clientSocket)
+		go connctrl.HandleClientSocket(clientSocket)
 	}
 }
