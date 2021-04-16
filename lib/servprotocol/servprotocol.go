@@ -109,8 +109,8 @@ func AnswerPingReq(clientSocket net.Conn) {
 	clientSocket.Write(req[:dataLen])
 }
 
-// SearchVersionProtocol finds the serverVersion and serverProtocol in (data []byte) and writes them in the config file
-func SearchVersionProtocol(data []byte) {
+// GetVersionProtocol finds the serverVersion and serverProtocol in (data []byte) and writes them in the config file
+func GetVersionProtocol(data []byte) {
 	// if the above specified buffer contains "\"version\":{\"name\":\"" and ",\"protocol\":" --> extract the serverVersion and serverProtocol
 	if bytes.Contains(data, []byte("\"version\":{\"name\":\"")) && bytes.Contains(data, []byte(",\"protocol\":")) {
 		newServerVersion := string(bytes.Split(bytes.Split(data, []byte("\"version\":{\"name\":\""))[1], []byte("\","))[0])

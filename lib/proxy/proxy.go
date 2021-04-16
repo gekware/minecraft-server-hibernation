@@ -64,7 +64,7 @@ func Forward(source, destination net.Conn, isServerToClient bool, stopSig *bool)
 
 		// version/protocol are only found in serverToClient connection in the first buffer that is read
 		if firstBuffer && isServerToClient {
-			servprotocol.SearchVersionProtocol(data[:dataLen])
+			servprotocol.GetVersionProtocol(data[:dataLen])
 
 			// first cycle is finished, set firstBuffer = false
 			firstBuffer = false
