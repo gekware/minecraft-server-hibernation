@@ -57,10 +57,15 @@ func LoadConfig() error {
 		return fmt.Errorf("loadConfig: %v", err)
 	}
 
-	// as soon the config is loaded, set debug level for debugctrl
+	// as soon as the Config variable is set, set debug level for debugctrl
 	debugctrl.Debug = Config.Msh.Debug
 
 	err = setIpPorts()
+	if err != nil {
+		return fmt.Errorf("loadConfig: %v", err)
+	}
+
+	err = checkConfig()
 	if err != nil {
 		return fmt.Errorf("loadConfig: %v", err)
 	}
@@ -70,11 +75,6 @@ func LoadConfig() error {
 		// it's enough to log it without returning
 		// since the default icon is loaded by default
 		debugctrl.Log("loadConfig:", err.Error())
-	}
-
-	err = checkConfig()
-	if err != nil {
-		return fmt.Errorf("loadConfig: %v", err)
 	}
 
 	return nil
