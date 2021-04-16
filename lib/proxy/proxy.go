@@ -37,6 +37,7 @@ func Forward(source, destination net.Conn, isServerToClient bool, stopSig *bool)
 		dataLen, err := source.Read(data)
 		if err != nil {
 			// case in which the connection is closed by the source or closed by target
+			// this error should not make the function return and it is logged/managed internally
 			if err == io.EOF {
 				debugctrl.Log(fmt.Sprintf("closing %s --> %s because of: %s", strings.Split(source.RemoteAddr().String(), ":")[0], strings.Split(destination.RemoteAddr().String(), ":")[0], err.Error()))
 			} else {
@@ -65,7 +66,12 @@ func Forward(source, destination net.Conn, isServerToClient bool, stopSig *bool)
 
 		// version/protocol are only found in serverToClient connection in the first buffer that is read
 		if firstBuffer && isServerToClient {
-			servprotocol.GetVersionProtocol(data[:dataLen])
+			err = servprotocol.GetVersionProtocol(data[:dataLen])
+			// this error does not compromise the functionality of the function
+			// and should not make the function return
+			if err != nil {
+				debugctrl.Log("Forward: %v", err)
+			}
 
 			// first cycle is finished, set firstBuffer = false
 			firstBuffer = false

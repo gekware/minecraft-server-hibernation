@@ -26,7 +26,10 @@ func InterruptListener() {
 	<-c
 
 	// stop forcefully the minecraft server
-	servctrl.StopMinecraftServer(true)
+	err := servctrl.StopMinecraftServer(true)
+	if err != nil {
+		debugctrl.Log("InterruptListener: %v", err)
+	}
 
 	// exit
 	fmt.Print("exiting msh")

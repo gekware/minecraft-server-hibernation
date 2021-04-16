@@ -24,7 +24,8 @@ func StartMinecraftServer() error {
 	return nil
 }
 
-// StopMinecraftServer stops the minecraft server. When force == true, it bypasses checks for StopInstancesa/Players and orders the server shutdown
+// StopMinecraftServer stops the minecraft server.
+// When force == true, it bypasses checks for StopInstancesa/Players and orders the server shutdown
 func StopMinecraftServer(force bool) error {
 	var err error
 
@@ -77,5 +78,16 @@ func StopMinecraftServer(force bool) error {
 // RequestStopMinecraftServer increases stopInstances by one and starts the timer to execute stopEmptyMinecraftServer(false)
 func RequestStopMinecraftServer() {
 	asyncctrl.WithLock(func() { ServStats.StopInstances++ })
-	time.AfterFunc(time.Duration(confctrl.Config.Msh.TimeBeforeStoppingEmptyServer)*time.Second, func() { StopMinecraftServer(false) })
+
+	// [goroutine]
+	time.AfterFunc(time.Duration(confctrl.Config.Msh.TimeBeforeStoppingEmptyServer)*time.Second, func() {
+		err := StopMinecraftServer(false)
+		if err != nil {
+			// avoid printing "server is not online" error since it can be very frequent
+			// when updating the logging system this could be managed by logging it only at certain log levels
+			if err.Error() != "StopEmptyMinecraftServer: server is not online" {
+				debugctrl.Log("RequestStopMinecraftServer: %v", err)
+			}
+		}
+	})
 }

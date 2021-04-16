@@ -136,7 +136,8 @@ func (term *ServTerm) waitForExit() {
 	log.Print("*** MINECRAFT SERVER IS OFFLINE!")
 }
 
-// startInteraction manages the communication from term.out/term.err and input to term.in
+// startInteraction manages the communication from term.out/term.err and input to term.in.
+// Should be called before cmd.Start()
 // [goroutine]
 func (term *ServTerm) startInteraction() {
 	// add printer-out + printer-err to waitgroup
@@ -246,13 +247,13 @@ func (term *ServTerm) startInteraction() {
 		for {
 			line, err = reader.ReadString('\n')
 			if err != nil {
-				debugctrl.Log("servTerm scanner:", err.Error())
+				debugctrl.Log("servTerm input: %v", err)
 				continue
 			}
 
 			_, err = term.Execute(line)
 			if err != nil {
-				debugctrl.Log("servTerm scanner:", err.Error())
+				debugctrl.Log("servTerm input: %v", err)
 				continue
 			}
 		}

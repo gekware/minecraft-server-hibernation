@@ -49,7 +49,10 @@ func HandleClientSocket(clientSocket net.Conn) {
 			}
 
 			// answer to client with ping
-			servprotocol.AnswerPingReq(clientSocket)
+			err = servprotocol.AnswerPingReq(clientSocket)
+			if err != nil {
+				debugctrl.Log("handleClientSocket: %v", err)
+			}
 		}
 
 		// the client first message is [data, listenPortBytes, 2] or [data, listenPortBytes, 2, playerNameData] -->
@@ -87,10 +90,16 @@ func HandleClientSocket(clientSocket net.Conn) {
 
 			if servctrl.ServStats.Status == "offline" {
 				// client is trying to join the server and serverStatus == "offline" --> issue startMinecraftServer()
-				servctrl.StartMinecraftServer()
-				log.Printf("*** %s tried to join from %s:%s to %s:%s\n", playerName, clientAddress, confctrl.Config.Msh.Port, confctrl.TargetHost, confctrl.TargetPort)
-				// answer to client with text in the loadscreen
-				clientSocket.Write(servprotocol.BuildMessage("txt", "Server start command issued. Please wait... "+servctrl.ServStats.LoadProgress))
+				err = servctrl.StartMinecraftServer()
+				if err != nil {
+					// log to msh console and warn client with text in the loadscreen
+					debugctrl.Log("HandleClientSocket: %v", err)
+					clientSocket.Write(servprotocol.BuildMessage("txt", "An error occurred while starting the server: check the msh log"))
+				} else {
+					// log to msh console and answer to client with text in the loadscreen
+					log.Printf("*** %s tried to join from %s:%s to %s:%s\n", playerName, clientAddress, confctrl.Config.Msh.Port, confctrl.TargetHost, confctrl.TargetPort)
+					clientSocket.Write(servprotocol.BuildMessage("txt", "Server start command issued. Please wait... "+servctrl.ServStats.LoadProgress))
+				}
 
 			} else if servctrl.ServStats.Status == "starting" {
 				log.Printf("*** %s tried to join from %s:%s to %s:%s during server startup\n", playerName, clientAddress, confctrl.Config.Msh.Port, confctrl.TargetHost, confctrl.TargetPort)
