@@ -14,7 +14,6 @@ import (
 var ServerIcon string = defaultServerIcon
 
 // LoadIcon loads userIconPath image (base-64 encoded and compressed) into serverIcon variable.
-// Errors are non blocking
 func LoadIcon(serverDirPath string) error {
 	// get the path of the user specified server icon
 	userIconPath := filepath.Join(serverDirPath, "server-icon-frozen.png")
