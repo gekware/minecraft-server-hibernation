@@ -1,0 +1,10 @@
+[script]
+    + functions
+        - functions containing "[goroutine]" in their comment are meant to be launched as goroutine
+        - functions containing "[goroutine]" in their comment will return without any parameter
+        - functions containing "[blocking]" in their comment should not be launched as goroutine
+    + error management
+        - every function should return the error parameter
+            exception for: 
+                functions containing "[goroutine]" in their comment (return no parameters)
+                functions with no possibility of internal error
