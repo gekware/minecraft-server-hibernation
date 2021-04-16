@@ -81,22 +81,20 @@ func BuildMessage(format, message string) []byte {
 }
 
 // AnswerPingReq responds to the ping request
-func AnswerPingReq(clientSocket net.Conn) {
+func AnswerPingReq(clientSocket net.Conn) error {
 	req := make([]byte, 1024)
 
 	// read the first packet
 	dataLen, err := clientSocket.Read(req)
 	if err != nil {
-		debugctrl.Log("answerPingReq: error while reading [1] ping request:", err.Error())
-		return
+		return fmt.Errorf("answerPingReq: error while reading [1] ping request: %v", err)
 	}
 
 	// if req == [1, 0] --> read again (the correct ping byte array has still to arrive)
 	if bytes.Equal(req[:dataLen], []byte{1, 0}) {
 		dataLen, err = clientSocket.Read(req)
 		if err != nil {
-			debugctrl.Log("answerPingReq: error while reading [2] ping request:", err.Error())
-			return
+			return fmt.Errorf("answerPingReq: error while reading [2] ping request: %v", err)
 		}
 	} else if bytes.Equal(req[:2], []byte{1, 0}) {
 		// sometimes the [1 0] is at the beginning and needs to be removed.
@@ -107,10 +105,12 @@ func AnswerPingReq(clientSocket net.Conn) {
 
 	// answer the ping request
 	clientSocket.Write(req[:dataLen])
+
+	return nil
 }
 
 // GetVersionProtocol finds the serverVersion and serverProtocol in (data []byte) and writes them in the config file
-func GetVersionProtocol(data []byte) {
+func GetVersionProtocol(data []byte) error {
 	// if the above specified buffer contains "\"version\":{\"name\":\"" and ",\"protocol\":" --> extract the serverVersion and serverProtocol
 	if bytes.Contains(data, []byte("\"version\":{\"name\":\"")) && bytes.Contains(data, []byte(",\"protocol\":")) {
 		newServerVersion := string(bytes.Split(bytes.Split(data, []byte("\"version\":{\"name\":\""))[1], []byte("\","))[0])
@@ -129,8 +129,10 @@ func GetVersionProtocol(data []byte) {
 
 			err := confctrl.SaveConfig()
 			if err != nil {
-				debugctrl.Log("SearchVersionProtocol:", err.Error())
+				return fmt.Errorf("GetVersionProtocol: %v", err)
 			}
 		}
 	}
+
+	return nil
 }
