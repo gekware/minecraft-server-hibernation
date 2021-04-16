@@ -123,6 +123,7 @@ func checkUpdate(v, clientVersion, respHeader string) (bool, string, error) {
 
 // notifyGameChat sends a string with the command "/say"
 // every specified amount of time for a specified amount of time
+// [goroutine]
 func notifyGameChat(deltaNotification, deltaToEnd time.Duration, notificationString string) {
 	endT := time.Now().Add(deltaToEnd)
 
@@ -131,7 +132,7 @@ func notifyGameChat(deltaNotification, deltaToEnd time.Duration, notificationStr
 		if servctrl.ServTerminal.IsActive {
 			_, err := servctrl.ServTerminal.Execute("/say " + notificationString)
 			if err != nil {
-				debugctrl.Log("notifyEveryFor:", err.Error())
+				debugctrl.Log("notifyGameChat:", err.Error())
 			}
 		}
 
