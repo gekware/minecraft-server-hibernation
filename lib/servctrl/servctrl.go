@@ -53,7 +53,7 @@ func StopMinecraftServer(force bool) error {
 		}
 		// check if enough time has passed since last player disconnected
 		if asyncctrl.WithLock(func() interface{} { return ServStats.StopInstances > 0 }).(bool) {
-			return fmt.Errorf("StopEmptyMinecraftServer: not enough time has passed since last player disconnected")
+			return fmt.Errorf("StopEmptyMinecraftServer: not enough time has passed since last player disconnected (StopInstances: %d)", ServStats.StopInstances)
 		}
 
 		_, err = ServTerminal.Execute(confctrl.Config.Commands.StopServer)
