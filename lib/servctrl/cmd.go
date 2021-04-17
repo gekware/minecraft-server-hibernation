@@ -247,13 +247,13 @@ func (term *ServTerm) startInteraction() {
 		for {
 			line, err = reader.ReadString('\n')
 			if err != nil {
-				debugctrl.Log("servTerm input: %v", err)
+				debugctrl.Log("servTerm input:", err)
 				continue
 			}
 
 			_, err = term.Execute(line)
 			if err != nil {
-				debugctrl.Log("servTerm input: %v", err)
+				debugctrl.Log("servTerm input:", err)
 				continue
 			}
 		}

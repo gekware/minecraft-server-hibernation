@@ -70,7 +70,7 @@ func Forward(source, destination net.Conn, isServerToClient bool, stopSig *bool)
 			// this error does not compromise the functionality of the function
 			// and should not make the function return
 			if err != nil {
-				debugctrl.Log("Forward: %v", err)
+				debugctrl.Log("Forward:", err)
 			}
 
 			// first cycle is finished, set firstBuffer = false

@@ -51,7 +51,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 			// answer to client with ping
 			err = servprotocol.AnswerPingReq(clientSocket)
 			if err != nil {
-				debugctrl.Log("handleClientSocket: %v", err)
+				debugctrl.Log("handleClientSocket:", err)
 			}
 		}
 
@@ -93,7 +93,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 				err = servctrl.StartMinecraftServer()
 				if err != nil {
 					// log to msh console and warn client with text in the loadscreen
-					debugctrl.Log("HandleClientSocket: %v", err)
+					debugctrl.Log("HandleClientSocket:", err)
 					clientSocket.Write(servprotocol.BuildMessage("txt", "An error occurred while starting the server: check the msh log"))
 				} else {
 					// log to msh console and answer to client with text in the loadscreen

@@ -28,7 +28,7 @@ func InterruptListener() {
 	// stop forcefully the minecraft server
 	err := servctrl.StopMinecraftServer(true)
 	if err != nil {
-		debugctrl.Log("InterruptListener: %v", err)
+		debugctrl.Log("InterruptListener:", err)
 	}
 
 	// exit

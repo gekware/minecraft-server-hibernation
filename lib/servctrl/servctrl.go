@@ -86,7 +86,7 @@ func RequestStopMinecraftServer() {
 			// avoid printing "server is not online" error since it can be very frequent
 			// when updating the logging system this could be managed by logging it only at certain log levels
 			if err.Error() != "StopEmptyMinecraftServer: server is not online" {
-				debugctrl.Log("RequestStopMinecraftServer: %v", err)
+				debugctrl.Log("RequestStopMinecraftServer:", err)
 			}
 		}
 	})
