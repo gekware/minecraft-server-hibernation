@@ -127,26 +127,10 @@ func HandleClientSocket(clientSocket net.Conn) {
 		// stopSig is used to close serv->client and client->serv at the same time
 		stopSig := false
 
-		// launch clientToServer() and serverToClient()
-		go clientToServer(clientSocket, serverSocket, &stopSig)
-		go serverToClient(serverSocket, clientSocket, &stopSig)
+		// launch proxy client -> server
+		go proxy.Forward(clientSocket, serverSocket, false, &stopSig)
+
+		// launch proxy server -> client
+		go proxy.Forward(serverSocket, clientSocket, true, &stopSig)
 	}
-}
-
-func clientToServer(source, destination net.Conn, stopSig *bool) {
-	servctrl.ServStats.Players++
-	log.Printf("*** A PLAYER JOINED THE SERVER! - %d players online", servctrl.ServStats.Players)
-
-	// exchanges data from client to server (isServerToClient == false)
-	proxy.Forward(source, destination, false, stopSig)
-
-	servctrl.ServStats.Players--
-	log.Printf("*** A PLAYER LEFT THE SERVER! - %d players online", servctrl.ServStats.Players)
-
-	servctrl.RequestStopMinecraftServer()
-}
-
-func serverToClient(source, destination net.Conn, stopSig *bool) {
-	// exchanges data from server to client (isServerToClient == true)
-	proxy.Forward(source, destination, true, stopSig)
 }

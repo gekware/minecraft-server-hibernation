@@ -205,10 +205,29 @@ func (term *ServTerm) startInteraction() {
 			 */
 
 			if ServStats.Status == "online" && len(lineSplit) == 2 {
-				// "Stopping" -> set ServStats.Status = "stopping"
-				if strings.Contains(lineSplit[0], "INFO") && strings.HasPrefix(lineSplit[1], "Stopping") {
-					ServStats.Status = "stopping"
-					log.Print("*** MINECRAFT SERVER IS STOPPING!")
+
+				if strings.Contains(lineSplit[0], "INFO") {
+					switch {
+					// player sends a chat message
+					case strings.Contains(lineSplit[1], "<") || strings.Contains(lineSplit[1], "["):
+						// do nothing
+
+					// player joins the server
+					case strings.Contains(lineSplit[1], "joined the game"):
+						ServStats.Players++
+						log.Printf("*** A PLAYER JOINED THE SERVER! - %d players online", ServStats.Players)
+
+					// player leaves the server
+					case strings.Contains(lineSplit[1], "left the game"):
+						ServStats.Players--
+						log.Printf("*** A PLAYER LEFT THE SERVER! - %d players online", ServStats.Players)
+						RequestStopMinecraftServer()
+
+					// the server is stopping
+					case strings.Contains(lineSplit[1], "Stopping"):
+						ServStats.Status = "stopping"
+						log.Print("*** MINECRAFT SERVER IS STOPPING!")
+					}
 				}
 			}
 
