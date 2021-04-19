@@ -11,6 +11,7 @@ import (
 	"msh/lib/debugctrl"
 	"msh/lib/osctrl"
 	"msh/lib/progctrl"
+	"msh/lib/utility"
 )
 
 // script version
@@ -29,7 +30,7 @@ var intro []string = []string{
 
 func main() {
 	// print program intro
-	fmt.Println(debugctrl.Boxify(intro))
+	fmt.Println(utility.Boxify(intro))
 
 	// check is os is supported.
 	// OsSupported is the first function to be called
