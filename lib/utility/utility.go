@@ -1,6 +1,7 @@
 package utility
 
 import (
+	"fmt"
 	"strings"
 )
 
@@ -23,4 +24,24 @@ func Boxify(strList []string) string {
 	textBox += "╚═" + strings.Repeat("═", max) + "═╝"
 
 	return textBox
+}
+
+// StrBetween returns the substring between 2 substrings
+func StrBetween(str string, a string, b string) (string, error) {
+	aIndex := strings.Index(str, a)
+	if aIndex == -1 {
+		return "", fmt.Errorf("StrBetween: first substring not found")
+	}
+	bIndex := strings.Index(str, b)
+	if bIndex == -1 {
+		return "", fmt.Errorf("StrBetween: second substring not found")
+	}
+
+	// the position of the last letter of a is needed
+	aEndIndex := aIndex + len(a)
+	if aEndIndex >= bIndex {
+		return "", fmt.Errorf("StrBetween: second substring index is before first")
+	}
+
+	return str[aEndIndex:bIndex], nil
 }

@@ -213,7 +213,8 @@ func (term *ServTerm) startInteraction() {
 						// do nothing
 
 					// player joins the server
-					case strings.Contains(lineSplit[1], "joined the game"):
+					// using "UUID of player" since minecraft server v1.12.2 does not use "joined the game"
+					case strings.Contains(lineSplit[1], "UUID of player"):
 						ServStats.Players++
 						log.Printf("*** A PLAYER JOINED THE SERVER! - %d players online", ServStats.Players)
 

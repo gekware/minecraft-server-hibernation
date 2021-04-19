@@ -2,12 +2,14 @@ package servctrl
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
 	"msh/lib/asyncctrl"
 	"msh/lib/confctrl"
 	"msh/lib/debugctrl"
+	"msh/lib/utility"
 )
 
 // StartMinecraftServer starts the minecraft server
@@ -27,7 +29,8 @@ func StartMinecraftServer() error {
 // StopMinecraftServer stops the minecraft server.
 // When force == true, it bypasses checks for StopInstancesa/Players and orders the server shutdown
 func StopMinecraftServer(force bool) error {
-	var err error
+	// error that returns from Execute() when executing the stop command
+	var errExec error
 
 	// wait for the starting server to go online
 	for ServStats.Status == "starting" {
@@ -41,7 +44,7 @@ func StopMinecraftServer(force bool) error {
 	// execute stop command
 	if force {
 		// if force == true, bypass checks for StopInstances/Players and proceed with server shutdown
-		_, err = ServTerminal.Execute(confctrl.Config.Commands.StopServerForce)
+		_, errExec = ServTerminal.Execute(confctrl.Config.Commands.StopServerForce)
 	} else {
 		// if force == false, check that there is only one "stop server command" instance running and players <= 0,
 		// if so proceed with server shutdown
@@ -49,17 +52,36 @@ func StopMinecraftServer(force bool) error {
 
 		// check if there are players online
 		if asyncctrl.WithLock(func() interface{} { return ServStats.Players > 0 }).(bool) {
-			return fmt.Errorf("StopEmptyMinecraftServer: server is not empty")
+			return fmt.Errorf("StopEmptyMinecraftServer: server is not empty (player count > 0)")
 		}
+
+		// check if there are players online using the /list command
+		// (for safety, in case the first player check does not work)
+		outStr, err := ServTerminal.Execute("/list")
+		if err != nil {
+			return fmt.Errorf("stopEmptyMinecraftServer: error executing minecraft server /list command: %v", err)
+		}
+		playersStr, err := utility.StrBetween(outStr, "There are ", " of a max")
+		if err != nil {
+			return fmt.Errorf("stopEmptyMinecraftServer: error finding player number from /list command: %v", err)
+		}
+		players, err := strconv.Atoi(playersStr)
+		if err != nil {
+			return fmt.Errorf("stopEmptyMinecraftServer: error converting player number from /list command: %v", err)
+		}
+		if players > 0 {
+			return fmt.Errorf("StopEmptyMinecraftServer: server is not empty (with /list command)")
+		}
+
 		// check if enough time has passed since last player disconnected
 		if asyncctrl.WithLock(func() interface{} { return ServStats.StopInstances > 0 }).(bool) {
 			return fmt.Errorf("StopEmptyMinecraftServer: not enough time has passed since last player disconnected (StopInstances: %d)", ServStats.StopInstances)
 		}
 
-		_, err = ServTerminal.Execute(confctrl.Config.Commands.StopServer)
+		_, errExec = ServTerminal.Execute(confctrl.Config.Commands.StopServer)
 	}
-	if err != nil {
-		return fmt.Errorf("stopEmptyMinecraftServer: error executing minecraft server stop command: %v", err)
+	if errExec != nil {
+		return fmt.Errorf("stopEmptyMinecraftServer: error executing minecraft server stop command: %v", errExec)
 	}
 
 	if force {
