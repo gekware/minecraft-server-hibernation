@@ -133,7 +133,7 @@ func notifyGameChat(deltaNotification, deltaToEnd time.Duration, notificationStr
 	for time.Now().Before(endT) {
 		// check if terminal is active to avoid Execute() returning an error
 		if servctrl.ServTerminal.IsActive {
-			_, err := servctrl.ServTerminal.Execute("/say " + notificationString)
+			_, err := servctrl.ServTerminal.Execute("/say "+notificationString, "notifyGameChat")
 			if err != nil {
 				debugctrl.Log("notifyGameChat:", err.Error())
 			}

@@ -61,7 +61,7 @@ func CmdStart(dir, command string) error {
 }
 
 // Execute executes a command on the specified term
-func (term *ServTerm) Execute(command string) (string, error) {
+func (term *ServTerm) Execute(command, origin string) (string, error) {
 	if !term.IsActive {
 		return "", fmt.Errorf("Execute: terminal not active")
 	}
@@ -73,7 +73,7 @@ func (term *ServTerm) Execute(command string) (string, error) {
 			return "", fmt.Errorf("Execute: server not online")
 		}
 
-		debugctrl.Log("terminal execute:"+colYel, com, colRes)
+		debugctrl.Log("terminal execute:"+colYel, com, colRes, "\t(origin:", origin, ")")
 
 		// write to cmd (\n indicates the enter key)
 		_, err := term.in.Write([]byte(com + "\n"))
@@ -211,7 +211,8 @@ func (term *ServTerm) startInteraction() {
 					switch {
 					// player sends a chat message
 					case strings.Contains(lineSplit[1], "<") || strings.Contains(lineSplit[1], "["):
-						// do nothing
+						// just log that the line is a chat message
+						debugctrl.Log("a chat message was sent")
 
 					// player joins the server
 					// using "UUID of player" since minecraft server v1.12.2 does not use "joined the game"
@@ -272,7 +273,7 @@ func (term *ServTerm) startInteraction() {
 				continue
 			}
 
-			_, err = term.Execute(line)
+			_, err = term.Execute(line, "user input")
 			if err != nil {
 				debugctrl.Log("servTerm input:", err)
 				continue

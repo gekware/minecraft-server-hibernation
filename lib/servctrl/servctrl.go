@@ -42,7 +42,7 @@ func StopMinecraftServer(force bool) error {
 	// execute stop command
 	if force {
 		// if force == true, bypass checks for StopInstances/Players and proceed with server shutdown
-		_, errExec = ServTerminal.Execute(confctrl.Config.Commands.StopServerForce)
+		_, errExec = ServTerminal.Execute(confctrl.Config.Commands.StopServerForce, "StopMinecraftServer - force")
 	} else {
 		// if force == false, check that there is only one "stop server command" instance running and players <= 0,
 		// if so proceed with server shutdown
@@ -60,7 +60,7 @@ func StopMinecraftServer(force bool) error {
 			return fmt.Errorf("StopEmptyMinecraftServer: not enough time has passed since last player disconnected (StopInstances: %d)", ServStats.StopInstances)
 		}
 
-		_, errExec = ServTerminal.Execute(confctrl.Config.Commands.StopServer)
+		_, errExec = ServTerminal.Execute(confctrl.Config.Commands.StopServer, "StopMinecraftServer")
 	}
 	if errExec != nil {
 		return fmt.Errorf("stopEmptyMinecraftServer: error executing minecraft server stop command: %v", errExec)
