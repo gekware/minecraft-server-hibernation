@@ -18,7 +18,7 @@ func CountPlayerSafe() (int, bool) {
 	playerCount, err := getPlayersByListCom()
 	if err != nil {
 		// no need to return an error since the less reliable internal player count is available
-		debugctrl.Log("CountPlayerSafe: %v", err)
+		debugctrl.Logln("CountPlayerSafe: %v", err)
 		return ServStats.PlayerCount, false
 	}
 

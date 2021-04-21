@@ -28,7 +28,7 @@ func InterruptListener() {
 	// stop forcefully the minecraft server
 	err := servctrl.StopMinecraftServer(true)
 	if err != nil {
-		debugctrl.Log("InterruptListener:", err)
+		debugctrl.Logln("InterruptListener:", err)
 	}
 
 	// exit
@@ -54,7 +54,7 @@ func UpdateManager(clientVersion string) {
 		if confctrl.Config.Msh.CheckForUpdates {
 			updateAvailable, onlineVersion, err := checkUpdate(v, clientVersion, respHeader)
 			if err != nil {
-				debugctrl.Log("UpdateManager:", err.Error())
+				debugctrl.Logln("UpdateManager:", err.Error())
 				time.Sleep(deltaT)
 				continue
 			}
@@ -135,7 +135,7 @@ func notifyGameChat(deltaNotification, deltaToEnd time.Duration, notificationStr
 		if servctrl.ServTerminal.IsActive {
 			_, err := servctrl.ServTerminal.Execute("/say "+notificationString, "notifyGameChat")
 			if err != nil {
-				debugctrl.Log("notifyGameChat:", err.Error())
+				debugctrl.Logln("notifyGameChat:", err.Error())
 			}
 		}
 

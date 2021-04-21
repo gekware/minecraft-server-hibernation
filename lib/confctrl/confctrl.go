@@ -74,7 +74,7 @@ func LoadConfig() error {
 	if err != nil {
 		// it's enough to log it without returning
 		// since the default icon is loaded by default
-		debugctrl.Log("loadConfig:", err.Error())
+		debugctrl.Logln("loadConfig:", err.Error())
 	}
 
 	return nil
@@ -94,7 +94,7 @@ func SaveConfig() error {
 		return fmt.Errorf("SaveConfig: could not write to config.json")
 	}
 
-	debugctrl.Log("SaveConfig: saved to config.json")
+	debugctrl.Logln("SaveConfig: saved to config.json")
 
 	return nil
 }
@@ -117,7 +117,7 @@ func setIpPorts() error {
 		return fmt.Errorf("setIpPorts: TargetPort and ListenPort appear to be the same, please change one of them")
 	}
 
-	debugctrl.Log("targeting server address:", TargetHost+":"+TargetPort)
+	debugctrl.Logln("targeting server address:", TargetHost+":"+TargetPort)
 
 	return nil
 }

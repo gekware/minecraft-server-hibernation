@@ -22,7 +22,7 @@ var Debug bool = false
 func PrintDataUsage() {
 	asyncctrl.WithLock(func() {
 		if BytesToClients != 0 || BytesToServer != 0 {
-			Log(fmt.Sprintf("data/s: %8.3f KB/s to clients | %8.3f KB/s to server", BytesToClients/1024, BytesToServer/1024))
+			Logln(fmt.Sprintf("data/s: %8.3f KB/s to clients | %8.3f KB/s to server", BytesToClients/1024, BytesToServer/1024))
 			BytesToClients = 0
 			BytesToServer = 0
 		}
@@ -31,8 +31,8 @@ func PrintDataUsage() {
 	time.AfterFunc(1*time.Second, func() { PrintDataUsage() })
 }
 
-// Log prints the args if debug option is set to true
-func Log(args ...interface{}) {
+// Logln prints the args if debug option is set to true
+func Logln(args ...interface{}) {
 	if Debug {
 		log.Println(args...)
 	}

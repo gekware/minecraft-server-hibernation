@@ -38,9 +38,9 @@ func Forward(source, destination net.Conn, isServerToClient bool, stopSig *bool)
 		if err != nil {
 			// case in which the connection is closed by the source or closed by target
 			if err == io.EOF {
-				debugctrl.Log(fmt.Sprintf("closing %s --> %s because of: %s", strings.Split(source.RemoteAddr().String(), ":")[0], strings.Split(destination.RemoteAddr().String(), ":")[0], err.Error()))
+				debugctrl.Logln(fmt.Sprintf("closing %s --> %s because of: %s", strings.Split(source.RemoteAddr().String(), ":")[0], strings.Split(destination.RemoteAddr().String(), ":")[0], err.Error()))
 			} else {
-				debugctrl.Log(fmt.Sprintf("forwardSync: error in forward(): %v\n%s --> %s", err, strings.Split(source.RemoteAddr().String(), ":")[0], strings.Split(destination.RemoteAddr().String(), ":")[0]))
+				debugctrl.Logln(fmt.Sprintf("forwardSync: error in forward(): %v\n%s --> %s", err, strings.Split(source.RemoteAddr().String(), ":")[0], strings.Split(destination.RemoteAddr().String(), ":")[0]))
 			}
 
 			// close the source connection
@@ -67,7 +67,7 @@ func Forward(source, destination net.Conn, isServerToClient bool, stopSig *bool)
 		if firstBuffer && isServerToClient {
 			err = servprotocol.GetVersionProtocol(data[:dataLen])
 			if err != nil {
-				debugctrl.Log("Forward:", err)
+				debugctrl.Logln("Forward:", err)
 			}
 
 			// first cycle is finished, set firstBuffer = false

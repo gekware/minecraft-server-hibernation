@@ -77,7 +77,7 @@ func main() {
 	for {
 		clientSocket, err := listener.Accept()
 		if err != nil {
-			debugctrl.Log("main:", err.Error())
+			debugctrl.Logln("main:", err.Error())
 			continue
 		}
 

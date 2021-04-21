@@ -50,7 +50,7 @@ func StopMinecraftServer(force bool) error {
 
 		// check how many players are on the server
 		playerCount, isFromServer := CountPlayerSafe()
-		debugctrl.Log(playerCount, "online players - number got from server:", isFromServer)
+		debugctrl.Logln(playerCount, "online players - number got from server:", isFromServer)
 		if playerCount > 0 {
 			return fmt.Errorf("StopEmptyMinecraftServer: server is not empty")
 		}
@@ -69,10 +69,10 @@ func StopMinecraftServer(force bool) error {
 	if force {
 		if ServStats.Status == "stopping" {
 			// wait for the terminal to exit
-			debugctrl.Log("waiting for server terminal to exit")
+			debugctrl.Logln("waiting for server terminal to exit")
 			ServTerminal.Wg.Wait()
 		} else {
-			debugctrl.Log("server was not stopped by StopMinecraftServerForce command, world save might be compromised")
+			debugctrl.Logln("server was not stopped by StopMinecraftServerForce command, world save might be compromised")
 		}
 	}
 
@@ -90,7 +90,7 @@ func RequestStopMinecraftServer() {
 			// avoid printing "server is not online" error since it can be very frequent
 			// when updating the logging system this could be managed by logging it only at certain log levels
 			if err.Error() != "StopEmptyMinecraftServer: server is not online" {
-				debugctrl.Log("RequestStopMinecraftServer:", err)
+				debugctrl.Logln("RequestStopMinecraftServer:", err)
 			}
 		}
 	})

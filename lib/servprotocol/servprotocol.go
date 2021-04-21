@@ -118,7 +118,7 @@ func GetVersionProtocol(data []byte) error {
 
 		// if serverVersion or serverProtocol are different from the ones specified in config.json --> update them
 		if newServerVersion != confctrl.Config.Server.Version || newServerProtocol != confctrl.Config.Server.Protocol {
-			debugctrl.Log(
+			debugctrl.Logln(
 				"server version found!",
 				"serverVersion:", newServerVersion,
 				"serverProtocol:", newServerProtocol,

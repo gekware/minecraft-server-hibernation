@@ -73,7 +73,7 @@ func (term *ServTerm) Execute(command, origin string) (string, error) {
 			return "", fmt.Errorf("Execute: server not online")
 		}
 
-		debugctrl.Log("terminal execute:"+colYel, com, colRes, "\t(origin:", origin, ")")
+		debugctrl.Logln("terminal execute:"+colYel, com, colRes, "\t(origin:", origin, ")")
 
 		// write to cmd (\n indicates the enter key)
 		_, err := term.in.Write([]byte(com + "\n"))
@@ -131,7 +131,7 @@ func (term *ServTerm) waitForExit() {
 	term.in.Close()
 
 	term.IsActive = false
-	debugctrl.Log("waitForExit: terminal exited")
+	debugctrl.Logln("waitForExit: terminal exited")
 
 	ServStats.Status = "offline"
 	log.Print("*** MINECRAFT SERVER IS OFFLINE!")
@@ -212,7 +212,7 @@ func (term *ServTerm) startInteraction() {
 					// player sends a chat message
 					case strings.Contains(lineSplit[1], "<") || strings.Contains(lineSplit[1], "["):
 						// just log that the line is a chat message
-						debugctrl.Log("a chat message was sent")
+						debugctrl.Logln("a chat message was sent")
 
 					// player joins the server
 					// using "UUID of player" since minecraft server v1.12.2 does not use "joined the game"
@@ -269,13 +269,13 @@ func (term *ServTerm) startInteraction() {
 		for {
 			line, err = reader.ReadString('\n')
 			if err != nil {
-				debugctrl.Log("servTerm input:", err)
+				debugctrl.Logln("servTerm input:", err)
 				continue
 			}
 
 			_, err = term.Execute(line, "user input")
 			if err != nil {
-				debugctrl.Log("servTerm input:", err)
+				debugctrl.Logln("servTerm input:", err)
 				continue
 			}
 		}
