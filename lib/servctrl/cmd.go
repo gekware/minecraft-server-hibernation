@@ -29,8 +29,9 @@ var ServTerminal *ServTerm = &ServTerm{}
 // lastLine is a channel used to communicate the last line got from the printer function
 var lastLine = make(chan string)
 
-var colRes string = "\033[0m"
-var colCya string = "\033[36m"
+const colRes string = "\033[0m"
+const colCya string = "\033[36m"
+const colYel string = "\033[33m"
 
 // CmdStart starts a new terminal (non-blocking) and returns a servTerm object
 func CmdStart(dir, command string) error {
@@ -53,7 +54,7 @@ func CmdStart(dir, command string) error {
 	// initialization
 	ServStats.Status = "starting"
 	ServStats.LoadProgress = "0%"
-	ServStats.Players = 0
+	ServStats.PlayerCount = 0
 	log.Print("*** MINECRAFT SERVER IS STARTING!")
 
 	return nil
@@ -62,22 +63,22 @@ func CmdStart(dir, command string) error {
 // Execute executes a command on the specified term
 func (term *ServTerm) Execute(command string) (string, error) {
 	if !term.IsActive {
-		return "", fmt.Errorf("servctrl-cmd: Execute: terminal not active")
+		return "", fmt.Errorf("Execute: terminal not active")
 	}
 
 	commands := strings.Split(command, "\n")
 
 	for _, com := range commands {
-		if ServStats.Status == "online" {
-			debugctrl.Log("sending", com, "to terminal")
+		if ServStats.Status != "online" {
+			return "", fmt.Errorf("Execute: server not online")
+		}
 
-			// write to cmd (\n indicates the enter key)
-			_, err := term.in.Write([]byte(com + "\n"))
-			if err != nil {
-				return "", err
-			}
-		} else {
-			return "", fmt.Errorf("servctrl-cmd: Execute: server not online")
+		debugctrl.Log("terminal execute:"+colYel, com, colRes)
+
+		// write to cmd (\n indicates the enter key)
+		_, err := term.in.Write([]byte(com + "\n"))
+		if err != nil {
+			return "", fmt.Errorf("Execute: %v", err)
 		}
 	}
 
@@ -215,13 +216,13 @@ func (term *ServTerm) startInteraction() {
 					// player joins the server
 					// using "UUID of player" since minecraft server v1.12.2 does not use "joined the game"
 					case strings.Contains(lineSplit[1], "UUID of player"):
-						ServStats.Players++
-						log.Printf("*** A PLAYER JOINED THE SERVER! - %d players online", ServStats.Players)
+						ServStats.PlayerCount++
+						log.Printf("*** A PLAYER JOINED THE SERVER! - %d players online", ServStats.PlayerCount)
 
 					// player leaves the server
 					case strings.Contains(lineSplit[1], "left the game"):
-						ServStats.Players--
-						log.Printf("*** A PLAYER LEFT THE SERVER! - %d players online", ServStats.Players)
+						ServStats.PlayerCount--
+						log.Printf("*** A PLAYER LEFT THE SERVER! - %d players online", ServStats.PlayerCount)
 						RequestStopMinecraftServer()
 
 					// the server is stopping

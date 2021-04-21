@@ -4,21 +4,25 @@ import (
 	"fmt"
 	"strconv"
 
+	"msh/lib/debugctrl"
 	"msh/lib/utility"
 )
 
 // CountPlayerSafe returns the number of players on the server.
-// The /list command is used for safety and if it fails,
-// internal player count is returned.
-// The error returned is non blocking, the integer returned
-// will be in any case more or less reliable.
-func CountPlayerSafe() (int, error) {
+// The /list command is used for safety and if it fails, internal player count is returned.
+// No error is returned: the integer is always meaningful
+// (might be more or less reliable depending from where it retrieved).
+// A bool param is returned indicating if player count comes from
+// the internal player count (false) or the server player count (true).
+func CountPlayerSafe() (int, bool) {
 	playerCount, err := getPlayersByListCom()
 	if err != nil {
-		return ServStats.Players, fmt.Errorf("CountPlayerSafe: %v", err)
+		// no need to return an error since the less reliable internal player count is available
+		debugctrl.Log("CountPlayerSafe: %v", err)
+		return ServStats.PlayerCount, false
 	}
 
-	return playerCount, nil
+	return playerCount, true
 }
 
 // getPlayersByListCom returns the number of players using the /list command

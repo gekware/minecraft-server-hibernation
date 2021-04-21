@@ -48,11 +48,9 @@ func StopMinecraftServer(force bool) error {
 		// if so proceed with server shutdown
 		asyncctrl.WithLock(func() { ServStats.StopInstances-- })
 
-		playerCount, err := CountPlayerSafe()
-		if err != nil {
-			// this error is non blocking, no need to return
-			debugctrl.Log("StopEmptyMinecraftServer:", err)
-		}
+		// check how many players are on the server
+		playerCount, isFromServer := CountPlayerSafe()
+		debugctrl.Log(playerCount, "online players - number got from server:", isFromServer)
 		if playerCount > 0 {
 			return fmt.Errorf("StopEmptyMinecraftServer: server is not empty")
 		}
