@@ -9,6 +9,7 @@ import (
 	"msh/lib/confctrl"
 	"msh/lib/connctrl"
 	"msh/lib/debugctrl"
+	"msh/lib/inputctrl"
 	"msh/lib/osctrl"
 	"msh/lib/progctrl"
 	"msh/lib/utility"
@@ -59,6 +60,9 @@ func main() {
 
 	// launch printDataUsage()
 	go debugctrl.PrintDataUsage()
+
+	// launch GetInput()
+	go inputctrl.GetInput()
 
 	// open a listener on {confctrl.ListenHost}+":"+{Config.Msh.Port}
 	listener, err := net.Listen("tcp", confctrl.ListenHost+":"+confctrl.Config.Msh.Port)

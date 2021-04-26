@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"os"
 	"os/exec"
 	"strings"
 	"sync"
@@ -73,7 +72,7 @@ func (term *ServTerm) Execute(command, origin string) (string, error) {
 			return "", fmt.Errorf("Execute: server not online")
 		}
 
-		debugctrl.Logln("terminal execute:"+colYel, com, colRes, "\t(origin:", origin, ")")
+		debugctrl.Logln("terminal execute:"+colYel, com, colRes, "\t(origin:", origin+")")
 
 		// write to cmd (\n indicates the enter key)
 		_, err := term.in.Write([]byte(com + "\n"))
@@ -210,7 +209,7 @@ func (term *ServTerm) startInteraction() {
 				if strings.Contains(lineSplit[0], "INFO") {
 					switch {
 					// player sends a chat message
-					case strings.Contains(lineSplit[1], "<") || strings.Contains(lineSplit[1], "["):
+					case strings.HasPrefix(lineSplit[1], "<") || strings.HasPrefix(lineSplit[1], "["):
 						// just log that the line is a chat message
 						debugctrl.Logln("a chat message was sent")
 
@@ -255,29 +254,6 @@ func (term *ServTerm) startInteraction() {
 			line = scanner.Text()
 
 			fmt.Println(colCya + line + colRes)
-		}
-	}()
-
-	// input from os.Stdin
-	// [goroutine]
-	go func() {
-		var line string
-		var err error
-
-		reader := bufio.NewReader(os.Stdin)
-
-		for {
-			line, err = reader.ReadString('\n')
-			if err != nil {
-				debugctrl.Logln("servTerm input:", err)
-				continue
-			}
-
-			_, err = term.Execute(line, "user input")
-			if err != nil {
-				debugctrl.Logln("servTerm input:", err)
-				continue
-			}
 		}
 	}()
 }
