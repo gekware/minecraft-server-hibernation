@@ -52,8 +52,8 @@ func GetInput() {
 					debugctrl.Logln("GetInput:", err)
 				}
 			case "freeze":
-				// stop minecraft server forcefully
-				err = servctrl.StopMinecraftServer(true)
+				// stop minecraft server with no player check
+				err = servctrl.StopMinecraftServer(false)
 				if err != nil {
 					debugctrl.Logln("GetInput:", err)
 				}

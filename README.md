@@ -42,7 +42,6 @@ How to use:
     - FileName
     - StartServer
     - StopServer
-    - \* StopServerForce
     - \* HibernationInfo and StartingInfo
     - \* TimeBeforeStoppingEmptyServer
     - \* CheckForUpdates
@@ -71,11 +70,9 @@ Commands to start and stop minecraft server:
 ```yaml
 "Commands":{
   "StartServer": "java {-Xmx1024M} {-Xms1024M} -jar serverFileName nogui",
-  "StopServer": "{stop}",
-  "StopServerForce": ""
+  "StopServer": "{stop}"
 }
 
-# the StopMinecraftServerForce parameter is used to execute special commands when a forced shutdown happens
 ```
 Hibernation and warming up server description
 ```yaml

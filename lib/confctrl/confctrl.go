@@ -29,9 +29,8 @@ type configuration struct {
 		Version  string `json:"Version"`
 	} `json:"Server"`
 	Commands struct {
-		StartServer     string `json:"StartServer"`
-		StopServer      string `json:"StopServer"`
-		StopServerForce string `json:"StopServerForce"`
+		StartServer string `json:"StartServer"`
+		StopServer  string `json:"StopServer"`
 	} `json:"Commands"`
 	Msh struct {
 		CheckForUpdates               bool   `json:"CheckForUpdates"`
@@ -136,11 +135,6 @@ func checkConfig() error {
 	_, err = exec.LookPath("java")
 	if err != nil {
 		return fmt.Errorf("checkConfig: java not installed")
-	}
-
-	// if StopMinecraftServerForce is not set, set it equal to StopMinecraftServer
-	if Config.Commands.StopServerForce == "" {
-		Config.Commands.StopServerForce = Config.Commands.StopServer
 	}
 
 	return nil

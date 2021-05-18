@@ -25,8 +25,8 @@ func StartMinecraftServer() error {
 }
 
 // StopMinecraftServer stops the minecraft server.
-// When force == true, it bypasses checks for StopInstancesa/Players and orders the server shutdown
-func StopMinecraftServer(force bool) error {
+// When playersCheck == true, it checks for StopInstancesa/Players and orders the server shutdown
+func StopMinecraftServer(playersCheck bool) error {
 	// error that returns from Execute() when executing the stop command
 	var errExec error
 
@@ -39,12 +39,9 @@ func StopMinecraftServer(force bool) error {
 		return fmt.Errorf("StopEmptyMinecraftServer: server is not online")
 	}
 
-	// execute stop command
-	if force {
-		// if force == true, bypass checks for StopInstances/Players and proceed with server shutdown
-		_, errExec = ServTerminal.Execute(confctrl.Config.Commands.StopServerForce, "StopMinecraftServer - force")
-	} else {
-		// if force == false, check that there is only one "stop server command" instance running and players <= 0,
+	// player/stopInstances check
+	if playersCheck {
+		// check that there is only one "stop server command" instance running and players <= 0,
 		// if so proceed with server shutdown
 		asyncctrl.WithLock(func() { ServStats.StopInstances-- })
 
@@ -59,20 +56,21 @@ func StopMinecraftServer(force bool) error {
 		if asyncctrl.WithLock(func() interface{} { return ServStats.StopInstances > 0 }).(bool) {
 			return fmt.Errorf("StopEmptyMinecraftServer: not enough time has passed since last player disconnected (StopInstances: %d)", ServStats.StopInstances)
 		}
-
-		_, errExec = ServTerminal.Execute(confctrl.Config.Commands.StopServer, "StopMinecraftServer")
 	}
+
+	// execute stop command
+	_, errExec = ServTerminal.Execute(confctrl.Config.Commands.StopServer, "StopMinecraftServer")
 	if errExec != nil {
 		return fmt.Errorf("stopEmptyMinecraftServer: error executing minecraft server stop command: %v", errExec)
 	}
 
-	if force {
+	if !playersCheck {
 		if ServStats.Status == "stopping" {
 			// wait for the terminal to exit
 			debugctrl.Logln("waiting for server terminal to exit")
 			ServTerminal.Wg.Wait()
 		} else {
-			debugctrl.Logln("server was not stopped by StopMinecraftServerForce command, world save might be compromised")
+			debugctrl.Logln("server was not stopped by stop command, world save might be compromised")
 		}
 	}
 
@@ -85,7 +83,7 @@ func RequestStopMinecraftServer() {
 
 	// [goroutine]
 	time.AfterFunc(time.Duration(confctrl.Config.Msh.TimeBeforeStoppingEmptyServer)*time.Second, func() {
-		err := StopMinecraftServer(false)
+		err := StopMinecraftServer(true)
 		if err != nil {
 			// avoid printing "server is not online" error since it can be very frequent
 			// when updating the logging system this could be managed by logging it only at certain log levels
