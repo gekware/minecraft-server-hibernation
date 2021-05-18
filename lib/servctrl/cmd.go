@@ -60,6 +60,7 @@ func CmdStart(dir, command string) error {
 }
 
 // Execute executes a command on the specified term
+// [non-blocking]
 func (term *ServTerm) Execute(command, origin string) (string, error) {
 	if !term.IsActive {
 		return "", fmt.Errorf("Execute: terminal not active")

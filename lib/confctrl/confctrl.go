@@ -29,8 +29,9 @@ type configuration struct {
 		Version  string `json:"Version"`
 	} `json:"Server"`
 	Commands struct {
-		StartServer string `json:"StartServer"`
-		StopServer  string `json:"StopServer"`
+		StartServer           string `json:"StartServer"`
+		StopServer            string `json:"StopServer"`
+		StopServerAllowSIGINT int    `json:"StopServerAllowSIGINT"`
 	} `json:"Commands"`
 	Msh struct {
 		CheckForUpdates               bool   `json:"CheckForUpdates"`

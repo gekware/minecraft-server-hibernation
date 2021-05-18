@@ -64,13 +64,19 @@ func StopMinecraftServer(playersCheck bool) error {
 		return fmt.Errorf("stopEmptyMinecraftServer: error executing minecraft server stop command: %v", errExec)
 	}
 
+	// if sigint is allowed, launch a function to check the shutdown of minecraft server
+	if confctrl.Config.Commands.StopServerAllowSIGINT > 0 {
+		go sigintMinecraftServerIfOnlineAfterTimeout()
+	}
+
+	// if a player check was not executed and the server is stopping make this function blocking until server is down
 	if !playersCheck {
 		if ServStats.Status == "stopping" {
-			// wait for the terminal to exit
+			// wait for the terminal to exit then return
 			debugctrl.Logln("waiting for server terminal to exit")
 			ServTerminal.Wg.Wait()
 		} else {
-			debugctrl.Logln("server was not stopped by stop command, world save might be compromised")
+			return fmt.Errorf("stopEmptyMinecraftServer: stop command does not seem to be stopping server (no playersCheck)")
 		}
 	}
 
@@ -78,6 +84,7 @@ func StopMinecraftServer(playersCheck bool) error {
 }
 
 // RequestStopMinecraftServer increases stopInstances by one and starts the timer to execute stopEmptyMinecraftServer(false)
+// [goroutine]
 func RequestStopMinecraftServer() {
 	asyncctrl.WithLock(func() { ServStats.StopInstances++ })
 
@@ -92,4 +99,33 @@ func RequestStopMinecraftServer() {
 			}
 		}
 	})
+}
+
+// sigintMinecraftServerIfOnlineAfterTimeout waits for the specified time and then if the server is still online sends SIGINT to the process
+func sigintMinecraftServerIfOnlineAfterTimeout() {
+	countdown := confctrl.Config.Commands.StopServerAllowSIGINT
+
+	for countdown > 0 {
+		// if server goes offline it's the correct behaviour -> return
+		if ServStats.Status == "offline" {
+			return
+		}
+
+		countdown--
+		time.Sleep(time.Second)
+	}
+
+	// save world before killing the server, do not check for errors
+	debugctrl.Logln("saving word before killing the minecraft server process")
+	_, _ = ServTerminal.Execute("/save-all", "sigintMinecraftServerIfOnlineAfterTimeout")
+
+	// give time to save word
+	time.Sleep(time.Duration(10) * time.Second)
+
+	// send kill signal to server
+	debugctrl.Logln("send kill signal to minecraft server process since it won't stop normally")
+	err := ServTerminal.cmd.Process.Kill()
+	if err != nil {
+		debugctrl.Logln("sigintMinecraftServerIfOnlineAfterTimeout: %v", err)
+	}
 }

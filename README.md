@@ -42,6 +42,7 @@ How to use:
     - FileName
     - StartServer
     - StopServer
+    - \* StopServerAllowKill
     - \* HibernationInfo and StartingInfo
     - \* TimeBeforeStoppingEmptyServer
     - \* CheckForUpdates
@@ -69,10 +70,12 @@ Location of server folder and executable:
 Commands to start and stop minecraft server:
 ```yaml
 "Commands":{
-  "StartServer": "java {-Xmx1024M} {-Xms1024M} -jar serverFileName nogui",
-  "StopServer": "{stop}"
+    "StartServer": "java {-Xmx1024M} {-Xms1024M} -jar serverFileName nogui",
+    "StopServer": "{stop}",
+    "StopServerAllowKill": 10
 }
-
+# if StopServerAllowKill is more than 0, then the specified number is the amount of seconds
+# given to the minecraft server to go offline, after which it is killed
 ```
 Hibernation and warming up server description
 ```yaml

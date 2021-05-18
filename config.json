@@ -7,7 +7,8 @@
   },
   "Commands":{
     "StartServer": "java {-Xmx1024M} {-Xms1024M} -jar serverFileName nogui",
-    "StopServer": "{stop}"
+    "StopServer": "{stop}",
+    "StopServerAllowKill": 10
   },
   "Msh":{
     "Port": "25555",
