@@ -65,7 +65,7 @@ func StopMinecraftServer(playersCheck bool) error {
 	}
 
 	// if sigint is allowed, launch a function to check the shutdown of minecraft server
-	if confctrl.Config.Commands.StopServerAllowSIGINT > 0 {
+	if confctrl.Config.Commands.StopServerAllowKill > 0 {
 		go sigintMinecraftServerIfOnlineAfterTimeout()
 	}
 
@@ -103,7 +103,7 @@ func RequestStopMinecraftServer() {
 
 // sigintMinecraftServerIfOnlineAfterTimeout waits for the specified time and then if the server is still online sends SIGINT to the process
 func sigintMinecraftServerIfOnlineAfterTimeout() {
-	countdown := confctrl.Config.Commands.StopServerAllowSIGINT
+	countdown := confctrl.Config.Commands.StopServerAllowKill
 
 	for countdown > 0 {
 		// if server goes offline it's the correct behaviour -> return
