@@ -22,33 +22,35 @@ func InterruptListener() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 
-	// wait for termination signal
-	<-c
+	for {
+		// wait for termination signal
+		<-c
 
-	// stop the minecraft server with no player check
-	err := servctrl.StopMinecraftServer(false)
-	if err != nil {
-		debugctrl.Logln("InterruptListener:", err)
+		// stop the minecraft server with no player check
+		err := servctrl.StopMinecraftServer(false)
+		if err != nil {
+			debugctrl.Logln("InterruptListener:", err)
+		}
+
+		// wait 1 second to let the server go into stopping mode
+		time.Sleep(time.Second)
+
+		switch servctrl.ServStats.Status {
+		case "stopping":
+			// if server is correctly stopping, wait for minecraft server to exit
+			debugctrl.Logln("InterruptListener: waiting for minecraft server terminal to exit (server is stopping)")
+			servctrl.ServTerminal.Wg.Wait()
+		case "offline":
+			// if server is offline, then it's safe to continue
+			debugctrl.Logln("InterruptListener: minecraft server terminal already exited (server is offline)")
+		default:
+			debugctrl.Logln("InterruptListener: stop command does not seem to be stopping server during forceful shutdown")
+		}
+
+		// exit
+		fmt.Print("exiting msh")
+		os.Exit(0)
 	}
-
-	// wait 1 second to let the server go into stopping mode
-	time.Sleep(time.Second)
-
-	switch servctrl.ServStats.Status {
-	case "stopping":
-		// if server is correctly stopping, wait for minecraft server to exit
-		debugctrl.Logln("waiting for minecraft server terminal to exit (server is stopping)")
-		servctrl.ServTerminal.Wg.Wait()
-	case "offline":
-		// if server is offline, then it's safe to continue
-		debugctrl.Logln("minecraft server terminal already exited (server is offline)")
-	default:
-		debugctrl.Logln("InterruptListener: stop command does not seem to be stopping server during forceful shutdown")
-	}
-
-	// exit
-	fmt.Print("exiting msh")
-	os.Exit(0)
 }
 
 var CheckedUpdateC chan bool = make(chan bool, 1)
