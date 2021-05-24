@@ -69,17 +69,6 @@ func StopMinecraftServer(playersCheck bool) error {
 		go sigintMinecraftServerIfOnlineAfterTimeout()
 	}
 
-	// if a player check was not executed and the server is stopping make this function blocking until server is down
-	if !playersCheck {
-		if ServStats.Status == "stopping" {
-			// wait for the terminal to exit then return
-			debugctrl.Logln("waiting for server terminal to exit")
-			ServTerminal.Wg.Wait()
-		} else {
-			return fmt.Errorf("stopEmptyMinecraftServer: stop command does not seem to be stopping server (no playersCheck)")
-		}
-	}
-
 	return nil
 }
 

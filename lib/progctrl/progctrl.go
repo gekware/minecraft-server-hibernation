@@ -31,6 +31,21 @@ func InterruptListener() {
 		debugctrl.Logln("InterruptListener:", err)
 	}
 
+	// wait 1 second to let the server go into stopping mode
+	time.Sleep(time.Second)
+
+	switch servctrl.ServStats.Status {
+	case "stopping":
+		// if server is correctly stopping, wait for minecraft server to exit
+		debugctrl.Logln("waiting for minecraft server terminal to exit (server is stopping)")
+		servctrl.ServTerminal.Wg.Wait()
+	case "offline":
+		// if server is offline, then it's safe to continue
+		debugctrl.Logln("minecraft server terminal already exited (server is offline)")
+	default:
+		debugctrl.Logln("InterruptListener: stop command does not seem to be stopping server during forceful shutdown")
+	}
+
 	// exit
 	fmt.Print("exiting msh")
 	os.Exit(0)
