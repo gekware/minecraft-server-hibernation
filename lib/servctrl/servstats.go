@@ -5,7 +5,7 @@ type serverStats struct {
 	Status string
 	// PlayerCount keeps track of players connected to the server
 	PlayerCount int
-	// StopInstances keeps track of how many times stopEmptyMinecraftServer() has been called in the last {TimeBeforeStoppingEmptyServer} seconds
+	// StopInstances keeps track of how many times StopMinecraftServer() has been called in the last {TimeBeforeStoppingEmptyServer} seconds
 	StopInstances int
 	// LoadProgress indicates the loading percentage while the server is starting
 	LoadProgress string
