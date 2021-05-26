@@ -72,8 +72,6 @@ func UpdateManager(clientVersion string) {
 			updateAvailable, onlineVersion, err := checkUpdate(v, clientVersion, respHeader)
 			if err != nil {
 				debugctrl.Logln("UpdateManager:", err.Error())
-				time.Sleep(deltaT)
-				continue
 			}
 
 			if updateAvailable {
@@ -97,6 +95,7 @@ func UpdateManager(clientVersion string) {
 }
 
 // checkUpdate checks for updates. Returns (update available, online version, error)
+// if error occurred, online version will be "error"
 func checkUpdate(v, clientVersion, respHeader string) (bool, string, error) {
 	userAgentOs := "osNotSupported"
 	switch runtime.GOOS {
@@ -112,7 +111,7 @@ func checkUpdate(v, clientVersion, respHeader string) (bool, string, error) {
 	url := "http://minecraft-server-hibernation.heliohost.us/latest-version.php?v=" + v + "&version=" + clientVersion
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return false, "", fmt.Errorf("checkUpdate: %v", err)
+		return false, "error", fmt.Errorf("checkUpdate: %v", err)
 	}
 	req.Header.Add("User-Agent", "msh ("+userAgentOs+") msh/"+clientVersion)
 
@@ -120,14 +119,14 @@ func checkUpdate(v, clientVersion, respHeader string) (bool, string, error) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return false, "", fmt.Errorf("checkUpdate: %v", err)
+		return false, "error", fmt.Errorf("checkUpdate: %v", err)
 	}
 	defer resp.Body.Close()
 
 	// read http response
 	respByte, err := ioutil.ReadAll(resp.Body)
 	if err != nil || !strings.Contains(string(respByte), respHeader) {
-		return false, "", fmt.Errorf("checkUpdate: (error reading http response) %v", err)
+		return false, "error", fmt.Errorf("checkUpdate: (error reading http response) %v", err)
 	}
 
 	// no error and respByte contains respHeader
@@ -137,7 +136,7 @@ func checkUpdate(v, clientVersion, respHeader string) (bool, string, error) {
 		return false, onlineVersion, nil
 	}
 
-	// an update is available, return updateAvailable == false
+	// an update is available, return updateAvailable == true
 	return true, onlineVersion, nil
 }
 
