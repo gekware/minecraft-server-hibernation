@@ -57,15 +57,15 @@ func LoadConfig() error {
 		return fmt.Errorf("loadConfig: %v", err)
 	}
 
-	// as soon as the Config variable is set, set debug level for debugctrl
-	debugctrl.Debug = Config.Msh.Debug
-
-	err = setIpPorts()
+	err = checkConfig()
 	if err != nil {
 		return fmt.Errorf("loadConfig: %v", err)
 	}
 
-	err = checkConfig()
+	// as soon as the Config variable is set, set debug level for debugctrl
+	debugctrl.Debug = Config.Msh.Debug
+
+	err = setIpPorts()
 	if err != nil {
 		return fmt.Errorf("loadConfig: %v", err)
 	}
@@ -99,6 +99,7 @@ func SaveConfig() error {
 	return nil
 }
 
+// setIpPorts reads server.properties server file and sets the correct ports
 func setIpPorts() error {
 	ListenHost = "0.0.0.0"
 	TargetHost = "127.0.0.1"
