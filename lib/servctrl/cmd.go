@@ -93,7 +93,7 @@ func (term *ServTerm) loadCmd(dir, command string) {
 	term.cmd.Dir = dir
 
 	// launch as new process group so that signals (ex: SIGINT) are not sent also the the child process
-	term.cmd.SysProcAttr = osctrl.GetSyscallNewProcessGroup()
+	term.cmd.SysProcAttr = osctrl.NewProcGroupAttr()
 }
 
 // loadStdPipes loads stdpipes into server terminal
