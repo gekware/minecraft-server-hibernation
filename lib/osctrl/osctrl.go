@@ -3,6 +3,7 @@ package osctrl
 import (
 	"fmt"
 	"runtime"
+	"syscall"
 )
 
 // OsSupported returns nil if the OS is supported
@@ -15,4 +16,9 @@ func OsSupported() error {
 	}
 
 	return nil
+}
+
+// NewProcGroupAttr returns a SysProcAttr struct to start a new process group
+func NewProcGroupAttr() *syscall.SysProcAttr {
+	return newProcGroupAttr()
 }
