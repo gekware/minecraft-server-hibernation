@@ -31,12 +31,9 @@ git clone https://github.com/gekigek99/minecraft-server-hibernation.git
 cd minecraft-server-hibernation/  
 go build .
 ```
-now you can run the msh executable
 
 -----
 ### INSTRUCTIONS:
-This is a Golang script to start a minecraft server on request and stop it when there are no players online.
-How to use:
 1. Install your desired minecraft server
 2. Edit the parameters in config.json as needed (*check definitions*):
     - Folder
@@ -55,7 +52,7 @@ How to use:
 
 \* = it's not compulsory to modify this parameter
 
-(remember to run the set msh to run at reboot)
+(remember to automatically run msh at reboot)
 
 -----
 ### DEFINITIONS:
