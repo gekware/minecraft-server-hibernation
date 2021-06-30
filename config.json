@@ -6,8 +6,9 @@
     "Protocol": "754"
   },
   "Commands":{
-    "StartServer": "java {-Xmx1024M} {-Xms1024M} -jar serverFileName nogui",
-    "StopServer": "{stop}",
+    "StartServer": "java <Commands.StartServerParam> -jar <Server.FileName> nogui" ,
+    "StartServerParam": "-Xmx1024M -Xms1024M" ,
+    "StopServer": "stop",
     "StopServerAllowKill": 10
   },
   "Msh":{

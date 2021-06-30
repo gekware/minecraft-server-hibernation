@@ -2,7 +2,6 @@ package servctrl
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"msh/lib/asyncctrl"
@@ -15,8 +14,7 @@ func StartMinecraftServer() error {
 	var err error
 
 	// start server terminal
-	command := strings.ReplaceAll(confctrl.Config.Commands.StartServer, "serverFileName", confctrl.Config.Server.FileName)
-	err = CmdStart(confctrl.Config.Server.Folder, command)
+	err = CmdStart(confctrl.ConfigRuntime.Server.Folder, confctrl.ConfigRuntime.Commands.StartServer)
 	if err != nil {
 		return fmt.Errorf("StartMinecraftServer: error starting minecraft server: %v", err)
 	}
@@ -59,13 +57,13 @@ func StopMinecraftServer(playersCheck bool) error {
 	}
 
 	// execute stop command
-	_, errExec = ServTerminal.Execute(confctrl.Config.Commands.StopServer, "StopMinecraftServer")
+	_, errExec = ServTerminal.Execute(confctrl.ConfigRuntime.Commands.StopServer, "StopMinecraftServer")
 	if errExec != nil {
 		return fmt.Errorf("StopMinecraftServer: error executing minecraft server stop command: %v", errExec)
 	}
 
 	// if sigint is allowed, launch a function to check the shutdown of minecraft server
-	if confctrl.Config.Commands.StopServerAllowKill > 0 {
+	if confctrl.ConfigRuntime.Commands.StopServerAllowKill > 0 {
 		go sigintMinecraftServerIfOnlineAfterTimeout()
 	}
 
@@ -78,7 +76,7 @@ func RequestStopMinecraftServer() {
 	asyncctrl.WithLock(func() { ServStats.StopInstances++ })
 
 	// [goroutine]
-	time.AfterFunc(time.Duration(confctrl.Config.Msh.TimeBeforeStoppingEmptyServer)*time.Second, func() {
+	time.AfterFunc(time.Duration(confctrl.ConfigRuntime.Msh.TimeBeforeStoppingEmptyServer)*time.Second, func() {
 		err := StopMinecraftServer(true)
 		if err != nil {
 			// avoid printing "server is not online" error since it can be very frequent
@@ -92,7 +90,7 @@ func RequestStopMinecraftServer() {
 
 // sigintMinecraftServerIfOnlineAfterTimeout waits for the specified time and then if the server is still online sends SIGINT to the process
 func sigintMinecraftServerIfOnlineAfterTimeout() {
-	countdown := confctrl.Config.Commands.StopServerAllowKill
+	countdown := confctrl.ConfigRuntime.Commands.StopServerAllowKill
 
 	for countdown > 0 {
 		// if server goes offline it's the correct behaviour -> return

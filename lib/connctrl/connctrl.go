@@ -38,14 +38,14 @@ func HandleClientSocket(clientSocket net.Conn) {
 		// the client first packet is {data, 1, 1, 0} or {data, 1} --> the client is requesting server info and ping
 		if buffer[dataLen-1] == 0 || buffer[dataLen-1] == 1 {
 			if servctrl.ServStats.Status == "offline" {
-				log.Printf("*** player unknown requested server info from %s:%s to %s:%s\n", clientAddress, confctrl.Config.Msh.Port, confctrl.TargetHost, confctrl.TargetPort)
+				log.Printf("*** player unknown requested server info from %s:%s to %s:%s\n", clientAddress, confctrl.ConfigRuntime.Msh.Port, confctrl.TargetHost, confctrl.TargetPort)
 				// answer to client with emulated server info
-				clientSocket.Write(servprotocol.BuildMessage("info", confctrl.Config.Msh.HibernationInfo))
+				clientSocket.Write(servprotocol.BuildMessage("info", confctrl.ConfigRuntime.Msh.HibernationInfo))
 
 			} else if servctrl.ServStats.Status == "starting" {
-				log.Printf("*** player unknown requested server info from %s:%s to %s:%s during server startup\n", clientAddress, confctrl.Config.Msh.Port, confctrl.TargetHost, confctrl.TargetPort)
+				log.Printf("*** player unknown requested server info from %s:%s to %s:%s during server startup\n", clientAddress, confctrl.ConfigRuntime.Msh.Port, confctrl.TargetHost, confctrl.TargetPort)
 				// answer to client with emulated server info
-				clientSocket.Write(servprotocol.BuildMessage("info", confctrl.Config.Msh.StartingInfo))
+				clientSocket.Write(servprotocol.BuildMessage("info", confctrl.ConfigRuntime.Msh.StartingInfo))
 			}
 
 			// answer to client with ping
@@ -57,7 +57,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 
 		// the client first message is [data, listenPortBytes, 2] or [data, listenPortBytes, 2, playerNameData] -->
 		// the client is trying to join the server
-		listenPortInt, err := strconv.Atoi(confctrl.Config.Msh.Port)
+		listenPortInt, err := strconv.Atoi(confctrl.ConfigRuntime.Msh.Port)
 		if err != nil {
 			debugctrl.Logln("handleClientSocket: error during ListenPort conversion to int")
 		}
@@ -97,12 +97,12 @@ func HandleClientSocket(clientSocket net.Conn) {
 					clientSocket.Write(servprotocol.BuildMessage("txt", "An error occurred while starting the server: check the msh log"))
 				} else {
 					// log to msh console and answer to client with text in the loadscreen
-					log.Printf("*** %s tried to join from %s:%s to %s:%s\n", playerName, clientAddress, confctrl.Config.Msh.Port, confctrl.TargetHost, confctrl.TargetPort)
+					log.Printf("*** %s tried to join from %s:%s to %s:%s\n", playerName, clientAddress, confctrl.ConfigRuntime.Msh.Port, confctrl.TargetHost, confctrl.TargetPort)
 					clientSocket.Write(servprotocol.BuildMessage("txt", "Server start command issued. Please wait... "+servctrl.ServStats.LoadProgress))
 				}
 
 			} else if servctrl.ServStats.Status == "starting" {
-				log.Printf("*** %s tried to join from %s:%s to %s:%s during server startup\n", playerName, clientAddress, confctrl.Config.Msh.Port, confctrl.TargetHost, confctrl.TargetPort)
+				log.Printf("*** %s tried to join from %s:%s to %s:%s during server startup\n", playerName, clientAddress, confctrl.ConfigRuntime.Msh.Port, confctrl.TargetHost, confctrl.TargetPort)
 				// answer to client with text in the loadscreen
 				clientSocket.Write(servprotocol.BuildMessage("txt", "Server is starting. Please wait... "+servctrl.ServStats.LoadProgress))
 			}

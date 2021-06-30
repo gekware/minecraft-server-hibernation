@@ -2,6 +2,7 @@ package confctrl
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -13,8 +14,11 @@ import (
 	"msh/lib/debugctrl"
 )
 
-// Config contains the configuration parameters
-var Config configuration
+// ConfigDefault contains the configuration parameters of the config file
+var ConfigDefault configuration
+
+// ConfigRuntime contains the configuration parameters during runtime
+var ConfigRuntime configuration
 
 var ListenHost string
 var TargetHost string
@@ -30,6 +34,7 @@ type configuration struct {
 	} `json:"Server"`
 	Commands struct {
 		StartServer         string `json:"StartServer"`
+		StartServerParam    string `json:"StartServerParam"`
 		StopServer          string `json:"StopServer"`
 		StopServerAllowKill int    `json:"StopServerAllowKill"`
 	} `json:"Commands"`
@@ -52,25 +57,30 @@ func LoadConfig() error {
 	}
 
 	// write read data into struct config
-	err = json.Unmarshal(configData, &Config)
+	err = json.Unmarshal(configData, &ConfigDefault)
 	if err != nil {
 		return fmt.Errorf("loadConfig: %v", err)
 	}
 
-	err = checkConfig()
+	// initialize runtime config
+	ConfigRuntime = ConfigDefault
+
+	setUpConfigRuntime()
+
+	err = checkConfigRuntime()
 	if err != nil {
 		return fmt.Errorf("loadConfig: %v", err)
 	}
 
 	// as soon as the Config variable is set, set debug level for debugctrl
-	debugctrl.Debug = Config.Msh.Debug
+	debugctrl.Debug = ConfigRuntime.Msh.Debug
 
 	err = setIpPorts()
 	if err != nil {
 		return fmt.Errorf("loadConfig: %v", err)
 	}
 
-	err = data.LoadIcon(Config.Server.Folder)
+	err = data.LoadIcon(ConfigRuntime.Server.Folder)
 	if err != nil {
 		// it's enough to log it without returning
 		// since the default icon is loaded by default
@@ -80,10 +90,10 @@ func LoadConfig() error {
 	return nil
 }
 
-// SaveConfig saves the config struct to the config file
-func SaveConfig() error {
+// SaveConfigDefault saves ConfigDefault to the config file
+func SaveConfigDefault() error {
 	// write the struct config to json data
-	configData, err := json.MarshalIndent(Config, "", "  ")
+	configData, err := json.MarshalIndent(ConfigDefault, "", "  ")
 	if err != nil {
 		return fmt.Errorf("SaveConfig: could not marshal from config.json")
 	}
@@ -99,35 +109,38 @@ func SaveConfig() error {
 	return nil
 }
 
-// setIpPorts reads server.properties server file and sets the correct ports
-func setIpPorts() error {
-	ListenHost = "0.0.0.0"
-	TargetHost = "127.0.0.1"
+// setUpConfigRuntime parses start arguments into ConfigRuntime and replaces placeholders
+func setUpConfigRuntime() {
+	// specify arguments
+	flag.StringVar(&ConfigRuntime.Server.FileName, "f", ConfigRuntime.Server.FileName, "Specify server file name.")
+	flag.StringVar(&ConfigRuntime.Server.Folder, "F", ConfigRuntime.Server.Folder, "Specify server folder path.")
 
-	serverPropertiesFilePath := filepath.Join(Config.Server.Folder, "server.properties")
-	data, err := ioutil.ReadFile(serverPropertiesFilePath)
-	if err != nil {
-		return fmt.Errorf("setIpPorts: %v", err)
+	flag.StringVar(&ConfigRuntime.Commands.StartServerParam, "P", ConfigRuntime.Commands.StartServerParam, "Specify start server parameters.")
+
+	flag.StringVar(&ConfigRuntime.Msh.Port, "p", ConfigRuntime.Msh.Port, "Specify msh port.")
+	flag.StringVar(&ConfigRuntime.Msh.HibernationInfo, "h", ConfigRuntime.Msh.HibernationInfo, "Specify hibernation info.")
+	flag.StringVar(&ConfigRuntime.Msh.StartingInfo, "s", ConfigRuntime.Msh.StartingInfo, "Specify starting info.")
+	flag.BoolVar(&ConfigRuntime.Msh.Debug, "d", ConfigRuntime.Msh.Debug, "Set debug to true.")
+
+	// specify the usage when there is an error in the arguments
+	flag.Usage = func() {
+		fmt.Printf("Usage of msh:\n")
+		flag.PrintDefaults()
 	}
 
-	dataStr := string(data)
-	dataStr = strings.ReplaceAll(dataStr, "\r", "")
-	TargetPort = strings.Split(strings.Split(dataStr, "server-port=")[1], "\n")[0]
+	// parse arguments
+	flag.Parse()
 
-	if TargetPort == Config.Msh.Port {
-		return fmt.Errorf("setIpPorts: TargetPort and ListenPort appear to be the same, please change one of them")
-	}
-
-	debugctrl.Logln("targeting server address:", TargetHost+":"+TargetPort)
-
-	return nil
+	// replace placeholders in StartServer command in ConfigRuntime
+	ConfigRuntime.Commands.StartServer = strings.ReplaceAll(ConfigRuntime.Commands.StartServer, "<Server.FileName>", ConfigRuntime.Server.FileName)
+	ConfigRuntime.Commands.StartServer = strings.ReplaceAll(ConfigRuntime.Commands.StartServer, "<Commands.StartServerParam>", ConfigRuntime.Commands.StartServerParam)
 }
 
-// checks different parameters
-func checkConfig() error {
+// checkConfigRuntime checks different parameters in ConfigRuntime
+func checkConfigRuntime() error {
 	// check if serverFile/serverFolder exists
 	// (if config.Basic.ServerFileName == "", then it will just check if the server folder exist)
-	serverFileFolderPath := filepath.Join(Config.Server.Folder, Config.Server.FileName)
+	serverFileFolderPath := filepath.Join(ConfigRuntime.Server.Folder, ConfigRuntime.Server.FileName)
 	_, err := os.Stat(serverFileFolderPath)
 	if os.IsNotExist(err) {
 		return fmt.Errorf("checkConfig: specified server file/folder does not exist: %s", serverFileFolderPath)
@@ -138,6 +151,30 @@ func checkConfig() error {
 	if err != nil {
 		return fmt.Errorf("checkConfig: java not installed")
 	}
+
+	return nil
+}
+
+// setIpPorts reads server.properties server file and sets the correct ports
+func setIpPorts() error {
+	ListenHost = "0.0.0.0"
+	TargetHost = "127.0.0.1"
+
+	serverPropertiesFilePath := filepath.Join(ConfigRuntime.Server.Folder, "server.properties")
+	data, err := ioutil.ReadFile(serverPropertiesFilePath)
+	if err != nil {
+		return fmt.Errorf("setIpPorts: %v", err)
+	}
+
+	dataStr := string(data)
+	dataStr = strings.ReplaceAll(dataStr, "\r", "")
+	TargetPort = strings.Split(strings.Split(dataStr, "server-port=")[1], "\n")[0]
+
+	if TargetPort == ConfigRuntime.Msh.Port {
+		return fmt.Errorf("setIpPorts: TargetPort and ListenPort appear to be the same, please change one of them")
+	}
+
+	debugctrl.Logln("targeting server address:", TargetHost+":"+TargetPort)
 
 	return nil
 }

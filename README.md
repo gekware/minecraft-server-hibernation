@@ -38,7 +38,7 @@ go build .
 2. Edit the parameters in config.json as needed (*check definitions*):
     - Folder
     - FileName
-    - StartServer
+    - StartServerParam
     - StopServer
     - \* StopServerAllowKill
     - \* HibernationInfo and StartingInfo
@@ -52,7 +52,7 @@ go build .
 
 \* = it's not compulsory to modify this parameter
 
-(remember to automatically run msh at reboot)
+_remember to automatically run msh at reboot_
 
 -----
 ### DEFINITIONS:
@@ -68,8 +68,9 @@ Location of server folder and executable:
 Commands to start and stop minecraft server:
 ```yaml
 "Commands":{
-    "StartServer": "java {-Xmx1024M} {-Xms1024M} -jar serverFileName nogui",
-    "StopServer": "{stop}",
+    "StartServer": "java <Commands.StartServerParam> -jar <Server.FileName> nogui" ,
+    "StartServerParam": "-Xmx1024M -Xms1024M" ,
+    "StopServer": "stop",
     "StopServerAllowKill": 10
 }
 # if StopServerAllowKill is more than 0, then the specified number is the amount of seconds
@@ -88,6 +89,8 @@ Set to false if you don't want to check for updates
 ```yaml
 "CheckForUpdates": true
 ```
+
+_some of these parameters can be configured with command-line arguments (--help to know which)_
 -----
 ### CREDITS:  
 

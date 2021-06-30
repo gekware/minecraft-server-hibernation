@@ -69,7 +69,7 @@ func BuildMessage(format, message string) []byte {
 		messageJSON := fmt.Sprint("{",
 			"\"description\":{\"text\":\"", messageAdapted, "\"},",
 			"\"players\":{\"max\":0,\"online\":0},",
-			"\"version\":{\"name\":\"", confctrl.Config.Server.Version, "\",\"protocol\":", fmt.Sprint(confctrl.Config.Server.Protocol), "},",
+			"\"version\":{\"name\":\"", confctrl.ConfigRuntime.Server.Version, "\",\"protocol\":", fmt.Sprint(confctrl.ConfigRuntime.Server.Protocol), "},",
 			"\"favicon\":\"data:image/png;base64,", data.ServerIcon, "\"",
 			"}",
 		)
@@ -117,17 +117,22 @@ func GetVersionProtocol(data []byte) error {
 		newServerProtocol := string(bytes.Split(bytes.Split(data, []byte(",\"protocol\":"))[1], []byte("}"))[0])
 
 		// if serverVersion or serverProtocol are different from the ones specified in config.json --> update them
-		if newServerVersion != confctrl.Config.Server.Version || newServerProtocol != confctrl.Config.Server.Protocol {
+		if newServerVersion != confctrl.ConfigRuntime.Server.Version || newServerProtocol != confctrl.ConfigRuntime.Server.Protocol {
 			debugctrl.Logln(
 				"server version found!",
 				"serverVersion:", newServerVersion,
 				"serverProtocol:", newServerProtocol,
 			)
 
-			confctrl.Config.Server.Version = newServerVersion
-			confctrl.Config.Server.Protocol = newServerProtocol
+			// update the runtime config
+			confctrl.ConfigRuntime.Server.Version = newServerVersion
+			confctrl.ConfigRuntime.Server.Protocol = newServerProtocol
 
-			err := confctrl.SaveConfig()
+			// update the file config
+			confctrl.ConfigDefault.Server.Version = newServerVersion
+			confctrl.ConfigDefault.Server.Protocol = newServerProtocol
+
+			err := confctrl.SaveConfigDefault()
 			if err != nil {
 				return fmt.Errorf("GetVersionProtocol: %v", err)
 			}

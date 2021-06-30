@@ -15,7 +15,8 @@ var BytesToClients float64 = 0
 var BytesToServer float64 = 0
 
 // Debug specify if debug should be printed or not
-var Debug bool = false
+// (default is true so it will log errors before logging the config)
+var Debug bool = true
 
 // PrintDataUsage prints each second bytes/s to clients and to server.
 // [goroutine]

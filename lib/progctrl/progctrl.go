@@ -68,7 +68,7 @@ func UpdateManager(clientVersion string) {
 	respHeader := "latest version: "
 
 	for {
-		if confctrl.Config.Msh.CheckForUpdates {
+		if confctrl.ConfigRuntime.Msh.CheckForUpdates {
 			updateAvailable, onlineVersion, err := checkUpdate(v, clientVersion, respHeader)
 			if err != nil {
 				debugctrl.Logln("UpdateManager:", err.Error())
