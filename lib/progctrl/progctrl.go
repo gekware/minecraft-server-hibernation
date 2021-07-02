@@ -39,7 +39,7 @@ func InterruptListener() {
 		case "stopping":
 			// if server is correctly stopping, wait for minecraft server to exit
 			debugctrl.Logln("InterruptListener: waiting for minecraft server terminal to exit (server is stopping)")
-			servctrl.ServTerminal.Wg.Wait()
+			servctrl.ServTerm.Wg.Wait()
 		case "offline":
 			// if server is offline, then it's safe to continue
 			debugctrl.Logln("InterruptListener: minecraft server terminal already exited (server is offline)")
@@ -148,8 +148,8 @@ func notifyGameChat(deltaNotification, deltaToEnd time.Duration, notificationStr
 
 	for time.Now().Before(endT) {
 		// check if terminal is active to avoid Execute() returning an error
-		if servctrl.ServTerminal.IsActive {
-			_, err := servctrl.ServTerminal.Execute("/say "+notificationString, "notifyGameChat")
+		if servctrl.ServTerm.IsActive {
+			_, err := servctrl.ServTerm.Execute("/say "+notificationString, "notifyGameChat")
 			if err != nil {
 				debugctrl.Logln("notifyGameChat:", err.Error())
 			}

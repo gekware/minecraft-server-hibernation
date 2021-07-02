@@ -18,6 +18,9 @@ type ServTerminal struct {
 	IsActive bool
 	Wg       sync.WaitGroup
 	cmd      *exec.Cmd
+	outPipe  io.ReadCloser
+	errPipe  io.ReadCloser
+	inPipe   io.WriteCloser
 }
 
 var ServTerm *ServTerminal = &ServTerminal{}
@@ -29,11 +32,6 @@ var lastLine = make(chan string)
 const colRes string = "\033[0m"
 const colCya string = "\033[36m"
 const colYel string = "\033[33m"
-
-// minecraft server cmd pipes
-var outPipe io.ReadCloser
-var errPipe io.ReadCloser
-var inPipe io.WriteCloser
 
 // CmdStart starts a new terminal (non-blocking) and returns a servTerm object
 func CmdStart(dir, command string) error {
@@ -74,7 +72,7 @@ func (ServTerm *ServTerminal) Execute(command, origin string) (string, error) {
 		debugctrl.Logln("terminal execute:"+colYel, com, colRes, "\t(origin:", origin+")")
 
 		// write to cmd (\n indicates the enter key)
-		_, err := inPipe.Write([]byte(com + "\n"))
+		_, err := ServTerm.inPipe.Write([]byte(com + "\n"))
 		if err != nil {
 			return "", fmt.Errorf("Execute: %v", err)
 		}
@@ -95,44 +93,26 @@ func (ServTerm *ServTerminal) loadCmd(dir, command string) {
 	ServTerm.cmd.SysProcAttr = osctrl.NewProcGroupAttr()
 }
 
-// waitForExit manages term.isActive parameter and set ServStats.Status = "offline" when it exits.
-// [goroutine]
-func (ServTerm *ServTerminal) waitForExit() {
-	ServTerm.IsActive = true
-
-	// wait for printer out/err to exit
-	ServTerm.Wg.Wait()
-
-	outPipe.Close()
-	errPipe.Close()
-	inPipe.Close()
-
-	ServTerm.IsActive = false
-	debugctrl.Logln("waitForExit: terminal exited")
-
-	ServStats.Status = "offline"
-	log.Print("*** MINECRAFT SERVER IS OFFLINE!")
-}
-
 // startInteraction manages the communication from StdoutPipe/StderrPipe
 // Should be called before cmd.Start()
 // [goroutine]
 func (ServTerm *ServTerminal) startInteraction() {
-	outPipe, _ = ServTerm.cmd.StdoutPipe()
-	errPipe, _ = ServTerm.cmd.StderrPipe()
-	inPipe, _ = ServTerm.cmd.StdinPipe()
+	// set outPipe and errPipe (also inPipe, since it's needed in Execute)
+	ServTerm.outPipe, _ = ServTerm.cmd.StdoutPipe()
+	ServTerm.errPipe, _ = ServTerm.cmd.StderrPipe()
+	ServTerm.inPipe, _ = ServTerm.cmd.StdinPipe()
 
 	// add printer-out + printer-err to waitgroup
 	ServTerm.Wg.Add(2)
 
-	// print term.out
+	// print terminal StdoutPipe
 	// [goroutine]
 	go func() {
 		var line string
 
 		defer ServTerm.Wg.Done()
 
-		scanner := bufio.NewScanner(outPipe)
+		scanner := bufio.NewScanner(ServTerm.outPipe)
 
 		for scanner.Scan() {
 			line = scanner.Text()
@@ -223,14 +203,14 @@ func (ServTerm *ServTerminal) startInteraction() {
 		}
 	}()
 
-	// print term.err
+	// print terminal StderrPipe
 	// [goroutine]
 	go func() {
 		var line string
 
 		defer ServTerm.Wg.Done()
 
-		scanner := bufio.NewScanner(errPipe)
+		scanner := bufio.NewScanner(ServTerm.errPipe)
 
 		for scanner.Scan() {
 			line = scanner.Text()
@@ -238,4 +218,23 @@ func (ServTerm *ServTerminal) startInteraction() {
 			fmt.Println(colCya + line + colRes)
 		}
 	}()
+}
+
+// waitForExit manages term.isActive parameter and set ServStats.Status = "offline" when it exits.
+// [goroutine]
+func (ServTerm *ServTerminal) waitForExit() {
+	ServTerm.IsActive = true
+
+	// wait for printer out/err to exit
+	ServTerm.Wg.Wait()
+
+	ServTerm.outPipe.Close()
+	ServTerm.errPipe.Close()
+	ServTerm.inPipe.Close()
+
+	ServTerm.IsActive = false
+	debugctrl.Logln("waitForExit: terminal exited")
+
+	ServStats.Status = "offline"
+	log.Print("*** MINECRAFT SERVER IS OFFLINE!")
 }

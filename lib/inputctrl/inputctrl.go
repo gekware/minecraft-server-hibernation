@@ -70,7 +70,7 @@ func GetInput() {
 			}
 
 			// just pass the command to the minecraft server terminal
-			_, err = servctrl.ServTerminal.Execute(strings.Join(lineSplit[1:], " "), "user input")
+			_, err = servctrl.ServTerm.Execute(strings.Join(lineSplit[1:], " "), "user input")
 			if err != nil {
 				debugctrl.Logln("GetInput:", err)
 			}

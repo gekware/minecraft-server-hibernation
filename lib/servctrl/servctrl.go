@@ -86,7 +86,7 @@ func RequestStopMinecraftServer() {
 	})
 }
 
-// sigintMinecraftServerIfOnlineAfterTimeout waits for the specified time and then if the server is still online sends SIGINT to the process
+// sigintMinecraftServerIfOnlineAfterTimeout waits for the specified time and then if the server is still online, sends SIGINT to the process
 func sigintMinecraftServerIfOnlineAfterTimeout() {
 	countdown := confctrl.ConfigRuntime.Commands.StopServerAllowKill
 
