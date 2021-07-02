@@ -13,42 +13,40 @@ import (
 	"msh/lib/osctrl"
 )
 
-// ServTerm is the minecraft server terminal
-type ServTerm struct {
+// ServTerminal is the minecraft server terminal
+type ServTerminal struct {
 	IsActive bool
 	Wg       sync.WaitGroup
 	cmd      *exec.Cmd
-	out      io.ReadCloser
-	err      io.ReadCloser
-	in       io.WriteCloser
 }
 
-var ServTerminal *ServTerm = &ServTerm{}
+var ServTerm *ServTerminal = &ServTerminal{}
 
 // lastLine is a channel used to communicate the last line got from the printer function
 var lastLine = make(chan string)
 
+// constants to print color text on terminal
 const colRes string = "\033[0m"
 const colCya string = "\033[36m"
 const colYel string = "\033[33m"
 
+// minecraft server cmd pipes
+var outPipe io.ReadCloser
+var errPipe io.ReadCloser
+var inPipe io.WriteCloser
+
 // CmdStart starts a new terminal (non-blocking) and returns a servTerm object
 func CmdStart(dir, command string) error {
-	ServTerminal.loadCmd(dir, command)
+	ServTerm.loadCmd(dir, command)
 
-	err := ServTerminal.loadStdPipes()
+	go ServTerm.startInteraction()
+
+	err := ServTerm.cmd.Start()
 	if err != nil {
 		return fmt.Errorf("CmdStart: %v", err)
 	}
 
-	go ServTerminal.startInteraction()
-
-	err = ServTerminal.cmd.Start()
-	if err != nil {
-		return fmt.Errorf("CmdStart: %v", err)
-	}
-
-	go ServTerminal.waitForExit()
+	go ServTerm.waitForExit()
 
 	// initialization
 	ServStats.Status = "starting"
@@ -61,8 +59,8 @@ func CmdStart(dir, command string) error {
 
 // Execute executes a command on the specified term
 // [non-blocking]
-func (term *ServTerm) Execute(command, origin string) (string, error) {
-	if !term.IsActive {
+func (ServTerm *ServTerminal) Execute(command, origin string) (string, error) {
+	if !ServTerm.IsActive {
 		return "", fmt.Errorf("Execute: terminal not active")
 	}
 
@@ -76,7 +74,7 @@ func (term *ServTerm) Execute(command, origin string) (string, error) {
 		debugctrl.Logln("terminal execute:"+colYel, com, colRes, "\t(origin:", origin+")")
 
 		// write to cmd (\n indicates the enter key)
-		_, err := term.in.Write([]byte(com + "\n"))
+		_, err := inPipe.Write([]byte(com + "\n"))
 		if err != nil {
 			return "", fmt.Errorf("Execute: %v", err)
 		}
@@ -86,72 +84,55 @@ func (term *ServTerm) Execute(command, origin string) (string, error) {
 }
 
 // loadCmd loads cmd into server terminal
-func (term *ServTerm) loadCmd(dir, command string) {
+func (ServTerm *ServTerminal) loadCmd(dir, command string) {
 	cSplit := strings.Split(command, " ")
 
-	term.cmd = exec.Command(cSplit[0], cSplit[1:]...)
-	term.cmd.Dir = dir
+	ServTerm.cmd = exec.Command(cSplit[0], cSplit[1:]...)
+	ServTerm.cmd.Dir = dir
 
-	// launch as new process group so that signals (ex: SIGINT) are not sent also the the child process
-	term.cmd.SysProcAttr = osctrl.NewProcGroupAttr()
-}
-
-// loadStdPipes loads stdpipes into server terminal
-func (term *ServTerm) loadStdPipes() error {
-	outPipe, err := term.cmd.StdoutPipe()
-	if err != nil {
-		return fmt.Errorf("loadStdPipes: %v", err)
-	}
-	errPipe, err := term.cmd.StderrPipe()
-	if err != nil {
-		return fmt.Errorf("loadStdPipes: %v", err)
-	}
-	inPipe, err := term.cmd.StdinPipe()
-	if err != nil {
-		return fmt.Errorf("loadStdPipes: %v", err)
-	}
-
-	term.out = outPipe
-	term.err = errPipe
-	term.in = inPipe
-
-	return nil
+	// launch as new process group so that signals (ex: SIGINT) are sent to msh
+	// (not relayed to the java server child process)
+	ServTerm.cmd.SysProcAttr = osctrl.NewProcGroupAttr()
 }
 
 // waitForExit manages term.isActive parameter and set ServStats.Status = "offline" when it exits.
 // [goroutine]
-func (term *ServTerm) waitForExit() {
-	term.IsActive = true
+func (ServTerm *ServTerminal) waitForExit() {
+	ServTerm.IsActive = true
 
 	// wait for printer out/err to exit
-	term.Wg.Wait()
+	ServTerm.Wg.Wait()
 
-	term.out.Close()
-	term.err.Close()
-	term.in.Close()
+	outPipe.Close()
+	errPipe.Close()
+	inPipe.Close()
 
-	term.IsActive = false
+	ServTerm.IsActive = false
 	debugctrl.Logln("waitForExit: terminal exited")
 
 	ServStats.Status = "offline"
 	log.Print("*** MINECRAFT SERVER IS OFFLINE!")
 }
 
-// startInteraction manages the communication from term.out/term.err and input to term.in.
+// startInteraction manages the communication from StdoutPipe/StderrPipe
 // Should be called before cmd.Start()
 // [goroutine]
-func (term *ServTerm) startInteraction() {
+func (ServTerm *ServTerminal) startInteraction() {
+	outPipe, _ = ServTerm.cmd.StdoutPipe()
+	errPipe, _ = ServTerm.cmd.StderrPipe()
+	inPipe, _ = ServTerm.cmd.StdinPipe()
+
 	// add printer-out + printer-err to waitgroup
-	term.Wg.Add(2)
+	ServTerm.Wg.Add(2)
 
 	// print term.out
 	// [goroutine]
 	go func() {
 		var line string
 
-		defer term.Wg.Done()
+		defer ServTerm.Wg.Done()
 
-		scanner := bufio.NewScanner(term.out)
+		scanner := bufio.NewScanner(outPipe)
 
 		for scanner.Scan() {
 			line = scanner.Text()
@@ -247,9 +228,9 @@ func (term *ServTerm) startInteraction() {
 	go func() {
 		var line string
 
-		defer term.Wg.Done()
+		defer ServTerm.Wg.Done()
 
-		scanner := bufio.NewScanner(term.err)
+		scanner := bufio.NewScanner(errPipe)
 
 		for scanner.Scan() {
 			line = scanner.Text()

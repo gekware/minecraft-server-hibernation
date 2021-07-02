@@ -11,10 +11,8 @@ import (
 
 // StartMinecraftServer starts the minecraft server
 func StartMinecraftServer() error {
-	var err error
-
 	// start server terminal
-	err = CmdStart(confctrl.ConfigRuntime.Server.Folder, confctrl.ConfigRuntime.Commands.StartServer)
+	err := CmdStart(confctrl.ConfigRuntime.Server.Folder, confctrl.ConfigRuntime.Commands.StartServer)
 	if err != nil {
 		return fmt.Errorf("StartMinecraftServer: error starting minecraft server: %v", err)
 	}
@@ -57,7 +55,7 @@ func StopMinecraftServer(playersCheck bool) error {
 	}
 
 	// execute stop command
-	_, errExec = ServTerminal.Execute(confctrl.ConfigRuntime.Commands.StopServer, "StopMinecraftServer")
+	_, errExec = ServTerm.Execute(confctrl.ConfigRuntime.Commands.StopServer, "StopMinecraftServer")
 	if errExec != nil {
 		return fmt.Errorf("StopMinecraftServer: error executing minecraft server stop command: %v", errExec)
 	}
@@ -104,14 +102,14 @@ func sigintMinecraftServerIfOnlineAfterTimeout() {
 
 	// save world before killing the server, do not check for errors
 	debugctrl.Logln("saving word before killing the minecraft server process")
-	_, _ = ServTerminal.Execute("/save-all", "sigintMinecraftServerIfOnlineAfterTimeout")
+	_, _ = ServTerm.Execute("/save-all", "sigintMinecraftServerIfOnlineAfterTimeout")
 
 	// give time to save word
 	time.Sleep(time.Duration(10) * time.Second)
 
 	// send kill signal to server
 	debugctrl.Logln("send kill signal to minecraft server process since it won't stop normally")
-	err := ServTerminal.cmd.Process.Kill()
+	err := ServTerm.cmd.Process.Kill()
 	if err != nil {
 		debugctrl.Logln("sigintMinecraftServerIfOnlineAfterTimeout: %v", err)
 	}
