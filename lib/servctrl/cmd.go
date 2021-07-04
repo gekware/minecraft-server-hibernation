@@ -13,8 +13,10 @@ import (
 	"msh/lib/osctrl"
 )
 
-// ServTerminal is the minecraft server terminal
-type ServTerminal struct {
+var ServTerm *servTerminal = &servTerminal{}
+
+// servTerminal is the minecraft server terminal
+type servTerminal struct {
 	IsActive bool
 	Wg       sync.WaitGroup
 	cmd      *exec.Cmd
@@ -23,41 +25,46 @@ type ServTerminal struct {
 	inPipe   io.WriteCloser
 }
 
-var ServTerm *ServTerminal = &ServTerminal{}
-
 // lastLine is a channel used to communicate the last line got from the printer function
 var lastLine = make(chan string)
 
 // constants to print color text on terminal
-const colRes string = "\033[0m"
-const colCya string = "\033[36m"
-const colYel string = "\033[33m"
+const (
+	colRes string = "\033[0m"
+	colCya string = "\033[36m"
+	colYel string = "\033[33m"
+)
 
 // CmdStart starts a new terminal (non-blocking) and returns a servTerm object
 func CmdStart(dir, command string) error {
-	ServTerm.loadCmd(dir, command)
+	err := loadTerm(dir, command)
+	if err != nil {
+		return fmt.Errorf("loadTerm: %v", err)
+	}
 
-	go ServTerm.startInteraction()
+	go goPrinterOutErr()
 
-	err := ServTerm.cmd.Start()
+	err = ServTerm.cmd.Start()
 	if err != nil {
 		return fmt.Errorf("CmdStart: %v", err)
 	}
 
-	go ServTerm.waitForExit()
+	go waitForExit()
+
+	go printDataUsage()
 
 	// initialization
-	ServStats.Status = "starting"
-	ServStats.LoadProgress = "0%"
-	ServStats.PlayerCount = 0
+	Stats.Status = "starting"
+	Stats.LoadProgress = "0%"
+	Stats.PlayerCount = 0
 	log.Print("*** MINECRAFT SERVER IS STARTING!")
 
 	return nil
 }
 
-// Execute executes a command on the specified term
+// Execute executes a command on ServTerm
 // [non-blocking]
-func (ServTerm *ServTerminal) Execute(command, origin string) (string, error) {
+func Execute(command, origin string) (string, error) {
 	if !ServTerm.IsActive {
 		return "", fmt.Errorf("Execute: terminal not active")
 	}
@@ -65,7 +72,7 @@ func (ServTerm *ServTerminal) Execute(command, origin string) (string, error) {
 	commands := strings.Split(command, "\n")
 
 	for _, com := range commands {
-		if ServStats.Status != "online" {
+		if Stats.Status != "online" {
 			return "", fmt.Errorf("Execute: server not online")
 		}
 
@@ -81,27 +88,41 @@ func (ServTerm *ServTerminal) Execute(command, origin string) (string, error) {
 	return <-lastLine, nil
 }
 
-// loadCmd loads cmd into server terminal
-func (ServTerm *ServTerminal) loadCmd(dir, command string) {
+// loadTerm loads cmd/pipes into ServTerm
+func loadTerm(dir, command string) error {
 	cSplit := strings.Split(command, " ")
 
+	// set terminal cmd
 	ServTerm.cmd = exec.Command(cSplit[0], cSplit[1:]...)
 	ServTerm.cmd.Dir = dir
 
 	// launch as new process group so that signals (ex: SIGINT) are sent to msh
 	// (not relayed to the java server child process)
 	ServTerm.cmd.SysProcAttr = osctrl.NewProcGroupAttr()
+
+	// set terminal pipes
+	var err error
+	ServTerm.outPipe, err = ServTerm.cmd.StdoutPipe()
+	if err != nil {
+		return fmt.Errorf("StdoutPipe load: %v", err)
+	}
+	ServTerm.errPipe, err = ServTerm.cmd.StderrPipe()
+	if err != nil {
+		return fmt.Errorf("StdoutPipe load: %v", err)
+	}
+	ServTerm.inPipe, err = ServTerm.cmd.StdinPipe()
+	if err != nil {
+		return fmt.Errorf("StdoutPipe load: %v", err)
+	}
+
+	return nil
 }
 
-// startInteraction manages the communication from StdoutPipe/StderrPipe
-// Should be called before cmd.Start()
+// goPrinterOutErr manages the communication from StdoutPipe/StderrPipe.
+// Launches 1 goroutine to scan StdoutPipe and 1 goroutine to scan StderrPipe
+// (Should be called before cmd.Start())
 // [goroutine]
-func (ServTerm *ServTerminal) startInteraction() {
-	// set outPipe and errPipe (also inPipe, since it's needed in Execute)
-	ServTerm.outPipe, _ = ServTerm.cmd.StdoutPipe()
-	ServTerm.errPipe, _ = ServTerm.cmd.StderrPipe()
-	ServTerm.inPipe, _ = ServTerm.cmd.StdinPipe()
-
+func goPrinterOutErr() {
 	// add printer-out + printer-err to waitgroup
 	ServTerm.Wg.Add(2)
 
@@ -119,18 +140,18 @@ func (ServTerm *ServTerminal) startInteraction() {
 
 			fmt.Println(colCya + line + colRes)
 
-			if ServStats.Status == "starting" {
+			if Stats.Status == "starting" {
 				// for modded server terminal compatibility, use separate check for "INFO" and flag-word
 				// using only "INFO" and not "[Server thread/INFO]"" because paper minecraft servers don't use "[Server thread/INFO]"
 
 				// "Preparing spawn area: " -> update ServStats.LoadProgress
 				if strings.Contains(line, "INFO") && strings.Contains(line, "Preparing spawn area: ") {
-					ServStats.LoadProgress = strings.Split(strings.Split(line, "Preparing spawn area: ")[1], "\n")[0]
+					Stats.LoadProgress = strings.Split(strings.Split(line, "Preparing spawn area: ")[1], "\n")[0]
 				}
 
 				// "Done" -> set ServStats.Status = "online"
 				if strings.Contains(line, "INFO") && strings.Contains(line, "Done") {
-					ServStats.Status = "online"
+					Stats.Status = "online"
 					log.Print("*** MINECRAFT SERVER IS ONLINE!")
 
 					// launch a stopInstance so that if no players connect the server will shutdown
@@ -166,7 +187,7 @@ func (ServTerm *ServTerminal) startInteraction() {
 			 * This is enforced via checking that len(lineSplit) == 2
 			 */
 
-			if ServStats.Status == "online" && len(lineSplit) == 2 {
+			if Stats.Status == "online" && len(lineSplit) == 2 {
 
 				if strings.Contains(lineSplit[0], "INFO") {
 					switch {
@@ -178,18 +199,18 @@ func (ServTerm *ServTerminal) startInteraction() {
 					// player joins the server
 					// using "UUID of player" since minecraft server v1.12.2 does not use "joined the game"
 					case strings.Contains(lineSplit[1], "UUID of player"):
-						ServStats.PlayerCount++
-						log.Printf("*** A PLAYER JOINED THE SERVER! - %d players online", ServStats.PlayerCount)
+						Stats.PlayerCount++
+						log.Printf("*** A PLAYER JOINED THE SERVER! - %d players online", Stats.PlayerCount)
 
 					// player leaves the server
 					case strings.Contains(lineSplit[1], "left the game"):
-						ServStats.PlayerCount--
-						log.Printf("*** A PLAYER LEFT THE SERVER! - %d players online", ServStats.PlayerCount)
+						Stats.PlayerCount--
+						log.Printf("*** A PLAYER LEFT THE SERVER! - %d players online", Stats.PlayerCount)
 						RequestStopMinecraftServer()
 
 					// the server is stopping
 					case strings.Contains(lineSplit[1], "Stopping"):
-						ServStats.Status = "stopping"
+						Stats.Status = "stopping"
 						log.Print("*** MINECRAFT SERVER IS STOPPING!")
 					}
 				}
@@ -220,9 +241,9 @@ func (ServTerm *ServTerminal) startInteraction() {
 	}()
 }
 
-// waitForExit manages term.isActive parameter and set ServStats.Status = "offline" when it exits.
+// waitForExit manages ServTerm.isActive parameter and set ServStats.Status = "offline" when minecraft server process exits.
 // [goroutine]
-func (ServTerm *ServTerminal) waitForExit() {
+func waitForExit() {
 	ServTerm.IsActive = true
 
 	// wait for printer out/err to exit
@@ -235,6 +256,6 @@ func (ServTerm *ServTerminal) waitForExit() {
 	ServTerm.IsActive = false
 	debugctrl.Logln("waitForExit: terminal exited")
 
-	ServStats.Status = "offline"
+	Stats.Status = "offline"
 	log.Print("*** MINECRAFT SERVER IS OFFLINE!")
 }

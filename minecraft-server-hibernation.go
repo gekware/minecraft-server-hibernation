@@ -58,9 +58,6 @@ func main() {
 	// listen for interrupt signals
 	go progctrl.InterruptListener()
 
-	// launch printDataUsage()
-	go debugctrl.PrintDataUsage()
-
 	// launch GetInput()
 	go inputctrl.GetInput()
 

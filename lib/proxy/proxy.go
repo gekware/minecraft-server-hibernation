@@ -7,26 +7,28 @@ import (
 	"strings"
 	"time"
 
-	"msh/lib/asyncctrl"
 	"msh/lib/confctrl"
 	"msh/lib/debugctrl"
+	"msh/lib/servctrl"
 	"msh/lib/servprotocol"
 )
 
 // Forward takes a source and a destination net.Conn and forwards them.
 // (isServerToClient used to know the forward direction).
 // [goroutine]
-func Forward(source, destination net.Conn, isServerToClient bool, stopSig *bool) {
+func Forward(source, destination net.Conn, isServerToClient bool, stopC chan bool) {
 	data := make([]byte, 1024)
 
 	// set to false after the first for cycle
 	firstBuffer := true
 
 	for {
-		if *stopSig {
-			// if stopSig is true, close the source connection
+		// if stopC receives true, close the source connection, otherwise continue
+		select {
+		case <-stopC:
 			source.Close()
-			break
+			return
+		default:
 		}
 
 		// update read and write timeout
@@ -44,9 +46,9 @@ func Forward(source, destination net.Conn, isServerToClient bool, stopSig *bool)
 			}
 
 			// close the source connection
-			asyncctrl.WithLock(func() { *stopSig = true })
+			stopC <- true
 			source.Close()
-			break
+			return
 		}
 
 		// write data to destination
@@ -54,13 +56,13 @@ func Forward(source, destination net.Conn, isServerToClient bool, stopSig *bool)
 
 		// calculate bytes/s to client/server
 		if debugctrl.Debug {
-			asyncctrl.WithLock(func() {
-				if isServerToClient {
-					debugctrl.BytesToClients = debugctrl.BytesToClients + float64(dataLen)
-				} else {
-					debugctrl.BytesToServer = debugctrl.BytesToServer + float64(dataLen)
-				}
-			})
+			servctrl.Stats.M.Lock()
+			if isServerToClient {
+				servctrl.Stats.BytesToClients = servctrl.Stats.BytesToClients + float64(dataLen)
+			} else {
+				servctrl.Stats.BytesToServer = servctrl.Stats.BytesToServer + float64(dataLen)
+			}
+			servctrl.Stats.M.Unlock()
 		}
 
 		// version/protocol are only found in serverToClient connection in the first buffer that is read

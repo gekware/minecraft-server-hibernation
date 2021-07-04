@@ -2,9 +2,9 @@ package servctrl
 
 import (
 	"fmt"
+	"sync/atomic"
 	"time"
 
-	"msh/lib/asyncctrl"
 	"msh/lib/confctrl"
 	"msh/lib/debugctrl"
 )
@@ -27,11 +27,11 @@ func StopMinecraftServer(playersCheck bool) error {
 	var errExec error
 
 	// wait for the starting server to go online
-	for ServStats.Status == "starting" {
+	for Stats.Status == "starting" {
 		time.Sleep(1 * time.Second)
 	}
 	// if server is not online return
-	if ServStats.Status != "online" {
+	if Stats.Status != "online" {
 		return fmt.Errorf("StopMinecraftServer: server is not online")
 	}
 
@@ -39,7 +39,7 @@ func StopMinecraftServer(playersCheck bool) error {
 	if playersCheck {
 		// check that there is only one "stop server command" instance running and players <= 0,
 		// if so proceed with server shutdown
-		asyncctrl.WithLock(func() { ServStats.StopInstances-- })
+		atomic.AddInt32(&Stats.StopInstances, -1)
 
 		// check how many players are on the server
 		playerCount, isFromServer := CountPlayerSafe()
@@ -49,13 +49,14 @@ func StopMinecraftServer(playersCheck bool) error {
 		}
 
 		// check if enough time has passed since last player disconnected
-		if asyncctrl.WithLock(func() interface{} { return ServStats.StopInstances > 0 }).(bool) {
-			return fmt.Errorf("StopMinecraftServer: not enough time has passed since last player disconnected (StopInstances: %d)", ServStats.StopInstances)
+
+		if atomic.LoadInt32(&Stats.StopInstances) > 0 {
+			return fmt.Errorf("StopMinecraftServer: not enough time has passed since last player disconnected (StopInstances: %d)", Stats.StopInstances)
 		}
 	}
 
 	// execute stop command
-	_, errExec = ServTerm.Execute(confctrl.ConfigRuntime.Commands.StopServer, "StopMinecraftServer")
+	_, errExec = Execute(confctrl.ConfigRuntime.Commands.StopServer, "StopMinecraftServer")
 	if errExec != nil {
 		return fmt.Errorf("StopMinecraftServer: error executing minecraft server stop command: %v", errExec)
 	}
@@ -71,7 +72,7 @@ func StopMinecraftServer(playersCheck bool) error {
 // RequestStopMinecraftServer increases stopInstances by one and starts the timer to execute StopMinecraftServer(false)
 // [goroutine]
 func RequestStopMinecraftServer() {
-	asyncctrl.WithLock(func() { ServStats.StopInstances++ })
+	atomic.AddInt32(&Stats.StopInstances, 1)
 
 	// [goroutine]
 	time.AfterFunc(time.Duration(confctrl.ConfigRuntime.Msh.TimeBeforeStoppingEmptyServer)*time.Second, func() {
@@ -92,7 +93,7 @@ func sigintMinecraftServerIfOnlineAfterTimeout() {
 
 	for countdown > 0 {
 		// if server goes offline it's the correct behaviour -> return
-		if ServStats.Status == "offline" {
+		if Stats.Status == "offline" {
 			return
 		}
 
@@ -102,7 +103,7 @@ func sigintMinecraftServerIfOnlineAfterTimeout() {
 
 	// save world before killing the server, do not check for errors
 	debugctrl.Logln("saving word before killing the minecraft server process")
-	_, _ = ServTerm.Execute("/save-all", "sigintMinecraftServerIfOnlineAfterTimeout")
+	_, _ = Execute("/save-all", "sigintMinecraftServerIfOnlineAfterTimeout")
 
 	// give time to save word
 	time.Sleep(time.Duration(10) * time.Second)
