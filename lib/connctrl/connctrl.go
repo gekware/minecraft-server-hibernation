@@ -40,12 +40,12 @@ func HandleClientSocket(clientSocket net.Conn) {
 			if servctrl.Stats.Status == "offline" {
 				log.Printf("*** player unknown requested server info from %s:%s to %s:%s\n", clientAddress, confctrl.ConfigRuntime.Msh.Port, confctrl.TargetHost, confctrl.TargetPort)
 				// answer to client with emulated server info
-				clientSocket.Write(servprotocol.BuildMessage("info", confctrl.ConfigRuntime.Msh.HibernationInfo))
+				clientSocket.Write(servprotocol.BuildMessage("info", confctrl.ConfigRuntime.Msh.InfoHibernation))
 
 			} else if servctrl.Stats.Status == "starting" {
 				log.Printf("*** player unknown requested server info from %s:%s to %s:%s during server startup\n", clientAddress, confctrl.ConfigRuntime.Msh.Port, confctrl.TargetHost, confctrl.TargetPort)
 				// answer to client with emulated server info
-				clientSocket.Write(servprotocol.BuildMessage("info", confctrl.ConfigRuntime.Msh.StartingInfo))
+				clientSocket.Write(servprotocol.BuildMessage("info", confctrl.ConfigRuntime.Msh.InfoStarting))
 			}
 
 			// answer to client with ping

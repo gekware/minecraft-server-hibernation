@@ -14,9 +14,9 @@
   "Msh": {
     "CheckForUpdates": true,
     "Debug": false,
-    "HibernationInfo": "                   \u0026fserver status:\n                   \u0026b\u0026lHIBERNATING",
+    "InfoHibernation": "                   \u0026fserver status:\n                   \u0026b\u0026lHIBERNATING",
+    "InfoStarting": "                   \u0026fserver status:\n                    \u00266\u0026lWARMING UP",
     "Port": "25555",
-    "StartingInfo": "                   \u0026fserver status:\n                    \u00266\u0026lWARMING UP",
     "TimeBeforeStoppingEmptyServer": 60
   }
 }

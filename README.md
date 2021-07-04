@@ -76,10 +76,10 @@ Commands to start and stop minecraft server:
 # if StopServerAllowKill is more than 0, then the specified number is the amount of seconds
 # given to the minecraft server to go offline, after which it is killed
 ```
-Hibernation and warming up server description
+Hibernation and Starting server description
 ```yaml
-"HibernationInfo": "                   \u0026fserver status:\n                   \u0026b\u0026lHIBERNATING",
-"StartingInfo": "                   \u0026fserver status:\n                    \u00266\u0026lWARMING UP"
+"InfoHibernation": "                   \u0026fserver status:\n                   \u0026b\u0026lHIBERNATING",
+"InfoStarting": "                   \u0026fserver status:\n                    \u00266\u0026lWARMING UP"
 ```
 *60 seconds* is the time (after the last player disconnected) that the script waits before shutting down the minecraft server
 ```yaml

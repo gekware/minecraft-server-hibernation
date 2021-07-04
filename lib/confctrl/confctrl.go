@@ -41,9 +41,9 @@ type configuration struct {
 	Msh struct {
 		CheckForUpdates               bool   `json:"CheckForUpdates"`
 		Debug                         bool   `json:"Debug"`
-		HibernationInfo               string `json:"HibernationInfo"`
+		InfoHibernation               string `json:"InfoHibernation"`
 		Port                          string `json:"Port"`
-		StartingInfo                  string `json:"StartingInfo"`
+		InfoStarting                  string `json:"InfoStarting"`
 		TimeBeforeStoppingEmptyServer int64  `json:"TimeBeforeStoppingEmptyServer"`
 	} `json:"Msh"`
 }
@@ -118,8 +118,8 @@ func setUpConfigRuntime() {
 	flag.StringVar(&ConfigRuntime.Commands.StartServerParam, "P", ConfigRuntime.Commands.StartServerParam, "Specify start server parameters.")
 
 	flag.StringVar(&ConfigRuntime.Msh.Port, "p", ConfigRuntime.Msh.Port, "Specify msh port.")
-	flag.StringVar(&ConfigRuntime.Msh.HibernationInfo, "h", ConfigRuntime.Msh.HibernationInfo, "Specify hibernation info.")
-	flag.StringVar(&ConfigRuntime.Msh.StartingInfo, "s", ConfigRuntime.Msh.StartingInfo, "Specify starting info.")
+	flag.StringVar(&ConfigRuntime.Msh.InfoHibernation, "h", ConfigRuntime.Msh.InfoHibernation, "Specify hibernation info.")
+	flag.StringVar(&ConfigRuntime.Msh.InfoStarting, "s", ConfigRuntime.Msh.InfoStarting, "Specify starting info.")
 	flag.BoolVar(&ConfigRuntime.Msh.Debug, "d", ConfigRuntime.Msh.Debug, "Set debug to true.")
 
 	// specify the usage when there is an error in the arguments
