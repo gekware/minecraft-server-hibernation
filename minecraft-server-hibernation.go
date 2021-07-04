@@ -68,10 +68,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	defer func() {
-		listener.Close()
-	}()
-
 	log.Println("*** listening for new clients to connect on " + confctrl.ListenHost + ":" + confctrl.ConfigRuntime.Msh.Port + " ...")
 
 	// infinite cycle to accept clients. when a clients connects it is passed to handleClientSocket()
