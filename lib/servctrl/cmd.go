@@ -154,7 +154,7 @@ func goPrinterOutErr() {
 					Stats.Status = "online"
 					log.Print("*** MINECRAFT SERVER IS ONLINE!")
 
-					// launch a stopInstance so that if no players connect the server will shutdown
+					// launch a StopMSRequests so that if no players connect the server will shutdown
 					StopMSRequest()
 				}
 			}

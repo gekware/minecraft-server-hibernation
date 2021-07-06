@@ -21,7 +21,7 @@ func StartMS() error {
 }
 
 // StopMS stops the minecraft server.
-// When playersCheck == true, it checks for StopInstancesa/Players and orders the server shutdown
+// When playersCheck == true, it checks for StopMSRequests/Players and orders the server shutdown
 func StopMS(playersCheck bool) error {
 	// error that returns from Execute() when executing the stop command
 	var errExec error
@@ -35,9 +35,9 @@ func StopMS(playersCheck bool) error {
 		return fmt.Errorf("StopMS: server is not online")
 	}
 
-	// player/stopInstances check
+	// player/StopMSRequests check
 	if playersCheck {
-		// check that there is only one "stop server command" instance running and players <= 0,
+		// check that there is only one StopMSRequest running and players <= 0,
 		// if so proceed with server shutdown
 		atomic.AddInt32(&Stats.StopMSRequests, -1)
 
@@ -51,7 +51,7 @@ func StopMS(playersCheck bool) error {
 		// check if enough time has passed since last player disconnected
 
 		if atomic.LoadInt32(&Stats.StopMSRequests) > 0 {
-			return fmt.Errorf("StopMS: not enough time has passed since last player disconnected (StopInstances: %d)", Stats.StopMSRequests)
+			return fmt.Errorf("StopMS: not enough time has passed since last player disconnected (StopMSRequests: %d)", Stats.StopMSRequests)
 		}
 	}
 
@@ -69,22 +69,24 @@ func StopMS(playersCheck bool) error {
 	return nil
 }
 
-// StopMSRequest increases stopInstances by one and starts the timer to execute StopMS(false)
+// StopMSRequest increases StopMSRequests by one and starts the timer to execute StopMS(false)
 // [goroutine]
-func StopMSRequest() { // !!! + cambiare tutti i minecraft server a MS
+func StopMSRequest() {
 	atomic.AddInt32(&Stats.StopMSRequests, 1)
 
 	// [goroutine]
-	time.AfterFunc(time.Duration(confctrl.ConfigRuntime.Msh.TimeBeforeStoppingEmptyServer)*time.Second, func() {
-		err := StopMS(true)
-		if err != nil {
-			// avoid printing "server is not online" error since it can be very frequent
-			// when updating the logging system this could be managed by logging it only at certain log levels
-			if err.Error() != "StopMS: server is not online" {
-				debugctrl.Logln("StopMSRequest:", err)
+	time.AfterFunc(
+		time.Duration(confctrl.ConfigRuntime.Msh.TimeBeforeStoppingEmptyServer)*time.Second,
+		func() {
+			err := StopMS(true)
+			if err != nil {
+				// avoid printing "server is not online" error since it can be very frequent
+				// when updating the logging system this could be managed by logging it only at certain log levels
+				if err.Error() != "StopMS: server is not online" {
+					debugctrl.Logln("StopMSRequest:", err)
+				}
 			}
-		}
-	})
+		})
 }
 
 // killMSifOnlineAfterTimeout waits for the specified time and then if the server is still online, kills the server process
