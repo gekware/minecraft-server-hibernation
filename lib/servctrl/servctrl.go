@@ -69,7 +69,7 @@ func StopMS(playersCheck bool) error {
 	return nil
 }
 
-// StopMSRequest increases StopMSRequests by one and starts the timer to execute StopMS(false)
+// StopMSRequest increases StopMSRequests by one and starts the timer to execute StopMS(true) (with playersCheck)
 // [goroutine]
 func StopMSRequest() {
 	atomic.AddInt32(&Stats.StopMSRequests, 1)
