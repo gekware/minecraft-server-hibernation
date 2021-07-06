@@ -89,8 +89,8 @@ func HandleClientSocket(clientSocket net.Conn) {
 			}
 
 			if servctrl.Stats.Status == "offline" {
-				// client is trying to join the server and serverStatus == "offline" --> issue startMinecraftServer()
-				err = servctrl.StartMinecraftServer()
+				// client is trying to join the server and serverStatus == "offline" --> issue StartMS()
+				err = servctrl.StartMS()
 				if err != nil {
 					// log to msh console and warn client with text in the loadscreen
 					debugctrl.Logln("HandleClientSocket:", err)

@@ -155,7 +155,7 @@ func goPrinterOutErr() {
 					log.Print("*** MINECRAFT SERVER IS ONLINE!")
 
 					// launch a stopInstance so that if no players connect the server will shutdown
-					RequestStopMinecraftServer()
+					StopMSRequest()
 				}
 			}
 
@@ -206,7 +206,7 @@ func goPrinterOutErr() {
 					case strings.Contains(lineSplit[1], "left the game"):
 						Stats.PlayerCount--
 						log.Printf("*** A PLAYER LEFT THE SERVER! - %d players online", Stats.PlayerCount)
-						RequestStopMinecraftServer()
+						StopMSRequest()
 
 					// the server is stopping
 					case strings.Contains(lineSplit[1], "Stopping"):

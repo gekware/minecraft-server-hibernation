@@ -14,8 +14,9 @@ type serverStats struct {
 	Status string
 	// PlayerCount keeps track of players connected to the server
 	PlayerCount int
-	// StopInstances keeps track of how many times StopMinecraftServer() has been called in the last {TimeBeforeStoppingEmptyServer} seconds
-	StopInstances int32
+	// StopMSRequests keeps track of how many times StopMSRequest() has been called in the last {TimeBeforeStoppingEmptyServer} seconds.
+	// (It's an int32 variable to allow for atomic operations)
+	StopMSRequests int32
 	// LoadProgress indicates the loading percentage while the server is starting
 	LoadProgress string
 	// BytesToClients tracks bytes/s server->clients
@@ -32,7 +33,7 @@ func init() {
 		M:              &sync.Mutex{},
 		Status:         "offline",
 		PlayerCount:    0,
-		StopInstances:  0,
+		StopMSRequests: 0,
 		LoadProgress:   "0%",
 		BytesToClients: 0,
 		BytesToServer:  0,
@@ -53,7 +54,6 @@ func printDataUsage() {
 			Stats.M.Unlock()
 		}
 
-		// time.AfterFunc(1*time.Second, func() { printDataUsage(n + 1) })
 		time.Sleep(time.Second)
 	}
 }

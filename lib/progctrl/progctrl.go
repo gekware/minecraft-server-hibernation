@@ -29,7 +29,7 @@ func InterruptListener() {
 		<-c
 
 		// stop the minecraft server with no player check
-		err := servctrl.StopMinecraftServer(false)
+		err := servctrl.StopMS(false)
 		if err != nil {
 			debugctrl.Logln("InterruptListener:", err)
 		}
