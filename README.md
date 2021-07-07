@@ -90,8 +90,10 @@ Set to false if you don't want to check for updates
 "CheckForUpdates": true
 ```
 
-_some of these parameters can be configured with command-line arguments (--help to know which)_
+_Some of these parameters can be configured with command-line arguments (--help to know which)_
+
 -----
+
 ### CREDITS:  
 
 Author: [gekigek99](https://github.com/gekigek99)  
