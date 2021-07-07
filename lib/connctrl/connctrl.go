@@ -57,13 +57,14 @@ func HandleClientSocket(clientSocket net.Conn) {
 
 		// the client first message is [data, listenPortBytes, 2] or [data, listenPortBytes, 2, playerNameData] -->
 		// the client is trying to join the server
-		listenPortInt, err := strconv.Atoi(confctrl.ConfigRuntime.Msh.Port)
+		listenPortUint64, err := strconv.ParseUint(confctrl.ConfigRuntime.Msh.Port, 10, 16) // bitSize: 16 -> since it will be converted to Uint16
 		if err != nil {
-			debugctrl.Logln("handleClientSocket: error during ListenPort conversion to int")
+			debugctrl.Logln("handleClientSocket: error during ListenPort conversion to uint64")
 		}
+		listenPortUint16 := uint16(listenPortUint64)
 		listenPortBytes := make([]byte, 2)
-		binary.BigEndian.PutUint16(listenPortBytes, uint16(listenPortInt)) // 25555 ->	[99 211] / hex[63 D3]
-		listenPortJoinBytes := append(listenPortBytes, byte(2))            // 			[99 211 2] / hex[63 D3 2]
+		binary.BigEndian.PutUint16(listenPortBytes, listenPortUint16) // 25555 ->	[99 211] / hex[63 D3]
+		listenPortJoinBytes := append(listenPortBytes, byte(2))       // 			[99 211 2] / hex[63 D3 2]
 
 		if bytes.Contains(buffer[:dataLen], listenPortJoinBytes) {
 			var playerName string
