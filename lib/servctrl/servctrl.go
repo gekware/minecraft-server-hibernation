@@ -108,7 +108,7 @@ func killMSifOnlineAfterTimeout() {
 	_, _ = Execute("/save-all", "killMSifOnlineAfterTimeout")
 
 	// give time to save word
-	time.Sleep(time.Duration(10) * time.Second)
+	time.Sleep(10 * time.Second)
 
 	// send kill signal to server
 	debugctrl.Logln("send kill signal to minecraft server process since it won't stop normally")
