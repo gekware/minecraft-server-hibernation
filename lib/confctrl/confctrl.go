@@ -39,11 +39,11 @@ type configuration struct {
 		StopServerAllowKill int    `json:"StopServerAllowKill"`
 	} `json:"Commands"`
 	Msh struct {
-		CheckForUpdates               bool   `json:"CheckForUpdates"`
 		Debug                         bool   `json:"Debug"`
 		InfoHibernation               string `json:"InfoHibernation"`
-		Port                          string `json:"Port"`
 		InfoStarting                  string `json:"InfoStarting"`
+		NotifyUpdate                  bool   `json:"NotifyUpdate"`
+		Port                          string `json:"Port"`
 		TimeBeforeStoppingEmptyServer int64  `json:"TimeBeforeStoppingEmptyServer"`
 	} `json:"Msh"`
 }

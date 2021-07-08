@@ -78,27 +78,24 @@ func UpdateManager(clientVersion string) {
 	respHeader := "latest version: "
 
 	for {
-		if confctrl.ConfigRuntime.Msh.CheckForUpdates {
-			status, onlineVersion, err := checkUpdate(v, clientVersion, respHeader)
-			if err != nil {
-				debugctrl.Logln("UpdateManager:", err.Error())
-			}
+		status, onlineVersion, err := checkUpdate(v, clientVersion, respHeader)
+		if err != nil {
+			debugctrl.Logln("UpdateManager:", err.Error())
+		}
 
-			var notificationString string
+		if confctrl.ConfigRuntime.Msh.NotifyUpdate {
 			switch status {
 			case UPDATED:
-				notificationString = "*** msh " + clientVersion + " is updated ***"
+				fmt.Println("*** msh " + clientVersion + " is updated ***")
 			case UPDATEAVAILABLE:
-				notificationString = "*** msh " + onlineVersion + " is now available: visit github to update! ***"
+				notification := "*** msh " + onlineVersion + " is now available: visit github to update! ***"
+				fmt.Println(notification)
 
 				// notify to game chat every 20 minutes for deltaT time
-				go notifyGameChat(20*time.Minute, deltaT, notificationString)
+				go notifyGameChat(20*time.Minute, deltaT, notification)
 			case UNOFFICIALVERSION:
-				notificationString = "*** msh " + clientVersion + " is running an unofficial release ***"
+				fmt.Println("*** msh " + clientVersion + " is running an unofficial release ***")
 			}
-
-			// notify on msh terminal
-			fmt.Println(notificationString)
 		}
 
 		select {
@@ -132,7 +129,7 @@ func checkUpdate(v, clientVersion, respHeader string) (int, string, error) {
 	req.Header.Add("User-Agent", "msh ("+userAgentOs+") msh/"+clientVersion)
 
 	// execute http request
-	client := &http.Client{}
+	client := &http.Client{Timeout: 3 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
 		return ERROR, "error", fmt.Errorf("checkUpdate: %v", err)
