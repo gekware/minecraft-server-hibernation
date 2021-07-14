@@ -86,15 +86,15 @@ func UpdateManager(clientVersion string) {
 		if confctrl.ConfigRuntime.Msh.NotifyUpdate {
 			switch status {
 			case UPDATED:
-				fmt.Println("*** msh " + clientVersion + " is updated ***")
+				fmt.Println("*** msh (" + clientVersion + ") is updated ***")
 			case UPDATEAVAILABLE:
-				notification := "*** msh " + onlineVersion + " is now available: visit github to update! ***"
+				notification := "*** msh (" + onlineVersion + ") is now available: visit github to update! ***"
 				fmt.Println(notification)
 
 				// notify to game chat every 20 minutes for deltaT time
 				go notifyGameChat(20*time.Minute, deltaT, notification)
 			case UNOFFICIALVERSION:
-				fmt.Println("*** msh " + clientVersion + " is running an unofficial release ***")
+				fmt.Println("*** msh (" + clientVersion + ") is running an unofficial release ***")
 			}
 		}
 
@@ -129,7 +129,7 @@ func checkUpdate(v, clientVersion, respHeader string) (int, string, error) {
 	req.Header.Add("User-Agent", "msh ("+userAgentOs+") msh/"+clientVersion)
 
 	// execute http request
-	client := &http.Client{Timeout: 3 * time.Second}
+	client := &http.Client{Timeout: 4 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
 		return ERROR, "error", fmt.Errorf("checkUpdate: %v", err)
@@ -146,30 +146,29 @@ func checkUpdate(v, clientVersion, respHeader string) (int, string, error) {
 	onlineVersion := strings.ReplaceAll(string(respByte), respHeader, "")
 
 	// check which version is more recent
-	res, err := compareVersion(clientVersion, onlineVersion)
+	delta, err := deltaVersion(onlineVersion, clientVersion)
 	if err != nil {
 		return ERROR, "error", fmt.Errorf("checkUpdate: %v", err)
 	}
 
-	switch res {
-	case -1:
+	switch {
+	case delta > 0:
 		// an update is available
 		return UPDATEAVAILABLE, onlineVersion, nil
-	case 1:
+	case delta < 0:
 		// the runtime version has not yet been officially released
-		return UNOFFICIALVERSION, clientVersion, nil
+		return UNOFFICIALVERSION, onlineVersion, nil
 	default:
 		// no update available
-		return UPDATED, clientVersion, nil
+		return UPDATED, onlineVersion, nil
 	}
 }
 
-// compareVersion returns:
-// -2	an error occurred.
-// -1	if the first version parameter is smaller.
-// 0	if the first version parameter is equale.
-// +1	if the first version parameter is greater.
-func compareVersion(clientVersion, onlineVersion string) (int, error) {
+// deltaVersion returns the difference between onlineVersion and clientVersion:
+// =0	versions are equal or an error occurred.
+// >0	if onlineVersion is more recent.
+// <0	if onlineVersion is less recent.
+func deltaVersion(onlineVersion, clientVersion string) (int, error) {
 	// digitize transforms a string "vx.x.x" into an integer x000x000x000
 	digitize := func(Version string) (int, error) {
 		versionInt := 0
@@ -179,7 +178,7 @@ func compareVersion(clientVersion, onlineVersion string) (int, error) {
 		for n, digit := range versionSplit {
 			digitInt, err := strconv.Atoi(digit)
 			if err != nil {
-				return -2, err
+				return 0, err
 			}
 			versionInt += digitInt * int(math.Pow(1000, float64(len(versionSplit)-n)))
 		}
@@ -189,21 +188,14 @@ func compareVersion(clientVersion, onlineVersion string) (int, error) {
 
 	clientVersionInt, err := digitize(clientVersion)
 	if err != nil {
-		return -2, fmt.Errorf("compareVersion: %v", err)
+		return 0, fmt.Errorf("compareVersion: %v", err)
 	}
 	onlineVersionInt, err := digitize(onlineVersion)
 	if err != nil {
-		return -2, fmt.Errorf("compareVersion: %v", err)
+		return 0, fmt.Errorf("compareVersion: %v", err)
 	}
 
-	switch {
-	case clientVersionInt < onlineVersionInt:
-		return -1, nil
-	case clientVersionInt > onlineVersionInt:
-		return 1, nil
-	default:
-		return 0, nil
-	}
+	return onlineVersionInt - clientVersionInt, nil
 }
 
 // notifyGameChat sends a string with the command "/say"
