@@ -198,7 +198,7 @@ func deltaVersion(onlineVersion, clientVersion string) (int, error) {
 	return onlineVersionInt - clientVersionInt, nil
 }
 
-// notifyGameChat sends a string with the command "/say"
+// notifyGameChat sends a string with the command "say"
 // every specified amount of time for a specified amount of time
 // [goroutine]
 func notifyGameChat(deltaNotification, deltaToEnd time.Duration, notificationString string) {
@@ -207,7 +207,7 @@ func notifyGameChat(deltaNotification, deltaToEnd time.Duration, notificationStr
 	for time.Now().Before(endT) {
 		// check if terminal is active to avoid Execute() returning an error
 		if servctrl.ServTerm.IsActive {
-			_, err := servctrl.Execute("/say "+notificationString, "notifyGameChat")
+			_, err := servctrl.Execute("say "+notificationString, "notifyGameChat")
 			if err != nil {
 				debugctrl.Logln("notifyGameChat:", err.Error())
 			}

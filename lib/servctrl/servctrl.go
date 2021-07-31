@@ -105,7 +105,7 @@ func killMSifOnlineAfterTimeout() {
 
 	// save world before killing the server, do not check for errors
 	debugctrl.Logln("saving word before killing the minecraft server process")
-	_, _ = Execute("/save-all", "killMSifOnlineAfterTimeout")
+	_, _ = Execute("save-all", "killMSifOnlineAfterTimeout")
 
 	// give time to save word
 	time.Sleep(10 * time.Second)

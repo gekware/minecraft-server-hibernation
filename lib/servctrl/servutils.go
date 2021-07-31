@@ -27,7 +27,7 @@ func CountPlayerSafe() (int, bool) {
 
 // getPlayersByListCom returns the number of players using the /list command
 func getPlayersByListCom() (int, error) {
-	outStr, err := Execute("/list", "getPlayersByListCom")
+	outStr, err := Execute("list", "getPlayersByListCom")
 	if err != nil {
 		return 0, fmt.Errorf("getPlayersByListCom: %v", err)
 	}
