@@ -159,33 +159,27 @@ func goPrinterOutErr() {
 				}
 			}
 
-			/*
-			 * It is possible that a player could send a message that contains text similar to server output:
-			 *		[14:08:43] [Server thread/INFO]: <player> : Stopping
-			 * 		[14:09:12] [Server thread/INFO]: <player> ]: Stopping
-			 * 		[14:09:32] [Server thread/INFO]: [player] : Stopping
-			 * 		[14:09:46] [Server thread/INFO]: [player: Stopping the server]
-			 *
-			 * When these variations are actually the server logging its shutdown:
-			 * 		[14:09:46] [Server thread/INFO]: Stopping the server
-			 *		[15Mar2021 14:09:46.581] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Stopping the server
-			 *
-			 * One way to handle this is to split the line in two parts:
-			 */
+			// It is possible that a player could send a message that contains text similar to server output:
+			// 		[14:08:43] [Server thread/INFO]: <player> Stopping
+			// 		[14:09:32] [Server thread/INFO]: [player] Stopping
+			//
+			// These are the correct shutdown logs:
+			// 		[14:09:46] [Server thread/INFO]: Stopping the server
+			// 		[15Mar2021 14:09:46.581] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Stopping the server
+			//
+			// lineSplit is therefore implemented:
 
 			var lineSplit = strings.SplitN(line, ": ", 2)
 
-			/*
-			 * lineSplit[0] is the log's "header" (e.g. "[14:09:46] [Server thread/INFO]")
-			 * lineSplit[1] is the log's "content" (e.g. "<player> ciao" or "Stopping the server")
-			 *
-			 * Since lineSplit[1] starts immediately after ": ",
-			 * comparison can be done using Strings.HasPrefix (or even direct '==' comparison)
-			 *
-			 * If line does not contain ": ", there is no reason to check it
-			 * (it does not adhere to expected log format or it is a multiline java exception)
-			 * This is enforced via checking that len(lineSplit) == 2
-			 */
+			// lineSplit[0] is the log's "header" (e.g. "[14:09:46] [Server thread/INFO]")
+			// lineSplit[1] is the log's "content" (e.g. "<player> ciao" or "Stopping the server")
+			//
+			// Since lineSplit[1] starts immediately after ": ",
+			// comparison can be done using Strings.HasPrefix (or even direct '==' comparison)
+			//
+			// If line does not contain ": ", there is no reason to check it
+			// (it does not adhere to expected log format or it is a multiline java exception)
+			// This is enforced via checking that len(lineSplit) == 2
 
 			if Stats.Status == "online" && len(lineSplit) == 2 {
 
@@ -203,7 +197,9 @@ func goPrinterOutErr() {
 						log.Printf("*** A PLAYER JOINED THE SERVER! - %d players online", Stats.PlayerCount)
 
 					// player leaves the server
-					case strings.Contains(lineSplit[1], "left the game"):
+					// using "lost connection: " (instead of "left the game") because it's more general
+					// (case of forced disconnection, check issue #116)
+					case strings.Contains(lineSplit[1], "lost connection: "):
 						Stats.PlayerCount--
 						log.Printf("*** A PLAYER LEFT THE SERVER! - %d players online", Stats.PlayerCount)
 						StopMSRequest()
