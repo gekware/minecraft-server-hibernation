@@ -197,9 +197,9 @@ func goPrinterOutErr() {
 						log.Printf("*** A PLAYER JOINED THE SERVER! - %d players online", Stats.PlayerCount)
 
 					// player leaves the server
-					// using "lost connection: " (instead of "left the game") because it's more general
+					// using "lost connection" (instead of "left the game") because it's more general
 					// (case of forced disconnection, check issue #116)
-					case strings.Contains(lineSplit[1], "lost connection: "):
+					case strings.Contains(lineSplit[1], "lost connection"):
 						Stats.PlayerCount--
 						log.Printf("*** A PLAYER LEFT THE SERVER! - %d players online", Stats.PlayerCount)
 						StopMSRequest()
