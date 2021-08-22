@@ -42,8 +42,6 @@ How to use:
     - FileName
     - StartServer
     - StopServer
-    - Version
-    - Protocol
     - \* StopServerForce
     - \* HibernationInfo and StartingInfo
     - \* TimeBeforeStoppingEmptyServer
@@ -62,13 +60,13 @@ How to use:
 ### DEFINITIONS:
 _only text in braces needs to be modified (remember to remove all braces)_
 
-Location of server folder, executable, server version and protocol number. You can find protocol numbers [here](https://wiki.vg/Protocol_version_numbers) :
+Location of server folder and executable. You can find protocol/version [here](https://wiki.vg/Protocol_version_numbers) (but msh should set them automatically):
 ```yaml
 "Server":{
   "Folder": "{path/to/server/folder}",
   "FileName": "{server.jar}",
-  "Version": "{1.17.1}",
-  "Protocol": "{756}"
+  "Version": "1.17.1",
+  "Protocol": "756"
 }
 ```
 Commands to start and stop minecraft server:
