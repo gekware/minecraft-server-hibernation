@@ -3,10 +3,12 @@ package progctrl
 import (
 	"fmt"
 	"io/ioutil"
+	"math"
 	"net/http"
 	"os"
 	"os/signal"
 	"runtime"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -22,21 +24,46 @@ func InterruptListener() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 
-	// wait for termination signal
-	<-c
+	for {
+		// wait for termination signal
+		<-c
 
-	// stop forcefully the minecraft server
-	err := servctrl.StopMinecraftServer(true)
-	if err != nil {
-		debugctrl.Logln("InterruptListener:", err)
+		// stop the minecraft server with no player check
+		err := servctrl.StopMS(false)
+		if err != nil {
+			debugctrl.Logln("InterruptListener:", err)
+		}
+
+		// wait 1 second to let the server go into stopping mode
+		time.Sleep(time.Second)
+
+		switch servctrl.Stats.Status {
+		case "stopping":
+			// if server is correctly stopping, wait for minecraft server to exit
+			debugctrl.Logln("InterruptListener: waiting for minecraft server terminal to exit (server is stopping)")
+			servctrl.ServTerm.Wg.Wait()
+		case "offline":
+			// if server is offline, then it's safe to continue
+			debugctrl.Logln("InterruptListener: minecraft server terminal already exited (server is offline)")
+		default:
+			debugctrl.Logln("InterruptListener: stop command does not seem to be stopping server during forceful shutdown")
+		}
+
+		// exit
+		fmt.Print("exiting msh")
+		os.Exit(0)
 	}
-
-	// exit
-	fmt.Print("exiting msh")
-	os.Exit(0)
 }
 
 var CheckedUpdateC chan bool = make(chan bool, 1)
+
+// these constant represent the result status of checkUpdate()
+const (
+	ERROR             = -1
+	UPDATED           = 0
+	UPDATEAVAILABLE   = 1
+	UNOFFICIALVERSION = 2
+)
 
 // UpdateManager checks for updates and notify the user via terminal/gamechat
 // [goroutine]
@@ -51,22 +78,23 @@ func UpdateManager(clientVersion string) {
 	respHeader := "latest version: "
 
 	for {
-		if confctrl.Config.Msh.CheckForUpdates {
-			updateAvailable, onlineVersion, err := checkUpdate(v, clientVersion, respHeader)
-			if err != nil {
-				debugctrl.Logln("UpdateManager:", err.Error())
-				time.Sleep(deltaT)
-				continue
-			}
+		status, onlineVersion, err := checkUpdate(v, clientVersion, respHeader)
+		if err != nil {
+			debugctrl.Logln("UpdateManager:", err.Error())
+		}
 
-			if updateAvailable {
-				notificationString := "*** msh " + onlineVersion + " is now available: visit github to update! ***"
-
-				// notify on msh terminal
-				fmt.Println(notificationString)
+		if confctrl.ConfigRuntime.Msh.NotifyUpdate {
+			switch status {
+			case UPDATED:
+				fmt.Println("*** msh (" + clientVersion + ") is updated ***")
+			case UPDATEAVAILABLE:
+				notification := "*** msh (" + onlineVersion + ") is now available: visit github to update! ***"
+				fmt.Println(notification)
 
 				// notify to game chat every 20 minutes for deltaT time
-				go notifyGameChat(20*time.Minute, deltaT, notificationString)
+				go notifyGameChat(20*time.Minute, deltaT, notification)
+			case UNOFFICIALVERSION:
+				fmt.Println("*** msh (" + clientVersion + ") is running an unofficial release ***")
 			}
 		}
 
@@ -80,7 +108,8 @@ func UpdateManager(clientVersion string) {
 }
 
 // checkUpdate checks for updates. Returns (update available, online version, error)
-func checkUpdate(v, clientVersion, respHeader string) (bool, string, error) {
+// if error occurred, online version will be "error"
+func checkUpdate(v, clientVersion, respHeader string) (int, string, error) {
 	userAgentOs := "osNotSupported"
 	switch runtime.GOOS {
 	case "windows":
@@ -95,36 +124,81 @@ func checkUpdate(v, clientVersion, respHeader string) (bool, string, error) {
 	url := "http://minecraft-server-hibernation.heliohost.us/latest-version.php?v=" + v + "&version=" + clientVersion
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return false, "", fmt.Errorf("checkUpdate: %v", err)
+		return ERROR, "error", fmt.Errorf("checkUpdate: %v", err)
 	}
 	req.Header.Add("User-Agent", "msh ("+userAgentOs+") msh/"+clientVersion)
 
 	// execute http request
-	client := &http.Client{}
+	client := &http.Client{Timeout: 4 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		return false, "", fmt.Errorf("checkUpdate: %v", err)
+		return ERROR, "error", fmt.Errorf("checkUpdate: %v", err)
 	}
 	defer resp.Body.Close()
 
 	// read http response
 	respByte, err := ioutil.ReadAll(resp.Body)
 	if err != nil || !strings.Contains(string(respByte), respHeader) {
-		return false, "", fmt.Errorf("checkUpdate: (error reading http response) %v", err)
+		return ERROR, "error", fmt.Errorf("checkUpdate: %v", err)
 	}
 
 	// no error and respByte contains respHeader
 	onlineVersion := strings.ReplaceAll(string(respByte), respHeader, "")
-	if clientVersion == onlineVersion {
-		// no update available, return updateAvailable == false
-		return false, onlineVersion, nil
+
+	// check which version is more recent
+	delta, err := deltaVersion(onlineVersion, clientVersion)
+	if err != nil {
+		return ERROR, "error", fmt.Errorf("checkUpdate: %v", err)
 	}
 
-	// an update is available, return updateAvailable == false
-	return true, onlineVersion, nil
+	switch {
+	case delta > 0:
+		// an update is available
+		return UPDATEAVAILABLE, onlineVersion, nil
+	case delta < 0:
+		// the runtime version has not yet been officially released
+		return UNOFFICIALVERSION, onlineVersion, nil
+	default:
+		// no update available
+		return UPDATED, onlineVersion, nil
+	}
 }
 
-// notifyGameChat sends a string with the command "/say"
+// deltaVersion returns the difference between onlineVersion and clientVersion:
+// =0	versions are equal or an error occurred.
+// >0	if onlineVersion is more recent.
+// <0	if onlineVersion is less recent.
+func deltaVersion(onlineVersion, clientVersion string) (int, error) {
+	// digitize transforms a string "vx.x.x" into an integer x000x000x000
+	digitize := func(Version string) (int, error) {
+		versionInt := 0
+
+		// replace and split version (input: "vx.x.x") to get a list of integers
+		versionSplit := strings.Split(strings.ReplaceAll(Version, "v", ""), ".")
+		for n, digit := range versionSplit {
+			digitInt, err := strconv.Atoi(digit)
+			if err != nil {
+				return 0, err
+			}
+			versionInt += digitInt * int(math.Pow(1000, float64(len(versionSplit)-n)))
+		}
+		// versionInt has this format: x000x000x000
+		return versionInt, nil
+	}
+
+	clientVersionInt, err := digitize(clientVersion)
+	if err != nil {
+		return 0, fmt.Errorf("compareVersion: %v", err)
+	}
+	onlineVersionInt, err := digitize(onlineVersion)
+	if err != nil {
+		return 0, fmt.Errorf("compareVersion: %v", err)
+	}
+
+	return onlineVersionInt - clientVersionInt, nil
+}
+
+// notifyGameChat sends a string with the command "say"
 // every specified amount of time for a specified amount of time
 // [goroutine]
 func notifyGameChat(deltaNotification, deltaToEnd time.Duration, notificationString string) {
@@ -132,8 +206,8 @@ func notifyGameChat(deltaNotification, deltaToEnd time.Duration, notificationStr
 
 	for time.Now().Before(endT) {
 		// check if terminal is active to avoid Execute() returning an error
-		if servctrl.ServTerminal.IsActive {
-			_, err := servctrl.ServTerminal.Execute("/say "+notificationString, "notifyGameChat")
+		if servctrl.ServTerm.IsActive {
+			_, err := servctrl.Execute("say "+notificationString, "notifyGameChat")
 			if err != nil {
 				debugctrl.Logln("notifyGameChat:", err.Error())
 			}

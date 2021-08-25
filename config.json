@@ -1,21 +1,22 @@
 {
-  "Server":{
+  "Server": {
     "Folder": "{path/to/server/folder}",
     "FileName": "{server.jar}",
-    "Version": "1.16.5",
-    "Protocol": "754"
+    "Protocol": "755",
+    "Version": "1.17"
   },
-  "Commands":{
-    "StartServer": "java {-Xmx1024M} {-Xms1024M} -jar serverFileName nogui",
-    "StopServer": "{stop}",
-    "StopServerForce": ""
+  "Commands": {
+    "StartServer": "java \u003cCommands.StartServerParam\u003e -jar \u003cServer.FileName\u003e nogui",
+    "StartServerParam": "-Xmx1024M -Xms1024M",
+    "StopServer": "stop",
+    "StopServerAllowKill": 10
   },
-  "Msh":{
+  "Msh": {
+    "Debug": false,
+    "InfoHibernation": "                   \u0026fserver status:\n                   \u0026b\u0026lHIBERNATING",
+    "InfoStarting": "                   \u0026fserver status:\n                    \u00266\u0026lWARMING UP",
+    "NotifyUpdate": true,
     "Port": "25555",
-    "HibernationInfo": "                   \u0026fserver status:\n                   \u0026b\u0026lHIBERNATING",
-    "StartingInfo": "                   \u0026fserver status:\n                    \u00266\u0026lWARMING UP",
-    "TimeBeforeStoppingEmptyServer": 60,
-    "CheckForUpdates": true,
-    "Debug": false
+    "TimeBeforeStoppingEmptyServer": 60
   }
 }

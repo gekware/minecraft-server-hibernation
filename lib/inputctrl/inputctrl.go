@@ -47,13 +47,13 @@ func GetInput() {
 
 			switch lineSplit[1] {
 			case "start":
-				err = servctrl.StartMinecraftServer()
+				err = servctrl.StartMS()
 				if err != nil {
 					debugctrl.Logln("GetInput:", err)
 				}
 			case "freeze":
-				// stop minecraft server forcefully
-				err = servctrl.StopMinecraftServer(true)
+				// stop minecraft server with no player check
+				err = servctrl.StopMS(false)
 				if err != nil {
 					debugctrl.Logln("GetInput:", err)
 				}
@@ -70,7 +70,7 @@ func GetInput() {
 			}
 
 			// just pass the command to the minecraft server terminal
-			_, err = servctrl.ServTerminal.Execute(strings.Join(lineSplit[1:], " "), "user input")
+			_, err = servctrl.Execute(strings.Join(lineSplit[1:], " "), "user input")
 			if err != nil {
 				debugctrl.Logln("GetInput:", err)
 			}

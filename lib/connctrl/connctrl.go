@@ -25,7 +25,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 	clientAddress := clientSocket.RemoteAddr().String()[:li]
 
 	// block containing the case of serverStatus == "offline" or "starting"
-	if servctrl.ServStats.Status == "offline" || servctrl.ServStats.Status == "starting" {
+	if servctrl.Stats.Status == "offline" || servctrl.Stats.Status == "starting" {
 		buffer := make([]byte, 1024)
 
 		// read first packet
@@ -37,15 +37,15 @@ func HandleClientSocket(clientSocket net.Conn) {
 
 		// the client first packet is {data, 1, 1, 0} or {data, 1} --> the client is requesting server info and ping
 		if buffer[dataLen-1] == 0 || buffer[dataLen-1] == 1 {
-			if servctrl.ServStats.Status == "offline" {
-				log.Printf("*** player unknown requested server info from %s:%s to %s:%s\n", clientAddress, confctrl.Config.Msh.Port, confctrl.TargetHost, confctrl.TargetPort)
+			if servctrl.Stats.Status == "offline" {
+				log.Printf("*** player unknown requested server info from %s:%s to %s:%s\n", clientAddress, confctrl.ConfigRuntime.Msh.Port, confctrl.TargetHost, confctrl.TargetPort)
 				// answer to client with emulated server info
-				clientSocket.Write(servprotocol.BuildMessage("info", confctrl.Config.Msh.HibernationInfo))
+				clientSocket.Write(servprotocol.BuildMessage("info", confctrl.ConfigRuntime.Msh.InfoHibernation))
 
-			} else if servctrl.ServStats.Status == "starting" {
-				log.Printf("*** player unknown requested server info from %s:%s to %s:%s during server startup\n", clientAddress, confctrl.Config.Msh.Port, confctrl.TargetHost, confctrl.TargetPort)
+			} else if servctrl.Stats.Status == "starting" {
+				log.Printf("*** player unknown requested server info from %s:%s to %s:%s during server startup\n", clientAddress, confctrl.ConfigRuntime.Msh.Port, confctrl.TargetHost, confctrl.TargetPort)
 				// answer to client with emulated server info
-				clientSocket.Write(servprotocol.BuildMessage("info", confctrl.Config.Msh.StartingInfo))
+				clientSocket.Write(servprotocol.BuildMessage("info", confctrl.ConfigRuntime.Msh.InfoStarting))
 			}
 
 			// answer to client with ping
@@ -57,13 +57,14 @@ func HandleClientSocket(clientSocket net.Conn) {
 
 		// the client first message is [data, listenPortBytes, 2] or [data, listenPortBytes, 2, playerNameData] -->
 		// the client is trying to join the server
-		listenPortInt, err := strconv.Atoi(confctrl.Config.Msh.Port)
+		listenPortUint64, err := strconv.ParseUint(confctrl.ConfigRuntime.Msh.Port, 10, 16) // bitSize: 16 -> since it will be converted to Uint16
 		if err != nil {
-			debugctrl.Logln("handleClientSocket: error during ListenPort conversion to int")
+			debugctrl.Logln("handleClientSocket: error during ListenPort conversion to uint64")
 		}
+		listenPortUint16 := uint16(listenPortUint64)
 		listenPortBytes := make([]byte, 2)
-		binary.BigEndian.PutUint16(listenPortBytes, uint16(listenPortInt)) // 25555 ->	[99 211] / hex[63 D3]
-		listenPortJoinBytes := append(listenPortBytes, byte(2))            // 			[99 211 2] / hex[63 D3 2]
+		binary.BigEndian.PutUint16(listenPortBytes, listenPortUint16) // 25555 ->	[99 211] / hex[63 D3]
+		listenPortJoinBytes := append(listenPortBytes, byte(2))       // 			[99 211 2] / hex[63 D3 2]
 
 		if bytes.Contains(buffer[:dataLen], listenPortJoinBytes) {
 			var playerName string
@@ -88,23 +89,23 @@ func HandleClientSocket(clientSocket net.Conn) {
 				playerName = string(playerNameBuffer[3 : len(playerNameBuffer)-zerosLen])
 			}
 
-			if servctrl.ServStats.Status == "offline" {
-				// client is trying to join the server and serverStatus == "offline" --> issue startMinecraftServer()
-				err = servctrl.StartMinecraftServer()
+			if servctrl.Stats.Status == "offline" {
+				// client is trying to join the server and serverStatus == "offline" --> issue StartMS()
+				err = servctrl.StartMS()
 				if err != nil {
 					// log to msh console and warn client with text in the loadscreen
 					debugctrl.Logln("HandleClientSocket:", err)
 					clientSocket.Write(servprotocol.BuildMessage("txt", "An error occurred while starting the server: check the msh log"))
 				} else {
 					// log to msh console and answer to client with text in the loadscreen
-					log.Printf("*** %s tried to join from %s:%s to %s:%s\n", playerName, clientAddress, confctrl.Config.Msh.Port, confctrl.TargetHost, confctrl.TargetPort)
-					clientSocket.Write(servprotocol.BuildMessage("txt", "Server start command issued. Please wait... "+servctrl.ServStats.LoadProgress))
+					log.Printf("*** %s tried to join from %s:%s to %s:%s\n", playerName, clientAddress, confctrl.ConfigRuntime.Msh.Port, confctrl.TargetHost, confctrl.TargetPort)
+					clientSocket.Write(servprotocol.BuildMessage("txt", "Server start command issued. Please wait... "+servctrl.Stats.LoadProgress))
 				}
 
-			} else if servctrl.ServStats.Status == "starting" {
-				log.Printf("*** %s tried to join from %s:%s to %s:%s during server startup\n", playerName, clientAddress, confctrl.Config.Msh.Port, confctrl.TargetHost, confctrl.TargetPort)
+			} else if servctrl.Stats.Status == "starting" {
+				log.Printf("*** %s tried to join from %s:%s to %s:%s during server startup\n", playerName, clientAddress, confctrl.ConfigRuntime.Msh.Port, confctrl.TargetHost, confctrl.TargetPort)
 				// answer to client with text in the loadscreen
-				clientSocket.Write(servprotocol.BuildMessage("txt", "Server is starting. Please wait... "+servctrl.ServStats.LoadProgress))
+				clientSocket.Write(servprotocol.BuildMessage("txt", "Server is starting. Please wait... "+servctrl.Stats.LoadProgress))
 			}
 		}
 
@@ -114,7 +115,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 	}
 
 	// block containing the case of serverStatus == "online"
-	if servctrl.ServStats.Status == "online" {
+	if servctrl.Stats.Status == "online" {
 		// if the server is online, just open a connection with the server and connect it with the client
 		serverSocket, err := net.Dial("tcp", confctrl.TargetHost+":"+confctrl.TargetPort)
 		if err != nil {
@@ -124,13 +125,13 @@ func HandleClientSocket(clientSocket net.Conn) {
 			return
 		}
 
-		// stopSig is used to close serv->client and client->serv at the same time
-		stopSig := false
+		// stopC is used to close serv->client and client->serv at the same time
+		stopC := make(chan bool, 1)
 
 		// launch proxy client -> server
-		go proxy.Forward(clientSocket, serverSocket, false, &stopSig)
+		go proxy.Forward(clientSocket, serverSocket, false, stopC)
 
 		// launch proxy server -> client
-		go proxy.Forward(serverSocket, clientSocket, true, &stopSig)
+		go proxy.Forward(serverSocket, clientSocket, true, stopC)
 	}
 }

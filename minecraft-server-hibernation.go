@@ -16,7 +16,7 @@ import (
 )
 
 // script version
-var version string = "v2.4.0"
+var version string = "v2.4.2"
 
 // contains intro to script and program
 var intro []string = []string{
@@ -58,24 +58,17 @@ func main() {
 	// listen for interrupt signals
 	go progctrl.InterruptListener()
 
-	// launch printDataUsage()
-	go debugctrl.PrintDataUsage()
-
 	// launch GetInput()
 	go inputctrl.GetInput()
 
 	// open a listener on {confctrl.ListenHost}+":"+{Config.Msh.Port}
-	listener, err := net.Listen("tcp", confctrl.ListenHost+":"+confctrl.Config.Msh.Port)
+	listener, err := net.Listen("tcp", confctrl.ListenHost+":"+confctrl.ConfigRuntime.Msh.Port)
 	if err != nil {
 		log.Println("main:", err.Error())
 		os.Exit(1)
 	}
 
-	defer func() {
-		listener.Close()
-	}()
-
-	log.Println("*** listening for new clients to connect on " + confctrl.ListenHost + ":" + confctrl.Config.Msh.Port + " ...")
+	log.Println("*** listening for new clients to connect on " + confctrl.ListenHost + ":" + confctrl.ConfigRuntime.Msh.Port + " ...")
 
 	// infinite cycle to accept clients. when a clients connects it is passed to handleClientSocket()
 	for {

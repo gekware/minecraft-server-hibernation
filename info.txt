@@ -3,6 +3,7 @@
         - functions containing "[goroutine]" in their comment are meant to be launched as goroutine
         - functions containing "[goroutine]" in their comment will return without any parameter
         - functions containing "[blocking]" in their comment should not be launched as goroutine
+        - functions containing "[non-blocking]" in their comment execute commands in a non-blocking manner
     + error management
         - every function should return the error parameter
             exception for: 

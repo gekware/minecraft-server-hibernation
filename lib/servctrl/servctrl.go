@@ -2,96 +2,118 @@ package servctrl
 
 import (
 	"fmt"
-	"strings"
+	"sync/atomic"
 	"time"
 
-	"msh/lib/asyncctrl"
 	"msh/lib/confctrl"
 	"msh/lib/debugctrl"
 )
 
-// StartMinecraftServer starts the minecraft server
-func StartMinecraftServer() error {
-	var err error
-
+// StartMS starts the minecraft server
+func StartMS() error {
 	// start server terminal
-	command := strings.ReplaceAll(confctrl.Config.Commands.StartServer, "serverFileName", confctrl.Config.Server.FileName)
-	err = CmdStart(confctrl.Config.Server.Folder, command)
+	err := CmdStart(confctrl.ConfigRuntime.Server.Folder, confctrl.ConfigRuntime.Commands.StartServer)
 	if err != nil {
-		return fmt.Errorf("StartMinecraftServer: error starting minecraft server: %v", err)
+		return fmt.Errorf("StartMS: error starting minecraft server: %v", err)
 	}
 
 	return nil
 }
 
-// StopMinecraftServer stops the minecraft server.
-// When force == true, it bypasses checks for StopInstancesa/Players and orders the server shutdown
-func StopMinecraftServer(force bool) error {
+// StopMS stops the minecraft server.
+// When playersCheck == true, it checks for StopMSRequests/Players and orders the server shutdown
+func StopMS(playersCheck bool) error {
 	// error that returns from Execute() when executing the stop command
 	var errExec error
 
 	// wait for the starting server to go online
-	for ServStats.Status == "starting" {
+	for Stats.Status == "starting" {
 		time.Sleep(1 * time.Second)
 	}
 	// if server is not online return
-	if ServStats.Status != "online" {
-		return fmt.Errorf("StopEmptyMinecraftServer: server is not online")
+	if Stats.Status != "online" {
+		return fmt.Errorf("StopMS: server is not online")
 	}
 
-	// execute stop command
-	if force {
-		// if force == true, bypass checks for StopInstances/Players and proceed with server shutdown
-		_, errExec = ServTerminal.Execute(confctrl.Config.Commands.StopServerForce, "StopMinecraftServer - force")
-	} else {
-		// if force == false, check that there is only one "stop server command" instance running and players <= 0,
+	// player/StopMSRequests check
+	if playersCheck {
+		// check that there is only one StopMSRequest running and players <= 0,
 		// if so proceed with server shutdown
-		asyncctrl.WithLock(func() { ServStats.StopInstances-- })
+		atomic.AddInt32(&Stats.StopMSRequests, -1)
 
 		// check how many players are on the server
 		playerCount, isFromServer := CountPlayerSafe()
 		debugctrl.Logln(playerCount, "online players - number got from server:", isFromServer)
 		if playerCount > 0 {
-			return fmt.Errorf("StopEmptyMinecraftServer: server is not empty")
+			return fmt.Errorf("StopMS: server is not empty")
 		}
 
 		// check if enough time has passed since last player disconnected
-		if asyncctrl.WithLock(func() interface{} { return ServStats.StopInstances > 0 }).(bool) {
-			return fmt.Errorf("StopEmptyMinecraftServer: not enough time has passed since last player disconnected (StopInstances: %d)", ServStats.StopInstances)
-		}
 
-		_, errExec = ServTerminal.Execute(confctrl.Config.Commands.StopServer, "StopMinecraftServer")
+		if atomic.LoadInt32(&Stats.StopMSRequests) > 0 {
+			return fmt.Errorf("StopMS: not enough time has passed since last player disconnected (StopMSRequests: %d)", Stats.StopMSRequests)
+		}
 	}
+
+	// execute stop command
+	_, errExec = Execute(confctrl.ConfigRuntime.Commands.StopServer, "StopMS")
 	if errExec != nil {
-		return fmt.Errorf("stopEmptyMinecraftServer: error executing minecraft server stop command: %v", errExec)
+		return fmt.Errorf("StopMS: error executing minecraft server stop command: %v", errExec)
 	}
 
-	if force {
-		if ServStats.Status == "stopping" {
-			// wait for the terminal to exit
-			debugctrl.Logln("waiting for server terminal to exit")
-			ServTerminal.Wg.Wait()
-		} else {
-			debugctrl.Logln("server was not stopped by StopMinecraftServerForce command, world save might be compromised")
-		}
+	// if sigint is allowed, launch a function to check the shutdown of minecraft server
+	if confctrl.ConfigRuntime.Commands.StopServerAllowKill > 0 {
+		go killMSifOnlineAfterTimeout()
 	}
 
 	return nil
 }
 
-// RequestStopMinecraftServer increases stopInstances by one and starts the timer to execute stopEmptyMinecraftServer(false)
-func RequestStopMinecraftServer() {
-	asyncctrl.WithLock(func() { ServStats.StopInstances++ })
+// StopMSRequest increases StopMSRequests by one and starts the timer to execute StopMS(true) (with playersCheck)
+// [goroutine]
+func StopMSRequest() {
+	atomic.AddInt32(&Stats.StopMSRequests, 1)
 
 	// [goroutine]
-	time.AfterFunc(time.Duration(confctrl.Config.Msh.TimeBeforeStoppingEmptyServer)*time.Second, func() {
-		err := StopMinecraftServer(false)
-		if err != nil {
-			// avoid printing "server is not online" error since it can be very frequent
-			// when updating the logging system this could be managed by logging it only at certain log levels
-			if err.Error() != "StopEmptyMinecraftServer: server is not online" {
-				debugctrl.Logln("RequestStopMinecraftServer:", err)
+	time.AfterFunc(
+		time.Duration(confctrl.ConfigRuntime.Msh.TimeBeforeStoppingEmptyServer)*time.Second,
+		func() {
+			err := StopMS(true)
+			if err != nil {
+				// avoid printing "server is not online" error since it can be very frequent
+				// when updating the logging system this could be managed by logging it only at certain log levels
+				if err.Error() != "StopMS: server is not online" {
+					debugctrl.Logln("StopMSRequest:", err)
+				}
 			}
+		})
+}
+
+// killMSifOnlineAfterTimeout waits for the specified time and then if the server is still online, kills the server process
+func killMSifOnlineAfterTimeout() {
+	countdown := confctrl.ConfigRuntime.Commands.StopServerAllowKill
+
+	for countdown > 0 {
+		// if server goes offline it's the correct behaviour -> return
+		if Stats.Status == "offline" {
+			return
 		}
-	})
+
+		countdown--
+		time.Sleep(time.Second)
+	}
+
+	// save world before killing the server, do not check for errors
+	debugctrl.Logln("saving word before killing the minecraft server process")
+	_, _ = Execute("save-all", "killMSifOnlineAfterTimeout")
+
+	// give time to save word
+	time.Sleep(10 * time.Second)
+
+	// send kill signal to server
+	debugctrl.Logln("send kill signal to minecraft server process since it won't stop normally")
+	err := ServTerm.cmd.Process.Kill()
+	if err != nil {
+		debugctrl.Logln("killMSifOnlineAfterTimeout: %v", err)
+	}
 }

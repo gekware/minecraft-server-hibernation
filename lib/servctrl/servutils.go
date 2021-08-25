@@ -19,7 +19,7 @@ func CountPlayerSafe() (int, bool) {
 	if err != nil {
 		// no need to return an error since the less reliable internal player count is available
 		debugctrl.Logln("CountPlayerSafe: %v", err)
-		return ServStats.PlayerCount, false
+		return Stats.PlayerCount, false
 	}
 
 	return playerCount, true
@@ -27,7 +27,7 @@ func CountPlayerSafe() (int, bool) {
 
 // getPlayersByListCom returns the number of players using the /list command
 func getPlayersByListCom() (int, error) {
-	outStr, err := ServTerminal.Execute("/list", "getPlayersByListCom")
+	outStr, err := Execute("list", "getPlayersByListCom")
 	if err != nil {
 		return 0, fmt.Errorf("getPlayersByListCom: %v", err)
 	}
