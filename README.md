@@ -6,7 +6,7 @@
 [![msh - license](https://img.shields.io/github/license/gekigek99/minecraft-server-hibernation?color=6fff00)](https://github.com/gekigek99/minecraft-server-hibernation/blob/master/LICENSE)
 [![msh - stars](https://img.shields.io/github/stars/gekigek99/minecraft-server-hibernation?color=ffbd19)](https://github.com/gekigek99/minecraft-server-hibernation/stargazers)
 
-Avoid wasting of resources by **automatically start** your minecraft server when a player join **and stop** it when no one is online  
+Avoid wasting of resources by **automatically starting** your minecraft server when a player join **and stopping** it when no one is online  
 _(for vanilla/modded on linux/windows/macos)_  
 
 <p align="center" >
@@ -58,11 +58,13 @@ _remember to automatically run msh at reboot_
 ### DEFINITIONS:
 _only text in braces needs to be modified (remember to remove all braces)_
 
-Location of server folder and executable:
+Location of server folder and executable. You can find protocol/version [here](https://wiki.vg/Protocol_version_numbers) (but msh should set them automatically):
 ```yaml
 "Server":{
   "Folder": "{path/to/server/folder}",
-  "FileName": "{server.jar}"
+  "FileName": "{server.jar}",
+  "Version": "1.17.1",
+  "Protocol": "756"
 }
 ```
 Commands to start and stop minecraft server:
@@ -81,7 +83,7 @@ Hibernation and Starting server description
 "InfoHibernation": "                   \u0026fserver status:\n                   \u0026b\u0026lHIBERNATING",
 "InfoStarting": "                   \u0026fserver status:\n                    \u00266\u0026lWARMING UP"
 ```
-*60 seconds* is the time (after the last player disconnected) that the script waits before shutting down the minecraft server
+*60 seconds* is the time (after the last player disconnected) that the script waits before hibernating the minecraft server
 ```yaml
 "TimeBeforeStoppingEmptyServer": 60     #any parameter more than 30s is recommended
 ```
@@ -97,6 +99,7 @@ _Some of these parameters can be configured with command-line arguments (--help 
 ### CREDITS:  
 
 Author: [gekigek99](https://github.com/gekigek99)  
+
 Contributors: [najtin](https://github.com/najtin/minecraft-server-hibernation), [f8ith](https://github.com/f8ith/minecraft-server-hibernation), [Br31zh](https://github.com/Br31zh/minecraft-server-hibernation), [someotherotherguy](https://github.com/someotherotherguy/minecraft-server-hibernation)  
 Docker branch: [lubocode](https://github.com/lubocode/minecraft-server-hibernation)
 
