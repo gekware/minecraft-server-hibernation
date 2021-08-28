@@ -42,7 +42,7 @@ func CmdStart(dir, command string) error {
 		return fmt.Errorf("loadTerm: %v", err)
 	}
 
-	go goPrinterOutErr()
+	go printerOutErr()
 
 	err = ServTerm.cmd.Start()
 	if err != nil {
@@ -118,11 +118,11 @@ func loadTerm(dir, command string) error {
 	return nil
 }
 
-// goPrinterOutErr manages the communication from StdoutPipe/StderrPipe.
+// printerOutErr manages the communication from StdoutPipe/StderrPipe.
 // Launches 1 goroutine to scan StdoutPipe and 1 goroutine to scan StderrPipe
 // (Should be called before cmd.Start())
 // [goroutine]
-func goPrinterOutErr() {
+func printerOutErr() {
 	// add printer-out + printer-err to waitgroup
 	ServTerm.Wg.Add(2)
 
@@ -140,7 +140,15 @@ func goPrinterOutErr() {
 
 			fmt.Println(colCya + line + colRes)
 
-			if Stats.Status == "starting" {
+			// communicate to lastLine so that func Execute() can return the first line after the command
+			select {
+			case lastLine <- line:
+			default:
+			}
+
+			switch Stats.Status {
+
+			case "starting":
 				// for modded server terminal compatibility, use separate check for "INFO" and flag-word
 				// using only "INFO" and not "[Server thread/INFO]"" because paper minecraft servers don't use "[Server thread/INFO]"
 
@@ -158,64 +166,58 @@ func goPrinterOutErr() {
 					// launch a StopMSRequests so that if no players connect the server will shutdown
 					StopMSRequest()
 				}
-			}
 
-			// It is possible that a player could send a message that contains text similar to server output:
-			// 		[14:08:43] [Server thread/INFO]: <player> Stopping
-			// 		[14:09:32] [Server thread/INFO]: [player] Stopping
-			//
-			// These are the correct shutdown logs:
-			// 		[14:09:46] [Server thread/INFO]: Stopping the server
-			// 		[15Mar2021 14:09:46.581] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Stopping the server
-			//
-			// lineSplit is therefore implemented:
+			case "online":
+				// It is possible that a player could send a message that contains text similar to server output:
+				// 		[14:08:43] [Server thread/INFO]: <player> Stopping
+				// 		[14:09:32] [Server thread/INFO]: [player] Stopping
+				//
+				// These are the correct shutdown logs:
+				// 		[14:09:46] [Server thread/INFO]: Stopping the server
+				// 		[15Mar2021 14:09:46.581] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Stopping the server
+				//
+				// lineSplit is therefore implemented:
+				//
+				// [14:09:46] [Server thread/INFO]: <player> ciao
+				// ^-----------header------------^##^--content--^
 
-			var lineSplit = strings.SplitN(line, ": ", 2)
+				// Continue if line does not contain ": "
+				// (it does not adhere to expected log format or it is a multiline java exception)
+				if !strings.Contains(line, ": ") {
+					debugctrl.Logln("printerOutErr: line does not adhere to expected log format")
+					continue
+				}
 
-			// lineSplit[0] is the log's "header" (e.g. "[14:09:46] [Server thread/INFO]")
-			// lineSplit[1] is the log's "content" (e.g. "<player> ciao" or "Stopping the server")
-			//
-			// Since lineSplit[1] starts immediately after ": ",
-			// comparison can be done using Strings.HasPrefix (or even direct '==' comparison)
-			//
-			// If line does not contain ": ", there is no reason to check it
-			// (it does not adhere to expected log format or it is a multiline java exception)
-			// This is enforced via checking that len(lineSplit) == 2
+				lineSplit := strings.SplitN(line, ": ", 2)
+				lineHeader := lineSplit[0]
+				lineContent := lineSplit[1]
 
-			if Stats.Status == "online" && len(lineSplit) == 2 {
-
-				if strings.Contains(lineSplit[0], "INFO") {
+				if strings.Contains(lineHeader, "INFO") {
 					switch {
 					// player sends a chat message
-					case strings.HasPrefix(lineSplit[1], "<") || strings.HasPrefix(lineSplit[1], "["):
+					case strings.HasPrefix(lineContent, "<") || strings.HasPrefix(lineContent, "["):
 						// just log that the line is a chat message
 						debugctrl.Logln("a chat message was sent")
 
 					// player joins the server
 					// using "UUID of player" since minecraft server v1.12.2 does not use "joined the game"
-					case strings.Contains(lineSplit[1], "UUID of player"):
+					case strings.Contains(lineContent, "UUID of player"):
 						Stats.PlayerCount++
 						log.Printf("*** A PLAYER JOINED THE SERVER! - %d players online", Stats.PlayerCount)
 
 					// player leaves the server
 					// using "lost connection" (instead of "left the game") because it's more general (issue #116)
-					case strings.Contains(lineSplit[1], "lost connection"):
+					case strings.Contains(lineContent, "lost connection"):
 						Stats.PlayerCount--
 						log.Printf("*** A PLAYER LEFT THE SERVER! - %d players online", Stats.PlayerCount)
 						StopMSRequest()
 
 					// the server is stopping
-					case strings.Contains(lineSplit[1], "Stopping"):
+					case strings.Contains(lineContent, "Stopping"):
 						Stats.Status = "stopping"
 						log.Print("*** MINECRAFT SERVER IS STOPPING!")
 					}
 				}
-			}
-
-			// communicate to lastLine so that func Execute() can return the first line after the command
-			select {
-			case lastLine <- line:
-			default:
 			}
 		}
 	}()
