@@ -144,13 +144,14 @@ func goPrinterOutErr() {
 				// for modded server terminal compatibility, use separate check for "INFO" and flag-word
 				// using only "INFO" and not "[Server thread/INFO]"" because paper minecraft servers don't use "[Server thread/INFO]"
 
-				// "Preparing spawn area: " -> update ServStats.LoadProgress
+				// "Preparing spawn area: "	-> update ServStats.LoadProgress
 				if strings.Contains(line, "INFO") && strings.Contains(line, "Preparing spawn area: ") {
 					Stats.LoadProgress = strings.Split(strings.Split(line, "Preparing spawn area: ")[1], "\n")[0]
 				}
 
-				// "Done" -> set ServStats.Status = "online"
-				if strings.Contains(line, "INFO") && strings.Contains(line, "Done") {
+				// ": Done ("				-> set ServStats.Status = "online"
+				// using ": Done (" instead of "Done" to avoid false positives (issue #112)
+				if strings.Contains(line, "INFO") && strings.Contains(line, ": Done (") {
 					Stats.Status = "online"
 					log.Print("*** MINECRAFT SERVER IS ONLINE!")
 
@@ -197,8 +198,7 @@ func goPrinterOutErr() {
 						log.Printf("*** A PLAYER JOINED THE SERVER! - %d players online", Stats.PlayerCount)
 
 					// player leaves the server
-					// using "lost connection" (instead of "left the game") because it's more general
-					// (case of forced disconnection, check issue #116)
+					// using "lost connection" (instead of "left the game") because it's more general (issue #116)
 					case strings.Contains(lineSplit[1], "lost connection"):
 						Stats.PlayerCount--
 						log.Printf("*** A PLAYER LEFT THE SERVER! - %d players online", Stats.PlayerCount)
