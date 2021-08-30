@@ -70,15 +70,16 @@ const (
 func UpdateManager(clientVersion string) {
 	// protocol version number:		1
 	// connection every:			4 hours
-	// parameters passed to php:	v, clientVersion
-	// response:					"latest version: $onlineVersion"
+	// parameters passed to php:	clientProtV, clientVersion
+	// request headers:				HTTP_USER_AGENT
+	// response:					"latest version: $officialVersion"
 
-	v := "1"
+	clientProtV := "1"
 	deltaT := 4 * time.Hour
 	respHeader := "latest version: "
 
 	for {
-		status, onlineVersion, err := checkUpdate(v, clientVersion, respHeader)
+		status, onlineVersion, err := checkUpdate(clientProtV, clientVersion, respHeader)
 		if err != nil {
 			debugctrl.Logln("UpdateManager:", err.Error())
 		}
@@ -109,7 +110,7 @@ func UpdateManager(clientVersion string) {
 
 // checkUpdate checks for updates. Returns (update available, online version, error)
 // if error occurred, online version will be "error"
-func checkUpdate(v, clientVersion, respHeader string) (int, string, error) {
+func checkUpdate(clientProtV, clientVersion, respHeader string) (int, string, error) {
 	userAgentOs := "osNotSupported"
 	switch runtime.GOOS {
 	case "windows":
@@ -121,7 +122,7 @@ func checkUpdate(v, clientVersion, respHeader string) (int, string, error) {
 	}
 
 	// build http request
-	url := "http://minecraft-server-hibernation.heliohost.us/latest-version.php?v=" + v + "&version=" + clientVersion
+	url := "http://minecraft-server-hibernation.heliohost.us/latest-version.php?v=" + clientProtV + "&version=" + clientVersion
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return ERROR, "error", fmt.Errorf("checkUpdate: %v", err)
