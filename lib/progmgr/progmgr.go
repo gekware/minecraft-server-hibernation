@@ -1,4 +1,4 @@
-package progctrl
+package progmgr
 
 import (
 	"fmt"
@@ -13,8 +13,8 @@ import (
 	"syscall"
 	"time"
 
-	"msh/lib/confctrl"
-	"msh/lib/debugctrl"
+	"msh/lib/config"
+	"msh/lib/logger"
 	"msh/lib/servctrl"
 )
 
@@ -31,7 +31,7 @@ func InterruptListener() {
 		// stop the minecraft server with no player check
 		err := servctrl.StopMS(false)
 		if err != nil {
-			debugctrl.Logln("InterruptListener:", err)
+			logger.Logln("InterruptListener:", err)
 		}
 
 		// wait 1 second to let the server go into stopping mode
@@ -40,13 +40,13 @@ func InterruptListener() {
 		switch servctrl.Stats.Status {
 		case "stopping":
 			// if server is correctly stopping, wait for minecraft server to exit
-			debugctrl.Logln("InterruptListener: waiting for minecraft server terminal to exit (server is stopping)")
+			logger.Logln("InterruptListener: waiting for minecraft server terminal to exit (server is stopping)")
 			servctrl.ServTerm.Wg.Wait()
 		case "offline":
 			// if server is offline, then it's safe to continue
-			debugctrl.Logln("InterruptListener: minecraft server terminal already exited (server is offline)")
+			logger.Logln("InterruptListener: minecraft server terminal already exited (server is offline)")
 		default:
-			debugctrl.Logln("InterruptListener: stop command does not seem to be stopping server during forceful shutdown")
+			logger.Logln("InterruptListener: stop command does not seem to be stopping server during forceful shutdown")
 		}
 
 		// exit
@@ -81,10 +81,10 @@ func UpdateManager(clientVersion string) {
 	for {
 		status, onlineVersion, err := checkUpdate(clientProtV, clientVersion, respHeader)
 		if err != nil {
-			debugctrl.Logln("UpdateManager:", err.Error())
+			logger.Logln("UpdateManager:", err.Error())
 		}
 
-		if confctrl.ConfigRuntime.Msh.NotifyUpdate {
+		if config.ConfigRuntime.Msh.NotifyUpdate {
 			switch status {
 			case UPDATED:
 				fmt.Println("*** msh (" + clientVersion + ") is updated ***")
@@ -210,7 +210,7 @@ func notifyGameChat(deltaNotification, deltaToEnd time.Duration, notificationStr
 		if servctrl.ServTerm.IsActive {
 			_, err := servctrl.Execute("say "+notificationString, "notifyGameChat")
 			if err != nil {
-				debugctrl.Logln("notifyGameChat:", err.Error())
+				logger.Logln("notifyGameChat:", err.Error())
 			}
 		}
 

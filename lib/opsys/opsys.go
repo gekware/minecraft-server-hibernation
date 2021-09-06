@@ -1,4 +1,4 @@
-package osctrl
+package opsys
 
 import (
 	"fmt"

@@ -1,4 +1,4 @@
-package connctrl
+package servconn
 
 import (
 	"bytes"
@@ -9,11 +9,9 @@ import (
 	"strconv"
 	"strings"
 
-	"msh/lib/confctrl"
-	"msh/lib/debugctrl"
-	"msh/lib/proxy"
+	"msh/lib/config"
+	"msh/lib/logger"
 	"msh/lib/servctrl"
-	"msh/lib/servprotocol"
 )
 
 // HandleClientSocket handles a client that is connecting.
@@ -31,35 +29,35 @@ func HandleClientSocket(clientSocket net.Conn) {
 		// read first packet
 		dataLen, err := clientSocket.Read(buffer)
 		if err != nil {
-			debugctrl.Logln("handleClientSocket: error during clientSocket.Read() 1")
+			logger.Logln("handleClientSocket: error during clientSocket.Read() 1")
 			return
 		}
 
 		// the client first packet is {data, 1, 1, 0} or {data, 1} --> the client is requesting server info and ping
 		if buffer[dataLen-1] == 0 || buffer[dataLen-1] == 1 {
 			if servctrl.Stats.Status == "offline" {
-				log.Printf("*** player unknown requested server info from %s:%s to %s:%s\n", clientAddress, confctrl.ConfigRuntime.Msh.Port, confctrl.TargetHost, confctrl.TargetPort)
+				log.Printf("*** player unknown requested server info from %s:%s to %s:%s\n", clientAddress, config.ConfigRuntime.Msh.Port, config.TargetHost, config.TargetPort)
 				// answer to client with emulated server info
-				clientSocket.Write(servprotocol.BuildMessage("info", confctrl.ConfigRuntime.Msh.InfoHibernation))
+				clientSocket.Write(BuildMessage("info", config.ConfigRuntime.Msh.InfoHibernation))
 
 			} else if servctrl.Stats.Status == "starting" {
-				log.Printf("*** player unknown requested server info from %s:%s to %s:%s during server startup\n", clientAddress, confctrl.ConfigRuntime.Msh.Port, confctrl.TargetHost, confctrl.TargetPort)
+				log.Printf("*** player unknown requested server info from %s:%s to %s:%s during server startup\n", clientAddress, config.ConfigRuntime.Msh.Port, config.TargetHost, config.TargetPort)
 				// answer to client with emulated server info
-				clientSocket.Write(servprotocol.BuildMessage("info", confctrl.ConfigRuntime.Msh.InfoStarting))
+				clientSocket.Write(BuildMessage("info", config.ConfigRuntime.Msh.InfoStarting))
 			}
 
 			// answer to client with ping
-			err = servprotocol.AnswerPingReq(clientSocket)
+			err = AnswerPingReq(clientSocket)
 			if err != nil {
-				debugctrl.Logln("handleClientSocket:", err)
+				logger.Logln("handleClientSocket:", err)
 			}
 		}
 
 		// the client first message is [data, listenPortBytes, 2] or [data, listenPortBytes, 2, playerNameData] -->
 		// the client is trying to join the server
-		listenPortUint64, err := strconv.ParseUint(confctrl.ConfigRuntime.Msh.Port, 10, 16) // bitSize: 16 -> since it will be converted to Uint16
+		listenPortUint64, err := strconv.ParseUint(config.ConfigRuntime.Msh.Port, 10, 16) // bitSize: 16 -> since it will be converted to Uint16
 		if err != nil {
-			debugctrl.Logln("handleClientSocket: error during ListenPort conversion to uint64")
+			logger.Logln("handleClientSocket: error during ListenPort conversion to uint64")
 		}
 		listenPortUint16 := uint16(listenPortUint64)
 		listenPortBytes := make([]byte, 2)
@@ -74,7 +72,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 			if bytes.Index(buffer[:dataLen], listenPortJoinBytes) == dataLen-3 {
 				dataLen, err = clientSocket.Read(buffer)
 				if err != nil {
-					debugctrl.Logln("handleClientSocket: error during clientSocket.Read() 2")
+					logger.Logln("handleClientSocket: error during clientSocket.Read() 2")
 					return
 				}
 				playerName = string(buffer[3:dataLen])
@@ -94,34 +92,34 @@ func HandleClientSocket(clientSocket net.Conn) {
 				err = servctrl.StartMS()
 				if err != nil {
 					// log to msh console and warn client with text in the loadscreen
-					debugctrl.Logln("HandleClientSocket:", err)
-					clientSocket.Write(servprotocol.BuildMessage("txt", "An error occurred while starting the server: check the msh log"))
+					logger.Logln("HandleClientSocket:", err)
+					clientSocket.Write(BuildMessage("txt", "An error occurred while starting the server: check the msh log"))
 				} else {
 					// log to msh console and answer to client with text in the loadscreen
-					log.Printf("*** %s tried to join from %s:%s to %s:%s\n", playerName, clientAddress, confctrl.ConfigRuntime.Msh.Port, confctrl.TargetHost, confctrl.TargetPort)
-					clientSocket.Write(servprotocol.BuildMessage("txt", "Server start command issued. Please wait... "+servctrl.Stats.LoadProgress))
+					log.Printf("*** %s tried to join from %s:%s to %s:%s\n", playerName, clientAddress, config.ConfigRuntime.Msh.Port, config.TargetHost, config.TargetPort)
+					clientSocket.Write(BuildMessage("txt", "Server start command issued. Please wait... "+servctrl.Stats.LoadProgress))
 				}
 
 			} else if servctrl.Stats.Status == "starting" {
-				log.Printf("*** %s tried to join from %s:%s to %s:%s during server startup\n", playerName, clientAddress, confctrl.ConfigRuntime.Msh.Port, confctrl.TargetHost, confctrl.TargetPort)
+				log.Printf("*** %s tried to join from %s:%s to %s:%s during server startup\n", playerName, clientAddress, config.ConfigRuntime.Msh.Port, config.TargetHost, config.TargetPort)
 				// answer to client with text in the loadscreen
-				clientSocket.Write(servprotocol.BuildMessage("txt", "Server is starting. Please wait... "+servctrl.Stats.LoadProgress))
+				clientSocket.Write(BuildMessage("txt", "Server is starting. Please wait... "+servctrl.Stats.LoadProgress))
 			}
 		}
 
 		// since the server is still not online, close the client connection
-		debugctrl.Logln(fmt.Sprintf("closing connection for: %s", clientAddress))
+		logger.Logln(fmt.Sprintf("closing connection for: %s", clientAddress))
 		clientSocket.Close()
 	}
 
 	// block containing the case of serverStatus == "online"
 	if servctrl.Stats.Status == "online" {
 		// if the server is online, just open a connection with the server and connect it with the client
-		serverSocket, err := net.Dial("tcp", confctrl.TargetHost+":"+confctrl.TargetPort)
+		serverSocket, err := net.Dial("tcp", config.TargetHost+":"+config.TargetPort)
 		if err != nil {
-			debugctrl.Logln("handleClientSocket: error during serverSocket.Dial()")
+			logger.Logln("handleClientSocket: error during serverSocket.Dial()")
 			// report dial error to client with text in the loadscreen
-			clientSocket.Write(servprotocol.BuildMessage("txt", "can't connect to server... check if minecraft server is running and set the correct targetPort"))
+			clientSocket.Write(BuildMessage("txt", "can't connect to server... check if minecraft server is running and set the correct targetPort"))
 			return
 		}
 
@@ -129,9 +127,9 @@ func HandleClientSocket(clientSocket net.Conn) {
 		stopC := make(chan bool, 1)
 
 		// launch proxy client -> server
-		go proxy.Forward(clientSocket, serverSocket, false, stopC)
+		go Forward(clientSocket, serverSocket, false, stopC)
 
 		// launch proxy server -> client
-		go proxy.Forward(serverSocket, clientSocket, true, stopC)
+		go Forward(serverSocket, clientSocket, true, stopC)
 	}
 }

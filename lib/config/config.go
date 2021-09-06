@@ -1,4 +1,4 @@
-package confctrl
+package config
 
 import (
 	"encoding/json"
@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"msh/lib/data"
-	"msh/lib/debugctrl"
+	"msh/lib/logger"
 )
 
 // ConfigDefault contains the configuration parameters of the config file
@@ -72,8 +72,8 @@ func LoadConfig() error {
 		return fmt.Errorf("loadConfig: %v", err)
 	}
 
-	// as soon as the Config variable is set, set debug level for debugctrl
-	debugctrl.Debug = ConfigRuntime.Msh.Debug
+	// as soon as the Config variable is set, set debug level
+	logger.Debug = ConfigRuntime.Msh.Debug
 
 	err = setIpPorts()
 	if err != nil {
@@ -84,7 +84,7 @@ func LoadConfig() error {
 	if err != nil {
 		// it's enough to log it without returning
 		// since the default icon is loaded by default
-		debugctrl.Logln("loadConfig:", err.Error())
+		logger.Logln("loadConfig:", err.Error())
 	}
 
 	return nil
@@ -104,7 +104,7 @@ func SaveConfigDefault() error {
 		return fmt.Errorf("SaveConfig: could not write to config.json")
 	}
 
-	debugctrl.Logln("SaveConfig: saved to config.json")
+	logger.Logln("SaveConfig: saved to config.json")
 
 	return nil
 }
@@ -174,7 +174,7 @@ func setIpPorts() error {
 		return fmt.Errorf("setIpPorts: TargetPort and ListenPort appear to be the same, please change one of them")
 	}
 
-	debugctrl.Logln("targeting server address:", TargetHost+":"+TargetPort)
+	logger.Logln("targeting server address:", TargetHost+":"+TargetPort)
 
 	return nil
 }

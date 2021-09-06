@@ -1,6 +1,6 @@
-// +build windows
+// +build linux
 
-package osctrl
+package opsys
 
 import (
 	"syscall"
@@ -8,7 +8,7 @@ import (
 
 func newProcGroupAttr() *syscall.SysProcAttr {
 	newProcGroupAttr := &syscall.SysProcAttr{
-		CreationFlags: syscall.CREATE_NEW_PROCESS_GROUP,
+		Setpgid: true,
 	}
 
 	return newProcGroupAttr

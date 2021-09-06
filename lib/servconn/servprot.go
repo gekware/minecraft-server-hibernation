@@ -1,4 +1,4 @@
-package servprotocol
+package servconn
 
 import (
 	"bytes"
@@ -6,9 +6,9 @@ import (
 	"net"
 	"strings"
 
-	"msh/lib/confctrl"
+	"msh/lib/config"
 	"msh/lib/data"
-	"msh/lib/debugctrl"
+	"msh/lib/logger"
 )
 
 // BuildMessage takes the format ("txt", "info") and a message to write to the client
@@ -69,7 +69,7 @@ func BuildMessage(format, message string) []byte {
 		messageJSON := fmt.Sprint("{",
 			"\"description\":{\"text\":\"", messageAdapted, "\"},",
 			"\"players\":{\"max\":0,\"online\":0},",
-			"\"version\":{\"name\":\"", confctrl.ConfigRuntime.Server.Version, "\",\"protocol\":", fmt.Sprint(confctrl.ConfigRuntime.Server.Protocol), "},",
+			"\"version\":{\"name\":\"", config.ConfigRuntime.Server.Version, "\",\"protocol\":", fmt.Sprint(config.ConfigRuntime.Server.Protocol), "},",
 			"\"favicon\":\"data:image/png;base64,", data.ServerIcon, "\"",
 			"}",
 		)
@@ -117,22 +117,22 @@ func GetVersionProtocol(data []byte) error {
 		newServerProtocol := string(bytes.Split(bytes.Split(data, []byte(",\"protocol\":"))[1], []byte("}"))[0])
 
 		// if serverVersion or serverProtocol are different from the ones specified in config.json --> update them
-		if newServerVersion != confctrl.ConfigRuntime.Server.Version || newServerProtocol != confctrl.ConfigRuntime.Server.Protocol {
-			debugctrl.Logln(
+		if newServerVersion != config.ConfigRuntime.Server.Version || newServerProtocol != config.ConfigRuntime.Server.Protocol {
+			logger.Logln(
 				"server version found!",
 				"serverVersion:", newServerVersion,
 				"serverProtocol:", newServerProtocol,
 			)
 
 			// update the runtime config
-			confctrl.ConfigRuntime.Server.Version = newServerVersion
-			confctrl.ConfigRuntime.Server.Protocol = newServerProtocol
+			config.ConfigRuntime.Server.Version = newServerVersion
+			config.ConfigRuntime.Server.Protocol = newServerProtocol
 
 			// update the file config
-			confctrl.ConfigDefault.Server.Version = newServerVersion
-			confctrl.ConfigDefault.Server.Protocol = newServerProtocol
+			config.ConfigDefault.Server.Version = newServerVersion
+			config.ConfigDefault.Server.Protocol = newServerProtocol
 
-			err := confctrl.SaveConfigDefault()
+			err := config.SaveConfigDefault()
 			if err != nil {
 				return fmt.Errorf("GetVersionProtocol: %v", err)
 			}

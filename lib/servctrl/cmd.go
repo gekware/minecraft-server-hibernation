@@ -9,8 +9,8 @@ import (
 	"strings"
 	"sync"
 
-	"msh/lib/debugctrl"
-	"msh/lib/osctrl"
+	"msh/lib/logger"
+	"msh/lib/opsys"
 )
 
 var ServTerm *servTerminal = &servTerminal{}
@@ -76,7 +76,7 @@ func Execute(command, origin string) (string, error) {
 			return "", fmt.Errorf("Execute: server not online")
 		}
 
-		debugctrl.Logln("terminal execute:"+colYel, com, colRes, "\t(origin:", origin+")")
+		logger.Logln("terminal execute:"+colYel, com, colRes, "\t(origin:", origin+")")
 
 		// write to cmd (\n indicates the enter key)
 		_, err := ServTerm.inPipe.Write([]byte(com + "\n"))
@@ -98,7 +98,7 @@ func loadTerm(dir, command string) error {
 
 	// launch as new process group so that signals (ex: SIGINT) are sent to msh
 	// (not relayed to the java server child process)
-	ServTerm.cmd.SysProcAttr = osctrl.NewProcGroupAttr()
+	ServTerm.cmd.SysProcAttr = opsys.NewProcGroupAttr()
 
 	// set terminal pipes
 	var err error
@@ -184,7 +184,7 @@ func printerOutErr() {
 				// Continue if line does not contain ": "
 				// (it does not adhere to expected log format or it is a multiline java exception)
 				if !strings.Contains(line, ": ") {
-					debugctrl.Logln("printerOutErr: line does not adhere to expected log format")
+					logger.Logln("printerOutErr: line does not adhere to expected log format")
 					continue
 				}
 
@@ -197,7 +197,7 @@ func printerOutErr() {
 					// player sends a chat message
 					case strings.HasPrefix(lineContent, "<") || strings.HasPrefix(lineContent, "["):
 						// just log that the line is a chat message
-						debugctrl.Logln("a chat message was sent")
+						logger.Logln("a chat message was sent")
 
 					// player joins the server
 					// using "UUID of player" since minecraft server v1.12.2 does not use "joined the game"
@@ -252,7 +252,7 @@ func waitForExit() {
 	ServTerm.inPipe.Close()
 
 	ServTerm.IsActive = false
-	debugctrl.Logln("waitForExit: terminal exited")
+	logger.Logln("waitForExit: terminal exited")
 
 	Stats.Status = "offline"
 	log.Print("*** MINECRAFT SERVER IS OFFLINE!")

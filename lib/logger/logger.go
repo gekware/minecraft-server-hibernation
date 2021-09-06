@@ -1,4 +1,4 @@
-package debugctrl
+package logger
 
 import (
 	"log"

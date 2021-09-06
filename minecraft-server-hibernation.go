@@ -6,12 +6,12 @@ import (
 	"net"
 	"os"
 
-	"msh/lib/confctrl"
-	"msh/lib/connctrl"
-	"msh/lib/debugctrl"
-	"msh/lib/inputctrl"
-	"msh/lib/osctrl"
-	"msh/lib/progctrl"
+	"msh/lib/config"
+	"msh/lib/input"
+	"msh/lib/logger"
+	"msh/lib/opsys"
+	"msh/lib/progmgr"
+	"msh/lib/servconn"
 	"msh/lib/utility"
 )
 
@@ -35,7 +35,7 @@ func main() {
 
 	// check is os is supported.
 	// OsSupported is the first function to be called
-	err := osctrl.OsSupported()
+	err := opsys.OsSupported()
 	if err != nil {
 		log.Println("main:", err.Error())
 		os.Exit(1)
@@ -44,40 +44,40 @@ func main() {
 	// load configuration from config file
 	// load server-icon-frozen.png if present
 	// LoadConfig is the second function to be called
-	err = confctrl.LoadConfig()
+	err = config.LoadConfig()
 	if err != nil {
 		log.Println("main:", err.Error())
 		os.Exit(1)
 	}
 
 	// launch update manager to check for updates
-	go progctrl.UpdateManager(version)
+	go progmgr.UpdateManager(version)
 	// wait for the initial update check
-	<-progctrl.CheckedUpdateC
+	<-progmgr.CheckedUpdateC
 
 	// listen for interrupt signals
-	go progctrl.InterruptListener()
+	go progmgr.InterruptListener()
 
 	// launch GetInput()
-	go inputctrl.GetInput()
+	go input.GetInput()
 
-	// open a listener on {confctrl.ListenHost}+":"+{Config.Msh.Port}
-	listener, err := net.Listen("tcp", confctrl.ListenHost+":"+confctrl.ConfigRuntime.Msh.Port)
+	// open a listener on {config.ListenHost}+":"+{config.Msh.Port}
+	listener, err := net.Listen("tcp", config.ListenHost+":"+config.ConfigRuntime.Msh.Port)
 	if err != nil {
 		log.Println("main:", err.Error())
 		os.Exit(1)
 	}
 
-	log.Println("*** listening for new clients to connect on " + confctrl.ListenHost + ":" + confctrl.ConfigRuntime.Msh.Port + " ...")
+	log.Println("*** listening for new clients to connect on " + config.ListenHost + ":" + config.ConfigRuntime.Msh.Port + " ...")
 
 	// infinite cycle to accept clients. when a clients connects it is passed to handleClientSocket()
 	for {
 		clientSocket, err := listener.Accept()
 		if err != nil {
-			debugctrl.Logln("main:", err.Error())
+			logger.Logln("main:", err.Error())
 			continue
 		}
 
-		go connctrl.HandleClientSocket(clientSocket)
+		go servconn.HandleClientSocket(clientSocket)
 	}
 }

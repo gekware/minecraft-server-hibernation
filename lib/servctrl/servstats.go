@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"msh/lib/debugctrl"
+	"msh/lib/logger"
 )
 
 type serverStats struct {
@@ -46,7 +46,7 @@ func init() {
 func printDataUsage() {
 	for ServTerm.IsActive {
 		if Stats.BytesToClients != 0 || Stats.BytesToServer != 0 {
-			debugctrl.Logln(fmt.Sprintf("data/s: %8.3f KB/s to clients | %8.3f KB/s to server", Stats.BytesToClients/1024, Stats.BytesToServer/1024))
+			logger.Logln(fmt.Sprintf("data/s: %8.3f KB/s to clients | %8.3f KB/s to server", Stats.BytesToClients/1024, Stats.BytesToServer/1024))
 
 			Stats.M.Lock()
 			Stats.BytesToClients = 0

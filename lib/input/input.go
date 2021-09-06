@@ -1,4 +1,4 @@
-package inputctrl
+package input
 
 import (
 	"bufio"
@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"msh/lib/debugctrl"
+	"msh/lib/logger"
 	"msh/lib/servctrl"
 )
 
@@ -21,7 +21,7 @@ func GetInput() {
 	for {
 		line, err = reader.ReadString('\n')
 		if err != nil {
-			debugctrl.Logln("GetInput:", err)
+			logger.Logln("GetInput:", err)
 			continue
 		}
 
@@ -34,7 +34,7 @@ func GetInput() {
 		}
 		lineSplit := strings.Split(line, " ")
 
-		debugctrl.Logln("GetInput: user input:", lineSplit[:])
+		logger.Logln("GetInput: user input:", lineSplit[:])
 
 		switch lineSplit[0] {
 		// target msh
@@ -49,13 +49,13 @@ func GetInput() {
 			case "start":
 				err = servctrl.StartMS()
 				if err != nil {
-					debugctrl.Logln("GetInput:", err)
+					logger.Logln("GetInput:", err)
 				}
 			case "freeze":
 				// stop minecraft server with no player check
 				err = servctrl.StopMS(false)
 				if err != nil {
-					debugctrl.Logln("GetInput:", err)
+					logger.Logln("GetInput:", err)
 				}
 			default:
 				fmt.Println("msh command error: unknown command (start - freeze)")
@@ -72,7 +72,7 @@ func GetInput() {
 			// just pass the command to the minecraft server terminal
 			_, err = servctrl.Execute(strings.Join(lineSplit[1:], " "), "user input")
 			if err != nil {
-				debugctrl.Logln("GetInput:", err)
+				logger.Logln("GetInput:", err)
 			}
 
 		// wrong target

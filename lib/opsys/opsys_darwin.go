@@ -1,6 +1,6 @@
 // +build darwin
 
-package osctrl
+package opsys
 
 import (
 	"syscall"
