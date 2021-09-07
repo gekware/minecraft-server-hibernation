@@ -2,8 +2,8 @@
   "Server": {
     "Folder": "{path/to/server/folder}",
     "FileName": "{server.jar}",
-    "Protocol": "755",
-    "Version": "1.17"
+    "Protocol": "756",
+    "Version": "1.17.1"
   },
   "Commands": {
     "StartServer": "java \u003cCommands.StartServerParam\u003e -jar \u003cServer.FileName\u003e nogui",
