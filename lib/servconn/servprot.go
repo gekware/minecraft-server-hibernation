@@ -20,6 +20,16 @@ const (
 	CLIENT_REQ_JOIN  = 2  // client request server join
 )
 
+var (
+	// reqInfoFlag and reqJoinFlag can be initialized here
+	// because config.ConfigRuntime.Msh.Port should already be initialized
+
+	// flag contained in INFO request packet (first packet of client)
+	reqInfoFlag = append(buildListenPortBytes(), byte(1))
+	// flag contained in JOIN request packet (first packet of client)
+	reqJoinFlag = append(buildListenPortBytes(), byte(2))
+)
+
 // buildMessage takes the format ("txt", "info") and a message to write to the client
 func buildMessage(format, message string) []byte {
 	var mountHeader = func(messageStr string) []byte {
@@ -99,35 +109,31 @@ func buildListenPortBytes() []byte {
 
 	listenPortUint16 := uint16(listenPortUint64)
 	listenPortBytes := make([]byte, 2)
-	binary.BigEndian.PutUint16(listenPortBytes, listenPortUint16) // 25555 ->	[99 211] / hex[63 D3]
+	binary.BigEndian.PutUint16(listenPortBytes, listenPortUint16) // 25555 -> [99 211] / hex[63 D3]
 
 	return listenPortBytes
 }
 
 // getReqType returns the request type (INFO or JOIN) and playerName (if it's a join request) of the client
 func getReqType(clientSocket net.Conn) (int, string, error) {
-	listenPortBytes := buildListenPortBytes()
-
 	reqPacket, err := getClientPacket(clientSocket)
 	if err != nil {
 		return CLIENT_REQ_ERROR, "", fmt.Errorf("getReqType: %v", err)
 	}
 
-	playerName, err := extractPlayerName(reqPacket, clientSocket)
-	if err != nil {
-		// this error is non-blocking, just log it
-		logger.Logln("getReqType:", err)
-	}
+	playerName := extractPlayerName(reqPacket, clientSocket)
 
 	switch {
-	case bytes.Contains(reqPacket, append(listenPortBytes, byte(1))):
+	case bytes.Contains(reqPacket, reqInfoFlag):
 		// client is requesting server info and ping
 		// client first packet:	[ ... x x x (listenPortBytes) 1 1 0] or [ ... x x x (listenPortBytes) 1 ]
+		//                      [           ^---reqInfoFlag---^    ]    [           ^---reqInfoFlag---^ ]
 		return CLIENT_REQ_INFO, playerName, nil
 
-	case bytes.Contains(reqPacket, append(listenPortBytes, byte(2))):
+	case bytes.Contains(reqPacket, reqJoinFlag):
 		// client is trying to join the server
-		// client first packet:	[ ... x x x (listenPortBytes) 2] or [ ... x x x (listenPortBytes) 2 x x x (player name)]
+		// client first packet:	[ ... x x x (listenPortBytes) 2 ] or [ ... x x x (listenPortBytes) 2 x x x (player name) ]
+		//                      [           ^---reqJoinFlag---^ ]    [           ^---reqJoinFlag---^                     ]
 		return CLIENT_REQ_JOIN, playerName, nil
 
 	default:
@@ -178,23 +184,23 @@ func getClientPacket(clientSocket net.Conn) ([]byte, error) {
 }
 
 // extractPlayerName retrieves the name of the player that is trying to connect.
-// "player unknown" is returned in case of error or [ (listenPortBytes) 2 ] not found
-func extractPlayerName(data []byte, clientSocket net.Conn) (string, error) {
-	listenPortBytes := buildListenPortBytes()
-
-	if !bytes.Contains(data, append(listenPortBytes, byte(2))) {
-		return "player unknown", nil // [ (listenPortBytes) 2 ] where not found, just return player unknown
+// "player unknown" is returned in case of error or reqJoinFlag not found
+func extractPlayerName(data []byte, clientSocket net.Conn) string {
+	// player name is found only in join request packet
+	if !bytes.Contains(data, reqJoinFlag) {
+		// reqJoinFlag not found
+		return "player unknown"
 	}
 
-	dataSplAft := bytes.SplitAfter(data, append(listenPortBytes, byte(2)))
+	dataSplAft := bytes.SplitAfter(data, reqJoinFlag)
 
 	if len(dataSplAft[1]) > 0 {
 		// packet join request and player name:
 		// [ ... x x x (listenPortBytes) 2 x x x (player name) ]
 		// [ ^---data----------------------------------------^ ]
-		// [                               ^--dataSplAft[1]--^ ]
+		// [           ^---reqJoinFlag---^ ^--dataSplAft[1]--^ ]
 
-		return string(dataSplAft[1][3:]), nil
+		return string(dataSplAft[1][3:])
 
 	} else {
 		// packet join request:
@@ -205,10 +211,12 @@ func extractPlayerName(data []byte, clientSocket net.Conn) (string, error) {
 
 		data, err := getClientPacket(clientSocket)
 		if err != nil {
-			return "player unknown", fmt.Errorf("getPlayerName: %v", err)
+			// this error is non-blocking, just log it
+			logger.Logln("extractPlayerName:", err)
+			return "player unknown"
 		}
 
-		return string(data[3:]), nil
+		return string(data[3:])
 	}
 }
 
