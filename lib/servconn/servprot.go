@@ -104,10 +104,41 @@ func buildListenPortBytes() []byte {
 	return listenPortBytes
 }
 
-// answerPing responds to the ping request
-func answerPing(clientSocket net.Conn) error {
+// getReqType returns the request type (INFO or JOIN) and playerName (if it's a join request) of the client
+func getReqType(clientSocket net.Conn) (int, string, error) {
+	listenPortBytes := buildListenPortBytes()
+
+	reqPacket, err := getClientPacket(clientSocket)
+	if err != nil {
+		return CLIENT_REQ_ERROR, "", fmt.Errorf("getReqType: %v", err)
+	}
+
+	playerName, err := extractPlayerName(reqPacket, clientSocket)
+	if err != nil {
+		// this error is non-blocking, just log it
+		logger.Logln("getReqType:", err)
+	}
+
+	switch {
+	case bytes.Contains(reqPacket, append(listenPortBytes, byte(1))):
+		// client is requesting server info and ping
+		// client first packet:	[ ... x x x (listenPortBytes) 1 1 0] or [ ... x x x (listenPortBytes) 1 ]
+		return CLIENT_REQ_INFO, playerName, nil
+
+	case bytes.Contains(reqPacket, append(listenPortBytes, byte(2))):
+		// client is trying to join the server
+		// client first packet:	[ ... x x x (listenPortBytes) 2] or [ ... x x x (listenPortBytes) 2 x x x (player name)]
+		return CLIENT_REQ_JOIN, playerName, nil
+
+	default:
+		return CLIENT_REQ_UNKN, "", fmt.Errorf("getReqType: client request unknown")
+	}
+}
+
+// getPing responds to the ping request
+func getPing(clientSocket net.Conn) error {
 	// read the first packet
-	pingData, err := readClientPacket(clientSocket)
+	pingData, err := getClientPacket(clientSocket)
 	if err != nil {
 		return fmt.Errorf("answerPingReq: error while reading [1] ping request: %v", err)
 	}
@@ -116,7 +147,7 @@ func answerPing(clientSocket net.Conn) error {
 	case bytes.Equal(pingData, []byte{1, 0}):
 		// packet is [1 0]
 		// read the second packet
-		pingData, err = readClientPacket(clientSocket)
+		pingData, err = getClientPacket(clientSocket)
 		if err != nil {
 			return fmt.Errorf("answerPingReq: error while reading [2] ping request: %v", err)
 		}
@@ -133,47 +164,29 @@ func answerPing(clientSocket net.Conn) error {
 	return nil
 }
 
-// getReqType returns the request type (INFO or JOIN) and playerName (if it's a join request) of the client
-func getReqType(clientSocket net.Conn) (int, string, error) {
-	listenPortBytes := buildListenPortBytes()
+// getClientPacket reads the client socket and returns only the bytes containing data
+func getClientPacket(clientSocket net.Conn) ([]byte, error) {
+	buf := make([]byte, 1024)
 
-	reqPacket, err := readClientPacket(clientSocket)
+	// read first packet
+	dataLen, err := clientSocket.Read(buf)
 	if err != nil {
-		return CLIENT_REQ_ERROR, "", fmt.Errorf("getReqType: %v", err)
+		return nil, fmt.Errorf("readClientPacket: error during clientSocket.Read()")
 	}
 
-	switch {
-	case bytes.Contains(reqPacket, append(listenPortBytes, byte(1))):
-		// client is requesting server info and ping
-		// client first packet:	[ ... x x x (listenPortBytes) 1 1 0] or [ ... x x x (listenPortBytes) 1 ]
-
-		return CLIENT_REQ_INFO, "", nil
-
-	case bytes.Contains(reqPacket, append(listenPortBytes, byte(2))):
-		// client is trying to join the server
-		// client first packet:	[ ... x x x (listenPortBytes) 2] or [ ... x x x (listenPortBytes) 2 x x x (player name)]
-
-		playerName, err := getPlayerName(clientSocket, reqPacket)
-		if err != nil {
-			// this error is non-blocking, just log it
-			logger.Logln("getReqType:", err)
-		}
-
-		return CLIENT_REQ_JOIN, playerName, nil
-
-	default:
-		return CLIENT_REQ_UNKN, "", fmt.Errorf("getReqType: client request unknown")
-	}
+	return buf[:dataLen], nil
 }
 
-// getPlayerName retrieves the name of the player that is trying to connect.
-// In case of error, "playerNameError" is returned as player name
-func getPlayerName(clientSocket net.Conn, data []byte) (string, error) {
-	if !bytes.Contains(data, append(buildListenPortBytes(), byte(2))) {
-		return "playerNameError", fmt.Errorf("getPlayerName: could not find [ (listenPortBytes) 2 ]")
+// extractPlayerName retrieves the name of the player that is trying to connect.
+// "player unknown" is returned in case of error or [ (listenPortBytes) 2 ] not found
+func extractPlayerName(data []byte, clientSocket net.Conn) (string, error) {
+	listenPortBytes := buildListenPortBytes()
+
+	if !bytes.Contains(data, append(listenPortBytes, byte(2))) {
+		return "player unknown", nil // [ (listenPortBytes) 2 ] where not found, just return player unknown
 	}
 
-	dataSplAft := bytes.SplitAfter(data, append(buildListenPortBytes(), byte(2)))
+	dataSplAft := bytes.SplitAfter(data, append(listenPortBytes, byte(2)))
 
 	if len(dataSplAft[1]) > 0 {
 		// packet join request and player name:
@@ -190,17 +203,17 @@ func getPlayerName(clientSocket net.Conn, data []byte) (string, error) {
 		// [ ^---data--------------------^ ] [       ^-data[3:]--^ ]
 		// [              dataSplitAft[1]-╝] [                     ]
 
-		data, err := readClientPacket(clientSocket)
+		data, err := getClientPacket(clientSocket)
 		if err != nil {
-			return "playerNameError", fmt.Errorf("getPlayerName: %v", err)
+			return "player unknown", fmt.Errorf("getPlayerName: %v", err)
 		}
 
 		return string(data[3:]), nil
 	}
 }
 
-// getVersionProtocol finds the serverVersion and serverProtocol in (data []byte) and writes them in the config file
-func getVersionProtocol(data []byte) error {
+// extractVersionProtocol finds the serverVersion and serverProtocol in (data []byte) and writes them in the config file
+func extractVersionProtocol(data []byte) error {
 	// if the above specified data contains "\"version\":{\"name\":\"" and ",\"protocol\":" --> extract the serverVersion and serverProtocol
 	if bytes.Contains(data, []byte("\"version\":{\"name\":\"")) && bytes.Contains(data, []byte(",\"protocol\":")) {
 		newServerVersion := string(bytes.Split(bytes.Split(data, []byte("\"version\":{\"name\":\""))[1], []byte("\","))[0])
@@ -230,17 +243,4 @@ func getVersionProtocol(data []byte) error {
 	}
 
 	return nil
-}
-
-// readClientPacket reads the client socket and returns only the bytes containing data
-func readClientPacket(clientSocket net.Conn) ([]byte, error) {
-	buf := make([]byte, 1024)
-
-	// read first packet
-	dataLen, err := clientSocket.Read(buf)
-	if err != nil {
-		return nil, fmt.Errorf("readClientPacket: error during clientSocket.Read()")
-	}
-
-	return buf[:dataLen], nil
 }

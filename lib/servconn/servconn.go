@@ -30,13 +30,13 @@ func HandleClientSocket(clientSocket net.Conn) {
 		case CLIENT_REQ_INFO:
 			// client requests "server info"
 
-			log.Printf("*** player unknown requested server info from %s:%s to %s:%s\n", clientAddress, config.ConfigRuntime.Msh.Port, config.TargetHost, config.TargetPort)
+			log.Printf("*** %s requested server info from %s:%s to %s:%s\n", playerName, clientAddress, config.ConfigRuntime.Msh.Port, config.TargetHost, config.TargetPort)
 
 			// answer to client with emulated server info
 			clientSocket.Write(buildMessage("info", config.ConfigRuntime.Msh.InfoHibernation))
 
 			// answer to client ping
-			err := answerPing(clientSocket)
+			err := getPing(clientSocket)
 			if err != nil {
 				logger.Logln("HandleClientSocket:", err)
 			}
@@ -72,13 +72,13 @@ func HandleClientSocket(clientSocket net.Conn) {
 		case CLIENT_REQ_INFO:
 			// client requests "INFO"
 
-			log.Printf("*** player unknown requested server info from %s:%s to %s:%s during server startup\n", clientAddress, config.ConfigRuntime.Msh.Port, config.TargetHost, config.TargetPort)
+			log.Printf("*** %s requested server info from %s:%s to %s:%s during server startup\n", playerName, clientAddress, config.ConfigRuntime.Msh.Port, config.TargetHost, config.TargetPort)
 
 			// answer to client with emulated server info
 			clientSocket.Write(buildMessage("info", config.ConfigRuntime.Msh.InfoStarting))
 
 			// answer to client ping
-			err = answerPing(clientSocket)
+			err = getPing(clientSocket)
 			if err != nil {
 				logger.Logln("HandleClientSocket:", err)
 			}

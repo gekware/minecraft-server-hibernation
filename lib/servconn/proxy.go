@@ -66,7 +66,7 @@ func forward(source, destination net.Conn, isServerToClient bool, stopC chan boo
 
 		// version/protocol are only found in serverToClient connection in the first buffer that is read
 		if firstBuf && isServerToClient {
-			err = getVersionProtocol(data[:dataLen])
+			err = extractVersionProtocol(data[:dataLen])
 			if err != nil {
 				logger.Logln("Forward:", err)
 			}
