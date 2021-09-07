@@ -1,7 +1,6 @@
 package servconn
 
 import (
-	"bytes"
 	"log"
 	"net"
 	"strings"
@@ -32,10 +31,10 @@ func HandleClientSocket(clientSocket net.Conn) {
 
 		bufferData := buffer[:dataLen]
 
-		// client is requesting server info and ping
-		// client first packet:	[... x x x 1 1 0]	or	[... x x x 1])
+		switch getReqType(bufferData) {
+		case CLIENT_REQ_INFO:
+			// client requests "server info"
 
-		if bufferData[dataLen-1] == 0 || bufferData[dataLen-1] == 1 {
 			log.Printf("*** player unknown requested server info from %s:%s to %s:%s\n", clientAddress, config.ConfigRuntime.Msh.Port, config.TargetHost, config.TargetPort)
 
 			// answer to client with emulated server info
@@ -46,12 +45,10 @@ func HandleClientSocket(clientSocket net.Conn) {
 			if err != nil {
 				logger.Logln("HandleClientSocket:", err)
 			}
-		}
 
-		// client is trying to join the server
-		// client first packet:	[ ... x x x (listenPortBytes) 2] or [ ... x x x (listenPortBytes) 2 (player name)]
+		case CLIENT_REQ_JOIN:
+			// client requests "server join"
 
-		if bytes.Contains(bufferData, append(buildListenPortBytes(), byte(2))) {
 			playerName := getPlayerName(clientSocket, bufferData)
 
 			// server status == "offline" --> issue StartMS()
@@ -83,10 +80,10 @@ func HandleClientSocket(clientSocket net.Conn) {
 
 		bufferData := buffer[:dataLen]
 
-		// client is requesting server info and ping
-		// client first packet:	[... x x x 1 1 0]	or	[... x x x 1])
+		switch getReqType(bufferData) {
+		case CLIENT_REQ_INFO:
+			// client requests "server info"
 
-		if buffer[dataLen-1] == 0 || buffer[dataLen-1] == 1 {
 			log.Printf("*** player unknown requested server info from %s:%s to %s:%s during server startup\n", clientAddress, config.ConfigRuntime.Msh.Port, config.TargetHost, config.TargetPort)
 
 			// answer to client with emulated server info
@@ -97,12 +94,10 @@ func HandleClientSocket(clientSocket net.Conn) {
 			if err != nil {
 				logger.Logln("HandleClientSocket:", err)
 			}
-		}
 
-		// client is trying to join the server
-		// client first packet:	[ ... x x x (listenPortBytes) 2] or [ ... x x x (listenPortBytes) 2 (player name)]
+		case CLIENT_REQ_JOIN:
+			// client requests "server join"
 
-		if bytes.Contains(bufferData, append(buildListenPortBytes(), byte(2))) {
 			playerName := getPlayerName(clientSocket, bufferData)
 
 			// log to msh console and answer to client with text in the loadscreen

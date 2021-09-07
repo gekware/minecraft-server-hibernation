@@ -13,6 +13,12 @@ import (
 	"msh/lib/logger"
 )
 
+const (
+	CLIENT_REQ_UNKN = 0
+	CLIENT_REQ_INFO = 1
+	CLIENT_REQ_JOIN = 2
+)
+
 // buildMessage takes the format ("txt", "info") and a message to write to the client
 func buildMessage(format, message string) []byte {
 	var mountHeader = func(messageStr string) []byte {
@@ -187,5 +193,23 @@ func getPlayerName(clientSocket net.Conn, bufferData []byte) string {
 		}
 
 		return string(buffer[3:dataLen])
+	}
+}
+
+// getReqType returns the request type of the client first packet (info or join)
+func getReqType(bufferData []byte) int {
+	switch {
+	case bufferData[len(bufferData)-1] == 0 || bufferData[len(bufferData)-1] == 1:
+		// client is requesting server info and ping
+		// client first packet:	[... x x x 1 1 0] or [... x x x 1]
+		return CLIENT_REQ_INFO
+
+	case bytes.Contains(bufferData, append(buildListenPortBytes(), byte(2))):
+		// client is trying to join the server
+		// client first packet:	[ ... x x x (listenPortBytes) 2] or [ ... x x x (listenPortBytes) 2 (player name)]
+		return CLIENT_REQ_JOIN
+
+	default:
+		return CLIENT_REQ_UNKN
 	}
 }
