@@ -82,6 +82,21 @@ func buildMessage(format, message string) []byte {
 	return messageHeader
 }
 
+// buildListenPortBytes calculates listen port in BigEndian bytes
+func buildListenPortBytes() []byte {
+	listenPortUint64, err := strconv.ParseUint(config.ConfigRuntime.Msh.Port, 10, 16) // bitSize: 16 -> since it will be converted to Uint16
+	if err != nil {
+		logger.Logln("buildListenPortBytes: error during ListenPort conversion to uint64")
+		return nil
+	}
+
+	listenPortUint16 := uint16(listenPortUint64)
+	listenPortBytes := make([]byte, 2)
+	binary.BigEndian.PutUint16(listenPortBytes, listenPortUint16) // 25555 ->	[99 211] / hex[63 D3]
+
+	return listenPortBytes
+}
+
 // answerPingReq responds to the ping request
 func answerPingReq(clientSocket net.Conn) error {
 	req := make([]byte, 1024)
@@ -92,17 +107,18 @@ func answerPingReq(clientSocket net.Conn) error {
 		return fmt.Errorf("answerPingReq: error while reading [1] ping request: %v", err)
 	}
 
-	// if req == [1, 0] --> read again (the correct ping byte array has still to arrive)
 	if bytes.Equal(req[:dataLen], []byte{1, 0}) {
+		// packet is [1 0]
+		// read the second packet
 		dataLen, err = clientSocket.Read(req)
 		if err != nil {
 			return fmt.Errorf("answerPingReq: error while reading [2] ping request: %v", err)
 		}
 	} else if bytes.Equal(req[:2], []byte{1, 0}) {
-		// sometimes the [1 0] is at the beginning and needs to be removed.
-		// Example: [1 0 9 1 0 0 0 0 0 89 73 114] -> [9 1 0 0 0 0 0 89 73 114]
+		// packet is [1 0 9 1 0 0 0 0 0 89 73 114]
+		// remove first 2 bytes: [1 0 9 1 0 0 0 0 0 89 73 114] -> [9 1 0 0 0 0 0 89 73 114]
 		req = req[2:dataLen]
-		dataLen = dataLen - 2
+		dataLen -= 2
 	}
 
 	// answer the ping request
@@ -144,22 +160,9 @@ func getVersionProtocol(data []byte) error {
 	return nil
 }
 
-// getListenPortBytes calculates listen port in BigEndian bytes
-func getListenPortBytes() []byte {
-	listenPortUint64, err := strconv.ParseUint(config.ConfigRuntime.Msh.Port, 10, 16) // bitSize: 16 -> since it will be converted to Uint16
-	if err != nil {
-		logger.Logln("handleClientSocket: error during ListenPort conversion to uint64")
-	}
-	listenPortUint16 := uint16(listenPortUint64)
-	listenPortBytes := make([]byte, 2)
-	binary.BigEndian.PutUint16(listenPortBytes, listenPortUint16) // 25555 ->	[99 211] / hex[63 D3]
-
-	return listenPortBytes
-}
-
 // getPlayerName retrieves the name of the player that is trying to connect
 func getPlayerName(clientSocket net.Conn, bufferData []byte) string {
-	bufSplitAft := bytes.SplitAfter(bufferData, append(getListenPortBytes(), byte(2)))
+	bufSplitAft := bytes.SplitAfter(bufferData, append(buildListenPortBytes(), byte(2)))
 
 	if len(bufSplitAft[1]) != 0 {
 		// packet join request and player name:
@@ -179,7 +182,7 @@ func getPlayerName(clientSocket net.Conn, bufferData []byte) string {
 		buffer := make([]byte, 1024)
 		dataLen, err := clientSocket.Read(buffer)
 		if err != nil {
-			logger.Logln("handleClientSocket: error during clientSocket.Read() 2")
+			logger.Logln("getPlayerName: error during clientSocket.Read()")
 			return ""
 		}
 

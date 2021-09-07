@@ -2,7 +2,6 @@ package servconn
 
 import (
 	"bytes"
-	"fmt"
 	"log"
 	"net"
 	"strings"
@@ -27,7 +26,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 		// read first packet
 		dataLen, err := clientSocket.Read(buffer)
 		if err != nil {
-			logger.Logln("handleClientSocket: error during clientSocket.Read() 1")
+			logger.Logln("HandleClientSocket: error during clientSocket.Read()")
 			return
 		}
 
@@ -45,14 +44,14 @@ func HandleClientSocket(clientSocket net.Conn) {
 			// answer to client with ping
 			err = answerPingReq(clientSocket)
 			if err != nil {
-				logger.Logln("handleClientSocket:", err)
+				logger.Logln("HandleClientSocket:", err)
 			}
 		}
 
 		// client is trying to join the server
 		// client first packet:	[ ... x x x (listenPortBytes) 2] or [ ... x x x (listenPortBytes) 2 (player name)]
 
-		if bytes.Contains(bufferData, append(getListenPortBytes(), byte(2))) {
+		if bytes.Contains(bufferData, append(buildListenPortBytes(), byte(2))) {
 			playerName := getPlayerName(clientSocket, bufferData)
 
 			// server status == "offline" --> issue StartMS()
@@ -69,7 +68,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 		}
 
 		// close the client connection
-		logger.Logln(fmt.Sprintf("closing connection for: %s", clientAddress))
+		logger.Logln("closing connection for:", clientAddress)
 		clientSocket.Close()
 
 	case "starting":
@@ -78,7 +77,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 		// read first packet
 		dataLen, err := clientSocket.Read(buffer)
 		if err != nil {
-			logger.Logln("handleClientSocket: error during clientSocket.Read() 1")
+			logger.Logln("HandleClientSocket: error during clientSocket.Read()")
 			return
 		}
 
@@ -96,14 +95,14 @@ func HandleClientSocket(clientSocket net.Conn) {
 			// answer to client with ping
 			err = answerPingReq(clientSocket)
 			if err != nil {
-				logger.Logln("handleClientSocket:", err)
+				logger.Logln("HandleClientSocket:", err)
 			}
 		}
 
 		// client is trying to join the server
 		// client first packet:	[ ... x x x (listenPortBytes) 2] or [ ... x x x (listenPortBytes) 2 (player name)]
 
-		if bytes.Contains(bufferData, append(getListenPortBytes(), byte(2))) {
+		if bytes.Contains(bufferData, append(buildListenPortBytes(), byte(2))) {
 			playerName := getPlayerName(clientSocket, bufferData)
 
 			// log to msh console and answer to client with text in the loadscreen
@@ -112,14 +111,14 @@ func HandleClientSocket(clientSocket net.Conn) {
 		}
 
 		// close the client connection
-		logger.Logln(fmt.Sprintf("closing connection for: %s", clientAddress))
+		logger.Logln("closing connection for:", clientAddress)
 		clientSocket.Close()
 
 	case "online":
 		// just open a connection with the server and connect it with the client
 		serverSocket, err := net.Dial("tcp", config.TargetHost+":"+config.TargetPort)
 		if err != nil {
-			logger.Logln("handleClientSocket: error during serverSocket.Dial()")
+			logger.Logln("HandleClientSocket: error during serverSocket.Dial()")
 			// report dial error to client with text in the loadscreen
 			clientSocket.Write(buildMessage("txt", "can't connect to server... check if minecraft server is running and set the correct targetPort"))
 			return
