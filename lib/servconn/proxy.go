@@ -19,7 +19,7 @@ func forward(source, destination net.Conn, isServerToClient bool, stopC chan boo
 	data := make([]byte, 1024)
 
 	// set to false after the first for cycle
-	firstBuffer := true
+	firstBuf := true
 
 	for {
 		// if stopC receives true, close the source connection, otherwise continue
@@ -65,14 +65,14 @@ func forward(source, destination net.Conn, isServerToClient bool, stopC chan boo
 		}
 
 		// version/protocol are only found in serverToClient connection in the first buffer that is read
-		if firstBuffer && isServerToClient {
+		if firstBuf && isServerToClient {
 			err = getVersionProtocol(data[:dataLen])
 			if err != nil {
 				logger.Logln("Forward:", err)
 			}
 
-			// first cycle is finished, set firstBuffer = false
-			firstBuffer = false
+			// first cycle is finished, set firstBuf = false
+			firstBuf = false
 		}
 	}
 }
