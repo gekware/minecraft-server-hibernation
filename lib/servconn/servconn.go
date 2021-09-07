@@ -20,13 +20,13 @@ func HandleClientSocket(clientSocket net.Conn) {
 
 	switch servctrl.Stats.Status {
 	case servctrl.STATUS_OFFLINE:
-		clientPacket, err := readClientPacket(clientSocket)
+		reqType, playerName, err := getReqType(clientSocket)
 		if err != nil {
 			logger.Logln("HandleClientSocket:", err)
 			return
 		}
 
-		switch getReqType(clientPacket) {
+		switch reqType {
 		case CLIENT_REQ_INFO:
 			// client requests "server info"
 
@@ -36,7 +36,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 			clientSocket.Write(buildMessage("info", config.ConfigRuntime.Msh.InfoHibernation))
 
 			// answer to client ping
-			err = answerPing(clientSocket)
+			err := answerPing(clientSocket)
 			if err != nil {
 				logger.Logln("HandleClientSocket:", err)
 			}
@@ -44,21 +44,14 @@ func HandleClientSocket(clientSocket net.Conn) {
 		case CLIENT_REQ_JOIN:
 			// client requests "server join"
 
-			playerName, err := getPlayerName(clientSocket, clientPacket)
-			if err != nil {
-				logger.Logln("HandleClientSocket:", err)
-				// this error is non-blocking, use an error string as playerName
-				playerName = "playerNameError"
-			}
-
-			// server status == OFFLINE --> issue StartMS()
-			err = servctrl.StartMS()
+			// server is OFFLINE --> issue StartMS()
+			err := servctrl.StartMS()
 			if err != nil {
 				// log to msh console and warn client with text in the loadscreen
 				logger.Logln("HandleClientSocket:", err)
 				clientSocket.Write(buildMessage("txt", "An error occurred while starting the server: check the msh log"))
 			} else {
-				// log to msh console and answer to client with text in the loadscreen
+				// log to msh console and answer client with text in the loadscreen
 				log.Printf("*** %s tried to join from %s:%s to %s:%s\n", playerName, clientAddress, config.ConfigRuntime.Msh.Port, config.TargetHost, config.TargetPort)
 				clientSocket.Write(buildMessage("txt", "Server start command issued. Please wait... "+servctrl.Stats.LoadProgress))
 			}
@@ -69,15 +62,15 @@ func HandleClientSocket(clientSocket net.Conn) {
 		clientSocket.Close()
 
 	case servctrl.STATUS_STARTING:
-		clientPacket, err := readClientPacket(clientSocket)
+		reqType, playerName, err := getReqType(clientSocket)
 		if err != nil {
 			logger.Logln("HandleClientSocket:", err)
 			return
 		}
 
-		switch getReqType(clientPacket) {
+		switch reqType {
 		case CLIENT_REQ_INFO:
-			// client requests "server info"
+			// client requests "INFO"
 
 			log.Printf("*** player unknown requested server info from %s:%s to %s:%s during server startup\n", clientAddress, config.ConfigRuntime.Msh.Port, config.TargetHost, config.TargetPort)
 
@@ -91,14 +84,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 			}
 
 		case CLIENT_REQ_JOIN:
-			// client requests "server join"
-
-			playerName, err := getPlayerName(clientSocket, clientPacket)
-			if err != nil {
-				logger.Logln("HandleClientSocket:", err)
-				// this error is non-blocking, use an error string as playerName
-				playerName = "playerNameError"
-			}
+			// client requests "JOIN"
 
 			// log to msh console and answer to client with text in the loadscreen
 			log.Printf("*** %s tried to join from %s:%s to %s:%s during server startup\n", playerName, clientAddress, config.ConfigRuntime.Msh.Port, config.TargetHost, config.TargetPort)

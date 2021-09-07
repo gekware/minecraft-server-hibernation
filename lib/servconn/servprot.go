@@ -14,9 +14,10 @@ import (
 )
 
 const (
-	CLIENT_REQ_UNKN = 0
-	CLIENT_REQ_INFO = 1
-	CLIENT_REQ_JOIN = 2
+	CLIENT_REQ_ERROR = -1 // error while analyzing client request
+	CLIENT_REQ_UNKN  = 0  // client request unknown
+	CLIENT_REQ_INFO  = 1  // client request server info
+	CLIENT_REQ_JOIN  = 2  // client request server join
 )
 
 // buildMessage takes the format ("txt", "info") and a message to write to the client
@@ -132,6 +133,72 @@ func answerPing(clientSocket net.Conn) error {
 	return nil
 }
 
+// getReqType returns the request type (INFO or JOIN) and playerName (if it's a join request) of the client
+func getReqType(clientSocket net.Conn) (int, string, error) {
+	listenPortBytes := buildListenPortBytes()
+
+	reqPacket, err := readClientPacket(clientSocket)
+	if err != nil {
+		return CLIENT_REQ_ERROR, "", fmt.Errorf("getReqType: %v", err)
+	}
+
+	switch {
+	case bytes.Contains(reqPacket, append(listenPortBytes, byte(1))):
+		// client is requesting server info and ping
+		// client first packet:	[ ... x x x (listenPortBytes) 1 1 0] or [ ... x x x (listenPortBytes) 1 ]
+
+		return CLIENT_REQ_INFO, "", nil
+
+	case bytes.Contains(reqPacket, append(listenPortBytes, byte(2))):
+		// client is trying to join the server
+		// client first packet:	[ ... x x x (listenPortBytes) 2] or [ ... x x x (listenPortBytes) 2 x x x (player name)]
+
+		playerName, err := getPlayerName(clientSocket, reqPacket)
+		if err != nil {
+			// this error is non-blocking, just log it
+			logger.Logln("getReqType:", err)
+		}
+
+		return CLIENT_REQ_JOIN, playerName, nil
+
+	default:
+		return CLIENT_REQ_UNKN, "", fmt.Errorf("getReqType: client request unknown")
+	}
+}
+
+// getPlayerName retrieves the name of the player that is trying to connect.
+// In case of error, "playerNameError" is returned as player name
+func getPlayerName(clientSocket net.Conn, data []byte) (string, error) {
+	if !bytes.Contains(data, append(buildListenPortBytes(), byte(2))) {
+		return "playerNameError", fmt.Errorf("getPlayerName: could not find [ (listenPortBytes) 2 ]")
+	}
+
+	dataSplAft := bytes.SplitAfter(data, append(buildListenPortBytes(), byte(2)))
+
+	if len(dataSplAft[1]) > 0 {
+		// packet join request and player name:
+		// [ ... x x x (listenPortBytes) 2 x x x (player name) ]
+		// [ ^---data----------------------------------------^ ]
+		// [                               ^--dataSplAft[1]--^ ]
+
+		return string(dataSplAft[1][3:]), nil
+
+	} else {
+		// packet join request:
+		// (to get player name, a further packet read is required)
+		// [ ... x x x (listenPortBytes) 2 ] [ x x x (player name) ]
+		// [ ^---data--------------------^ ] [       ^-data[3:]--^ ]
+		// [              dataSplitAft[1]-╝] [                     ]
+
+		data, err := readClientPacket(clientSocket)
+		if err != nil {
+			return "playerNameError", fmt.Errorf("getPlayerName: %v", err)
+		}
+
+		return string(data[3:]), nil
+	}
+}
+
 // getVersionProtocol finds the serverVersion and serverProtocol in (data []byte) and writes them in the config file
 func getVersionProtocol(data []byte) error {
 	// if the above specified data contains "\"version\":{\"name\":\"" and ",\"protocol\":" --> extract the serverVersion and serverProtocol
@@ -163,54 +230,6 @@ func getVersionProtocol(data []byte) error {
 	}
 
 	return nil
-}
-
-// getPlayerName retrieves the name of the player that is trying to connect
-func getPlayerName(clientSocket net.Conn, data []byte) (string, error) {
-	dataSplAft := bytes.SplitAfter(data, append(buildListenPortBytes(), byte(2)))
-
-	if len(dataSplAft[1]) != 0 {
-		// packet join request and player name:
-		// [ ... x x x (listenPortBytes) 2 x x x (player name) ]
-		// [ ^---data----------------------------------------^ ]
-		// [                               ^--dataSplAft[1]--^ ]
-
-		return string(dataSplAft[1][3:]), nil
-
-	} else {
-		// packet join request:
-		// (to get player name, a further packet read is required)
-		// [ ... x x x (listenPortBytes) 2 ] [ x x x (player name) ]
-		// [ ^---data--------------------^ ] [       ^-data[3:]--^ ]
-		// [              dataSplitAft[1]-╝] [                     ]
-
-		data, err := readClientPacket(clientSocket)
-		if err != nil {
-			return "", fmt.Errorf("getPlayerName: %v", err)
-		}
-
-		return string(data[3:]), nil
-	}
-}
-
-// getReqType returns the request type of the client first packet (info or join)
-func getReqType(data []byte) int {
-	listenPortBytes := buildListenPortBytes()
-
-	switch {
-	case bytes.Contains(data, append(listenPortBytes, byte(1))):
-		// client is requesting server info and ping
-		// client first packet:	[ ... x x x (listenPortBytes) 1 1 0] or [ ... x x x (listenPortBytes) 1 ]
-		return CLIENT_REQ_INFO
-
-	case bytes.Contains(data, append(listenPortBytes, byte(2))):
-		// client is trying to join the server
-		// client first packet:	[ ... x x x (listenPortBytes) 2] or [ ... x x x (listenPortBytes) 2 x x x (player name)]
-		return CLIENT_REQ_JOIN
-
-	default:
-		return CLIENT_REQ_UNKN
-	}
 }
 
 // readClientPacket reads the client socket and returns only the bytes containing data
