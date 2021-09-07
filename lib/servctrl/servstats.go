@@ -8,6 +8,9 @@ import (
 	"msh/lib/logger"
 )
 
+// Stats contains the info relative to server
+var Stats *serverStats
+
 type serverStats struct {
 	M *sync.Mutex
 	// ServerStatus represent the status of the minecraft server ("offline", "starting", "online", "stopping")
@@ -24,9 +27,6 @@ type serverStats struct {
 	// BytesToServer tracks bytes/s clients->server
 	BytesToServer float64
 }
-
-// Stats contains the info relative to server
-var Stats *serverStats
 
 func init() {
 	Stats = &serverStats{

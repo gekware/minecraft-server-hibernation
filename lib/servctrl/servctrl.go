@@ -12,7 +12,7 @@ import (
 // StartMS starts the minecraft server
 func StartMS() error {
 	// start server terminal
-	err := CmdStart(config.ConfigRuntime.Server.Folder, config.ConfigRuntime.Commands.StartServer)
+	err := cmdStart(config.ConfigRuntime.Server.Folder, config.ConfigRuntime.Commands.StartServer)
 	if err != nil {
 		return fmt.Errorf("StartMS: error starting minecraft server: %v", err)
 	}
@@ -42,7 +42,7 @@ func StopMS(playersCheck bool) error {
 		atomic.AddInt32(&Stats.StopMSRequests, -1)
 
 		// check how many players are on the server
-		playerCount, isFromServer := CountPlayerSafe()
+		playerCount, isFromServer := countPlayerSafe()
 		logger.Logln(playerCount, "online players - number got from server:", isFromServer)
 		if playerCount > 0 {
 			return fmt.Errorf("StopMS: server is not empty")

@@ -35,33 +35,6 @@ const (
 	colYel string = "\033[33m"
 )
 
-// CmdStart starts a new terminal (non-blocking) and returns a servTerm object
-func CmdStart(dir, command string) error {
-	err := loadTerm(dir, command)
-	if err != nil {
-		return fmt.Errorf("loadTerm: %v", err)
-	}
-
-	go printerOutErr()
-
-	err = ServTerm.cmd.Start()
-	if err != nil {
-		return fmt.Errorf("CmdStart: %v", err)
-	}
-
-	go waitForExit()
-
-	go printDataUsage()
-
-	// initialization
-	Stats.Status = "starting"
-	Stats.LoadProgress = "0%"
-	Stats.PlayerCount = 0
-	log.Print("*** MINECRAFT SERVER IS STARTING!")
-
-	return nil
-}
-
 // Execute executes a command on ServTerm
 // [non-blocking]
 func Execute(command, origin string) (string, error) {
@@ -86,6 +59,33 @@ func Execute(command, origin string) (string, error) {
 	}
 
 	return <-lastLine, nil
+}
+
+// cmdStart starts a new terminal (non-blocking) and returns a servTerm object
+func cmdStart(dir, command string) error {
+	err := loadTerm(dir, command)
+	if err != nil {
+		return fmt.Errorf("loadTerm: %v", err)
+	}
+
+	go printerOutErr()
+
+	err = ServTerm.cmd.Start()
+	if err != nil {
+		return fmt.Errorf("CmdStart: %v", err)
+	}
+
+	go waitForExit()
+
+	go printDataUsage()
+
+	// initialization
+	Stats.Status = "starting"
+	Stats.LoadProgress = "0%"
+	Stats.PlayerCount = 0
+	log.Print("*** MINECRAFT SERVER IS STARTING!")
+
+	return nil
 }
 
 // loadTerm loads cmd/pipes into ServTerm
