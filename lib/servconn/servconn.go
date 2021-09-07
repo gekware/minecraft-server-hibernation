@@ -20,18 +20,13 @@ func HandleClientSocket(clientSocket net.Conn) {
 
 	switch servctrl.Stats.Status {
 	case "offline":
-		buffer := make([]byte, 1024)
-
-		// read first packet
-		dataLen, err := clientSocket.Read(buffer)
+		clientFirstPacket, err := readClientFirstPacket(clientSocket)
 		if err != nil {
-			logger.Logln("HandleClientSocket: error during clientSocket.Read()")
+			logger.Logln("HandleClientSocket:", err)
 			return
 		}
 
-		bufferData := buffer[:dataLen]
-
-		switch getReqType(bufferData) {
+		switch getReqType(clientFirstPacket) {
 		case CLIENT_REQ_INFO:
 			// client requests "server info"
 
@@ -49,7 +44,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 		case CLIENT_REQ_JOIN:
 			// client requests "server join"
 
-			playerName := getPlayerName(clientSocket, bufferData)
+			playerName := getPlayerName(clientSocket, clientFirstPacket)
 
 			// server status == "offline" --> issue StartMS()
 			err = servctrl.StartMS()
@@ -69,18 +64,13 @@ func HandleClientSocket(clientSocket net.Conn) {
 		clientSocket.Close()
 
 	case "starting":
-		buffer := make([]byte, 1024)
-
-		// read first packet
-		dataLen, err := clientSocket.Read(buffer)
+		clientFirstPacket, err := readClientFirstPacket(clientSocket)
 		if err != nil {
-			logger.Logln("HandleClientSocket: error during clientSocket.Read()")
+			logger.Logln("HandleClientSocket:", err)
 			return
 		}
 
-		bufferData := buffer[:dataLen]
-
-		switch getReqType(bufferData) {
+		switch getReqType(clientFirstPacket) {
 		case CLIENT_REQ_INFO:
 			// client requests "server info"
 
@@ -98,7 +88,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 		case CLIENT_REQ_JOIN:
 			// client requests "server join"
 
-			playerName := getPlayerName(clientSocket, bufferData)
+			playerName := getPlayerName(clientSocket, clientFirstPacket)
 
 			// log to msh console and answer to client with text in the loadscreen
 			log.Printf("*** %s tried to join from %s:%s to %s:%s during server startup\n", playerName, clientAddress, config.ConfigRuntime.Msh.Port, config.TargetHost, config.TargetPort)
