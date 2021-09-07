@@ -167,7 +167,7 @@ func getVersionProtocol(data []byte) error {
 }
 
 // getPlayerName retrieves the name of the player that is trying to connect
-func getPlayerName(clientSocket net.Conn, data []byte) string {
+func getPlayerName(clientSocket net.Conn, data []byte) (string, error) {
 	bufSplitAft := bytes.SplitAfter(data, append(buildListenPortBytes(), byte(2)))
 
 	if len(bufSplitAft[1]) != 0 {
@@ -176,7 +176,7 @@ func getPlayerName(clientSocket net.Conn, data []byte) string {
 		// [ ^---data----------------------------------------^ ]
 		// [                               ^-bufSplitAft[1]--^ ]
 
-		return string(bufSplitAft[1][3:len(bufSplitAft[1])])
+		return string(bufSplitAft[1][3:len(bufSplitAft[1])]), nil
 
 	} else {
 		// packet join request:
@@ -188,11 +188,11 @@ func getPlayerName(clientSocket net.Conn, data []byte) string {
 		buf := make([]byte, 1024)
 		dataLen, err := clientSocket.Read(buf)
 		if err != nil {
-			logger.Logln("getPlayerName: error during clientSocket.Read()")
-			return ""
+			logger.Logln()
+			return "", fmt.Errorf("getPlayerName: error during clientSocket.Read()")
 		}
 
-		return string(buf[3:dataLen])
+		return string(buf[3:dataLen]), nil
 	}
 }
 

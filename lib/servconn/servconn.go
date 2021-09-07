@@ -44,7 +44,12 @@ func HandleClientSocket(clientSocket net.Conn) {
 		case CLIENT_REQ_JOIN:
 			// client requests "server join"
 
-			playerName := getPlayerName(clientSocket, clientFirstPacket)
+			playerName, err := getPlayerName(clientSocket, clientFirstPacket)
+			if err != nil {
+				logger.Logln("HandleClientSocket:", err)
+				// this error is non-blocking, use an error string as playerName
+				playerName = "playerNameError"
+			}
 
 			// server status == "offline" --> issue StartMS()
 			err = servctrl.StartMS()
@@ -88,7 +93,12 @@ func HandleClientSocket(clientSocket net.Conn) {
 		case CLIENT_REQ_JOIN:
 			// client requests "server join"
 
-			playerName := getPlayerName(clientSocket, clientFirstPacket)
+			playerName, err := getPlayerName(clientSocket, clientFirstPacket)
+			if err != nil {
+				logger.Logln("HandleClientSocket:", err)
+				// this error is non-blocking, use an error string as playerName
+				playerName = "playerNameError"
+			}
 
 			// log to msh console and answer to client with text in the loadscreen
 			log.Printf("*** %s tried to join from %s:%s to %s:%s during server startup\n", playerName, clientAddress, config.ConfigRuntime.Msh.Port, config.TargetHost, config.TargetPort)
