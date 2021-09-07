@@ -11,10 +11,17 @@ import (
 // Stats contains the info relative to server
 var Stats *serverStats
 
+const (
+	OFFLINE  = 0
+	STARTING = 1
+	ONLINE   = 2
+	STOPPING = 3
+)
+
 type serverStats struct {
 	M *sync.Mutex
-	// ServerStatus represent the status of the minecraft server ("offline", "starting", "online", "stopping")
-	Status string
+	// ServerStatus represent the status of the minecraft server (OFFLINE, STARTING, ONLINE, STOPPING)
+	Status int
 	// PlayerCount keeps track of players connected to the server
 	PlayerCount int
 	// StopMSRequests keeps track of how many times StopMSRequest() has been called in the last {TimeBeforeStoppingEmptyServer} seconds.
@@ -31,7 +38,7 @@ type serverStats struct {
 func init() {
 	Stats = &serverStats{
 		M:              &sync.Mutex{},
-		Status:         "offline",
+		Status:         OFFLINE,
 		PlayerCount:    0,
 		StopMSRequests: 0,
 		LoadProgress:   "0%",

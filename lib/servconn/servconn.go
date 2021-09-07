@@ -19,7 +19,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 	clientAddress := clientSocket.RemoteAddr().String()[:li]
 
 	switch servctrl.Stats.Status {
-	case "offline":
+	case servctrl.OFFLINE:
 		clientFirstPacket, err := readClientFirstPacket(clientSocket)
 		if err != nil {
 			logger.Logln("HandleClientSocket:", err)
@@ -51,7 +51,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 				playerName = "playerNameError"
 			}
 
-			// server status == "offline" --> issue StartMS()
+			// server status == OFFLINE --> issue StartMS()
 			err = servctrl.StartMS()
 			if err != nil {
 				// log to msh console and warn client with text in the loadscreen
@@ -68,7 +68,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 		logger.Logln("closing connection for:", clientAddress)
 		clientSocket.Close()
 
-	case "starting":
+	case servctrl.STARTING:
 		clientFirstPacket, err := readClientFirstPacket(clientSocket)
 		if err != nil {
 			logger.Logln("HandleClientSocket:", err)
@@ -109,7 +109,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 		logger.Logln("closing connection for:", clientAddress)
 		clientSocket.Close()
 
-	case "online":
+	case servctrl.ONLINE:
 		// just open a connection with the server and connect it with the client
 		serverSocket, err := net.Dial("tcp", config.TargetHost+":"+config.TargetPort)
 		if err != nil {

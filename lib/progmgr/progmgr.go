@@ -38,13 +38,15 @@ func InterruptListener() {
 		time.Sleep(time.Second)
 
 		switch servctrl.Stats.Status {
-		case "stopping":
+		case servctrl.STOPPING:
 			// if server is correctly stopping, wait for minecraft server to exit
 			logger.Logln("InterruptListener: waiting for minecraft server terminal to exit (server is stopping)")
 			servctrl.ServTerm.Wg.Wait()
-		case "offline":
+
+		case servctrl.OFFLINE:
 			// if server is offline, then it's safe to continue
 			logger.Logln("InterruptListener: minecraft server terminal already exited (server is offline)")
+
 		default:
 			logger.Logln("InterruptListener: stop command does not seem to be stopping server during forceful shutdown")
 		}
@@ -88,12 +90,13 @@ func UpdateManager(clientVersion string) {
 			switch status {
 			case UPDATED:
 				fmt.Println("*** msh (" + clientVersion + ") is updated ***")
+
 			case UPDATEAVAILABLE:
 				notification := "*** msh (" + onlineVersion + ") is now available: visit github to update! ***"
 				fmt.Println(notification)
-
 				// notify to game chat every 20 minutes for deltaT time
 				go notifyGameChat(20*time.Minute, deltaT, notification)
+
 			case UNOFFICIALVERSION:
 				fmt.Println("*** msh (" + clientVersion + ") is running an unofficial release ***")
 			}

@@ -45,7 +45,7 @@ func Execute(command, origin string) (string, error) {
 	commands := strings.Split(command, "\n")
 
 	for _, com := range commands {
-		if Stats.Status != "online" {
+		if Stats.Status != ONLINE {
 			return "", fmt.Errorf("Execute: server not online")
 		}
 
@@ -80,7 +80,7 @@ func cmdStart(dir, command string) error {
 	go printDataUsage()
 
 	// initialization
-	Stats.Status = "starting"
+	Stats.Status = STARTING
 	Stats.LoadProgress = "0%"
 	Stats.PlayerCount = 0
 	log.Print("*** MINECRAFT SERVER IS STARTING!")
@@ -148,26 +148,26 @@ func printerOutErr() {
 
 			switch Stats.Status {
 
-			case "starting":
+			case STARTING:
 				// for modded server terminal compatibility, use separate check for "INFO" and flag-word
 				// using only "INFO" and not "[Server thread/INFO]"" because paper minecraft servers don't use "[Server thread/INFO]"
 
-				// "Preparing spawn area: "	-> update ServStats.LoadProgress
+				// "Preparing spawn area: " -> update ServStats.LoadProgress
 				if strings.Contains(line, "INFO") && strings.Contains(line, "Preparing spawn area: ") {
 					Stats.LoadProgress = strings.Split(strings.Split(line, "Preparing spawn area: ")[1], "\n")[0]
 				}
 
-				// ": Done ("				-> set ServStats.Status = "online"
+				// ": Done (" -> set ServStats.Status = ONLINE
 				// using ": Done (" instead of "Done" to avoid false positives (issue #112)
 				if strings.Contains(line, "INFO") && strings.Contains(line, ": Done (") {
-					Stats.Status = "online"
+					Stats.Status = ONLINE
 					log.Print("*** MINECRAFT SERVER IS ONLINE!")
 
 					// launch a StopMSRequests so that if no players connect the server will shutdown
 					StopMSRequest()
 				}
 
-			case "online":
+			case ONLINE:
 				// It is possible that a player could send a message that contains text similar to server output:
 				// 		[14:08:43] [Server thread/INFO]: <player> Stopping
 				// 		[14:09:32] [Server thread/INFO]: [player] Stopping
@@ -214,7 +214,7 @@ func printerOutErr() {
 
 					// the server is stopping
 					case strings.Contains(lineContent, "Stopping"):
-						Stats.Status = "stopping"
+						Stats.Status = STOPPING
 						log.Print("*** MINECRAFT SERVER IS STOPPING!")
 					}
 				}
@@ -239,7 +239,7 @@ func printerOutErr() {
 	}()
 }
 
-// waitForExit manages ServTerm.isActive parameter and set ServStats.Status = "offline" when minecraft server process exits.
+// waitForExit manages ServTerm.isActive parameter and set ServStats.Status = OFFLINE when minecraft server process exits.
 // [goroutine]
 func waitForExit() {
 	ServTerm.IsActive = true
@@ -254,6 +254,6 @@ func waitForExit() {
 	ServTerm.IsActive = false
 	logger.Logln("waitForExit: terminal exited")
 
-	Stats.Status = "offline"
+	Stats.Status = OFFLINE
 	log.Print("*** MINECRAFT SERVER IS OFFLINE!")
 }
