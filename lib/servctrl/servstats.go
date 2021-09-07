@@ -19,20 +19,13 @@ const (
 )
 
 type serverStats struct {
-	M *sync.Mutex
-	// ServerStatus represent the status of the minecraft server
-	Status int
-	// PlayerCount keeps track of players connected to the server
-	PlayerCount int
-	// StopMSRequests keeps track of how many times StopMSRequest() has been called in the last {TimeBeforeStoppingEmptyServer} seconds.
-	// (It's an int32 variable to allow for atomic operations)
-	StopMSRequests int32
-	// LoadProgress indicates the loading percentage while the server is starting
-	LoadProgress string
-	// BytesToClients tracks bytes/s server->clients
-	BytesToClients float64
-	// BytesToServer tracks bytes/s clients->server
-	BytesToServer float64
+	M              *sync.Mutex
+	Status         int     // represent the status of the minecraft server
+	PlayerCount    int     // tracks players connected to the server
+	StopMSRequests int32   // tracks active StopMSRequest() instances. (int32 for atomic operations)
+	LoadProgress   string  // tracks loading percentage of starting server
+	BytesToClients float64 // tracks bytes/s server->clients
+	BytesToServer  float64 // tracks bytes/s clients->server
 }
 
 func init() {
