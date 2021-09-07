@@ -103,32 +103,31 @@ func buildListenPortBytes() []byte {
 	return listenPortBytes
 }
 
-// answerPingReq responds to the ping request
-func answerPingReq(clientSocket net.Conn) error {
-	req := make([]byte, 1024)
-
+// answerPing responds to the ping request
+func answerPing(clientSocket net.Conn) error {
 	// read the first packet
-	dataLen, err := clientSocket.Read(req)
+	pingData, err := readClientPacket(clientSocket)
 	if err != nil {
 		return fmt.Errorf("answerPingReq: error while reading [1] ping request: %v", err)
 	}
 
-	if bytes.Equal(req[:dataLen], []byte{1, 0}) {
+	switch {
+	case bytes.Equal(pingData, []byte{1, 0}):
 		// packet is [1 0]
 		// read the second packet
-		dataLen, err = clientSocket.Read(req)
+		pingData, err = readClientPacket(clientSocket)
 		if err != nil {
 			return fmt.Errorf("answerPingReq: error while reading [2] ping request: %v", err)
 		}
-	} else if bytes.Equal(req[:2], []byte{1, 0}) {
+
+	case bytes.Equal(pingData[:2], []byte{1, 0}):
 		// packet is [1 0 9 1 0 0 0 0 0 89 73 114]
 		// remove first 2 bytes: [1 0 9 1 0 0 0 0 0 89 73 114] -> [9 1 0 0 0 0 0 89 73 114]
-		req = req[2:dataLen]
-		dataLen -= 2
+		pingData = pingData[2:]
 	}
 
-	// answer the ping request
-	clientSocket.Write(req[:dataLen])
+	// answer ping
+	clientSocket.Write(pingData)
 
 	return nil
 }
@@ -168,45 +167,45 @@ func getVersionProtocol(data []byte) error {
 
 // getPlayerName retrieves the name of the player that is trying to connect
 func getPlayerName(clientSocket net.Conn, data []byte) (string, error) {
-	bufSplitAft := bytes.SplitAfter(data, append(buildListenPortBytes(), byte(2)))
+	dataSplAft := bytes.SplitAfter(data, append(buildListenPortBytes(), byte(2)))
 
-	if len(bufSplitAft[1]) != 0 {
+	if len(dataSplAft[1]) != 0 {
 		// packet join request and player name:
 		// [ ... x x x (listenPortBytes) 2 x x x (player name) ]
 		// [ ^---data----------------------------------------^ ]
-		// [                               ^-bufSplitAft[1]--^ ]
+		// [                               ^--dataSplAft[1]--^ ]
 
-		return string(bufSplitAft[1][3:len(bufSplitAft[1])]), nil
+		return string(dataSplAft[1][3:]), nil
 
 	} else {
 		// packet join request:
 		// (to get player name, a further packet read is required)
-		// [ ... x x x (listenPortBytes) 2 ] [ x x x (player name)                ]
-		// [ ^---data--------------------^ ] [       ^-----------^-buf[3:dataLen] ]
-		// [               bufSplitAft[1]-╝] [                                    ]
+		// [ ... x x x (listenPortBytes) 2 ] [ x x x (player name) ]
+		// [ ^---data--------------------^ ] [       ^-data[3:]--^ ]
+		// [              dataSplitAft[1]-╝] [                     ]
 
-		buf := make([]byte, 1024)
-		dataLen, err := clientSocket.Read(buf)
+		data, err := readClientPacket(clientSocket)
 		if err != nil {
-			logger.Logln()
-			return "", fmt.Errorf("getPlayerName: error during clientSocket.Read()")
+			return "", fmt.Errorf("getPlayerName: %v", err)
 		}
 
-		return string(buf[3:dataLen]), nil
+		return string(data[3:]), nil
 	}
 }
 
 // getReqType returns the request type of the client first packet (info or join)
 func getReqType(data []byte) int {
+	listenPortBytes := buildListenPortBytes()
+
 	switch {
-	case data[len(data)-1] == 0 || data[len(data)-1] == 1:
+	case bytes.Contains(data, append(listenPortBytes, byte(1))):
 		// client is requesting server info and ping
-		// client first packet:	[... x x x 1 1 0] or [... x x x 1]
+		// client first packet:	[ ... x x x (listenPortBytes) 1 1 0] or [ ... x x x (listenPortBytes) 1 ]
 		return CLIENT_REQ_INFO
 
-	case bytes.Contains(data, append(buildListenPortBytes(), byte(2))):
+	case bytes.Contains(data, append(listenPortBytes, byte(2))):
 		// client is trying to join the server
-		// client first packet:	[ ... x x x (listenPortBytes) 2] or [ ... x x x (listenPortBytes) 2 (player name)]
+		// client first packet:	[ ... x x x (listenPortBytes) 2] or [ ... x x x (listenPortBytes) 2 x x x (player name)]
 		return CLIENT_REQ_JOIN
 
 	default:
@@ -214,14 +213,14 @@ func getReqType(data []byte) int {
 	}
 }
 
-// readClientFirstPacket reads the client first packet and returns only the bytes representing data
-func readClientFirstPacket(clientSocket net.Conn) ([]byte, error) {
+// readClientPacket reads the client socket and returns only the bytes containing data
+func readClientPacket(clientSocket net.Conn) ([]byte, error) {
 	buf := make([]byte, 1024)
 
 	// read first packet
 	dataLen, err := clientSocket.Read(buf)
 	if err != nil {
-		return nil, fmt.Errorf("readClientFirstPacket: error during clientSocket.Read()")
+		return nil, fmt.Errorf("readClientPacket: error during clientSocket.Read()")
 	}
 
 	return buf[:dataLen], nil

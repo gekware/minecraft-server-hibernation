@@ -20,13 +20,13 @@ func HandleClientSocket(clientSocket net.Conn) {
 
 	switch servctrl.Stats.Status {
 	case servctrl.STATUS_OFFLINE:
-		clientFirstPacket, err := readClientFirstPacket(clientSocket)
+		clientPacket, err := readClientPacket(clientSocket)
 		if err != nil {
 			logger.Logln("HandleClientSocket:", err)
 			return
 		}
 
-		switch getReqType(clientFirstPacket) {
+		switch getReqType(clientPacket) {
 		case CLIENT_REQ_INFO:
 			// client requests "server info"
 
@@ -35,8 +35,8 @@ func HandleClientSocket(clientSocket net.Conn) {
 			// answer to client with emulated server info
 			clientSocket.Write(buildMessage("info", config.ConfigRuntime.Msh.InfoHibernation))
 
-			// answer to client with ping
-			err = answerPingReq(clientSocket)
+			// answer to client ping
+			err = answerPing(clientSocket)
 			if err != nil {
 				logger.Logln("HandleClientSocket:", err)
 			}
@@ -44,7 +44,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 		case CLIENT_REQ_JOIN:
 			// client requests "server join"
 
-			playerName, err := getPlayerName(clientSocket, clientFirstPacket)
+			playerName, err := getPlayerName(clientSocket, clientPacket)
 			if err != nil {
 				logger.Logln("HandleClientSocket:", err)
 				// this error is non-blocking, use an error string as playerName
@@ -69,13 +69,13 @@ func HandleClientSocket(clientSocket net.Conn) {
 		clientSocket.Close()
 
 	case servctrl.STATUS_STARTING:
-		clientFirstPacket, err := readClientFirstPacket(clientSocket)
+		clientPacket, err := readClientPacket(clientSocket)
 		if err != nil {
 			logger.Logln("HandleClientSocket:", err)
 			return
 		}
 
-		switch getReqType(clientFirstPacket) {
+		switch getReqType(clientPacket) {
 		case CLIENT_REQ_INFO:
 			// client requests "server info"
 
@@ -84,8 +84,8 @@ func HandleClientSocket(clientSocket net.Conn) {
 			// answer to client with emulated server info
 			clientSocket.Write(buildMessage("info", config.ConfigRuntime.Msh.InfoStarting))
 
-			// answer to client with ping
-			err = answerPingReq(clientSocket)
+			// answer to client ping
+			err = answerPing(clientSocket)
 			if err != nil {
 				logger.Logln("HandleClientSocket:", err)
 			}
@@ -93,7 +93,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 		case CLIENT_REQ_JOIN:
 			// client requests "server join"
 
-			playerName, err := getPlayerName(clientSocket, clientFirstPacket)
+			playerName, err := getPlayerName(clientSocket, clientPacket)
 			if err != nil {
 				logger.Logln("HandleClientSocket:", err)
 				// this error is non-blocking, use an error string as playerName
