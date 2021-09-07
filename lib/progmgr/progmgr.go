@@ -38,12 +38,12 @@ func InterruptListener() {
 		time.Sleep(time.Second)
 
 		switch servctrl.Stats.Status {
-		case servctrl.STOPPING:
+		case servctrl.STATUS_STOPPING:
 			// if server is correctly stopping, wait for minecraft server to exit
 			logger.Logln("InterruptListener: waiting for minecraft server terminal to exit (server is stopping)")
 			servctrl.ServTerm.Wg.Wait()
 
-		case servctrl.OFFLINE:
+		case servctrl.STATUS_OFFLINE:
 			// if server is offline, then it's safe to continue
 			logger.Logln("InterruptListener: minecraft server terminal already exited (server is offline)")
 

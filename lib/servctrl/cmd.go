@@ -45,7 +45,7 @@ func Execute(command, origin string) (string, error) {
 	commands := strings.Split(command, "\n")
 
 	for _, com := range commands {
-		if Stats.Status != ONLINE {
+		if Stats.Status != STATUS_ONLINE {
 			return "", fmt.Errorf("Execute: server not online")
 		}
 
@@ -80,7 +80,7 @@ func cmdStart(dir, command string) error {
 	go printDataUsage()
 
 	// initialization
-	Stats.Status = STARTING
+	Stats.Status = STATUS_STARTING
 	Stats.LoadProgress = "0%"
 	Stats.PlayerCount = 0
 	log.Print("*** MINECRAFT SERVER IS STARTING!")
@@ -148,7 +148,7 @@ func printerOutErr() {
 
 			switch Stats.Status {
 
-			case STARTING:
+			case STATUS_STARTING:
 				// for modded server terminal compatibility, use separate check for "INFO" and flag-word
 				// using only "INFO" and not "[Server thread/INFO]"" because paper minecraft servers don't use "[Server thread/INFO]"
 
@@ -160,14 +160,14 @@ func printerOutErr() {
 				// ": Done (" -> set ServStats.Status = ONLINE
 				// using ": Done (" instead of "Done" to avoid false positives (issue #112)
 				if strings.Contains(line, "INFO") && strings.Contains(line, ": Done (") {
-					Stats.Status = ONLINE
+					Stats.Status = STATUS_ONLINE
 					log.Print("*** MINECRAFT SERVER IS ONLINE!")
 
 					// launch a StopMSRequests so that if no players connect the server will shutdown
 					StopMSRequest()
 				}
 
-			case ONLINE:
+			case STATUS_ONLINE:
 				// It is possible that a player could send a message that contains text similar to server output:
 				// 		[14:08:43] [Server thread/INFO]: <player> Stopping
 				// 		[14:09:32] [Server thread/INFO]: [player] Stopping
@@ -214,7 +214,7 @@ func printerOutErr() {
 
 					// the server is stopping
 					case strings.Contains(lineContent, "Stopping"):
-						Stats.Status = STOPPING
+						Stats.Status = STATUS_STOPPING
 						log.Print("*** MINECRAFT SERVER IS STOPPING!")
 					}
 				}
@@ -254,6 +254,6 @@ func waitForExit() {
 	ServTerm.IsActive = false
 	logger.Logln("waitForExit: terminal exited")
 
-	Stats.Status = OFFLINE
+	Stats.Status = STATUS_OFFLINE
 	log.Print("*** MINECRAFT SERVER IS OFFLINE!")
 }

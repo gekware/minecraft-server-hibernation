@@ -27,11 +27,11 @@ func StopMS(playersCheck bool) error {
 	var errExec error
 
 	// wait for the starting server to go online
-	for Stats.Status == STARTING {
+	for Stats.Status == STATUS_STARTING {
 		time.Sleep(1 * time.Second)
 	}
 	// if server is not online return
-	if Stats.Status != ONLINE {
+	if Stats.Status != STATUS_ONLINE {
 		return fmt.Errorf("StopMS: server is not online")
 	}
 
@@ -95,7 +95,7 @@ func killMSifOnlineAfterTimeout() {
 
 	for countdown > 0 {
 		// if server goes offline it's the correct behaviour -> return
-		if Stats.Status == OFFLINE {
+		if Stats.Status == STATUS_OFFLINE {
 			return
 		}
 
