@@ -2,8 +2,10 @@ package servconn
 
 import (
 	"bytes"
+	"encoding/binary"
 	"fmt"
 	"net"
+	"strconv"
 	"strings"
 
 	"msh/lib/config"
@@ -11,8 +13,8 @@ import (
 	"msh/lib/logger"
 )
 
-// BuildMessage takes the format ("txt", "info") and a message to write to the client
-func BuildMessage(format, message string) []byte {
+// buildMessage takes the format ("txt", "info") and a message to write to the client
+func buildMessage(format, message string) []byte {
 	var mountHeader = func(messageStr string) []byte {
 		// mountHeader: mounts the complete header to a specified message
 		//					┌--------------------complete header--------------------┐
@@ -80,8 +82,8 @@ func BuildMessage(format, message string) []byte {
 	return messageHeader
 }
 
-// AnswerPingReq responds to the ping request
-func AnswerPingReq(clientSocket net.Conn) error {
+// answerPingReq responds to the ping request
+func answerPingReq(clientSocket net.Conn) error {
 	req := make([]byte, 1024)
 
 	// read the first packet
@@ -109,8 +111,8 @@ func AnswerPingReq(clientSocket net.Conn) error {
 	return nil
 }
 
-// GetVersionProtocol finds the serverVersion and serverProtocol in (data []byte) and writes them in the config file
-func GetVersionProtocol(data []byte) error {
+// getVersionProtocol finds the serverVersion and serverProtocol in (data []byte) and writes them in the config file
+func getVersionProtocol(data []byte) error {
 	// if the above specified buffer contains "\"version\":{\"name\":\"" and ",\"protocol\":" --> extract the serverVersion and serverProtocol
 	if bytes.Contains(data, []byte("\"version\":{\"name\":\"")) && bytes.Contains(data, []byte(",\"protocol\":")) {
 		newServerVersion := string(bytes.Split(bytes.Split(data, []byte("\"version\":{\"name\":\""))[1], []byte("\","))[0])
@@ -140,4 +142,47 @@ func GetVersionProtocol(data []byte) error {
 	}
 
 	return nil
+}
+
+// getListenPortBytes calculates listen port in BigEndian bytes
+func getListenPortBytes() []byte {
+	listenPortUint64, err := strconv.ParseUint(config.ConfigRuntime.Msh.Port, 10, 16) // bitSize: 16 -> since it will be converted to Uint16
+	if err != nil {
+		logger.Logln("handleClientSocket: error during ListenPort conversion to uint64")
+	}
+	listenPortUint16 := uint16(listenPortUint64)
+	listenPortBytes := make([]byte, 2)
+	binary.BigEndian.PutUint16(listenPortBytes, listenPortUint16) // 25555 ->	[99 211] / hex[63 D3]
+
+	return listenPortBytes
+}
+
+// getPlayerName retrieves the name of the player that is trying to connect
+func getPlayerName(clientSocket net.Conn, bufferData []byte) string {
+	bufSplitAft := bytes.SplitAfter(bufferData, append(getListenPortBytes(), byte(2)))
+
+	if len(bufSplitAft[1]) != 0 {
+		// packet join request and player name:
+		// [ ... x x x (listenPortBytes) 2 x x x (player name) ]
+		// [ ^---bufferData----------------------------------^ ]
+		// [                               ^-bufSplitAft[1]--^ ]
+
+		return string(bufSplitAft[1][3:len(bufSplitAft[1])])
+
+	} else {
+		// packet join request:
+		// (to get player name, a further packet read is required)
+		// [ ... x x x (listenPortBytes) 2 ] [ x x x (player name)                   ]
+		// [ ^---bufferData--------------^ ] [       ^-----------^-buffer[3:dataLen] ]
+		// [               bufSplitAft[1]-╝] [                                       ]
+
+		buffer := make([]byte, 1024)
+		dataLen, err := clientSocket.Read(buffer)
+		if err != nil {
+			logger.Logln("handleClientSocket: error during clientSocket.Read() 2")
+			return ""
+		}
+
+		return string(buffer[3:dataLen])
+	}
 }

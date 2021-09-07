@@ -12,10 +12,10 @@ import (
 	"msh/lib/servctrl"
 )
 
-// Forward takes a source and a destination net.Conn and forwards them.
+// forward takes a source and a destination net.Conn and forwards them.
 // (isServerToClient used to know the forward direction).
 // [goroutine]
-func Forward(source, destination net.Conn, isServerToClient bool, stopC chan bool) {
+func forward(source, destination net.Conn, isServerToClient bool, stopC chan bool) {
 	data := make([]byte, 1024)
 
 	// set to false after the first for cycle
@@ -66,7 +66,7 @@ func Forward(source, destination net.Conn, isServerToClient bool, stopC chan boo
 
 		// version/protocol are only found in serverToClient connection in the first buffer that is read
 		if firstBuffer && isServerToClient {
-			err = GetVersionProtocol(data[:dataLen])
+			err = getVersionProtocol(data[:dataLen])
 			if err != nil {
 				logger.Logln("Forward:", err)
 			}
