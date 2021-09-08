@@ -19,8 +19,8 @@ const (
 	CLIENT_REQ_INFO  = 0x00010001 // client request server info
 	CLIENT_REQ_JOIN  = 0x00010002 // client request server join
 
-	MESSAGE_FORMAT_TXT  = 0x00020001
-	MESSAGE_FORMAT_INFO = 0x00020002
+	MESSAGE_FORMAT_TXT  = 0x00020001 // message to client should be built as TXT
+	MESSAGE_FORMAT_INFO = 0x00020002 // message to client should be built as INFO
 )
 
 // buildMessage takes the message format (TXT/INFO) and a message to write to the client
@@ -59,11 +59,9 @@ func buildMessage(messageFormat int, message string) []byte {
 		return messageByte
 	}
 
-	var messageHeader []byte
-
 	switch messageFormat {
 	case MESSAGE_FORMAT_TXT:
-		// display text in the loadscreen
+		// send text to be shown in the loadscreen
 
 		messageJSON := fmt.Sprint(
 			"{",
@@ -71,26 +69,28 @@ func buildMessage(messageFormat int, message string) []byte {
 			"}",
 		)
 
-		messageHeader = mountHeader(messageJSON)
+		return mountHeader(messageJSON)
 
 	case MESSAGE_FORMAT_INFO:
 		// send server info
 
-		// in message: "\n" -> "&r\\n" then "&" -> "\xc2\xa7"
-		messageAdapted := strings.ReplaceAll(strings.ReplaceAll(message, "\n", "&r\\n"), "&", "\xc2\xa7")
+		// "\n" should be encoded as "\xc2\xa7r\\n"
+		// "&"  should be encoded as "\xc2\xa7"
+		message = strings.ReplaceAll(strings.ReplaceAll(message, "\n", "&r\\n"), "&", "\xc2\xa7")
 
 		messageJSON := fmt.Sprint("{",
-			"\"description\":{\"text\":\"", messageAdapted, "\"},",
+			"\"description\":{\"text\":\"", message, "\"},",
 			"\"players\":{\"max\":0,\"online\":0},",
 			"\"version\":{\"name\":\"", config.ConfigRuntime.Server.Version, "\",\"protocol\":", fmt.Sprint(config.ConfigRuntime.Server.Protocol), "},",
 			"\"favicon\":\"data:image/png;base64,", data.ServerIcon, "\"",
 			"}",
 		)
 
-		messageHeader = mountHeader(messageJSON)
-	}
+		return mountHeader(messageJSON)
 
-	return messageHeader
+	default:
+		return nil
+	}
 }
 
 // buildReqFlag generates the INFO flag and JOIN flag using the msh port
