@@ -14,26 +14,29 @@ import (
 )
 
 const (
-	CLIENT_REQ_ERROR = -1 // error while analyzing client request
-	CLIENT_REQ_UNKN  = 0  // client request unknown
-	CLIENT_REQ_INFO  = 1  // client request server info
-	CLIENT_REQ_JOIN  = 2  // client request server join
+	CLIENT_REQ_ERROR = 0xffffffff // error while analyzing client request
+	CLIENT_REQ_UNKN  = 0x00010000 // client request unknown
+	CLIENT_REQ_INFO  = 0x00010001 // client request server info
+	CLIENT_REQ_JOIN  = 0x00010002 // client request server join
+
+	MESSAGE_FORMAT_TXT  = 0x00020001
+	MESSAGE_FORMAT_INFO = 0x00020002
 )
 
-// buildMessage takes the format ("txt", "info") and a message to write to the client
-func buildMessage(format, message string) []byte {
+// buildMessage takes the message format (TXT/INFO) and a message to write to the client
+func buildMessage(messageFormat int, message string) []byte {
+	// mountHeader mounts the full header to a specified message
 	var mountHeader = func(messageStr string) []byte {
-		// mountHeader: mounts the complete header to a specified message
-		//					┌--------------------complete header--------------------┐
-		// scheme: 			[sub-header1		|sub-header2 	|sub-header3		|message	]
-		// bytes used:		[2					|1				|2					|0 ... 16381]
-		// value range:		[131 0 - 255 127	|0				|128 0 - 252 127	|---		]
+		//                  ┌--------------------full header--------------------┐
+		// scheme:          [ sub-header1     | sub-header2 | sub-header3       | message   ]
+		// bytes used:      [ 2               | 1           | 2                 | 0 - 16379 ]
+		// value range:     [ 128 0 - 255 127 | 0           | 128 0 - 255 127	| --------- ]
 
+		// addSubHeader mounts 1 sub-header to a specified message
 		var addSubHeader = func(message []byte) []byte {
-			// addSubHeader: mounts 1 sub-header to a specified message
-			//				┌sub-header1/sub-header3┐
-			// scheme:		[firstByte	|secondByte	|data	]
-			// value range:	[128-255	|0-127		|---	]
+			//              ┌------sub-header1/3------┐
+			// scheme:      [ firstByte | secondByte  | data ]
+			// value range: [ 128 - 255 | 0 - 127     | ---- ]
 			// it's a number composed of 2 digits in base-128 (firstByte is least significant byte)
 			// sub-header represents the length of the following data
 
@@ -58,8 +61,9 @@ func buildMessage(format, message string) []byte {
 
 	var messageHeader []byte
 
-	if format == "txt" {
-		// to display text in the loadscreen
+	switch messageFormat {
+	case MESSAGE_FORMAT_TXT:
+		// display text in the loadscreen
 
 		messageJSON := fmt.Sprint(
 			"{",
@@ -69,8 +73,8 @@ func buildMessage(format, message string) []byte {
 
 		messageHeader = mountHeader(messageJSON)
 
-	} else if format == "info" {
-		// to send server info
+	case MESSAGE_FORMAT_INFO:
+		// send server info
 
 		// in message: "\n" -> "&r\\n" then "&" -> "\xc2\xa7"
 		messageAdapted := strings.ReplaceAll(strings.ReplaceAll(message, "\n", "&r\\n"), "&", "\xc2\xa7")
@@ -111,7 +115,7 @@ func buildReqFlag(mshPort string) ([]byte, []byte) {
 	return reqFlagInfo, reqFlagJoin
 }
 
-// getReqType returns the request type (INFO or JOIN) and playerName (if it's a join request) of the client
+// getReqType returns the request type (INFO or JOIN) and playerName of the client
 func getReqType(clientSocket net.Conn) (int, string, error) {
 	reqPacket, err := getClientPacket(clientSocket)
 	if err != nil {
@@ -119,7 +123,7 @@ func getReqType(clientSocket net.Conn) (int, string, error) {
 	}
 
 	reqFlagInfo, reqFlagJoin := buildReqFlag(config.ConfigRuntime.Msh.Port)
-	playerName := extractPlayerName(reqPacket, clientSocket)
+	playerName := extractPlayerName(reqPacket, reqFlagJoin, clientSocket)
 
 	switch {
 	case bytes.Contains(reqPacket, reqFlagInfo):
@@ -183,9 +187,7 @@ func getClientPacket(clientSocket net.Conn) ([]byte, error) {
 
 // extractPlayerName retrieves the name of the player that is trying to connect.
 // "player unknown" is returned in case of error or reqFlagJoin not found
-func extractPlayerName(data []byte, clientSocket net.Conn) string {
-	_, reqFlagJoin := buildReqFlag(config.ConfigRuntime.Msh.Port)
-
+func extractPlayerName(data, reqFlagJoin []byte, clientSocket net.Conn) string {
 	// player name is found only in join request packet
 	if !bytes.Contains(data, reqFlagJoin) {
 		// reqFlagJoin not found
@@ -222,7 +224,7 @@ func extractPlayerName(data []byte, clientSocket net.Conn) string {
 
 // extractVersionProtocol finds the serverVersion and serverProtocol in (data []byte) and writes them in the config file
 func extractVersionProtocol(data []byte) error {
-	// if the above specified data contains "\"version\":{\"name\":\"" and ",\"protocol\":" --> extract the serverVersion and serverProtocol
+	// if data contains "\"version\":{\"name\":\"" and ",\"protocol\":" --> extract the serverVersion and serverProtocol
 	if bytes.Contains(data, []byte("\"version\":{\"name\":\"")) && bytes.Contains(data, []byte(",\"protocol\":")) {
 		newServerVersion := string(bytes.Split(bytes.Split(data, []byte("\"version\":{\"name\":\""))[1], []byte("\","))[0])
 		newServerProtocol := string(bytes.Split(bytes.Split(data, []byte(",\"protocol\":"))[1], []byte("}"))[0])

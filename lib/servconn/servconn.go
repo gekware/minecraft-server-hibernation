@@ -33,7 +33,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 			log.Printf("*** %s requested server info from %s:%s to %s:%s\n", playerName, clientAddress, config.ConfigRuntime.Msh.Port, config.TargetHost, config.TargetPort)
 
 			// answer to client with emulated server info
-			clientSocket.Write(buildMessage("info", config.ConfigRuntime.Msh.InfoHibernation))
+			clientSocket.Write(buildMessage(MESSAGE_FORMAT_INFO, config.ConfigRuntime.Msh.InfoHibernation))
 
 			// answer to client ping
 			err := getPing(clientSocket)
@@ -49,11 +49,11 @@ func HandleClientSocket(clientSocket net.Conn) {
 			if err != nil {
 				// log to msh console and warn client with text in the loadscreen
 				logger.Logln("HandleClientSocket:", err)
-				clientSocket.Write(buildMessage("txt", "An error occurred while starting the server: check the msh log"))
+				clientSocket.Write(buildMessage(MESSAGE_FORMAT_TXT, "An error occurred while starting the server: check the msh log"))
 			} else {
 				// log to msh console and answer client with text in the loadscreen
 				log.Printf("*** %s tried to join from %s:%s to %s:%s\n", playerName, clientAddress, config.ConfigRuntime.Msh.Port, config.TargetHost, config.TargetPort)
-				clientSocket.Write(buildMessage("txt", "Server start command issued. Please wait... "+servctrl.Stats.LoadProgress))
+				clientSocket.Write(buildMessage(MESSAGE_FORMAT_TXT, "Server start command issued. Please wait... "+servctrl.Stats.LoadProgress))
 			}
 		}
 
@@ -75,7 +75,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 			log.Printf("*** %s requested server info from %s:%s to %s:%s during server startup\n", playerName, clientAddress, config.ConfigRuntime.Msh.Port, config.TargetHost, config.TargetPort)
 
 			// answer to client with emulated server info
-			clientSocket.Write(buildMessage("info", config.ConfigRuntime.Msh.InfoStarting))
+			clientSocket.Write(buildMessage(MESSAGE_FORMAT_INFO, config.ConfigRuntime.Msh.InfoStarting))
 
 			// answer to client ping
 			err = getPing(clientSocket)
@@ -88,7 +88,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 
 			// log to msh console and answer to client with text in the loadscreen
 			log.Printf("*** %s tried to join from %s:%s to %s:%s during server startup\n", playerName, clientAddress, config.ConfigRuntime.Msh.Port, config.TargetHost, config.TargetPort)
-			clientSocket.Write(buildMessage("txt", "Server is starting. Please wait... "+servctrl.Stats.LoadProgress))
+			clientSocket.Write(buildMessage(MESSAGE_FORMAT_TXT, "Server is starting. Please wait... "+servctrl.Stats.LoadProgress))
 		}
 
 		// close the client connection
@@ -101,7 +101,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 		if err != nil {
 			logger.Logln("HandleClientSocket: error during serverSocket.Dial()")
 			// report dial error to client with text in the loadscreen
-			clientSocket.Write(buildMessage("txt", "can't connect to server... check if minecraft server is running and set the correct targetPort"))
+			clientSocket.Write(buildMessage(MESSAGE_FORMAT_TXT, "can't connect to server... check if minecraft server is running and set the correct targetPort"))
 			return
 		}
 
