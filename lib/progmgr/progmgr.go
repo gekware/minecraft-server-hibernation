@@ -61,10 +61,10 @@ var CheckedUpdateC chan bool = make(chan bool, 1)
 
 // these constant represent the result status of checkUpdate()
 const (
-	ERROR             = -1
-	UPDATED           = 0
-	UPDATEAVAILABLE   = 1
-	UNOFFICIALVERSION = 2
+	ERROR             = 0xffffffff
+	UPDATED           = 0x00000000
+	UPDATEAVAILABLE   = 0x00000001
+	UNOFFICIALVERSION = 0x00000002
 )
 
 // UpdateManager checks for updates and notify the user via terminal/gamechat
@@ -81,6 +81,8 @@ func UpdateManager(clientVersion string) {
 	respHeader := "latest version: "
 
 	for {
+		logger.Logln("checking version...")
+
 		status, onlineVersion, err := checkUpdate(clientProtV, clientVersion, respHeader)
 		if err != nil {
 			logger.Logln("UpdateManager:", err.Error())
