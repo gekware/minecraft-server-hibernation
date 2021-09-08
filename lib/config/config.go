@@ -50,6 +50,8 @@ type configuration struct {
 
 // LoadConfig loads json data from config.json into config
 func LoadConfig() error {
+	logger.Logln("loading config file...")
+
 	// read config.json
 	configData, err := ioutil.ReadFile("config.json")
 	if err != nil {
