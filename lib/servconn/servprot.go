@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	CLIENT_REQ_ERROR = 0xffffffff // error while analyzing client request
+	CLIENT_REQ_ERROR = 0x0001ffff // error while analyzing client request
 	CLIENT_REQ_UNKN  = 0x00010000 // client request unknown
 	CLIENT_REQ_INFO  = 0x00010001 // client request server info
 	CLIENT_REQ_JOIN  = 0x00010002 // client request server join
