@@ -30,9 +30,9 @@ var lastLine = make(chan string)
 
 // constants to print color text on terminal
 const (
-	colRes string = "\033[0m"
-	colCya string = "\033[36m"
-	colYel string = "\033[33m"
+	COLOR_RESET  = "\033[0m"
+	COLOR_CYAN   = "\033[36m"
+	COLOR_YELLOW = "\033[33m"
 )
 
 // Execute executes a command on ServTerm
@@ -49,7 +49,7 @@ func Execute(command, origin string) (string, error) {
 			return "", fmt.Errorf("Execute: server not online")
 		}
 
-		logger.Logln("terminal execute:"+colYel, com, colRes, "\t(origin:", origin+")")
+		logger.Logln("terminal execute:"+COLOR_YELLOW, com, COLOR_RESET, "\t(origin:", origin+")")
 
 		// write to cmd (\n indicates the enter key)
 		_, err := ServTerm.inPipe.Write([]byte(com + "\n"))
@@ -138,7 +138,7 @@ func printerOutErr() {
 		for scanner.Scan() {
 			line = scanner.Text()
 
-			fmt.Println(colCya + line + colRes)
+			fmt.Println(COLOR_CYAN + line + COLOR_RESET)
 
 			// communicate to lastLine so that func Execute() can return the first line after the command
 			select {
@@ -234,7 +234,7 @@ func printerOutErr() {
 		for scanner.Scan() {
 			line = scanner.Text()
 
-			fmt.Println(colCya + line + colRes)
+			fmt.Println(COLOR_CYAN + line + COLOR_RESET)
 		}
 	}()
 }
