@@ -20,34 +20,37 @@ func LoadIcon(serverDirPath string) error {
 
 	// if user specified icon exists: load the user specified server icon
 	if _, err := os.Stat(userIconPath); !os.IsNotExist(err) {
-		// Use a decoder to read and then an encoder to compress the image data
+		// use a decoder to read and then an encoder to compress the image data
 
 		buff := &bytes.Buffer{}
 		enc := &png.Encoder{CompressionLevel: -3} // -3: best compression
 
-		// Open file
+		// open file
 		f, err := os.Open(userIconPath)
 		if err != nil {
 			return fmt.Errorf("loadIcon: %v", err)
 		}
 		defer f.Close()
 
-		// Decode
+		// decode png
 		pngIm, err := png.Decode(f)
 		if err != nil {
 			return fmt.Errorf("loadIcon: %v", err)
 		}
 
-		// Encode if image is 64x64
-		if pngIm.Bounds().Max == image.Pt(64, 64) {
-			err = enc.Encode(buff, pngIm)
-			if err != nil {
-				return fmt.Errorf("loadIcon: %v", err)
-			}
-			ServerIcon = base64.RawStdEncoding.EncodeToString(buff.Bytes())
-		} else {
+		// return if image is not 64x64
+		if pngIm.Bounds().Max != image.Pt(64, 64) {
 			return fmt.Errorf("loadIcon: incorrect server-icon-frozen.png size. Current size: %dx%d", pngIm.Bounds().Max.X, pngIm.Bounds().Max.Y)
 		}
+
+		// encode png
+		err = enc.Encode(buff, pngIm)
+		if err != nil {
+			return fmt.Errorf("loadIcon: %v", err)
+		}
+
+		// set server icon global variable
+		ServerIcon = base64.RawStdEncoding.EncodeToString(buff.Bytes())
 	}
 
 	return nil
