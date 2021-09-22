@@ -57,8 +57,15 @@ func GetInput() {
 				if err != nil {
 					logger.Logln("GetInput:", err)
 				}
+			case "exit":
+				err = servctrl.StopMS(false)
+				if err != nil {
+					logger.Logln("GetInput:", err)
+				}
+				fmt.Print("exiting msh")
+				os.Exit(0)
 			default:
-				fmt.Println("msh command error: unknown command (start - freeze)")
+				fmt.Println("msh command error: unknown command (start - freeze - exit)")
 			}
 
 		// taget minecraft server

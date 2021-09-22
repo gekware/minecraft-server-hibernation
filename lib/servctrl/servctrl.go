@@ -20,7 +20,7 @@ func StartMS() error {
 	return nil
 }
 
-// StopMS stops the minecraft server.
+// StopMS executes "stop" command on the minecraft server.
 // When playersCheck == true, it checks for StopMSRequests/Players and orders the server shutdown
 func StopMS(playersCheck bool) error {
 	// error that returns from Execute() when executing the stop command
