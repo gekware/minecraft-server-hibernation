@@ -10,11 +10,9 @@ import (
 	"path/filepath"
 )
 
-// ServerIcon represents the minecraft server icon
-var ServerIcon string = defaultServerIcon
-
-// loadIcon loads userIconPath image (base-64 encoded and compressed) into serverIcon variable.
-func loadIcon(serverDirPath string) error {
+// loadIcon return server logo (base-64 encoded and compressed).
+// If image is missing or error, the default image is returned
+func loadIcon(serverDirPath string) (string, error) {
 	// get the path of the user specified server icon
 	userIconPath := filepath.Join(serverDirPath, "server-icon-frozen.png")
 
@@ -28,32 +26,33 @@ func loadIcon(serverDirPath string) error {
 		// open file
 		f, err := os.Open(userIconPath)
 		if err != nil {
-			return fmt.Errorf("loadIcon: %v", err)
+			return defaultServerIcon, fmt.Errorf("loadIcon: %v", err)
 		}
 		defer f.Close()
 
 		// decode png
 		pngIm, err := png.Decode(f)
 		if err != nil {
-			return fmt.Errorf("loadIcon: %v", err)
+			return defaultServerIcon, fmt.Errorf("loadIcon: %v", err)
 		}
 
 		// return if image is not 64x64
 		if pngIm.Bounds().Max != image.Pt(64, 64) {
-			return fmt.Errorf("loadIcon: incorrect server-icon-frozen.png size. Current size: %dx%d", pngIm.Bounds().Max.X, pngIm.Bounds().Max.Y)
+			return defaultServerIcon, fmt.Errorf("loadIcon: incorrect server-icon-frozen.png size. Current size: %dx%d", pngIm.Bounds().Max.X, pngIm.Bounds().Max.Y)
 		}
 
 		// encode png
 		err = enc.Encode(buff, pngIm)
 		if err != nil {
-			return fmt.Errorf("loadIcon: %v", err)
+			return defaultServerIcon, fmt.Errorf("loadIcon: %v", err)
 		}
 
-		// set server icon global variable
-		ServerIcon = base64.RawStdEncoding.EncodeToString(buff.Bytes())
+		// return user specified server icon as base64 encoded string
+		return base64.RawStdEncoding.EncodeToString(buff.Bytes()), nil
 	}
 
-	return nil
+	// return default server icon (user specified server icon not found)
+	return defaultServerIcon, nil
 }
 
 // defaultServerIcon is the msh logo base-64 encoded

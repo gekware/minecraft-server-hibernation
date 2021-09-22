@@ -121,7 +121,7 @@ func getReqType(clientSocket net.Conn) (int, string, error) {
 		return CLIENT_REQ_ERROR, "", fmt.Errorf("getReqType: %v", err)
 	}
 
-	reqFlagInfo, reqFlagJoin := buildReqFlag(config.ConfigRuntime.Msh.Port)
+	reqFlagInfo, reqFlagJoin := buildReqFlag(config.ListenPort)
 	playerName := extractPlayerName(reqPacket, reqFlagJoin, clientSocket)
 
 	switch {

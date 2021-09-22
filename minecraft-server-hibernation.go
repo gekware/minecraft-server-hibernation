@@ -61,14 +61,14 @@ func main() {
 	// launch GetInput()
 	go input.GetInput()
 
-	// open a listener on {config.ListenHost}+":"+{config.Msh.Port}
-	listener, err := net.Listen("tcp", config.ListenHost+":"+config.ConfigRuntime.Msh.Port)
+	// open a listener
+	listener, err := net.Listen("tcp", config.ListenHost+":"+config.ListenPort)
 	if err != nil {
 		log.Println("main:", err.Error())
 		os.Exit(1)
 	}
 
-	log.Println("*** listening for new clients to connect on " + config.ListenHost + ":" + config.ConfigRuntime.Msh.Port + " ...")
+	log.Println("*** listening for new clients to connect on " + config.ListenHost + ":" + config.ListenPort + " ...")
 
 	// infinite cycle to accept clients. when a clients connects it is passed to handleClientSocket()
 	for {

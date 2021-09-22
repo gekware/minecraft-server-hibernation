@@ -13,15 +13,20 @@ import (
 	"msh/lib/logger"
 )
 
-// ConfigDefault contains the configuration parameters of the config file
-var ConfigDefault configuration
+var (
+	// Config variables contain the configuration parameters for config file and runtime
+	ConfigDefault configuration
+	ConfigRuntime configuration
 
-// ConfigRuntime contains the configuration parameters during runtime
-var ConfigRuntime configuration
+	// ServerIcon contains the minecraft server icon
+	ServerIcon string
 
-var ListenHost string
-var TargetHost string
-var TargetPort string
+	// Listen and Target host/port used for proxy connection
+	ListenHost string
+	ListenPort string
+	TargetHost string
+	TargetPort string
+)
 
 // struct adapted to config.json
 type configuration struct {
@@ -57,16 +62,17 @@ func LoadConfig() error {
 		return fmt.Errorf("loadConfig: %v", err)
 	}
 
-	// write read data into struct config
+	// write read data into ConfigDefault
 	err = json.Unmarshal(configData, &ConfigDefault)
 	if err != nil {
 		return fmt.Errorf("loadConfig: %v", err)
 	}
 
-	// initialize runtime config
-	ConfigRuntime = ConfigDefault
+	// generate runtime config
+	ConfigRuntime = generateConfigRuntime()
 
-	setUpConfigRuntime()
+	// --------------- ConfigRuntime --------------- //
+	// from now on only ConfigRuntime should be used //
 
 	err = checkConfigRuntime()
 	if err != nil {
@@ -76,12 +82,15 @@ func LoadConfig() error {
 	// as soon as the Config variable is set, set debug level
 	logger.Debug = ConfigRuntime.Msh.Debug
 
-	err = setIpPorts()
+	// initialize ip and ports for connection
+	ListenHost, ListenPort, TargetHost, TargetPort, err = getIpPorts()
 	if err != nil {
 		return fmt.Errorf("loadConfig: %v", err)
 	}
+	logger.Logln("msh proxy setup:\t", ListenHost+":"+ListenPort, "-->", TargetHost+":"+TargetPort)
 
-	err = loadIcon(ConfigRuntime.Server.Folder)
+	// set server icon
+	ServerIcon, err = loadIcon(ConfigRuntime.Server.Folder)
 	if err != nil {
 		// it's enough to log it without returning
 		// since the default icon is loaded by default
@@ -110,8 +119,11 @@ func SaveConfigDefault() error {
 	return nil
 }
 
-// setUpConfigRuntime parses start arguments into ConfigRuntime and replaces placeholders
-func setUpConfigRuntime() {
+// generateConfigRuntime parses start arguments into ConfigRuntime and replaces placeholders
+func generateConfigRuntime() configuration {
+	// initialize with ConfigDefault
+	ConfigRuntime = ConfigDefault
+
 	// specify arguments
 	flag.StringVar(&ConfigRuntime.Server.FileName, "f", ConfigRuntime.Server.FileName, "Specify server file name.")
 	flag.StringVar(&ConfigRuntime.Server.Folder, "F", ConfigRuntime.Server.Folder, "Specify server folder path.")
@@ -132,9 +144,11 @@ func setUpConfigRuntime() {
 	// parse arguments
 	flag.Parse()
 
-	// replace placeholders in StartServer command in ConfigRuntime
+	// replace placeholders in ConfigRuntime StartServer command
 	ConfigRuntime.Commands.StartServer = strings.ReplaceAll(ConfigRuntime.Commands.StartServer, "<Server.FileName>", ConfigRuntime.Server.FileName)
 	ConfigRuntime.Commands.StartServer = strings.ReplaceAll(ConfigRuntime.Commands.StartServer, "<Commands.StartServerParam>", ConfigRuntime.Commands.StartServerParam)
+
+	return ConfigRuntime
 }
 
 // checkConfigRuntime checks different parameters in ConfigRuntime
@@ -156,15 +170,12 @@ func checkConfigRuntime() error {
 	return nil
 }
 
-// setIpPorts reads server.properties server file and sets the correct ports
-func setIpPorts() error {
-	ListenHost = "0.0.0.0"
-	TargetHost = "127.0.0.1"
-
+// getIpPorts reads server.properties server file and returns the correct ports
+func getIpPorts() (string, string, string, string, error) {
 	serverPropertiesFilePath := filepath.Join(ConfigRuntime.Server.Folder, "server.properties")
 	data, err := ioutil.ReadFile(serverPropertiesFilePath)
 	if err != nil {
-		return fmt.Errorf("setIpPorts: %v", err)
+		return "", "", "", "", fmt.Errorf("setIpPorts: %v", err)
 	}
 
 	dataStr := string(data)
@@ -172,10 +183,9 @@ func setIpPorts() error {
 	TargetPort = strings.Split(strings.Split(dataStr, "server-port=")[1], "\n")[0]
 
 	if TargetPort == ConfigRuntime.Msh.Port {
-		return fmt.Errorf("setIpPorts: TargetPort and ListenPort appear to be the same, please change one of them")
+		return "", "", "", "", fmt.Errorf("setIpPorts: TargetPort and ListenPort appear to be the same, please change one of them")
 	}
 
-	logger.Logln("targeting server address:", TargetHost+":"+TargetPort)
-
-	return nil
+	// return ListenHost, TargetHost, TargetPort, nil
+	return "0.0.0.0", ConfigRuntime.Msh.Port, "127.0.0.1", TargetPort, nil
 }
