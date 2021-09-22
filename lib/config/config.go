@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"msh/lib/logger"
+	"msh/lib/opsys"
 )
 
 var (
@@ -54,6 +55,13 @@ type configuration struct {
 
 // LoadConfig loads json data from config.json into config
 func LoadConfig() error {
+	logger.Logln("checking OS support...")
+	// check if OS is supported.
+	err := opsys.OsSupported()
+	if err != nil {
+		return fmt.Errorf("loadConfig: %v", err)
+	}
+
 	logger.Logln("loading config file...")
 
 	// read config.json

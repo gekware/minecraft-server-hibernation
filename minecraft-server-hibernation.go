@@ -9,7 +9,6 @@ import (
 	"msh/lib/config"
 	"msh/lib/input"
 	"msh/lib/logger"
-	"msh/lib/opsys"
 	"msh/lib/progmgr"
 	"msh/lib/servconn"
 	"msh/lib/utility"
@@ -33,18 +32,10 @@ func main() {
 	// print program intro
 	fmt.Println(utility.Boxify(intro))
 
-	// check is os is supported.
-	// OsSupported is the first function to be called
-	err := opsys.OsSupported()
-	if err != nil {
-		log.Println("main:", err.Error())
-		os.Exit(1)
-	}
-
 	// load configuration from config file
 	// load server-icon-frozen.png if present
 	// LoadConfig is the second function to be called
-	err = config.LoadConfig()
+	err := config.LoadConfig()
 	if err != nil {
 		log.Println("main:", err.Error())
 		os.Exit(1)
