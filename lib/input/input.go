@@ -41,7 +41,7 @@ func GetInput() {
 		case "msh":
 			// check that there is a command for the target
 			if len(lineSplit) < 2 {
-				fmt.Println("msh command error: specify msh command")
+				fmt.Println("msh command error: specify msh command (start - freeze - exit)")
 				continue
 			}
 
