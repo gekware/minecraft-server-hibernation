@@ -12,6 +12,8 @@ import (
 
 	"msh/lib/logger"
 	"msh/lib/opsys"
+
+	"gopkg.in/yaml.v2"
 )
 
 var (
@@ -29,28 +31,28 @@ var (
 	TargetPort string
 )
 
-// struct adapted to config.json
+// struct adapted to config file
 type configuration struct {
 	Server struct {
-		Folder   string `json:"Folder"`
-		FileName string `json:"FileName"`
-		Protocol string `json:"Protocol"`
-		Version  string `json:"Version"`
-	} `json:"Server"`
+		Folder   string `yaml:"Folder"`
+		FileName string `yaml:"FileName"`
+		Protocol string `yaml:"Protocol"`
+		Version  string `yaml:"Version"`
+	} `yaml:"Server"`
 	Commands struct {
-		StartServer         string `json:"StartServer"`
-		StartServerParam    string `json:"StartServerParam"`
-		StopServer          string `json:"StopServer"`
-		StopServerAllowKill int    `json:"StopServerAllowKill"`
-	} `json:"Commands"`
+		StartServer         string `yaml:"StartServer"`
+		StartServerParam    string `yaml:"StartServerParam"`
+		StopServer          string `yaml:"StopServer"`
+		StopServerAllowKill int    `yaml:"StopServerAllowKill"`
+	} `yaml:"Commands"`
 	Msh struct {
-		Debug                         bool   `json:"Debug"`
-		InfoHibernation               string `json:"InfoHibernation"`
-		InfoStarting                  string `json:"InfoStarting"`
-		NotifyUpdate                  bool   `json:"NotifyUpdate"`
-		Port                          string `json:"Port"`
-		TimeBeforeStoppingEmptyServer int64  `json:"TimeBeforeStoppingEmptyServer"`
-	} `json:"Msh"`
+		Debug                         bool   `yaml:"Debug"`
+		InfoHibernation               string `yaml:"InfoHibernation"`
+		InfoStarting                  string `yaml:"InfoStarting"`
+		NotifyUpdate                  bool   `yaml:"NotifyUpdate"`
+		Port                          string `yaml:"Port"`
+		TimeBeforeStoppingEmptyServer int64  `yaml:"TimeBeforeStoppingEmptyServer"`
+	} `yaml:"Msh"`
 }
 
 // LoadConfig loads json data from config.json into config
@@ -64,14 +66,14 @@ func LoadConfig() error {
 
 	logger.Logln("loading config file...")
 
-	// read config.json
-	configData, err := ioutil.ReadFile("config.json")
+	// read config file
+	configData, err := ioutil.ReadFile("msh-config.yml")
 	if err != nil {
 		return fmt.Errorf("loadConfig: %v", err)
 	}
 
 	// write read data into ConfigDefault
-	err = json.Unmarshal(configData, &ConfigDefault)
+	err = yaml.Unmarshal(configData, &ConfigDefault)
 	if err != nil {
 		return fmt.Errorf("loadConfig: %v", err)
 	}

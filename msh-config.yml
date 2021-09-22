@@ -1,0 +1,17 @@
+Server:
+  Folder: "{path/to/server/folder}"
+  FileName: "{server.jar}"
+  Protocol: "756"
+  Version: "1.17.1"
+Commands:
+  StartServer: "java <Commands.StartServerParam> -jar <Server.FileName> nogui"
+  StartServerParam: "-Xmx1024M -Xms1024M"
+  StopServer: "stop"
+  StopServerAllowKill: 10
+Msh:
+  Debug: true
+  InfoHibernation: "                   \u0026fserver status:\n                   \u0026b\u0026lHIBERNATING"
+  InfoStarting: "                   \u0026fserver status:\n                    \u00266\u0026lWARMING UP"
+  NotifyUpdate: true
+  Port: "25555"
+  TimeBeforeStoppingEmptyServer: 30
