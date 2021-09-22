@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"msh/lib/data"
 	"msh/lib/logger"
 )
 
@@ -82,7 +81,7 @@ func LoadConfig() error {
 		return fmt.Errorf("loadConfig: %v", err)
 	}
 
-	err = data.LoadIcon(ConfigRuntime.Server.Folder)
+	err = loadIcon(ConfigRuntime.Server.Folder)
 	if err != nil {
 		// it's enough to log it without returning
 		// since the default icon is loaded by default

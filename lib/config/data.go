@@ -1,4 +1,4 @@
-package data
+package config
 
 import (
 	"bytes"
@@ -13,8 +13,8 @@ import (
 // ServerIcon represents the minecraft server icon
 var ServerIcon string = defaultServerIcon
 
-// LoadIcon loads userIconPath image (base-64 encoded and compressed) into serverIcon variable.
-func LoadIcon(serverDirPath string) error {
+// loadIcon loads userIconPath image (base-64 encoded and compressed) into serverIcon variable.
+func loadIcon(serverDirPath string) error {
 	// get the path of the user specified server icon
 	userIconPath := filepath.Join(serverDirPath, "server-icon-frozen.png")
 

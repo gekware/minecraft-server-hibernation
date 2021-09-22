@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"msh/lib/config"
-	"msh/lib/data"
 	"msh/lib/logger"
 )
 
@@ -82,7 +81,7 @@ func buildMessage(messageFormat int, message string) []byte {
 			"\"description\":{\"text\":\"", message, "\"},",
 			"\"players\":{\"max\":0,\"online\":0},",
 			"\"version\":{\"name\":\"", config.ConfigRuntime.Server.Version, "\",\"protocol\":", fmt.Sprint(config.ConfigRuntime.Server.Protocol), "},",
-			"\"favicon\":\"data:image/png;base64,", data.ServerIcon, "\"",
+			"\"favicon\":\"data:image/png;base64,", config.ServerIcon, "\"",
 			"}",
 		)
 
