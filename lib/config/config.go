@@ -16,6 +16,9 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// configFileName is the config file name
+const configFileName string = "msh-config.yml"
+
 var (
 	// Config variables contain the configuration parameters for config file and runtime
 	ConfigDefault configuration
@@ -55,7 +58,7 @@ type configuration struct {
 	} `yaml:"Msh"`
 }
 
-// LoadConfig loads json data from config.json into config
+// LoadConfig loads json data from config file into config
 func LoadConfig() error {
 	logger.Logln("checking OS support...")
 	// check if OS is supported.
@@ -67,7 +70,7 @@ func LoadConfig() error {
 	logger.Logln("loading config file...")
 
 	// read config file
-	configData, err := ioutil.ReadFile("msh-config.yml")
+	configData, err := ioutil.ReadFile(configFileName)
 	if err != nil {
 		return fmt.Errorf("loadConfig: %v", err)
 	}
@@ -115,16 +118,16 @@ func SaveConfigDefault() error {
 	// write the struct config to json data
 	configData, err := json.MarshalIndent(ConfigDefault, "", "  ")
 	if err != nil {
-		return fmt.Errorf("SaveConfig: could not marshal from config.json")
+		return fmt.Errorf("SaveConfig: could not marshal from config file")
 	}
 
-	// write json data to config.json
-	err = ioutil.WriteFile("config.json", configData, 0644)
+	// write json data to config file
+	err = ioutil.WriteFile(configFileName, configData, 0644)
 	if err != nil {
-		return fmt.Errorf("SaveConfig: could not write to config.json")
+		return fmt.Errorf("SaveConfig: could not write to config file")
 	}
 
-	logger.Logln("SaveConfig: saved to config.json")
+	logger.Logln("SaveConfig: saved to config file")
 
 	return nil
 }

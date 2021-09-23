@@ -35,7 +35,7 @@ go build .
 -----
 ### INSTRUCTIONS:
 1. Install your desired minecraft server
-2. Edit the parameters in `config.json` as needed (*check definitions*):
+2. Edit the parameters in config file as needed (*check definitions*):
     - Folder
     - FileName
     - StartServerParam

@@ -228,7 +228,7 @@ func extractVersionProtocol(data []byte) error {
 		newServerVersion := string(bytes.Split(bytes.Split(data, []byte("\"version\":{\"name\":\""))[1], []byte("\","))[0])
 		newServerProtocol := string(bytes.Split(bytes.Split(data, []byte(",\"protocol\":"))[1], []byte("}"))[0])
 
-		// if serverVersion or serverProtocol are different from the ones specified in config.json --> update them
+		// if serverVersion or serverProtocol are different from the ones specified in config file --> update them
 		if newServerVersion != config.ConfigRuntime.Server.Version || newServerProtocol != config.ConfigRuntime.Server.Protocol {
 			logger.Logln(
 				"server version found!",
