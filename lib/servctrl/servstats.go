@@ -5,18 +5,12 @@ import (
 	"sync"
 	"time"
 
+	"msh/lib/errco"
 	"msh/lib/logger"
 )
 
 // Stats contains the info relative to server
 var Stats *serverStats
-
-const (
-	STATUS_OFFLINE  = 0x00000000
-	STATUS_STARTING = 0x00000001
-	STATUS_ONLINE   = 0x00000002
-	STATUS_STOPPING = 0x00000003
-)
 
 type serverStats struct {
 	M              *sync.Mutex
@@ -31,7 +25,7 @@ type serverStats struct {
 func init() {
 	Stats = &serverStats{
 		M:              &sync.Mutex{},
-		Status:         STATUS_OFFLINE,
+		Status:         errco.SERVER_STATUS_OFFLINE,
 		PlayerCount:    0,
 		StopMSRequests: 0,
 		LoadProgress:   "0%",

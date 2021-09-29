@@ -9,17 +9,8 @@ import (
 	"strings"
 
 	"msh/lib/config"
+	"msh/lib/errco"
 	"msh/lib/logger"
-)
-
-const (
-	CLIENT_REQ_ERROR = 0x0001ffff // error while analyzing client request
-	CLIENT_REQ_UNKN  = 0x00010000 // client request unknown
-	CLIENT_REQ_INFO  = 0x00010001 // client request server info
-	CLIENT_REQ_JOIN  = 0x00010002 // client request server join
-
-	MESSAGE_FORMAT_TXT  = 0x00020001 // message to client should be built as TXT
-	MESSAGE_FORMAT_INFO = 0x00020002 // message to client should be built as INFO
 )
 
 // buildMessage takes the message format (TXT/INFO) and a message to write to the client
@@ -59,7 +50,7 @@ func buildMessage(messageFormat int, message string) []byte {
 	}
 
 	switch messageFormat {
-	case MESSAGE_FORMAT_TXT:
+	case errco.MESSAGE_FORMAT_TXT:
 		// send text to be shown in the loadscreen
 
 		messageJSON := fmt.Sprint(
@@ -70,7 +61,7 @@ func buildMessage(messageFormat int, message string) []byte {
 
 		return mountHeader(messageJSON)
 
-	case MESSAGE_FORMAT_INFO:
+	case errco.MESSAGE_FORMAT_INFO:
 		// send server info
 
 		// "\n" should be encoded as "\xc2\xa7r\\n"
@@ -118,7 +109,7 @@ func buildReqFlag(mshPort string) ([]byte, []byte) {
 func getReqType(clientSocket net.Conn) (int, string, error) {
 	reqPacket, err := getClientPacket(clientSocket)
 	if err != nil {
-		return CLIENT_REQ_ERROR, "", fmt.Errorf("getReqType: %v", err)
+		return errco.CLIENT_REQ_ERROR, "", fmt.Errorf("getReqType: %v", err)
 	}
 
 	reqFlagInfo, reqFlagJoin := buildReqFlag(config.ListenPort)
@@ -129,16 +120,16 @@ func getReqType(clientSocket net.Conn) (int, string, error) {
 		// client is requesting server info and ping
 		// client first packet:	[ ... x x x (listenPortBytes) 1 1 0] or [ ... x x x (listenPortBytes) 1 ]
 		//                      [           ^---reqFlagInfo---^    ]    [           ^---reqFlagInfo---^ ]
-		return CLIENT_REQ_INFO, playerName, nil
+		return errco.CLIENT_REQ_INFO, playerName, nil
 
 	case bytes.Contains(reqPacket, reqFlagJoin):
 		// client is trying to join the server
 		// client first packet:	[ ... x x x (listenPortBytes) 2 ] or [ ... x x x (listenPortBytes) 2 x x x (player name) ]
 		//                      [           ^---reqFlagJoin---^ ]    [           ^---reqFlagJoin---^                     ]
-		return CLIENT_REQ_JOIN, playerName, nil
+		return errco.CLIENT_REQ_JOIN, playerName, nil
 
 	default:
-		return CLIENT_REQ_UNKN, "", fmt.Errorf("getReqType: client request unknown")
+		return errco.CLIENT_REQ_UNKN, "", fmt.Errorf("getReqType: client request unknown")
 	}
 }
 

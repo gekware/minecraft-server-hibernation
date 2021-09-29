@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"msh/lib/config"
+	"msh/lib/errco"
 	"msh/lib/logger"
 )
 
@@ -27,11 +28,11 @@ func StopMS(playersCheck bool) error {
 	var errExec error
 
 	// wait for the starting server to go online
-	for Stats.Status == STATUS_STARTING {
+	for Stats.Status == errco.SERVER_STATUS_STARTING {
 		time.Sleep(1 * time.Second)
 	}
 	// if server is not online return
-	if Stats.Status != STATUS_ONLINE {
+	if Stats.Status != errco.SERVER_STATUS_ONLINE {
 		return fmt.Errorf("StopMS: server is not online")
 	}
 
@@ -95,7 +96,7 @@ func killMSifOnlineAfterTimeout() {
 
 	for countdown > 0 {
 		// if server goes offline it's the correct behaviour -> return
-		if Stats.Status == STATUS_OFFLINE {
+		if Stats.Status == errco.SERVER_STATUS_OFFLINE {
 			return
 		}
 

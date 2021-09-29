@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"msh/lib/config"
+	"msh/lib/errco"
 	"msh/lib/logger"
 	"msh/lib/servctrl"
 )
@@ -38,12 +39,12 @@ func InterruptListener() {
 		time.Sleep(time.Second)
 
 		switch servctrl.Stats.Status {
-		case servctrl.STATUS_STOPPING:
+		case errco.SERVER_STATUS_STOPPING:
 			// if server is correctly stopping, wait for minecraft server to exit
 			logger.Logln("InterruptListener: waiting for minecraft server terminal to exit (server is stopping)")
 			servctrl.ServTerm.Wg.Wait()
 
-		case servctrl.STATUS_OFFLINE:
+		case errco.SERVER_STATUS_OFFLINE:
 			// if server is offline, then it's safe to continue
 			logger.Logln("InterruptListener: minecraft server terminal already exited (server is offline)")
 
@@ -58,14 +59,6 @@ func InterruptListener() {
 }
 
 var CheckedUpdateC chan bool = make(chan bool, 1)
-
-// these constant represent the result status of checkUpdate()
-const (
-	ERROR             = 0xffffffff
-	UPDATED           = 0x00000000
-	UPDATEAVAILABLE   = 0x00000001
-	UNOFFICIALVERSION = 0x00000002
-)
 
 // UpdateManager checks for updates and notify the user via terminal/gamechat
 // [goroutine]
@@ -90,16 +83,16 @@ func UpdateManager(clientVersion string) {
 
 		if config.ConfigRuntime.Msh.NotifyUpdate {
 			switch status {
-			case UPDATED:
+			case errco.VERSION_UPDATED:
 				fmt.Println("*** msh (" + clientVersion + ") is updated ***")
 
-			case UPDATEAVAILABLE:
+			case errco.VERSION_UPDATEAVAILABLE:
 				notification := "*** msh (" + onlineVersion + ") is now available: visit github to update! ***"
 				fmt.Println(notification)
 				// notify to game chat every 20 minutes for deltaT time
 				go notifyGameChat(20*time.Minute, deltaT, notification)
 
-			case UNOFFICIALVERSION:
+			case errco.VERSION_UNOFFICIALVERSION:
 				fmt.Println("*** msh (" + clientVersion + ") is running an unofficial release ***")
 			}
 		}
@@ -130,7 +123,7 @@ func checkUpdate(clientProtV, clientVersion, respHeader string) (int, string, er
 	url := "http://minecraft-server-hibernation.heliohost.us/latest-version.php?v=" + clientProtV + "&version=" + clientVersion
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return ERROR, "error", fmt.Errorf("checkUpdate: %v", err)
+		return errco.VERSION_ERROR, "error", fmt.Errorf("checkUpdate: %v", err)
 	}
 	req.Header.Add("User-Agent", "msh ("+userAgentOs+") msh/"+clientVersion)
 
@@ -138,14 +131,14 @@ func checkUpdate(clientProtV, clientVersion, respHeader string) (int, string, er
 	client := &http.Client{Timeout: 4 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		return ERROR, "error", fmt.Errorf("checkUpdate: %v", err)
+		return errco.VERSION_ERROR, "error", fmt.Errorf("checkUpdate: %v", err)
 	}
 	defer resp.Body.Close()
 
 	// read http response
 	respByte, err := ioutil.ReadAll(resp.Body)
 	if err != nil || !strings.Contains(string(respByte), respHeader) {
-		return ERROR, "error", fmt.Errorf("checkUpdate: %v", err)
+		return errco.VERSION_ERROR, "error", fmt.Errorf("checkUpdate: %v", err)
 	}
 
 	// no error and respByte contains respHeader
@@ -154,19 +147,19 @@ func checkUpdate(clientProtV, clientVersion, respHeader string) (int, string, er
 	// check which version is more recent
 	delta, err := deltaVersion(onlineVersion, clientVersion)
 	if err != nil {
-		return ERROR, "error", fmt.Errorf("checkUpdate: %v", err)
+		return errco.VERSION_ERROR, "error", fmt.Errorf("checkUpdate: %v", err)
 	}
 
 	switch {
 	case delta > 0:
 		// an update is available
-		return UPDATEAVAILABLE, onlineVersion, nil
+		return errco.VERSION_UPDATEAVAILABLE, onlineVersion, nil
 	case delta < 0:
 		// the runtime version has not yet been officially released
-		return UNOFFICIALVERSION, onlineVersion, nil
+		return errco.VERSION_UNOFFICIALVERSION, onlineVersion, nil
 	default:
 		// no update available
-		return UPDATED, onlineVersion, nil
+		return errco.VERSION_UPDATED, onlineVersion, nil
 	}
 }
 
