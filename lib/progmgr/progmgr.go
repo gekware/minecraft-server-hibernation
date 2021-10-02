@@ -15,7 +15,6 @@ import (
 
 	"msh/lib/config"
 	"msh/lib/errco"
-	"msh/lib/logger"
 	"msh/lib/servctrl"
 )
 
@@ -32,7 +31,7 @@ func InterruptListener() {
 		// stop the minecraft server with no player check
 		err := servctrl.StopMS(false)
 		if err != nil {
-			logger.Logln("InterruptListener:", err)
+			errco.Logln("InterruptListener:", err)
 		}
 
 		// wait 1 second to let the server go into stopping mode
@@ -41,15 +40,15 @@ func InterruptListener() {
 		switch servctrl.Stats.Status {
 		case errco.SERVER_STATUS_STOPPING:
 			// if server is correctly stopping, wait for minecraft server to exit
-			logger.Logln("InterruptListener: waiting for minecraft server terminal to exit (server is stopping)")
+			errco.Logln("InterruptListener: waiting for minecraft server terminal to exit (server is stopping)")
 			servctrl.ServTerm.Wg.Wait()
 
 		case errco.SERVER_STATUS_OFFLINE:
 			// if server is offline, then it's safe to continue
-			logger.Logln("InterruptListener: minecraft server terminal already exited (server is offline)")
+			errco.Logln("InterruptListener: minecraft server terminal already exited (server is offline)")
 
 		default:
-			logger.Logln("InterruptListener: stop command does not seem to be stopping server during forceful shutdown")
+			errco.Logln("InterruptListener: stop command does not seem to be stopping server during forceful shutdown")
 		}
 
 		// exit
@@ -74,11 +73,11 @@ func UpdateManager(clientVersion string) {
 	respHeader := "latest version: "
 
 	for {
-		logger.Logln("checking version...")
+		errco.Logln("checking version...")
 
 		status, onlineVersion, err := checkUpdate(clientProtV, clientVersion, respHeader)
 		if err != nil {
-			logger.Logln("UpdateManager:", err.Error())
+			errco.Logln("UpdateManager:", err.Error())
 		}
 
 		if config.ConfigRuntime.Msh.NotifyUpdate {
@@ -208,7 +207,7 @@ func notifyGameChat(deltaNotification, deltaToEnd time.Duration, notificationStr
 		if servctrl.ServTerm.IsActive {
 			_, err := servctrl.Execute("say "+notificationString, "notifyGameChat")
 			if err != nil {
-				logger.Logln("notifyGameChat:", err.Error())
+				errco.Logln("notifyGameChat:", err.Error())
 			}
 		}
 

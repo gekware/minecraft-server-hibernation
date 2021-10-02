@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"msh/lib/errco"
-	"msh/lib/logger"
 )
 
 // Stats contains the info relative to server
@@ -40,7 +39,7 @@ func init() {
 func printDataUsage() {
 	for ServTerm.IsActive {
 		if Stats.BytesToClients != 0 || Stats.BytesToServer != 0 {
-			logger.Logln(fmt.Sprintf("data/s: %8.3f KB/s to clients | %8.3f KB/s to server", Stats.BytesToClients/1024, Stats.BytesToServer/1024))
+			errco.Logln(fmt.Sprintf("data/s: %8.3f KB/s to clients | %8.3f KB/s to server", Stats.BytesToClients/1024, Stats.BytesToServer/1024))
 
 			Stats.M.Lock()
 			Stats.BytesToClients = 0

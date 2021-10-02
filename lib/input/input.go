@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"msh/lib/logger"
+	"msh/lib/errco"
 	"msh/lib/servctrl"
 )
 
@@ -21,7 +21,7 @@ func GetInput() {
 	for {
 		line, err = reader.ReadString('\n')
 		if err != nil {
-			logger.Logln("GetInput:", err)
+			errco.Logln("GetInput:", err)
 			continue
 		}
 
@@ -34,7 +34,7 @@ func GetInput() {
 		}
 		lineSplit := strings.Split(line, " ")
 
-		logger.Logln("GetInput: user input:", lineSplit[:])
+		errco.Logln("GetInput: user input:", lineSplit[:])
 
 		switch lineSplit[0] {
 		// target msh
@@ -49,18 +49,18 @@ func GetInput() {
 			case "start":
 				err = servctrl.StartMS()
 				if err != nil {
-					logger.Logln("GetInput:", err)
+					errco.Logln("GetInput:", err)
 				}
 			case "freeze":
 				// stop minecraft server with no player check
 				err = servctrl.StopMS(false)
 				if err != nil {
-					logger.Logln("GetInput:", err)
+					errco.Logln("GetInput:", err)
 				}
 			case "exit":
 				err = servctrl.StopMS(false)
 				if err != nil {
-					logger.Logln("GetInput:", err)
+					errco.Logln("GetInput:", err)
 				}
 				fmt.Print("exiting msh")
 				os.Exit(0)
@@ -79,7 +79,7 @@ func GetInput() {
 			// just pass the command to the minecraft server terminal
 			_, err = servctrl.Execute(strings.Join(lineSplit[1:], " "), "user input")
 			if err != nil {
-				logger.Logln("GetInput:", err)
+				errco.Logln("GetInput:", err)
 			}
 
 		// wrong target

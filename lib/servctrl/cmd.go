@@ -10,7 +10,6 @@ import (
 	"sync"
 
 	"msh/lib/errco"
-	"msh/lib/logger"
 	"msh/lib/opsys"
 )
 
@@ -50,7 +49,7 @@ func Execute(command, origin string) (string, error) {
 			return "", fmt.Errorf("Execute: server not online")
 		}
 
-		logger.Logln("terminal execute:"+COLOR_YELLOW, com, COLOR_RESET, "\t(origin:", origin+")")
+		errco.Logln("terminal execute:"+COLOR_YELLOW, com, COLOR_RESET, "\t(origin:", origin+")")
 
 		// write to cmd (\n indicates the enter key)
 		_, err := ServTerm.inPipe.Write([]byte(com + "\n"))
@@ -185,7 +184,7 @@ func printerOutErr() {
 				// Continue if line does not contain ": "
 				// (it does not adhere to expected log format or it is a multiline java exception)
 				if !strings.Contains(line, ": ") {
-					logger.Logln("printerOutErr: line does not adhere to expected log format")
+					errco.Logln("printerOutErr: line does not adhere to expected log format")
 					continue
 				}
 
@@ -198,7 +197,7 @@ func printerOutErr() {
 					// player sends a chat message
 					case strings.HasPrefix(lineContent, "<") || strings.HasPrefix(lineContent, "["):
 						// just log that the line is a chat message
-						logger.Logln("a chat message was sent")
+						errco.Logln("a chat message was sent")
 
 					// player joins the server
 					// using "UUID of player" since minecraft server v1.12.2 does not use "joined the game"
@@ -253,7 +252,7 @@ func waitForExit() {
 	ServTerm.inPipe.Close()
 
 	ServTerm.IsActive = false
-	logger.Logln("waitForExit: terminal exited")
+	errco.Logln("waitForExit: terminal exited")
 
 	Stats.Status = errco.SERVER_STATUS_OFFLINE
 	log.Print("*** MINECRAFT SERVER IS OFFLINE!")

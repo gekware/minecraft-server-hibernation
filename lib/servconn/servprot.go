@@ -10,7 +10,6 @@ import (
 
 	"msh/lib/config"
 	"msh/lib/errco"
-	"msh/lib/logger"
 )
 
 // buildMessage takes the message format (TXT/INFO) and a message to write to the client
@@ -89,7 +88,7 @@ func buildReqFlag(mshPort string) ([]byte, []byte) {
 
 	listenPortUint64, err := strconv.ParseUint(mshPort, 10, 16) // bitSize: 16 -> since it will be converted to Uint16
 	if err != nil {
-		logger.Logln("buildListenPortBytes: error during ListenPort conversion to uint64")
+		errco.Logln("buildListenPortBytes: error during ListenPort conversion to uint64")
 		return nil, nil
 	}
 
@@ -204,7 +203,7 @@ func extractPlayerName(data, reqFlagJoin []byte, clientSocket net.Conn) string {
 		data, err := getClientPacket(clientSocket)
 		if err != nil {
 			// this error is non-blocking, just log it
-			logger.Logln("extractPlayerName:", err)
+			errco.Logln("extractPlayerName:", err)
 			return "player unknown"
 		}
 
@@ -221,7 +220,7 @@ func extractVersionProtocol(data []byte) error {
 
 		// if serverVersion or serverProtocol are different from the ones specified in config file --> update them
 		if newServerVersion != config.ConfigRuntime.Server.Version || newServerProtocol != config.ConfigRuntime.Server.Protocol {
-			logger.Logln(
+			errco.Logln(
 				"server version found!",
 				"serverVersion:", newServerVersion,
 				"serverProtocol:", newServerProtocol,

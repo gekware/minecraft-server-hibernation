@@ -7,7 +7,6 @@ import (
 
 	"msh/lib/config"
 	"msh/lib/errco"
-	"msh/lib/logger"
 	"msh/lib/servctrl"
 )
 
@@ -23,7 +22,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 	case errco.SERVER_STATUS_OFFLINE:
 		reqType, playerName, err := getReqType(clientSocket)
 		if err != nil {
-			logger.Logln("HandleClientSocket:", err)
+			errco.Logln("HandleClientSocket:", err)
 			return
 		}
 
@@ -39,7 +38,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 			// answer to client ping
 			err := getPing(clientSocket)
 			if err != nil {
-				logger.Logln("HandleClientSocket:", err)
+				errco.Logln("HandleClientSocket:", err)
 			}
 
 		case errco.CLIENT_REQ_JOIN:
@@ -49,7 +48,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 			err := servctrl.StartMS()
 			if err != nil {
 				// log to msh console and warn client with text in the loadscreen
-				logger.Logln("HandleClientSocket:", err)
+				errco.Logln("HandleClientSocket:", err)
 				clientSocket.Write(buildMessage(errco.MESSAGE_FORMAT_TXT, "An error occurred while starting the server: check the msh log"))
 			} else {
 				// log to msh console and answer client with text in the loadscreen
@@ -59,13 +58,13 @@ func HandleClientSocket(clientSocket net.Conn) {
 		}
 
 		// close the client connection
-		logger.Logln("closing connection for:", clientAddress)
+		errco.Logln("closing connection for:", clientAddress)
 		clientSocket.Close()
 
 	case errco.SERVER_STATUS_STARTING:
 		reqType, playerName, err := getReqType(clientSocket)
 		if err != nil {
-			logger.Logln("HandleClientSocket:", err)
+			errco.Logln("HandleClientSocket:", err)
 			return
 		}
 
@@ -81,7 +80,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 			// answer to client ping
 			err = getPing(clientSocket)
 			if err != nil {
-				logger.Logln("HandleClientSocket:", err)
+				errco.Logln("HandleClientSocket:", err)
 			}
 
 		case errco.CLIENT_REQ_JOIN:
@@ -93,14 +92,14 @@ func HandleClientSocket(clientSocket net.Conn) {
 		}
 
 		// close the client connection
-		logger.Logln("closing connection for:", clientAddress)
+		errco.Logln("closing connection for:", clientAddress)
 		clientSocket.Close()
 
 	case errco.SERVER_STATUS_ONLINE:
 		// just open a connection with the server and connect it with the client
 		serverSocket, err := net.Dial("tcp", config.TargetHost+":"+config.TargetPort)
 		if err != nil {
-			logger.Logln("HandleClientSocket: error during serverSocket.Dial()")
+			errco.Logln("HandleClientSocket: error during serverSocket.Dial()")
 			// report dial error to client with text in the loadscreen
 			clientSocket.Write(buildMessage(errco.MESSAGE_FORMAT_TXT, "can't connect to server... check if minecraft server is running and set the correct targetPort"))
 			return

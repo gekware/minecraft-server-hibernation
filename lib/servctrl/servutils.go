@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"msh/lib/logger"
+	"msh/lib/errco"
 	"msh/lib/utility"
 )
 
@@ -18,7 +18,7 @@ func countPlayerSafe() (int, bool) {
 	playerCount, err := getPlayersByListCom()
 	if err != nil {
 		// no need to return an error since the less reliable internal player count is available
-		logger.Logln("countPlayerSafe: %v", err)
+		errco.Logln("countPlayerSafe: %v", err)
 		return Stats.PlayerCount, false
 	}
 

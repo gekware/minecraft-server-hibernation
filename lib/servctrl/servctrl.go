@@ -7,7 +7,6 @@ import (
 
 	"msh/lib/config"
 	"msh/lib/errco"
-	"msh/lib/logger"
 )
 
 // StartMS starts the minecraft server
@@ -44,7 +43,7 @@ func StopMS(playersCheck bool) error {
 
 		// check how many players are on the server
 		playerCount, isFromServer := countPlayerSafe()
-		logger.Logln(playerCount, "online players - number got from server:", isFromServer)
+		errco.Logln(playerCount, "online players - number got from server:", isFromServer)
 		if playerCount > 0 {
 			return fmt.Errorf("StopMS: server is not empty")
 		}
@@ -84,7 +83,7 @@ func StopMSRequest() {
 				// avoid printing "server is not online" error since it can be very frequent
 				// when updating the logging system this could be managed by logging it only at certain log levels
 				if err.Error() != "StopMS: server is not online" {
-					logger.Logln("StopMSRequest:", err)
+					errco.Logln("StopMSRequest:", err)
 				}
 			}
 		})
@@ -105,16 +104,16 @@ func killMSifOnlineAfterTimeout() {
 	}
 
 	// save world before killing the server, do not check for errors
-	logger.Logln("saving word before killing the minecraft server process")
+	errco.Logln("saving word before killing the minecraft server process")
 	_, _ = Execute("save-all", "killMSifOnlineAfterTimeout")
 
 	// give time to save word
 	time.Sleep(10 * time.Second)
 
 	// send kill signal to server
-	logger.Logln("send kill signal to minecraft server process since it won't stop normally")
+	errco.Logln("send kill signal to minecraft server process since it won't stop normally")
 	err := ServTerm.cmd.Process.Kill()
 	if err != nil {
-		logger.Logln("killMSifOnlineAfterTimeout: %v", err)
+		errco.Logln("killMSifOnlineAfterTimeout: %v", err)
 	}
 }
