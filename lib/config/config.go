@@ -10,10 +10,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"msh/lib/logger"
-	"msh/lib/opsys"
-
 	"gopkg.in/yaml.v2"
+
+	"msh/lib/errco"
+	"msh/lib/opsys"
 )
 
 // configFileName is the config file name
@@ -59,26 +59,26 @@ type configuration struct {
 }
 
 // LoadConfig loads json data from config file into config
-func LoadConfig() error {
-	logger.Logln("checking OS support...")
+func LoadConfig() *errco.Error {
+	errco.Logln("checking OS support...")
 	// check if OS is supported.
 	err := opsys.OsSupported()
 	if err != nil {
-		return fmt.Errorf("loadConfig: %v", err)
+		return errco.NewErr(errco.LOAD_CONFIG_ERROR, errco.LVL_B, "LoadConfig", err.Error(), true)
 	}
 
-	logger.Logln("loading config file...")
+	errco.Logln("loading config file...")
 
 	// read config file
 	configData, err := ioutil.ReadFile(configFileName)
 	if err != nil {
-		return fmt.Errorf("loadConfig: %v", err)
+		return errco.NewErr(errco.LOAD_CONFIG_ERROR, errco.LVL_B, "LoadConfig", err.Error(), true)
 	}
 
 	// write read data into ConfigDefault
 	err = yaml.Unmarshal(configData, &ConfigDefault)
 	if err != nil {
-		return fmt.Errorf("loadConfig: %v", err)
+		return errco.NewErr(errco.LOAD_CONFIG_ERROR, errco.LVL_B, "LoadConfig", err.Error(), true)
 	}
 
 	// generate runtime config
@@ -87,47 +87,47 @@ func LoadConfig() error {
 	// --------------- ConfigRuntime --------------- //
 	// from now on only ConfigRuntime should be used //
 
-	err = checkConfigRuntime()
-	if err != nil {
-		return fmt.Errorf("loadConfig: %v", err)
+	errMsh := checkConfigRuntime()
+	if errMsh.MustReturn() {
+		return errMsh.AddTrace("LoadConfig")
 	}
 
 	// as soon as the Config variable is set, set debug level
-	logger.Debug = ConfigRuntime.Msh.Debug
+	errco.Debug = ConfigRuntime.Msh.Debug
 
 	// initialize ip and ports for connection
-	ListenHost, ListenPort, TargetHost, TargetPort, err = getIpPorts()
-	if err != nil {
-		return fmt.Errorf("loadConfig: %v", err)
+	ListenHost, ListenPort, TargetHost, TargetPort, errMsh = getIpPorts()
+	if errMsh.MustReturn() {
+		return errMsh.AddTrace("LoadConfig")
 	}
-	logger.Logln("msh proxy setup:\t", ListenHost+":"+ListenPort, "-->", TargetHost+":"+TargetPort)
+	errco.Logln("msh proxy setup:\t", ListenHost+":"+ListenPort, "-->", TargetHost+":"+TargetPort)
 
 	// set server icon
 	ServerIcon, err = loadIcon(ConfigRuntime.Server.Folder)
 	if err != nil {
 		// it's enough to log it without returning
 		// since the default icon is loaded by default
-		logger.Logln("loadConfig:", err.Error())
+		errco.Logln("loadConfig:", err.Error())
 	}
 
 	return nil
 }
 
 // SaveConfigDefault saves ConfigDefault to the config file
-func SaveConfigDefault() error {
+func SaveConfigDefault() *errco.Error {
 	// write the struct config to json data
 	configData, err := json.MarshalIndent(ConfigDefault, "", "  ")
 	if err != nil {
-		return fmt.Errorf("SaveConfig: could not marshal from config file")
+		return errco.NewErr(errco.SAVE_CONFIG_ERROR, errco.LVL_D, "SaveConfigDefault", "could not marshal from config file", false)
 	}
 
 	// write json data to config file
 	err = ioutil.WriteFile(configFileName, configData, 0644)
 	if err != nil {
-		return fmt.Errorf("SaveConfig: could not write to config file")
+		return errco.NewErr(errco.SAVE_CONFIG_ERROR, errco.LVL_D, "SaveConfigDefault", "could not write to config file", false)
 	}
 
-	logger.Logln("SaveConfig: saved to config file")
+	errco.Logln("SaveConfigDefault: saved to config file")
 
 	return nil
 }
@@ -165,30 +165,30 @@ func generateConfigRuntime() configuration {
 }
 
 // checkConfigRuntime checks different parameters in ConfigRuntime
-func checkConfigRuntime() error {
+func checkConfigRuntime() *errco.Error {
 	// check if serverFile/serverFolder exists
 	// (if config.Basic.ServerFileName == "", then it will just check if the server folder exist)
 	serverFileFolderPath := filepath.Join(ConfigRuntime.Server.Folder, ConfigRuntime.Server.FileName)
 	_, err := os.Stat(serverFileFolderPath)
 	if os.IsNotExist(err) {
-		return fmt.Errorf("checkConfig: specified server file/folder does not exist: %s", serverFileFolderPath)
+		return errco.NewErr(errco.CHECK_CONFIG_ERROR, errco.LVL_B, "checkConfigRuntime", "specified server file/folder does not exist: "+serverFileFolderPath, true)
 	}
 
 	// check if java is installed
 	_, err = exec.LookPath("java")
 	if err != nil {
-		return fmt.Errorf("checkConfig: java not installed")
+		return errco.NewErr(errco.CHECK_CONFIG_ERROR, errco.LVL_B, "checkConfigRuntime", "java not installed", true)
 	}
 
 	return nil
 }
 
 // getIpPorts reads server.properties server file and returns the correct ports
-func getIpPorts() (string, string, string, string, error) {
+func getIpPorts() (string, string, string, string, *errco.Error) {
 	serverPropertiesFilePath := filepath.Join(ConfigRuntime.Server.Folder, "server.properties")
 	data, err := ioutil.ReadFile(serverPropertiesFilePath)
 	if err != nil {
-		return "", "", "", "", fmt.Errorf("setIpPorts: %v", err)
+		return "", "", "", "", errco.NewErr(errco.LOAD_CONFIG_ERROR, errco.LVL_B, "setIpPorts", err.Error(), true)
 	}
 
 	dataStr := string(data)
@@ -196,7 +196,7 @@ func getIpPorts() (string, string, string, string, error) {
 	TargetPort = strings.Split(strings.Split(dataStr, "server-port=")[1], "\n")[0]
 
 	if TargetPort == ConfigRuntime.Msh.Port {
-		return "", "", "", "", fmt.Errorf("setIpPorts: TargetPort and ListenPort appear to be the same, please change one of them")
+		return "", "", "", "", errco.NewErr(errco.LOAD_CONFIG_ERROR, errco.LVL_B, "setIpPorts", "TargetPort and ListenPort appear to be the same, please change one of them", true)
 	}
 
 	// return ListenHost, TargetHost, TargetPort, nil

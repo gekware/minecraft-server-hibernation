@@ -7,8 +7,8 @@ import (
 	"os"
 
 	"msh/lib/config"
+	"msh/lib/errco"
 	"msh/lib/input"
-	"msh/lib/logger"
 	"msh/lib/progmgr"
 	"msh/lib/servconn"
 	"msh/lib/utility"
@@ -35,9 +35,9 @@ func main() {
 	// load configuration from config file
 	// load server-icon-frozen.png if present
 	// LoadConfig is the second function to be called
-	err := config.LoadConfig()
-	if err != nil {
-		log.Println("main:", err.Error())
+	errMsh := config.LoadConfig()
+	if errMsh != nil {
+		errco.LogMshErr(errMsh)
 		os.Exit(1)
 	}
 
@@ -65,7 +65,7 @@ func main() {
 	for {
 		clientSocket, err := listener.Accept()
 		if err != nil {
-			logger.Logln("main:", err.Error())
+			errco.Logln("main:", err.Error())
 			continue
 		}
 
