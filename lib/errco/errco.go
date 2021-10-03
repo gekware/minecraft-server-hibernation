@@ -13,14 +13,15 @@ func NewErr(code, lvl int, ori, str string, blocking bool) *Error {
 	return &Error{code, lvl, ori, str, blocking}
 }
 
-// AddTrace adds to the error the parent function
+// AddTrace adds the parent function to the error
 func (errMsh *Error) AddTrace(pFunc string) *Error {
 	errMsh.Ori = pFunc + ": " + errMsh.Ori
 	return errMsh
 }
 
-// MustReturn indicates if the error should block execution or not
-// in case the execution is not blocked, it will log the error
+// MustReturn indicates if the error should block execution or not.
+// In case the execution is not blocked, it will log the error within
+// the function itself
 func (errMsh *Error) MustReturn() bool {
 	mustReturn := errMsh != nil && errMsh.Blocking
 

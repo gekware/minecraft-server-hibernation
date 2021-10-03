@@ -75,9 +75,10 @@ func UpdateManager(clientVersion string) {
 	for {
 		errco.Logln("checking version...")
 
-		status, onlineVersion, err := checkUpdate(clientProtV, clientVersion, respHeader)
-		if err != nil {
-			errco.Logln("UpdateManager:", err.Error())
+		status, onlineVersion, errMsh := checkUpdate(clientProtV, clientVersion, respHeader)
+		if errMsh.MustReturn() {
+			// since UpdateManager is a goroutine, don't return and just log the error
+			errco.LogMshErr(errMsh)
 		}
 
 		if config.ConfigRuntime.Msh.NotifyUpdate {
@@ -107,7 +108,7 @@ func UpdateManager(clientVersion string) {
 
 // checkUpdate checks for updates. Returns (update available, online version, error)
 // if error occurred, online version will be "error"
-func checkUpdate(clientProtV, clientVersion, respHeader string) (int, string, error) {
+func checkUpdate(clientProtV, clientVersion, respHeader string) (int, string, *errco.Error) {
 	userAgentOs := "osNotSupported"
 	switch runtime.GOOS {
 	case "windows":
@@ -122,7 +123,7 @@ func checkUpdate(clientProtV, clientVersion, respHeader string) (int, string, er
 	url := "http://minecraft-server-hibernation.heliohost.us/latest-version.php?v=" + clientProtV + "&version=" + clientVersion
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return errco.VERSION_ERROR, "error", fmt.Errorf("checkUpdate: %v", err)
+		return errco.VERSION_ERROR, "error", errco.NewErr(errco.VERSION_ERROR, errco.LVL_D, "checkUpdate", err.Error(), false)
 	}
 	req.Header.Add("User-Agent", "msh ("+userAgentOs+") msh/"+clientVersion)
 
@@ -130,23 +131,23 @@ func checkUpdate(clientProtV, clientVersion, respHeader string) (int, string, er
 	client := &http.Client{Timeout: 4 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		return errco.VERSION_ERROR, "error", fmt.Errorf("checkUpdate: %v", err)
+		return errco.VERSION_ERROR, "error", errco.NewErr(errco.VERSION_ERROR, errco.LVL_D, "checkUpdate", err.Error(), false)
 	}
 	defer resp.Body.Close()
 
 	// read http response
 	respByte, err := ioutil.ReadAll(resp.Body)
 	if err != nil || !strings.Contains(string(respByte), respHeader) {
-		return errco.VERSION_ERROR, "error", fmt.Errorf("checkUpdate: %v", err)
+		return errco.VERSION_ERROR, "error", errco.NewErr(errco.VERSION_ERROR, errco.LVL_D, "checkUpdate", err.Error(), false)
 	}
 
 	// no error and respByte contains respHeader
 	onlineVersion := strings.ReplaceAll(string(respByte), respHeader, "")
 
 	// check which version is more recent
-	delta, err := deltaVersion(onlineVersion, clientVersion)
-	if err != nil {
-		return errco.VERSION_ERROR, "error", fmt.Errorf("checkUpdate: %v", err)
+	delta, errMsh := deltaVersion(onlineVersion, clientVersion)
+	if errMsh.MustReturn() {
+		return errco.VERSION_ERROR, "error", errMsh.AddTrace("checkUpdate")
 	}
 
 	switch {
@@ -166,7 +167,7 @@ func checkUpdate(clientProtV, clientVersion, respHeader string) (int, string, er
 // =0	versions are equal or an error occurred.
 // >0	if onlineVersion is more recent.
 // <0	if onlineVersion is less recent.
-func deltaVersion(onlineVersion, clientVersion string) (int, error) {
+func deltaVersion(onlineVersion, clientVersion string) (int, *errco.Error) {
 	// digitize transforms a string "vx.x.x" into an integer x000x000x000
 	digitize := func(Version string) (int, error) {
 		versionInt := 0
@@ -186,11 +187,11 @@ func deltaVersion(onlineVersion, clientVersion string) (int, error) {
 
 	clientVersionInt, err := digitize(clientVersion)
 	if err != nil {
-		return 0, fmt.Errorf("compareVersion: %v", err)
+		return 0, errco.NewErr(errco.VERSION_COMPARISON_ERROR, errco.LVL_D, "deltaVersion", err.Error(), false)
 	}
 	onlineVersionInt, err := digitize(onlineVersion)
 	if err != nil {
-		return 0, fmt.Errorf("compareVersion: %v", err)
+		return 0, errco.NewErr(errco.VERSION_COMPARISON_ERROR, errco.LVL_D, "deltaVersion", err.Error(), false)
 	}
 
 	return onlineVersionInt - clientVersionInt, nil

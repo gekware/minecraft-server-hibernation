@@ -31,9 +31,10 @@ const (
 // ------------------- errors ------------------ //
 
 const (
-	VERSION_ERROR = 0x0001f000 // check update result: error
+	VERSION_ERROR            = 0x0001f000 // check update error
+	VERSION_COMPARISON_ERROR = 0x0001f001 // delta version calculation error
 
-	CLIENT_REQ_ERROR = 0x0002f000 // client request result: error
+	CLIENT_REQ_ERROR = 0x0002f000 // client request error
 
 	LOAD_CONFIG_ERROR  = 0x0003f000 // error while loading config
 	SAVE_CONFIG_ERROR  = 0x0003f001 // error while saving config to file
