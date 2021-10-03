@@ -7,6 +7,7 @@ package errco
 0x0001xxxx: program manager package
 0x0002xxxx: server connection package
 0x0003xxxx: config package
+0x0004xxxx: operative system
 */
 
 // ------------------- codes ------------------- //
@@ -39,4 +40,6 @@ const (
 	LOAD_CONFIG_ERROR  = 0x0003f000 // error while loading config
 	SAVE_CONFIG_ERROR  = 0x0003f001 // error while saving config to file
 	CHECK_CONFIG_ERROR = 0x0003f002 // error while checking config
+
+	OS_NOT_SUPPORTED_ERROR = 0x0004f001 // OS not supported
 )
