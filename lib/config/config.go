@@ -62,13 +62,12 @@ type configuration struct {
 func LoadConfig() *errco.Error {
 	errco.Logln("checking OS support...")
 	// check if OS is supported.
-	err := opsys.OsSupported()
-	if err != nil {
-		return errco.NewErr(errco.LOAD_CONFIG_ERROR, errco.LVL_B, "LoadConfig", err.Error(), true)
+	errMsh := opsys.OsSupported()
+	if errMsh.MustReturn() {
+		return errMsh.AddTrace("LoadConfig")
 	}
 
 	errco.Logln("loading config file...")
-
 	// read config file
 	configData, err := ioutil.ReadFile(configFileName)
 	if err != nil {
@@ -87,7 +86,7 @@ func LoadConfig() *errco.Error {
 	// --------------- ConfigRuntime --------------- //
 	// from now on only ConfigRuntime should be used //
 
-	errMsh := checkConfigRuntime()
+	errMsh = checkConfigRuntime()
 	if errMsh.MustReturn() {
 		return errMsh.AddTrace("LoadConfig")
 	}
