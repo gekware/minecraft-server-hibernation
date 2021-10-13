@@ -88,7 +88,7 @@ func buildReqFlag(mshPort string) ([]byte, []byte) {
 
 	listenPortUint64, err := strconv.ParseUint(mshPort, 10, 16) // bitSize: 16 -> since it will be converted to Uint16
 	if err != nil {
-		errco.Logln("buildListenPortBytes: error during ListenPort conversion to uint64")
+		errco.LogMshErr(errco.NewErr(errco.BUILD_REQ_FLAG_ERROR, errco.LVL_D, "buildReqFlag", err.Error(), true))
 		return nil, nil
 	}
 
@@ -98,17 +98,17 @@ func buildReqFlag(mshPort string) ([]byte, []byte) {
 
 	// generate flags
 
-	reqFlagInfo := append(listenPortBytes, byte(1)) // flag contained in INFO request packet (first packet of client)
-	reqFlagJoin := append(listenPortBytes, byte(2)) // flag contained in JOIN request packet (first packet of client)
+	reqFlagInfo := append(listenPortBytes, byte(1)) // flag contained in INFO request packet (first packet of client) -> [99 211 1]
+	reqFlagJoin := append(listenPortBytes, byte(2)) // flag contained in JOIN request packet (first packet of client) -> [99 211 2]
 
 	return reqFlagInfo, reqFlagJoin
 }
 
 // getReqType returns the request type (INFO or JOIN) and playerName of the client
-func getReqType(clientSocket net.Conn) (int, string, error) {
-	reqPacket, err := getClientPacket(clientSocket)
-	if err != nil {
-		return errco.CLIENT_REQ_ERROR, "", fmt.Errorf("getReqType: %v", err)
+func getReqType(clientSocket net.Conn) (int, string, *errco.Error) {
+	reqPacket, errMsh := getClientPacket(clientSocket)
+	if errMsh.MustReturn() {
+		return errco.CLIENT_REQ_ERROR, "", errMsh.AddTrace("getReqType")
 	}
 
 	reqFlagInfo, reqFlagJoin := buildReqFlag(config.ListenPort)
@@ -128,25 +128,25 @@ func getReqType(clientSocket net.Conn) (int, string, error) {
 		return errco.CLIENT_REQ_JOIN, playerName, nil
 
 	default:
-		return errco.CLIENT_REQ_UNKN, "", fmt.Errorf("getReqType: client request unknown")
+		return errco.CLIENT_REQ_UNKN, "", errco.NewErr(errco.CLIENT_REQ_UNKN, errco.LVL_D, "getReqType", "client request unknown", true)
 	}
 }
 
 // getPing responds to the ping request
-func getPing(clientSocket net.Conn) error {
+func getPing(clientSocket net.Conn) *errco.Error {
 	// read the first packet
-	pingData, err := getClientPacket(clientSocket)
-	if err != nil {
-		return fmt.Errorf("answerPingReq: error while reading [1] ping request: %v", err)
+	pingData, errMsh := getClientPacket(clientSocket)
+	if errMsh.MustReturn() {
+		return errMsh.AddTrace("getPing [1]")
 	}
 
 	switch {
 	case bytes.Equal(pingData, []byte{1, 0}):
 		// packet is [1 0]
 		// read the second packet
-		pingData, err = getClientPacket(clientSocket)
-		if err != nil {
-			return fmt.Errorf("answerPingReq: error while reading [2] ping request: %v", err)
+		pingData, errMsh = getClientPacket(clientSocket)
+		if errMsh.MustReturn() {
+			return errMsh.AddTrace("getPing [2]")
 		}
 
 	case bytes.Equal(pingData[:2], []byte{1, 0}):
@@ -162,13 +162,13 @@ func getPing(clientSocket net.Conn) error {
 }
 
 // getClientPacket reads the client socket and returns only the bytes containing data
-func getClientPacket(clientSocket net.Conn) ([]byte, error) {
+func getClientPacket(clientSocket net.Conn) ([]byte, *errco.Error) {
 	buf := make([]byte, 1024)
 
 	// read first packet
 	dataLen, err := clientSocket.Read(buf)
 	if err != nil {
-		return nil, fmt.Errorf("readClientPacket: error during clientSocket.Read()")
+		return nil, errco.NewErr(errco.CLIENT_SOCKET_READ_ERROR, errco.LVL_D, "getClientPacket", "error during clientSocket.Read()", true)
 	}
 
 	return buf[:dataLen], nil
@@ -200,10 +200,10 @@ func extractPlayerName(data, reqFlagJoin []byte, clientSocket net.Conn) string {
 		// [ ^---data--------------------^ ] [       ^-data[3:]--^ ]
 		// [              dataSplitAft[1]-╝] [                     ]
 
-		data, err := getClientPacket(clientSocket)
-		if err != nil {
-			// this error is non-blocking, just log it
-			errco.Logln("extractPlayerName:", err)
+		data, errMsh := getClientPacket(clientSocket)
+		if errMsh.MustReturn() {
+			// this error is non-blocking: log the error and return "player unknown"
+			errco.LogMshErr(errMsh.AddTrace("extractPlayerName"))
 			return "player unknown"
 		}
 
@@ -212,7 +212,7 @@ func extractPlayerName(data, reqFlagJoin []byte, clientSocket net.Conn) string {
 }
 
 // extractVersionProtocol finds the serverVersion and serverProtocol in (data []byte) and writes them in the config file
-func extractVersionProtocol(data []byte) error {
+func extractVersionProtocol(data []byte) *errco.Error {
 	// if data contains "\"version\":{\"name\":\"" and ",\"protocol\":" --> extract the serverVersion and serverProtocol
 	if bytes.Contains(data, []byte("\"version\":{\"name\":\"")) && bytes.Contains(data, []byte(",\"protocol\":")) {
 		newServerVersion := string(bytes.Split(bytes.Split(data, []byte("\"version\":{\"name\":\""))[1], []byte("\","))[0])
@@ -234,9 +234,9 @@ func extractVersionProtocol(data []byte) error {
 			config.ConfigDefault.Server.Version = newServerVersion
 			config.ConfigDefault.Server.Protocol = newServerProtocol
 
-			err := config.SaveConfigDefault()
-			if err != nil {
-				return fmt.Errorf("GetVersionProtocol: %v", err)
+			errMsh := config.SaveConfigDefault()
+			if errMsh.MustReturn() {
+				return errMsh.AddTrace("extractVersionProtocol")
 			}
 		}
 	}

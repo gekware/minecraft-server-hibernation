@@ -37,7 +37,7 @@ func main() {
 	// LoadConfig is the second function to be called
 	errMsh := config.LoadConfig()
 	if errMsh != nil {
-		errco.LogMshErr(errMsh)
+		errco.LogMshErr(errMsh.AddTrace("main"))
 		os.Exit(1)
 	}
 
