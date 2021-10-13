@@ -117,13 +117,13 @@ func SaveConfigDefault() *errco.Error {
 	// write the struct config to json data
 	configData, err := json.MarshalIndent(ConfigDefault, "", "  ")
 	if err != nil {
-		return errco.NewErr(errco.SAVE_CONFIG_ERROR, errco.LVL_D, "SaveConfigDefault", "could not marshal from config file", false)
+		return errco.NewErr(errco.SAVE_CONFIG_ERROR, errco.LVL_D, "SaveConfigDefault", "could not marshal from config file", true)
 	}
 
 	// write json data to config file
 	err = ioutil.WriteFile(configFileName, configData, 0644)
 	if err != nil {
-		return errco.NewErr(errco.SAVE_CONFIG_ERROR, errco.LVL_D, "SaveConfigDefault", "could not write to config file", false)
+		return errco.NewErr(errco.SAVE_CONFIG_ERROR, errco.LVL_D, "SaveConfigDefault", "could not write to config file", true)
 	}
 
 	errco.Logln("SaveConfigDefault: saved to config file")

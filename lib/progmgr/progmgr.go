@@ -78,7 +78,7 @@ func UpdateManager(clientVersion string) {
 		status, onlineVersion, errMsh := checkUpdate(clientProtV, clientVersion, respHeader)
 		if errMsh.MustReturn() {
 			// since UpdateManager is a goroutine, don't return and just log the error
-			errco.LogMshErr(errMsh)
+			errco.LogMshErr(errMsh.AddTrace("UpdateManager"))
 		}
 
 		if config.ConfigRuntime.Msh.NotifyUpdate {
@@ -123,7 +123,7 @@ func checkUpdate(clientProtV, clientVersion, respHeader string) (int, string, *e
 	url := "http://minecraft-server-hibernation.heliohost.us/latest-version.php?v=" + clientProtV + "&version=" + clientVersion
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return errco.VERSION_ERROR, "error", errco.NewErr(errco.VERSION_ERROR, errco.LVL_D, "checkUpdate", err.Error(), false)
+		return errco.VERSION_ERROR, "error", errco.NewErr(errco.VERSION_ERROR, errco.LVL_D, "checkUpdate", err.Error(), true)
 	}
 	req.Header.Add("User-Agent", "msh ("+userAgentOs+") msh/"+clientVersion)
 
@@ -131,14 +131,14 @@ func checkUpdate(clientProtV, clientVersion, respHeader string) (int, string, *e
 	client := &http.Client{Timeout: 4 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		return errco.VERSION_ERROR, "error", errco.NewErr(errco.VERSION_ERROR, errco.LVL_D, "checkUpdate", err.Error(), false)
+		return errco.VERSION_ERROR, "error", errco.NewErr(errco.VERSION_ERROR, errco.LVL_D, "checkUpdate", err.Error(), true)
 	}
 	defer resp.Body.Close()
 
 	// read http response
 	respByte, err := ioutil.ReadAll(resp.Body)
 	if err != nil || !strings.Contains(string(respByte), respHeader) {
-		return errco.VERSION_ERROR, "error", errco.NewErr(errco.VERSION_ERROR, errco.LVL_D, "checkUpdate", err.Error(), false)
+		return errco.VERSION_ERROR, "error", errco.NewErr(errco.VERSION_ERROR, errco.LVL_D, "checkUpdate", err.Error(), true)
 	}
 
 	// no error and respByte contains respHeader
@@ -187,11 +187,11 @@ func deltaVersion(onlineVersion, clientVersion string) (int, *errco.Error) {
 
 	clientVersionInt, err := digitize(clientVersion)
 	if err != nil {
-		return 0, errco.NewErr(errco.VERSION_COMPARISON_ERROR, errco.LVL_D, "deltaVersion", err.Error(), false)
+		return 0, errco.NewErr(errco.VERSION_COMPARISON_ERROR, errco.LVL_D, "deltaVersion", err.Error(), true)
 	}
 	onlineVersionInt, err := digitize(onlineVersion)
 	if err != nil {
-		return 0, errco.NewErr(errco.VERSION_COMPARISON_ERROR, errco.LVL_D, "deltaVersion", err.Error(), false)
+		return 0, errco.NewErr(errco.VERSION_COMPARISON_ERROR, errco.LVL_D, "deltaVersion", err.Error(), true)
 	}
 
 	return onlineVersionInt - clientVersionInt, nil
