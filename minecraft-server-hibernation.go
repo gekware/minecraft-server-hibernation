@@ -55,7 +55,7 @@ func main() {
 	// open a listener
 	listener, err := net.Listen("tcp", config.ListenHost+":"+config.ListenPort)
 	if err != nil {
-		log.Println("main:", err.Error())
+		errco.LogMshErr(errco.NewErr(errco.CLIENT_LISTEN_ERROR, errco.LVL_D, "main", err.Error()))
 		os.Exit(1)
 	}
 
