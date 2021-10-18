@@ -10,11 +10,11 @@ import (
 )
 
 // StartMS starts the minecraft server
-func StartMS() *errco.Error {
+func StartMS() error {
 	// start server terminal
-	errMsh := cmdStart(config.ConfigRuntime.Server.Folder, config.ConfigRuntime.Commands.StartServer)
-	if errMsh != nil {
-		return errMsh.AddTrace("StartMS")
+	err := cmdStart(config.ConfigRuntime.Server.Folder, config.ConfigRuntime.Commands.StartServer)
+	if err != nil {
+		return fmt.Errorf("StartMS: error starting minecraft server: %v", err)
 	}
 
 	return nil
@@ -22,14 +22,17 @@ func StartMS() *errco.Error {
 
 // StopMS executes "stop" command on the minecraft server.
 // When playersCheck == true, it checks for StopMSRequests/Players and orders the server shutdown
-func StopMS(playersCheck bool) *errco.Error {
+func StopMS(playersCheck bool) error {
+	// error that returns from Execute() when executing the stop command
+	var errExec error
+
 	// wait for the starting server to go online
 	for Stats.Status == errco.SERVER_STATUS_STARTING {
 		time.Sleep(1 * time.Second)
 	}
 	// if server is not online return
 	if Stats.Status != errco.SERVER_STATUS_ONLINE {
-		return errco.NewErr(errco.SERVER_NOT_ONLINE_ERROR, errco.LVL_D, "StopMS", "server is not online")
+		return fmt.Errorf("StopMS: server is not online")
 	}
 
 	// player/StopMSRequests check
@@ -42,20 +45,20 @@ func StopMS(playersCheck bool) *errco.Error {
 		playerCount, isFromServer := countPlayerSafe()
 		errco.Logln(playerCount, "online players - number got from server:", isFromServer)
 		if playerCount > 0 {
-			return errco.NewErr(errco.SERVER_NOT_EMPTY_ERROR, errco.LVL_D, "StopMS", "server is not empty")
+			return fmt.Errorf("StopMS: server is not empty")
 		}
 
 		// check if enough time has passed since last player disconnected
 
 		if atomic.LoadInt32(&Stats.StopMSRequests) > 0 {
-			return errco.NewErr(errco.SERVER_MUST_WAIT_ERROR, errco.LVL_D, "StopMS", "not enough time has passed since last player disconnected (StopMSRequests: "+fmt.Sprint(Stats.StopMSRequests)+" )")
+			return fmt.Errorf("StopMS: not enough time has passed since last player disconnected (StopMSRequests: %d)", Stats.StopMSRequests)
 		}
 	}
 
 	// execute stop command
-	_, errMsh := Execute(config.ConfigRuntime.Commands.StopServer, "StopMS")
-	if errMsh != nil {
-		return errMsh.AddTrace("StopMS")
+	_, errExec = Execute(config.ConfigRuntime.Commands.StopServer, "StopMS")
+	if errExec != nil {
+		return fmt.Errorf("StopMS: error executing minecraft server stop command: %v", errExec)
 	}
 
 	// if sigint is allowed, launch a function to check the shutdown of minecraft server
@@ -75,11 +78,12 @@ func StopMSRequest() {
 	time.AfterFunc(
 		time.Duration(config.ConfigRuntime.Msh.TimeBeforeStoppingEmptyServer)*time.Second,
 		func() {
-			errMsh := StopMS(true)
-			if errMsh != nil {
-				// avoid logging "server is not online" error since it can be very frequent
-				if errMsh.Cod != errco.SERVER_NOT_ONLINE_ERROR {
-					errco.LogMshErr(errMsh.AddTrace("StopMSRequest"))
+			err := StopMS(true)
+			if err != nil {
+				// avoid printing "server is not online" error since it can be very frequent
+				// when updating the logging system this could be managed by logging it only at certain log levels
+				if err.Error() != "StopMS: server is not online" {
+					errco.Logln("StopMSRequest:", err)
 				}
 			}
 		})

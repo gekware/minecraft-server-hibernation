@@ -8,13 +8,11 @@ import (
 	"image/png"
 	"os"
 	"path/filepath"
-
-	"msh/lib/errco"
 )
 
 // loadIcon return server logo (base-64 encoded and compressed).
 // If image is missing or error, the default image is returned
-func loadIcon(serverDirPath string) (string, *errco.Error) {
+func loadIcon(serverDirPath string) (string, error) {
 	// get the path of the user specified server icon
 	userIconPath := filepath.Join(serverDirPath, "server-icon-frozen.png")
 
@@ -28,25 +26,25 @@ func loadIcon(serverDirPath string) (string, *errco.Error) {
 		// open file
 		f, err := os.Open(userIconPath)
 		if err != nil {
-			return defaultServerIcon, errco.NewErr(errco.LOAD_ICON_ERROR, errco.LVL_D, "loadIcon", err.Error())
+			return defaultServerIcon, fmt.Errorf("loadIcon: %v", err)
 		}
 		defer f.Close()
 
 		// decode png
 		pngIm, err := png.Decode(f)
 		if err != nil {
-			return defaultServerIcon, errco.NewErr(errco.LOAD_ICON_ERROR, errco.LVL_D, "loadIcon", err.Error())
+			return defaultServerIcon, fmt.Errorf("loadIcon: %v", err)
 		}
 
 		// return if image is not 64x64
 		if pngIm.Bounds().Max != image.Pt(64, 64) {
-			return defaultServerIcon, errco.NewErr(errco.LOAD_ICON_ERROR, errco.LVL_D, "loadIcon", "incorrect server-icon-frozen.png size. Current size: "+fmt.Sprint(pngIm.Bounds().Max.X)+"x"+fmt.Sprint(pngIm.Bounds().Max.Y))
+			return defaultServerIcon, fmt.Errorf("loadIcon: incorrect server-icon-frozen.png size. Current size: %dx%d", pngIm.Bounds().Max.X, pngIm.Bounds().Max.Y)
 		}
 
 		// encode png
 		err = enc.Encode(buff, pngIm)
 		if err != nil {
-			return defaultServerIcon, errco.NewErr(errco.LOAD_ICON_ERROR, errco.LVL_D, "loadIcon", err.Error())
+			return defaultServerIcon, fmt.Errorf("loadIcon: %v", err)
 		}
 
 		// return user specified server icon as base64 encoded string

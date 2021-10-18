@@ -20,9 +20,9 @@ func HandleClientSocket(clientSocket net.Conn) {
 
 	switch servctrl.Stats.Status {
 	case errco.SERVER_STATUS_OFFLINE:
-		reqType, playerName, errMsh := getReqType(clientSocket)
-		if errMsh != nil {
-			errco.LogMshErr(errMsh.AddTrace("HandleClientSocket"))
+		reqType, playerName, err := getReqType(clientSocket)
+		if err != nil {
+			errco.Logln("HandleClientSocket:", err)
 			return
 		}
 
@@ -36,19 +36,19 @@ func HandleClientSocket(clientSocket net.Conn) {
 			clientSocket.Write(buildMessage(errco.MESSAGE_FORMAT_INFO, config.ConfigRuntime.Msh.InfoHibernation))
 
 			// answer to client ping
-			errMsh := getPing(clientSocket)
-			if errMsh != nil {
-				errco.LogMshErr(errMsh.AddTrace("HandleClientSocket"))
+			err := getPing(clientSocket)
+			if err != nil {
+				errco.Logln("HandleClientSocket:", err)
 			}
 
 		case errco.CLIENT_REQ_JOIN:
 			// client requests "server join"
 
 			// server is OFFLINE --> issue StartMS()
-			errMsh := servctrl.StartMS()
-			if errMsh != nil {
+			err := servctrl.StartMS()
+			if err != nil {
 				// log to msh console and warn client with text in the loadscreen
-				errco.LogMshErr(errMsh.AddTrace("HandleClientSocket"))
+				errco.Logln("HandleClientSocket:", err)
 				clientSocket.Write(buildMessage(errco.MESSAGE_FORMAT_TXT, "An error occurred while starting the server: check the msh log"))
 			} else {
 				// log to msh console and answer client with text in the loadscreen
@@ -62,9 +62,9 @@ func HandleClientSocket(clientSocket net.Conn) {
 		clientSocket.Close()
 
 	case errco.SERVER_STATUS_STARTING:
-		reqType, playerName, errMsh := getReqType(clientSocket)
-		if errMsh != nil {
-			errco.LogMshErr(errMsh.AddTrace("HandleClientSocket"))
+		reqType, playerName, err := getReqType(clientSocket)
+		if err != nil {
+			errco.Logln("HandleClientSocket:", err)
 			return
 		}
 
@@ -78,9 +78,9 @@ func HandleClientSocket(clientSocket net.Conn) {
 			clientSocket.Write(buildMessage(errco.MESSAGE_FORMAT_INFO, config.ConfigRuntime.Msh.InfoStarting))
 
 			// answer to client ping
-			errMsh = getPing(clientSocket)
-			if errMsh != nil {
-				errco.LogMshErr(errMsh.AddTrace("HandleClientSocket"))
+			err = getPing(clientSocket)
+			if err != nil {
+				errco.Logln("HandleClientSocket:", err)
 			}
 
 		case errco.CLIENT_REQ_JOIN:
@@ -99,7 +99,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 		// just open a connection with the server and connect it with the client
 		serverSocket, err := net.Dial("tcp", config.TargetHost+":"+config.TargetPort)
 		if err != nil {
-			errco.LogMshErr(errco.NewErr(errco.SERVER_DIAL_ERROR, errco.LVL_D, "HandleClientSocket", "error while dialing local minecraft server"))
+			errco.Logln("HandleClientSocket: error during serverSocket.Dial()")
 			// report dial error to client with text in the loadscreen
 			clientSocket.Write(buildMessage(errco.MESSAGE_FORMAT_TXT, "can't connect to server... check if minecraft server is running and set the correct targetPort"))
 			return

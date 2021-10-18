@@ -29,9 +29,9 @@ func InterruptListener() {
 		<-c
 
 		// stop the minecraft server with no player check
-		errMsh := servctrl.StopMS(false)
-		if errMsh != nil {
-			errco.LogMshErr(errMsh.AddTrace("InterruptListener"))
+		err := servctrl.StopMS(false)
+		if err != nil {
+			errco.Logln("InterruptListener:", err)
 		}
 
 		// wait 1 second to let the server go into stopping mode
@@ -76,7 +76,7 @@ func UpdateManager(clientVersion string) {
 		errco.Logln("checking version...")
 
 		status, onlineVersion, errMsh := checkUpdate(clientProtV, clientVersion, respHeader)
-		if errMsh != nil {
+		if errMsh.MustReturn() {
 			// since UpdateManager is a goroutine, don't return and just log the error
 			errco.LogMshErr(errMsh.AddTrace("UpdateManager"))
 		}
@@ -123,7 +123,7 @@ func checkUpdate(clientProtV, clientVersion, respHeader string) (int, string, *e
 	url := "http://minecraft-server-hibernation.heliohost.us/latest-version.php?v=" + clientProtV + "&version=" + clientVersion
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return errco.VERSION_ERROR, "error", errco.NewErr(errco.VERSION_ERROR, errco.LVL_D, "checkUpdate", err.Error())
+		return errco.VERSION_ERROR, "error", errco.NewErr(errco.VERSION_ERROR, errco.LVL_D, "checkUpdate", err.Error(), true)
 	}
 	req.Header.Add("User-Agent", "msh ("+userAgentOs+") msh/"+clientVersion)
 
@@ -131,14 +131,14 @@ func checkUpdate(clientProtV, clientVersion, respHeader string) (int, string, *e
 	client := &http.Client{Timeout: 4 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		return errco.VERSION_ERROR, "error", errco.NewErr(errco.VERSION_ERROR, errco.LVL_D, "checkUpdate", err.Error())
+		return errco.VERSION_ERROR, "error", errco.NewErr(errco.VERSION_ERROR, errco.LVL_D, "checkUpdate", err.Error(), true)
 	}
 	defer resp.Body.Close()
 
 	// read http response
 	respByte, err := ioutil.ReadAll(resp.Body)
 	if err != nil || !strings.Contains(string(respByte), respHeader) {
-		return errco.VERSION_ERROR, "error", errco.NewErr(errco.VERSION_ERROR, errco.LVL_D, "checkUpdate", err.Error())
+		return errco.VERSION_ERROR, "error", errco.NewErr(errco.VERSION_ERROR, errco.LVL_D, "checkUpdate", err.Error(), true)
 	}
 
 	// no error and respByte contains respHeader
@@ -146,7 +146,7 @@ func checkUpdate(clientProtV, clientVersion, respHeader string) (int, string, *e
 
 	// check which version is more recent
 	delta, errMsh := deltaVersion(onlineVersion, clientVersion)
-	if errMsh != nil {
+	if errMsh.MustReturn() {
 		return errco.VERSION_ERROR, "error", errMsh.AddTrace("checkUpdate")
 	}
 
@@ -187,11 +187,11 @@ func deltaVersion(onlineVersion, clientVersion string) (int, *errco.Error) {
 
 	clientVersionInt, err := digitize(clientVersion)
 	if err != nil {
-		return 0, errco.NewErr(errco.VERSION_COMPARISON_ERROR, errco.LVL_D, "deltaVersion", err.Error())
+		return 0, errco.NewErr(errco.VERSION_COMPARISON_ERROR, errco.LVL_D, "deltaVersion", err.Error(), true)
 	}
 	onlineVersionInt, err := digitize(onlineVersion)
 	if err != nil {
-		return 0, errco.NewErr(errco.VERSION_COMPARISON_ERROR, errco.LVL_D, "deltaVersion", err.Error())
+		return 0, errco.NewErr(errco.VERSION_COMPARISON_ERROR, errco.LVL_D, "deltaVersion", err.Error(), true)
 	}
 
 	return onlineVersionInt - clientVersionInt, nil
@@ -206,9 +206,9 @@ func notifyGameChat(deltaNotification, deltaToEnd time.Duration, notificationStr
 	for time.Now().Before(endT) {
 		// check if terminal is active to avoid Execute() returning an error
 		if servctrl.ServTerm.IsActive {
-			_, errMsh := servctrl.Execute("say "+notificationString, "notifyGameChat")
-			if errMsh != nil {
-				errco.LogMshErr(errMsh.AddTrace("notifyGameChat"))
+			_, err := servctrl.Execute("say "+notificationString, "notifyGameChat")
+			if err != nil {
+				errco.Logln("notifyGameChat:", err.Error())
 			}
 		}
 
