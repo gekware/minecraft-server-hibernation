@@ -20,9 +20,9 @@ func HandleClientSocket(clientSocket net.Conn) {
 
 	switch servctrl.Stats.Status {
 	case errco.SERVER_STATUS_OFFLINE:
-		reqType, playerName, err := getReqType(clientSocket)
-		if err != nil {
-			errco.Logln("HandleClientSocket:", err)
+		reqType, playerName, errMsh := getReqType(clientSocket)
+		if errMsh != nil {
+			errco.LogMshErr(errMsh.AddTrace("HandleClientSocket"))
 			return
 		}
 
@@ -36,9 +36,9 @@ func HandleClientSocket(clientSocket net.Conn) {
 			clientSocket.Write(buildMessage(errco.MESSAGE_FORMAT_INFO, config.ConfigRuntime.Msh.InfoHibernation))
 
 			// answer to client ping
-			err := getPing(clientSocket)
-			if err != nil {
-				errco.Logln("HandleClientSocket:", err)
+			errMsh := getPing(clientSocket)
+			if errMsh != nil {
+				errco.LogMshErr(errMsh.AddTrace("HandleClientSocket"))
 			}
 
 		case errco.CLIENT_REQ_JOIN:
