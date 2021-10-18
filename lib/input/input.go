@@ -41,7 +41,7 @@ func GetInput() {
 		case "msh":
 			// check that there is a command for the target
 			if len(lineSplit) < 2 {
-				fmt.Println("msh command error: specify msh command (start - freeze - exit)")
+				errco.LogMshErr(errco.NewErr(errco.COMMAND_INPUT_ERROR, errco.LVL_A, "GetInput", "specify msh command (start - freeze - exit)"))
 				continue
 			}
 
@@ -62,17 +62,17 @@ func GetInput() {
 				if errMsh != nil {
 					errco.LogMshErr(errMsh.AddTrace("GetInput"))
 				}
-				fmt.Print("exiting msh")
+				fmt.Println("exiting msh")
 				os.Exit(0)
 			default:
-				fmt.Println("msh command error: unknown command (start - freeze - exit)")
+				errco.LogMshErr(errco.NewErr(errco.COMMAND_UNKNOWN_ERROR, errco.LVL_A, "GetInput", "unknown command (start - freeze - exit)"))
 			}
 
 		// taget minecraft server
 		case "mine":
 			// check that there is a command for the target
 			if len(lineSplit) < 2 {
-				fmt.Println("msh command error: specify mine command")
+				errco.LogMshErr(errco.NewErr(errco.COMMAND_INPUT_ERROR, errco.LVL_A, "GetInput", "specify mine command"))
 				continue
 			}
 
@@ -84,7 +84,7 @@ func GetInput() {
 
 		// wrong target
 		default:
-			fmt.Println("please specify the target (msh - mine)")
+			errco.LogMshErr(errco.NewErr(errco.COMMAND_INPUT_ERROR, errco.LVL_A, "GetInput", "specify the target (msh - mine)"))
 		}
 	}
 }
