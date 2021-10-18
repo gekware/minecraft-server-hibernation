@@ -52,7 +52,7 @@ func InterruptListener() {
 		}
 
 		// exit
-		fmt.Print("exiting msh")
+		fmt.Println("exiting msh")
 		os.Exit(0)
 	}
 }

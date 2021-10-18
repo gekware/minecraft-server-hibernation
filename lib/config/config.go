@@ -149,7 +149,7 @@ func generateConfigRuntime() configuration {
 
 	// specify the usage when there is an error in the arguments
 	flag.Usage = func() {
-		fmt.Printf("Usage of msh:\n")
+		fmt.Println("Usage of msh:")
 		flag.PrintDefaults()
 	}
 
