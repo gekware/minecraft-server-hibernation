@@ -29,9 +29,9 @@ func InterruptListener() {
 		<-c
 
 		// stop the minecraft server with no player check
-		err := servctrl.StopMS(false)
-		if err != nil {
-			errco.Logln("InterruptListener:", err)
+		errMsh := servctrl.StopMS(false)
+		if errMsh != nil {
+			errco.LogMshErr(errMsh.AddTrace("InterruptListener"))
 		}
 
 		// wait 1 second to let the server go into stopping mode
@@ -206,9 +206,9 @@ func notifyGameChat(deltaNotification, deltaToEnd time.Duration, notificationStr
 	for time.Now().Before(endT) {
 		// check if terminal is active to avoid Execute() returning an error
 		if servctrl.ServTerm.IsActive {
-			_, err := servctrl.Execute("say "+notificationString, "notifyGameChat")
-			if err != nil {
-				errco.Logln("notifyGameChat:", err.Error())
+			_, errMsh := servctrl.Execute("say "+notificationString, "notifyGameChat")
+			if errMsh != nil {
+				errco.LogMshErr(errMsh.AddTrace("notifyGameChat"))
 			}
 		}
 
