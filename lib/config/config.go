@@ -63,7 +63,7 @@ func LoadConfig() *errco.Error {
 	errco.Logln("checking OS support...")
 	// check if OS is supported.
 	errMsh := opsys.OsSupported()
-	if errMsh.MustReturn() {
+	if errMsh != nil {
 		return errMsh.AddTrace("LoadConfig")
 	}
 
@@ -71,13 +71,13 @@ func LoadConfig() *errco.Error {
 	// read config file
 	configData, err := ioutil.ReadFile(configFileName)
 	if err != nil {
-		return errco.NewErr(errco.LOAD_CONFIG_ERROR, errco.LVL_B, "LoadConfig", err.Error(), true)
+		return errco.NewErr(errco.LOAD_CONFIG_ERROR, errco.LVL_B, "LoadConfig", err.Error())
 	}
 
 	// write read data into ConfigDefault
 	err = yaml.Unmarshal(configData, &ConfigDefault)
 	if err != nil {
-		return errco.NewErr(errco.LOAD_CONFIG_ERROR, errco.LVL_B, "LoadConfig", err.Error(), true)
+		return errco.NewErr(errco.LOAD_CONFIG_ERROR, errco.LVL_B, "LoadConfig", err.Error())
 	}
 
 	// generate runtime config
@@ -87,7 +87,7 @@ func LoadConfig() *errco.Error {
 	// from now on only ConfigRuntime should be used //
 
 	errMsh = checkConfigRuntime()
-	if errMsh.MustReturn() {
+	if errMsh != nil {
 		return errMsh.AddTrace("LoadConfig")
 	}
 
@@ -96,17 +96,17 @@ func LoadConfig() *errco.Error {
 
 	// initialize ip and ports for connection
 	ListenHost, ListenPort, TargetHost, TargetPort, errMsh = getIpPorts()
-	if errMsh.MustReturn() {
+	if errMsh != nil {
 		return errMsh.AddTrace("LoadConfig")
 	}
 	errco.Logln("msh proxy setup:\t", ListenHost+":"+ListenPort, "-->", TargetHost+":"+TargetPort)
 
 	// set server icon
-	ServerIcon, err = loadIcon(ConfigRuntime.Server.Folder)
-	if err != nil {
+	ServerIcon, errMsh = loadIcon(ConfigRuntime.Server.Folder)
+	if errMsh != nil {
 		// it's enough to log it without returning
 		// since the default icon is loaded by default
-		errco.Logln("loadConfig:", err.Error())
+		errco.LogMshErr(errMsh.AddTrace("LoadConfig"))
 	}
 
 	return nil
@@ -117,13 +117,13 @@ func SaveConfigDefault() *errco.Error {
 	// write the struct config to json data
 	configData, err := json.MarshalIndent(ConfigDefault, "", "  ")
 	if err != nil {
-		return errco.NewErr(errco.SAVE_CONFIG_ERROR, errco.LVL_D, "SaveConfigDefault", "could not marshal from config file", true)
+		return errco.NewErr(errco.SAVE_CONFIG_ERROR, errco.LVL_D, "SaveConfigDefault", "could not marshal from config file")
 	}
 
 	// write json data to config file
 	err = ioutil.WriteFile(configFileName, configData, 0644)
 	if err != nil {
-		return errco.NewErr(errco.SAVE_CONFIG_ERROR, errco.LVL_D, "SaveConfigDefault", "could not write to config file", true)
+		return errco.NewErr(errco.SAVE_CONFIG_ERROR, errco.LVL_D, "SaveConfigDefault", "could not write to config file")
 	}
 
 	errco.Logln("SaveConfigDefault: saved to config file")
@@ -170,13 +170,13 @@ func checkConfigRuntime() *errco.Error {
 	serverFileFolderPath := filepath.Join(ConfigRuntime.Server.Folder, ConfigRuntime.Server.FileName)
 	_, err := os.Stat(serverFileFolderPath)
 	if os.IsNotExist(err) {
-		return errco.NewErr(errco.CHECK_CONFIG_ERROR, errco.LVL_B, "checkConfigRuntime", "specified server file/folder does not exist: "+serverFileFolderPath, true)
+		return errco.NewErr(errco.CHECK_CONFIG_ERROR, errco.LVL_B, "checkConfigRuntime", "specified server file/folder does not exist: "+serverFileFolderPath)
 	}
 
 	// check if java is installed
 	_, err = exec.LookPath("java")
 	if err != nil {
-		return errco.NewErr(errco.CHECK_CONFIG_ERROR, errco.LVL_B, "checkConfigRuntime", "java not installed", true)
+		return errco.NewErr(errco.CHECK_CONFIG_ERROR, errco.LVL_B, "checkConfigRuntime", "java not installed")
 	}
 
 	return nil
@@ -187,7 +187,7 @@ func getIpPorts() (string, string, string, string, *errco.Error) {
 	serverPropertiesFilePath := filepath.Join(ConfigRuntime.Server.Folder, "server.properties")
 	data, err := ioutil.ReadFile(serverPropertiesFilePath)
 	if err != nil {
-		return "", "", "", "", errco.NewErr(errco.LOAD_CONFIG_ERROR, errco.LVL_B, "setIpPorts", err.Error(), true)
+		return "", "", "", "", errco.NewErr(errco.LOAD_CONFIG_ERROR, errco.LVL_B, "setIpPorts", err.Error())
 	}
 
 	dataStr := string(data)
@@ -195,7 +195,7 @@ func getIpPorts() (string, string, string, string, *errco.Error) {
 	TargetPort = strings.Split(strings.Split(dataStr, "server-port=")[1], "\n")[0]
 
 	if TargetPort == ConfigRuntime.Msh.Port {
-		return "", "", "", "", errco.NewErr(errco.LOAD_CONFIG_ERROR, errco.LVL_B, "setIpPorts", "TargetPort and ListenPort appear to be the same, please change one of them", true)
+		return "", "", "", "", errco.NewErr(errco.LOAD_CONFIG_ERROR, errco.LVL_B, "setIpPorts", "TargetPort and ListenPort appear to be the same, please change one of them")
 	}
 
 	// return ListenHost, TargetHost, TargetPort, nil

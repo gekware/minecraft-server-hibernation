@@ -47,20 +47,20 @@ func GetInput() {
 
 			switch lineSplit[1] {
 			case "start":
-				err = servctrl.StartMS()
-				if err != nil {
-					errco.Logln("GetInput:", err)
+				errMsh := servctrl.StartMS()
+				if errMsh != nil {
+					errco.LogMshErr(errMsh.AddTrace("GetInput"))
 				}
 			case "freeze":
 				// stop minecraft server with no player check
-				err = servctrl.StopMS(false)
-				if err != nil {
-					errco.Logln("GetInput:", err)
+				errMsh := servctrl.StopMS(false)
+				if errMsh != nil {
+					errco.LogMshErr(errMsh.AddTrace("GetInput"))
 				}
 			case "exit":
-				err = servctrl.StopMS(false)
-				if err != nil {
-					errco.Logln("GetInput:", err)
+				errMsh := servctrl.StopMS(false)
+				if errMsh != nil {
+					errco.LogMshErr(errMsh.AddTrace("GetInput"))
 				}
 				fmt.Print("exiting msh")
 				os.Exit(0)
@@ -77,9 +77,9 @@ func GetInput() {
 			}
 
 			// just pass the command to the minecraft server terminal
-			_, err = servctrl.Execute(strings.Join(lineSplit[1:], " "), "user input")
-			if err != nil {
-				errco.Logln("GetInput:", err)
+			_, errMsh := servctrl.Execute(strings.Join(lineSplit[1:], " "), "user input")
+			if errMsh != nil {
+				errco.LogMshErr(errMsh.AddTrace("GetInput"))
 			}
 
 		// wrong target

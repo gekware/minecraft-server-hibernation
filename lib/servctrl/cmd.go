@@ -37,16 +37,16 @@ const (
 
 // Execute executes a command on ServTerm
 // [non-blocking]
-func Execute(command, origin string) (string, error) {
+func Execute(command, origin string) (string, *errco.Error) {
 	if !ServTerm.IsActive {
-		return "", fmt.Errorf("Execute: terminal not active")
+		return "", errco.NewErr(errco.TERMINAL_NOT_ACTIVE_ERROR, errco.LVL_C, "Execute", "terminal not active")
 	}
 
 	commands := strings.Split(command, "\n")
 
 	for _, com := range commands {
 		if Stats.Status != errco.SERVER_STATUS_ONLINE {
-			return "", fmt.Errorf("Execute: server not online")
+			return "", errco.NewErr(errco.SERVER_NOT_ONLINE_ERROR, errco.LVL_C, "Execute", "server not online")
 		}
 
 		errco.Logln("terminal execute:"+COLOR_YELLOW, com, COLOR_RESET, "\t(origin:", origin+")")
@@ -54,7 +54,7 @@ func Execute(command, origin string) (string, error) {
 		// write to cmd (\n indicates the enter key)
 		_, err := ServTerm.inPipe.Write([]byte(com + "\n"))
 		if err != nil {
-			return "", fmt.Errorf("Execute: %v", err)
+			return "", errco.NewErr(errco.INPUT_PIPE_WRITE_ERROR, errco.LVL_C, "Execute", err.Error())
 		}
 	}
 
@@ -62,17 +62,17 @@ func Execute(command, origin string) (string, error) {
 }
 
 // cmdStart starts a new terminal (non-blocking) and returns a servTerm object
-func cmdStart(dir, command string) error {
-	err := loadTerm(dir, command)
-	if err != nil {
-		return fmt.Errorf("loadTerm: %v", err)
+func cmdStart(dir, command string) *errco.Error {
+	errMsh := loadTerm(dir, command)
+	if errMsh != nil {
+		return errMsh.AddTrace("cmdStart")
 	}
 
 	go printerOutErr()
 
-	err = ServTerm.cmd.Start()
+	err := ServTerm.cmd.Start()
 	if err != nil {
-		return fmt.Errorf("CmdStart: %v", err)
+		return errco.NewErr(errco.TERMINAL_START_ERROR, errco.LVL_D, "cmdStart", err.Error())
 	}
 
 	go waitForExit()
@@ -89,7 +89,7 @@ func cmdStart(dir, command string) error {
 }
 
 // loadTerm loads cmd/pipes into ServTerm
-func loadTerm(dir, command string) error {
+func loadTerm(dir, command string) *errco.Error {
 	cSplit := strings.Split(command, " ")
 
 	// set terminal cmd
@@ -104,15 +104,15 @@ func loadTerm(dir, command string) error {
 	var err error
 	ServTerm.outPipe, err = ServTerm.cmd.StdoutPipe()
 	if err != nil {
-		return fmt.Errorf("StdoutPipe load: %v", err)
+		return errco.NewErr(errco.PIPE_LOAD_ERROR, errco.LVL_D, "loadTerm", "StdoutPipe load: "+err.Error())
 	}
 	ServTerm.errPipe, err = ServTerm.cmd.StderrPipe()
 	if err != nil {
-		return fmt.Errorf("StdoutPipe load: %v", err)
+		return errco.NewErr(errco.PIPE_LOAD_ERROR, errco.LVL_D, "loadTerm", "StderrPipe load: "+err.Error())
 	}
 	ServTerm.inPipe, err = ServTerm.cmd.StdinPipe()
 	if err != nil {
-		return fmt.Errorf("StdoutPipe load: %v", err)
+		return errco.NewErr(errco.PIPE_LOAD_ERROR, errco.LVL_D, "loadTerm", "StdinPipe load: "+err.Error())
 	}
 
 	return nil

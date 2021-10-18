@@ -1,8 +1,9 @@
 package utility
 
 import (
-	"fmt"
 	"strings"
+
+	"msh/lib/errco"
 )
 
 // Boxify creates an ascii box around a list of text lines
@@ -27,20 +28,20 @@ func Boxify(strList []string) string {
 }
 
 // StrBetween returns the substring between 2 substrings
-func StrBetween(str string, a string, b string) (string, error) {
+func StrBetween(str string, a string, b string) (string, *errco.Error) {
 	aIndex := strings.Index(str, a)
 	if aIndex == -1 {
-		return "", fmt.Errorf("StrBetween: first substring not found")
+		return "", errco.NewErr(errco.STRING_ANALYSIS_ERROR, errco.LVL_D, "StrBetween", "first substring not found")
 	}
 	bIndex := strings.Index(str, b)
 	if bIndex == -1 {
-		return "", fmt.Errorf("StrBetween: second substring not found")
+		return "", errco.NewErr(errco.STRING_ANALYSIS_ERROR, errco.LVL_D, "StrBetween", "second substring not found")
 	}
 
 	// the position of the last letter of a is needed
 	aEndIndex := aIndex + len(a)
 	if aEndIndex >= bIndex {
-		return "", fmt.Errorf("StrBetween: second substring index is before first")
+		return "", errco.NewErr(errco.STRING_ANALYSIS_ERROR, errco.LVL_D, "StrBetween", "second substring index is before first")
 	}
 
 	return str[aEndIndex:bIndex], nil
