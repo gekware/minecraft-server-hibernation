@@ -67,7 +67,6 @@ Location of server folder and executable. You can find protocol/version [here](h
   "Protocol": "756"
 }
 ```
-
 Commands to start and stop minecraft server:
 ```yaml
 "Commands":{
@@ -79,11 +78,9 @@ Commands to start and stop minecraft server:
 # if StopServerAllowKill is more than 0, then the specified number is the amount of seconds
 # given to the minecraft server to go offline, after which it is killed
 ```
-
 Set the logging level for debug purposes
 ```yaml
 "Debug": 1
-
 # 0 - NONE: no log
 # 1 - BASE: basic log
 # 2 - SERV: mincraft server log

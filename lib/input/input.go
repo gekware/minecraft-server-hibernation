@@ -33,7 +33,7 @@ func GetInput() {
 		}
 		lineSplit := strings.Split(line, " ")
 
-		errco.Logln(errco.LVL_B, "GetInput: user input:", lineSplit[:])
+		errco.Logln(errco.LVL_B, "GetInput: user input: %s", lineSplit[:])
 
 		switch lineSplit[0] {
 		// target msh

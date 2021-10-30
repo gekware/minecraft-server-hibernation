@@ -2,7 +2,6 @@ package servctrl
 
 import (
 	"bufio"
-	"fmt"
 	"io"
 	"os/exec"
 	"strings"
@@ -48,7 +47,7 @@ func Execute(command, origin string) (string, *errco.Error) {
 			return "", errco.NewErr(errco.SERVER_NOT_ONLINE_ERROR, errco.LVL_C, "Execute", "server not online")
 		}
 
-		errco.Logln(errco.LVL_C, "terminal execute:"+COLOR_YELLOW, com, COLOR_RESET, "\t(origin:", origin+")")
+		errco.Logln(errco.LVL_C, "terminal execute: %s%s%s\t(origin: %s)", COLOR_YELLOW, com, COLOR_RESET, origin)
 
 		// write to cmd (\n indicates the enter key)
 		_, err := ServTerm.inPipe.Write([]byte(com + "\n"))
@@ -137,7 +136,7 @@ func printerOutErr() {
 		for scanner.Scan() {
 			line = scanner.Text()
 
-			errco.Logln(errco.LVL_C, COLOR_CYAN+line+COLOR_RESET)
+			errco.Logln(errco.LVL_C, "%s%s%s", COLOR_CYAN, line, COLOR_RESET)
 
 			// communicate to lastLine so that func Execute() can return the first line after the command
 			select {
@@ -202,13 +201,13 @@ func printerOutErr() {
 					// using "UUID of player" since minecraft server v1.12.2 does not use "joined the game"
 					case strings.Contains(lineContent, "UUID of player"):
 						Stats.PlayerCount++
-						errco.Logln(errco.LVL_C, fmt.Sprintf("A PLAYER JOINED THE SERVER! - %d players online", Stats.PlayerCount))
+						errco.Logln(errco.LVL_C, "A PLAYER JOINED THE SERVER! - %d players online", Stats.PlayerCount)
 
 					// player leaves the server
 					// using "lost connection" (instead of "left the game") because it's more general (issue #116)
 					case strings.Contains(lineContent, "lost connection"):
 						Stats.PlayerCount--
-						errco.Logln(errco.LVL_C, fmt.Sprintf("A PLAYER LEFT THE SERVER! - %d players online", Stats.PlayerCount))
+						errco.Logln(errco.LVL_C, "A PLAYER LEFT THE SERVER! - %d players online", Stats.PlayerCount)
 						StopMSRequest()
 
 					// the server is stopping
@@ -233,7 +232,7 @@ func printerOutErr() {
 		for scanner.Scan() {
 			line = scanner.Text()
 
-			errco.Logln(errco.LVL_C, COLOR_CYAN+line+COLOR_RESET)
+			errco.Logln(errco.LVL_C, "%s%s%s", COLOR_CYAN, line, COLOR_RESET)
 		}
 	}()
 }

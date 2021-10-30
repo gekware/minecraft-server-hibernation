@@ -1,6 +1,7 @@
 package progmgr
 
 import (
+	"fmt"
 	"io/ioutil"
 	"math"
 	"net/http"
@@ -83,16 +84,16 @@ func UpdateManager(clientVersion string) {
 		if config.ConfigRuntime.Msh.NotifyUpdate {
 			switch status {
 			case errco.VERSION_UPDATED:
-				errco.Logln(errco.LVL_A, "msh ("+clientVersion+") is updated")
+				errco.Logln(errco.LVL_A, "msh (%s) is updated", clientVersion)
 
 			case errco.VERSION_UPDATEAVAILABLE:
-				notification := "msh (" + onlineVersion + ") is now available: visit github to update!"
+				notification := fmt.Sprintf("msh (%s) is now available: visit github to update!", onlineVersion)
 				errco.Logln(errco.LVL_A, notification)
 				// notify to game chat every 20 minutes for deltaT time
 				go notifyGameChat(20*time.Minute, deltaT, notification)
 
 			case errco.VERSION_UNOFFICIALVERSION:
-				errco.Logln(errco.LVL_A, "msh ("+clientVersion+") is running an unofficial release")
+				errco.Logln(errco.LVL_A, "msh (%s) is running an unofficial release", clientVersion)
 			}
 		}
 

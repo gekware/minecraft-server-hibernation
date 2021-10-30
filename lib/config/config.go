@@ -95,14 +95,14 @@ func LoadConfig() *errco.Error {
 	// (up until now the default errco.DebugLvl is LVL_E)
 	errco.DebugLvl = ConfigRuntime.Msh.Debug
 	// LVL_A log level is used to always notice the user of the log level
-	errco.Logln(errco.LVL_A, "log level set to: "+fmt.Sprint(errco.DebugLvl))
+	errco.Logln(errco.LVL_A, "log level set to: %d", errco.DebugLvl)
 
 	// initialize ip and ports for connection
 	ListenHost, ListenPort, TargetHost, TargetPort, errMsh = getIpPorts()
 	if errMsh != nil {
 		return errMsh.AddTrace("LoadConfig")
 	}
-	errco.Logln(errco.LVL_D, "msh proxy setup:\t", ListenHost+":"+ListenPort, "-->", TargetHost+":"+TargetPort)
+	errco.Logln(errco.LVL_D, "msh proxy setup:\t%s:%s --> %s:%s", ListenHost, ListenPort, TargetHost, TargetPort)
 
 	// set server icon
 	ServerIcon, errMsh = loadIcon(ConfigRuntime.Server.Folder)

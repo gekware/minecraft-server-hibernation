@@ -59,7 +59,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	errco.Logln(errco.LVL_D, "listening for new clients to connect on "+config.ListenHost+":"+config.ListenPort+" ...")
+	errco.Logln(errco.LVL_D, "listening for new clients to connect on %s:%s...", config.ListenHost, config.ListenPort)
 
 	// infinite cycle to accept clients. when a clients connects it is passed to handleClientSocket()
 	for {

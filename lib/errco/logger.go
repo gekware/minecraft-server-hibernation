@@ -1,7 +1,8 @@
 package errco
 
 import (
-	"log"
+	"fmt"
+	"time"
 )
 
 // DebugLvl specify the level of debugging
@@ -17,14 +18,16 @@ const (
 )
 
 // Logln prints the args if debug option is set to true
-func Logln(lvl int, args ...interface{}) {
+func Logln(lvl int, s string, args ...interface{}) {
 	if lvl <= DebugLvl {
-		log.Println(args...)
+		dt := time.Now().Format("2006/01/02 15:04:05")
+		fmt.Printf(dt+" "+s+"\n", args...)
 	}
 }
 
 func LogMshErr(errMsh *Error) {
 	if errMsh.Lvl <= DebugLvl {
-		log.Println(errMsh.Ori + ": " + errMsh.Str)
+		dt := time.Now().Format("2006/01/02 15:04:05")
+		fmt.Printf(dt + " " + errMsh.Ori + ": " + errMsh.Str + "\n")
 	}
 }

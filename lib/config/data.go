@@ -40,7 +40,7 @@ func loadIcon(serverDirPath string) (string, *errco.Error) {
 
 		// return if image is not 64x64
 		if pngIm.Bounds().Max != image.Pt(64, 64) {
-			return defaultServerIcon, errco.NewErr(errco.LOAD_ICON_ERROR, errco.LVL_D, "loadIcon", "incorrect server-icon-frozen.png size. Current size: "+fmt.Sprint(pngIm.Bounds().Max.X)+"x"+fmt.Sprint(pngIm.Bounds().Max.Y))
+			return defaultServerIcon, errco.NewErr(errco.LOAD_ICON_ERROR, errco.LVL_D, "loadIcon", fmt.Sprintf("incorrect server-icon-frozen.png size. Current size: %dx%d", pngIm.Bounds().Max.X, pngIm.Bounds().Max.Y))
 		}
 
 		// encode png

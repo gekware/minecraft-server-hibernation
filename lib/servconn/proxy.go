@@ -1,7 +1,6 @@
 package servconn
 
 import (
-	"fmt"
 	"io"
 	"net"
 	"strings"
@@ -39,9 +38,9 @@ func forward(source, destination net.Conn, isServerToClient bool, stopC chan boo
 		if err != nil {
 			// case in which the connection is closed by the source or closed by target
 			if err == io.EOF {
-				errco.Logln(errco.LVL_D, fmt.Sprintf("forward: closing %15s --> %15s because of: %s", strings.Split(source.RemoteAddr().String(), ":")[0], strings.Split(destination.RemoteAddr().String(), ":")[0], err.Error()))
+				errco.Logln(errco.LVL_D, "forward: closing %15s --> %15s because of: %s", strings.Split(source.RemoteAddr().String(), ":")[0], strings.Split(destination.RemoteAddr().String(), ":")[0], err.Error())
 			} else {
-				errco.Logln(errco.LVL_D, fmt.Sprintf("forward: %v\n%15s --> %15s", err, strings.Split(source.RemoteAddr().String(), ":")[0], strings.Split(destination.RemoteAddr().String(), ":")[0]))
+				errco.Logln(errco.LVL_D, "forward: %v\n%15s --> %15s", err, strings.Split(source.RemoteAddr().String(), ":")[0], strings.Split(destination.RemoteAddr().String(), ":")[0])
 			}
 
 			// close the source connection
