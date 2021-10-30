@@ -1,6 +1,6 @@
 Server:
-  Folder: "C:\\Users\\Giacomo\\Desktop\\minecraft server"
-  FileName: "server.jar"
+  Folder: "{path/to/server/folder}"
+  FileName: "{server.jar}"
   Protocol: "756"
   Version: "1.17.1"
 Commands:
