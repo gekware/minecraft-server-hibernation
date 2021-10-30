@@ -57,8 +57,10 @@ func forward(source, destination net.Conn, isServerToClient bool, stopC chan boo
 			servctrl.Stats.M.Lock()
 			if isServerToClient {
 				servctrl.Stats.BytesToClients = servctrl.Stats.BytesToClients + float64(dataLen)
+				errco.Logln(errco.LVL_E, "server --> client:%v", data[:dataLen])
 			} else {
 				servctrl.Stats.BytesToServer = servctrl.Stats.BytesToServer + float64(dataLen)
+				errco.Logln(errco.LVL_E, "client --> server:%v", data[:dataLen])
 			}
 			servctrl.Stats.M.Unlock()
 		}
