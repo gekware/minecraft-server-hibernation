@@ -107,9 +107,9 @@ func killMSifOnlineAfterTimeout() {
 	time.Sleep(10 * time.Second)
 
 	// send kill signal to server
-	errco.Logln("send kill signal to minecraft server process since it won't stop normally")
+	errco.Logln("minecraft server process won't stop normally: sending kill signal")
 	err := ServTerm.cmd.Process.Kill()
 	if err != nil {
-		errco.Logln("killMSifOnlineAfterTimeout: %v", err)
+		errco.LogMshErr(errco.NewErr(errco.SERVER_KILL_ERROR, errco.LVL_D, "killMSifOnlineAfterTimeout", err.Error()))
 	}
 }

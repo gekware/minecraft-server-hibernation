@@ -21,7 +21,7 @@ func GetInput() {
 	for {
 		line, err = reader.ReadString('\n')
 		if err != nil {
-			errco.Logln("GetInput:", err)
+			errco.LogMshErr(errco.NewErr(errco.READ_INPUT_ERROR, errco.LVL_B, "GetInput", err.Error()))
 			continue
 		}
 

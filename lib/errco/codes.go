@@ -51,6 +51,8 @@ const (
 	SERVER_NOT_EMPTY_ERROR    = 0x0000f005 // minecraft server is not empty
 	SERVER_MUST_WAIT_ERROR    = 0x0000f006 // msh issued ms stop ahead of specified wait time
 	STRING_CONVERSION_ERROR   = 0x0000f007 // error while converting string
+	SERVER_UNEXP_OUTPUT_ERROR = 0x0000f008 // server output does not adhere to expected log format
+	SERVER_KILL_ERROR         = 0x0000f009 // error while killing server process
 
 	// program manager package
 
@@ -82,9 +84,11 @@ const (
 	// main
 
 	CLIENT_LISTEN_ERROR = 0x0006f000 // error while listening for new clients
+	CLIENT_ACCEPT_ERROR = 0x0006f001 // error while accepting new client
 
 	// input package
 
 	COMMAND_INPUT_ERROR   = 0x0007f000 // general error while reading command input
 	COMMAND_UNKNOWN_ERROR = 0x0007f001 // command is unknown
+	READ_INPUT_ERROR      = 0x0007f001 // error while reading input)
 )

@@ -65,7 +65,7 @@ func main() {
 	for {
 		clientSocket, err := listener.Accept()
 		if err != nil {
-			errco.Logln("main:", err.Error())
+			errco.LogMshErr(errco.NewErr(errco.CLIENT_ACCEPT_ERROR, errco.LVL_D, "main", err.Error()))
 			continue
 		}
 
