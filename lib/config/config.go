@@ -49,7 +49,7 @@ type configuration struct {
 		StopServerAllowKill int    `yaml:"StopServerAllowKill"`
 	} `yaml:"Commands"`
 	Msh struct {
-		Debug                         bool   `yaml:"Debug"`
+		Debug                         int    `yaml:"Debug"`
 		InfoHibernation               string `yaml:"InfoHibernation"`
 		InfoStarting                  string `yaml:"InfoStarting"`
 		NotifyUpdate                  bool   `yaml:"NotifyUpdate"`
@@ -60,14 +60,14 @@ type configuration struct {
 
 // LoadConfig loads json data from config file into config
 func LoadConfig() *errco.Error {
-	errco.Logln("checking OS support...")
+	errco.Logln(errco.LVL_D, "checking OS support...")
 	// check if OS is supported.
 	errMsh := opsys.OsSupported()
 	if errMsh != nil {
 		return errMsh.AddTrace("LoadConfig")
 	}
 
-	errco.Logln("loading config file...")
+	errco.Logln(errco.LVL_D, "loading config file...")
 	// read config file
 	configData, err := ioutil.ReadFile(configFileName)
 	if err != nil {
@@ -92,14 +92,17 @@ func LoadConfig() *errco.Error {
 	}
 
 	// as soon as the Config variable is set, set debug level
-	errco.Debug = ConfigRuntime.Msh.Debug
+	// (up until now the default errco.DebugLvl is LVL_E)
+	errco.DebugLvl = ConfigRuntime.Msh.Debug
+	// LVL_A log level is used to always notice the user of the log level
+	errco.Logln(errco.LVL_A, "log level set to: "+fmt.Sprint(errco.DebugLvl))
 
 	// initialize ip and ports for connection
 	ListenHost, ListenPort, TargetHost, TargetPort, errMsh = getIpPorts()
 	if errMsh != nil {
 		return errMsh.AddTrace("LoadConfig")
 	}
-	errco.Logln("msh proxy setup:\t", ListenHost+":"+ListenPort, "-->", TargetHost+":"+TargetPort)
+	errco.Logln(errco.LVL_D, "msh proxy setup:\t", ListenHost+":"+ListenPort, "-->", TargetHost+":"+TargetPort)
 
 	// set server icon
 	ServerIcon, errMsh = loadIcon(ConfigRuntime.Server.Folder)
@@ -126,7 +129,7 @@ func SaveConfigDefault() *errco.Error {
 		return errco.NewErr(errco.SAVE_CONFIG_ERROR, errco.LVL_D, "SaveConfigDefault", "could not write to config file")
 	}
 
-	errco.Logln("SaveConfigDefault: saved to config file")
+	errco.Logln(errco.LVL_B, "SaveConfigDefault: saved to config file")
 
 	return nil
 }
@@ -145,10 +148,11 @@ func generateConfigRuntime() configuration {
 	flag.StringVar(&ConfigRuntime.Msh.Port, "p", ConfigRuntime.Msh.Port, "Specify msh port.")
 	flag.StringVar(&ConfigRuntime.Msh.InfoHibernation, "h", ConfigRuntime.Msh.InfoHibernation, "Specify hibernation info.")
 	flag.StringVar(&ConfigRuntime.Msh.InfoStarting, "s", ConfigRuntime.Msh.InfoStarting, "Specify starting info.")
-	flag.BoolVar(&ConfigRuntime.Msh.Debug, "d", ConfigRuntime.Msh.Debug, "Set debug to true.")
+	flag.IntVar(&ConfigRuntime.Msh.Debug, "d", ConfigRuntime.Msh.Debug, "Specify debug level.")
 
 	// specify the usage when there is an error in the arguments
 	flag.Usage = func() {
+		// not using errco.Logln since log time is not needed
 		fmt.Println("Usage of msh:")
 		flag.PrintDefaults()
 	}

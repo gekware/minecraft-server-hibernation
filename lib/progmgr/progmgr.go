@@ -1,7 +1,6 @@
 package progmgr
 
 import (
-	"fmt"
 	"io/ioutil"
 	"math"
 	"net/http"
@@ -40,19 +39,19 @@ func InterruptListener() {
 		switch servctrl.Stats.Status {
 		case errco.SERVER_STATUS_STOPPING:
 			// if server is correctly stopping, wait for minecraft server to exit
-			errco.Logln("InterruptListener: waiting for minecraft server terminal to exit (server is stopping)")
+			errco.Logln(errco.LVL_D, "InterruptListener: waiting for minecraft server terminal to exit (server is stopping)")
 			servctrl.ServTerm.Wg.Wait()
 
 		case errco.SERVER_STATUS_OFFLINE:
 			// if server is offline, then it's safe to continue
-			errco.Logln("InterruptListener: minecraft server terminal already exited (server is offline)")
+			errco.Logln(errco.LVL_D, "InterruptListener: minecraft server terminal already exited (server is offline)")
 
 		default:
-			errco.Logln("InterruptListener: stop command does not seem to be stopping server during forceful shutdown")
+			errco.Logln(errco.LVL_D, "InterruptListener: stop command does not seem to be stopping server during forceful shutdown")
 		}
 
 		// exit
-		fmt.Println("exiting msh")
+		errco.Logln(errco.LVL_A, "exiting msh")
 		os.Exit(0)
 	}
 }
@@ -73,7 +72,7 @@ func UpdateManager(clientVersion string) {
 	respHeader := "latest version: "
 
 	for {
-		errco.Logln("checking version...")
+		errco.Logln(errco.LVL_D, "checking version...")
 
 		status, onlineVersion, errMsh := checkUpdate(clientProtV, clientVersion, respHeader)
 		if errMsh != nil {
@@ -84,16 +83,16 @@ func UpdateManager(clientVersion string) {
 		if config.ConfigRuntime.Msh.NotifyUpdate {
 			switch status {
 			case errco.VERSION_UPDATED:
-				fmt.Println("*** msh (" + clientVersion + ") is updated ***")
+				errco.Logln(errco.LVL_A, "msh ("+clientVersion+") is updated")
 
 			case errco.VERSION_UPDATEAVAILABLE:
-				notification := "*** msh (" + onlineVersion + ") is now available: visit github to update! ***"
-				fmt.Println(notification)
+				notification := "msh (" + onlineVersion + ") is now available: visit github to update!"
+				errco.Logln(errco.LVL_A, notification)
 				// notify to game chat every 20 minutes for deltaT time
 				go notifyGameChat(20*time.Minute, deltaT, notification)
 
 			case errco.VERSION_UNOFFICIALVERSION:
-				fmt.Println("*** msh (" + clientVersion + ") is running an unofficial release ***")
+				errco.Logln(errco.LVL_A, "msh ("+clientVersion+") is running an unofficial release")
 			}
 		}
 

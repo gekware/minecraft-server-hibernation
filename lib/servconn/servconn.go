@@ -1,7 +1,7 @@
 package servconn
 
 import (
-	"log"
+	"fmt"
 	"net"
 	"strings"
 
@@ -29,8 +29,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 		switch reqType {
 		case errco.CLIENT_REQ_INFO:
 			// client requests "server info"
-
-			log.Printf("*** %s requested server info from %s:%s to %s:%s\n", playerName, clientAddress, config.ListenPort, config.TargetHost, config.TargetPort)
+			errco.Logln(errco.LVL_D, fmt.Sprintf("%s requested server info from %s:%s to %s:%s\n", playerName, clientAddress, config.ListenPort, config.TargetHost, config.TargetPort))
 
 			// answer to client with emulated server info
 			clientSocket.Write(buildMessage(errco.MESSAGE_FORMAT_INFO, config.ConfigRuntime.Msh.InfoHibernation))
@@ -52,13 +51,13 @@ func HandleClientSocket(clientSocket net.Conn) {
 				clientSocket.Write(buildMessage(errco.MESSAGE_FORMAT_TXT, "An error occurred while starting the server: check the msh log"))
 			} else {
 				// log to msh console and answer client with text in the loadscreen
-				log.Printf("*** %s tried to join from %s:%s to %s:%s\n", playerName, clientAddress, config.ListenPort, config.TargetHost, config.TargetPort)
+				errco.Logln(errco.LVL_D, fmt.Sprintf("%s tried to join from %s:%s to %s:%s\n", playerName, clientAddress, config.ListenPort, config.TargetHost, config.TargetPort))
 				clientSocket.Write(buildMessage(errco.MESSAGE_FORMAT_TXT, "Server start command issued. Please wait... "+servctrl.Stats.LoadProgress))
 			}
 		}
 
 		// close the client connection
-		errco.Logln("closing connection for:", clientAddress)
+		errco.Logln(errco.LVL_D, "closing connection for:", clientAddress)
 		clientSocket.Close()
 
 	case errco.SERVER_STATUS_STARTING:
@@ -72,7 +71,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 		case errco.CLIENT_REQ_INFO:
 			// client requests "INFO"
 
-			log.Printf("*** %s requested server info from %s:%s to %s:%s during server startup\n", playerName, clientAddress, config.ListenPort, config.TargetHost, config.TargetPort)
+			errco.Logln(errco.LVL_D, fmt.Sprintf("%s requested server info from %s:%s to %s:%s during server startup\n", playerName, clientAddress, config.ListenPort, config.TargetHost, config.TargetPort))
 
 			// answer to client with emulated server info
 			clientSocket.Write(buildMessage(errco.MESSAGE_FORMAT_INFO, config.ConfigRuntime.Msh.InfoStarting))
@@ -87,12 +86,12 @@ func HandleClientSocket(clientSocket net.Conn) {
 			// client requests "JOIN"
 
 			// log to msh console and answer to client with text in the loadscreen
-			log.Printf("*** %s tried to join from %s:%s to %s:%s during server startup\n", playerName, clientAddress, config.ListenPort, config.TargetHost, config.TargetPort)
+			errco.Logln(errco.LVL_D, fmt.Sprintf("%s tried to join from %s:%s to %s:%s during server startup\n", playerName, clientAddress, config.ListenPort, config.TargetHost, config.TargetPort))
 			clientSocket.Write(buildMessage(errco.MESSAGE_FORMAT_TXT, "Server is starting. Please wait... "+servctrl.Stats.LoadProgress))
 		}
 
 		// close the client connection
-		errco.Logln("closing connection for:", clientAddress)
+		errco.Logln(errco.LVL_D, "closing connection for:", clientAddress)
 		clientSocket.Close()
 
 	case errco.SERVER_STATUS_ONLINE:

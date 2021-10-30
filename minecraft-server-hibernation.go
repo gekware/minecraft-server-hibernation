@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net"
 	"os"
 
@@ -30,6 +29,7 @@ var intro []string = []string{
 
 func main() {
 	// print program intro
+	// not using errco.Logln since log time is not needed
 	fmt.Println(utility.Boxify(intro))
 
 	// load configuration from config file
@@ -59,7 +59,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	log.Println("*** listening for new clients to connect on " + config.ListenHost + ":" + config.ListenPort + " ...")
+	errco.Logln(errco.LVL_D, "listening for new clients to connect on "+config.ListenHost+":"+config.ListenPort+" ...")
 
 	// infinite cycle to accept clients. when a clients connects it is passed to handleClientSocket()
 	for {

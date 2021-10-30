@@ -1,6 +1,6 @@
 Server:
-  Folder: "{path/to/server/folder}"
-  FileName: "{server.jar}"
+  Folder: "C:\\Users\\Giacomo\\Desktop\\minecraft server"
+  FileName: "server.jar"
   Protocol: "756"
   Version: "1.17.1"
 Commands:
@@ -9,7 +9,7 @@ Commands:
   StopServer: "stop"
   StopServerAllowKill: 10
 Msh:
-  Debug: true
+  Debug: 1 # [0 - 4]
   InfoHibernation: "                   \u0026fserver status:\n                   \u0026b\u0026lHIBERNATING"
   InfoStarting: "                   \u0026fserver status:\n                    \u00266\u0026lWARMING UP"
   NotifyUpdate: true

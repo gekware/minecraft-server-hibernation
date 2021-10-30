@@ -2,7 +2,6 @@ package input
 
 import (
 	"bufio"
-	"fmt"
 	"os"
 	"strings"
 
@@ -34,7 +33,7 @@ func GetInput() {
 		}
 		lineSplit := strings.Split(line, " ")
 
-		errco.Logln("GetInput: user input:", lineSplit[:])
+		errco.Logln(errco.LVL_B, "GetInput: user input:", lineSplit[:])
 
 		switch lineSplit[0] {
 		// target msh
@@ -62,7 +61,7 @@ func GetInput() {
 				if errMsh != nil {
 					errco.LogMshErr(errMsh.AddTrace("GetInput"))
 				}
-				fmt.Println("exiting msh")
+				errco.Logln(errco.LVL_A, "exiting msh")
 				os.Exit(0)
 			default:
 				errco.LogMshErr(errco.NewErr(errco.COMMAND_UNKNOWN_ERROR, errco.LVL_A, "GetInput", "unknown command (start - freeze - exit)"))

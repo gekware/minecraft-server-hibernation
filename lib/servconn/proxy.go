@@ -39,9 +39,9 @@ func forward(source, destination net.Conn, isServerToClient bool, stopC chan boo
 		if err != nil {
 			// case in which the connection is closed by the source or closed by target
 			if err == io.EOF {
-				errco.Logln(fmt.Sprintf("forward: closing %15s --> %15s because of: %s", strings.Split(source.RemoteAddr().String(), ":")[0], strings.Split(destination.RemoteAddr().String(), ":")[0], err.Error()))
+				errco.Logln(errco.LVL_D, fmt.Sprintf("forward: closing %15s --> %15s because of: %s", strings.Split(source.RemoteAddr().String(), ":")[0], strings.Split(destination.RemoteAddr().String(), ":")[0], err.Error()))
 			} else {
-				errco.Logln(fmt.Sprintf("forward: %v\n%15s --> %15s", err, strings.Split(source.RemoteAddr().String(), ":")[0], strings.Split(destination.RemoteAddr().String(), ":")[0]))
+				errco.Logln(errco.LVL_D, fmt.Sprintf("forward: %v\n%15s --> %15s", err, strings.Split(source.RemoteAddr().String(), ":")[0], strings.Split(destination.RemoteAddr().String(), ":")[0]))
 			}
 
 			// close the source connection
@@ -54,7 +54,7 @@ func forward(source, destination net.Conn, isServerToClient bool, stopC chan boo
 		destination.Write(data[:dataLen])
 
 		// calculate bytes/s to client/server
-		if errco.Debug {
+		if errco.DebugLvl >= errco.LVL_D {
 			servctrl.Stats.M.Lock()
 			if isServerToClient {
 				servctrl.Stats.BytesToClients = servctrl.Stats.BytesToClients + float64(dataLen)

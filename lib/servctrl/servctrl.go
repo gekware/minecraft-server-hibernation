@@ -100,14 +100,14 @@ func killMSifOnlineAfterTimeout() {
 	}
 
 	// save world before killing the server, do not check for errors
-	errco.Logln("saving word before killing the minecraft server process")
+	errco.Logln(errco.LVL_D, "saving word before killing the minecraft server process")
 	_, _ = Execute("save-all", "killMSifOnlineAfterTimeout")
 
 	// give time to save word
 	time.Sleep(10 * time.Second)
 
 	// send kill signal to server
-	errco.Logln("minecraft server process won't stop normally: sending kill signal")
+	errco.Logln(errco.LVL_D, "minecraft server process won't stop normally: sending kill signal")
 	err := ServTerm.cmd.Process.Kill()
 	if err != nil {
 		errco.LogMshErr(errco.NewErr(errco.SERVER_KILL_ERROR, errco.LVL_D, "killMSifOnlineAfterTimeout", err.Error()))

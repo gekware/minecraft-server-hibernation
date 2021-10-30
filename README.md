@@ -67,6 +67,7 @@ Location of server folder and executable. You can find protocol/version [here](h
   "Protocol": "756"
 }
 ```
+
 Commands to start and stop minecraft server:
 ```yaml
 "Commands":{
@@ -78,18 +79,29 @@ Commands to start and stop minecraft server:
 # if StopServerAllowKill is more than 0, then the specified number is the amount of seconds
 # given to the minecraft server to go offline, after which it is killed
 ```
+
+Set the logging level for debug purposes
+```yaml
+"Debug": 1
+
+# 0 - NONE: no log
+# 1 - BASE: basic log
+# 2 - SERV: mincraft server log
+# 3 - DEVE: developement log
+# 4 - BYTE: connection bytes log
+```
 Hibernation and Starting server description
 ```yaml
 "InfoHibernation": "                   \u0026fserver status:\n                   \u0026b\u0026lHIBERNATING",
 "InfoStarting": "                   \u0026fserver status:\n                    \u00266\u0026lWARMING UP"
 ```
-*60 seconds* is the time (after the last player disconnected) that the script waits before hibernating the minecraft server
-```yaml
-"TimeBeforeStoppingEmptyServer": 60     #any parameter more than 30s is recommended
-```
 Set to false if you don't want to notify updates in game chat (every 20 minutes)
 ```yaml
 "NotifyUpdate": true
+```
+*60 seconds* is the time (after the last player disconnected) that the script waits before hibernating the minecraft server
+```yaml
+"TimeBeforeStoppingEmptyServer": 60     #any parameter more than 30s is recommended
 ```
 
 _Some of these parameters can be configured with command-line arguments (--help to know which)_

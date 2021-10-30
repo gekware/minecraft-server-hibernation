@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"log"
 	"os/exec"
 	"strings"
 	"sync"
@@ -49,7 +48,7 @@ func Execute(command, origin string) (string, *errco.Error) {
 			return "", errco.NewErr(errco.SERVER_NOT_ONLINE_ERROR, errco.LVL_C, "Execute", "server not online")
 		}
 
-		errco.Logln("terminal execute:"+COLOR_YELLOW, com, COLOR_RESET, "\t(origin:", origin+")")
+		errco.Logln(errco.LVL_C, "terminal execute:"+COLOR_YELLOW, com, COLOR_RESET, "\t(origin:", origin+")")
 
 		// write to cmd (\n indicates the enter key)
 		_, err := ServTerm.inPipe.Write([]byte(com + "\n"))
@@ -83,7 +82,7 @@ func cmdStart(dir, command string) *errco.Error {
 	Stats.Status = errco.SERVER_STATUS_STARTING
 	Stats.LoadProgress = "0%"
 	Stats.PlayerCount = 0
-	log.Print("*** MINECRAFT SERVER IS STARTING!")
+	errco.Logln(errco.LVL_B, "MINECRAFT SERVER IS STARTING!")
 
 	return nil
 }
@@ -138,7 +137,7 @@ func printerOutErr() {
 		for scanner.Scan() {
 			line = scanner.Text()
 
-			fmt.Println(COLOR_CYAN + line + COLOR_RESET)
+			errco.Logln(errco.LVL_C, COLOR_CYAN+line+COLOR_RESET)
 
 			// communicate to lastLine so that func Execute() can return the first line after the command
 			select {
@@ -161,7 +160,7 @@ func printerOutErr() {
 				// using ": Done (" instead of "Done" to avoid false positives (issue #112)
 				if strings.Contains(line, "INFO") && strings.Contains(line, ": Done (") {
 					Stats.Status = errco.SERVER_STATUS_ONLINE
-					log.Print("*** MINECRAFT SERVER IS ONLINE!")
+					errco.Logln(errco.LVL_B, "MINECRAFT SERVER IS ONLINE!")
 
 					// launch a StopMSRequests so that if no players connect the server will shutdown
 					StopMSRequest()
@@ -197,25 +196,25 @@ func printerOutErr() {
 					// player sends a chat message
 					case strings.HasPrefix(lineContent, "<") || strings.HasPrefix(lineContent, "["):
 						// just log that the line is a chat message
-						errco.Logln("a chat message was sent")
+						errco.Logln(errco.LVL_C, "a chat message was sent")
 
 					// player joins the server
 					// using "UUID of player" since minecraft server v1.12.2 does not use "joined the game"
 					case strings.Contains(lineContent, "UUID of player"):
 						Stats.PlayerCount++
-						log.Printf("*** A PLAYER JOINED THE SERVER! - %d players online", Stats.PlayerCount)
+						errco.Logln(errco.LVL_C, fmt.Sprintf("A PLAYER JOINED THE SERVER! - %d players online", Stats.PlayerCount))
 
 					// player leaves the server
 					// using "lost connection" (instead of "left the game") because it's more general (issue #116)
 					case strings.Contains(lineContent, "lost connection"):
 						Stats.PlayerCount--
-						log.Printf("*** A PLAYER LEFT THE SERVER! - %d players online", Stats.PlayerCount)
+						errco.Logln(errco.LVL_C, fmt.Sprintf("A PLAYER LEFT THE SERVER! - %d players online", Stats.PlayerCount))
 						StopMSRequest()
 
 					// the server is stopping
 					case strings.Contains(lineContent, "Stopping"):
 						Stats.Status = errco.SERVER_STATUS_STOPPING
-						log.Print("*** MINECRAFT SERVER IS STOPPING!")
+						errco.Logln(errco.LVL_B, "MINECRAFT SERVER IS STOPPING!")
 					}
 				}
 			}
@@ -234,7 +233,7 @@ func printerOutErr() {
 		for scanner.Scan() {
 			line = scanner.Text()
 
-			fmt.Println(COLOR_CYAN + line + COLOR_RESET)
+			errco.Logln(errco.LVL_C, COLOR_CYAN+line+COLOR_RESET)
 		}
 	}()
 }
@@ -252,8 +251,8 @@ func waitForExit() {
 	ServTerm.inPipe.Close()
 
 	ServTerm.IsActive = false
-	errco.Logln("waitForExit: terminal exited")
+	errco.Logln(errco.LVL_D, "waitForExit: terminal exited")
 
 	Stats.Status = errco.SERVER_STATUS_OFFLINE
-	log.Print("*** MINECRAFT SERVER IS OFFLINE!")
+	errco.Logln(errco.LVL_B, "MINECRAFT SERVER IS OFFLINE!")
 }

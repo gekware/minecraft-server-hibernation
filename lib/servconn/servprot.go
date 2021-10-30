@@ -221,6 +221,7 @@ func extractVersionProtocol(data []byte) *errco.Error {
 		// if serverVersion or serverProtocol are different from the ones specified in config file --> update them
 		if newServerVersion != config.ConfigRuntime.Server.Version || newServerProtocol != config.ConfigRuntime.Server.Protocol {
 			errco.Logln(
+				errco.LVL_C,
 				"server version found!",
 				"serverVersion:", newServerVersion,
 				"serverProtocol:", newServerProtocol,

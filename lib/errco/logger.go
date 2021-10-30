@@ -4,23 +4,21 @@ import (
 	"log"
 )
 
-// Debug specify if debug should be printed or not
-// (default is true so it will log errors before logging the config)
-var Debug bool = true
-
-var DebugLvl int = LVL_B
+// DebugLvl specify the level of debugging
+// (default is LVL_E so it will log everything)
+var DebugLvl int = LVL_E
 
 const (
 	LVL_A = 0 // NONE: no log
-	LVL_B = 1 // BASE: basic log type
-	LVL_C = 2 // SERV: mincraft server log type
-	LVL_D = 3 // DEVE: developement log type
-	LVL_E = 4 // BYTE: connection bytes log type
+	LVL_B = 1 // BASE: basic log
+	LVL_C = 2 // SERV: mincraft server log
+	LVL_D = 3 // DEVE: developement log
+	LVL_E = 4 // BYTE: connection bytes log
 )
 
 // Logln prints the args if debug option is set to true
-func Logln(args ...interface{}) {
-	if Debug {
+func Logln(lvl int, args ...interface{}) {
+	if lvl <= DebugLvl {
 		log.Println(args...)
 	}
 }
