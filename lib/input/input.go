@@ -75,7 +75,13 @@ func GetInput() {
 				continue
 			}
 
-			// just pass the command to the minecraft server terminal
+			// check if server is online
+			if servctrl.Stats.Status != errco.SERVER_STATUS_ONLINE {
+				errco.LogMshErr(errco.NewErr(errco.SERVER_NOT_ONLINE_ERROR, errco.LVL_A, "GetInput", "minecraft server is not online (try \"msh start\")"))
+				continue
+			}
+
+			// pass the command to the minecraft server terminal
 			_, errMsh := servctrl.Execute(strings.Join(lineSplit[1:], " "), "user input")
 			if errMsh != nil {
 				errco.LogMshErr(errMsh.AddTrace("GetInput"))
