@@ -40,7 +40,7 @@ func Execute(command, origin string) (string, *errco.Error) {
 			return "", errco.NewErr(errco.SERVER_NOT_ONLINE_ERROR, errco.LVL_C, "Execute", "server not online")
 		}
 
-		errco.Logln(errco.LVL_C, "terminal execute: %s%s%s\t(origin: %s)", errco.COLOR_GRAY, com, errco.COLOR_RESET, origin)
+		errco.Logln(errco.LVL_C, "terminal execute: %s%s%s\t(origin: %s)", errco.COLOR_YELLOW, com, errco.COLOR_RESET, origin)
 
 		// write to cmd (\n indicates the enter key)
 		_, err := ServTerm.inPipe.Write([]byte(com + "\n"))
