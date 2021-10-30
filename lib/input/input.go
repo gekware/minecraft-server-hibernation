@@ -20,7 +20,7 @@ func GetInput() {
 	for {
 		line, err = reader.ReadString('\n')
 		if err != nil {
-			errco.LogMshErr(errco.NewErr(errco.READ_INPUT_ERROR, errco.LVL_B, "GetInput", err.Error()))
+			errco.LogMshErr(errco.NewErr(errco.READ_INPUT_ERROR, errco.LVL_D, "GetInput", err.Error()))
 			continue
 		}
 
@@ -33,7 +33,7 @@ func GetInput() {
 		}
 		lineSplit := strings.Split(line, " ")
 
-		errco.Logln(errco.LVL_B, "GetInput: user input: %s", lineSplit[:])
+		errco.Logln(errco.LVL_D, "GetInput: user input: %s", lineSplit[:])
 
 		switch lineSplit[0] {
 		// target msh
