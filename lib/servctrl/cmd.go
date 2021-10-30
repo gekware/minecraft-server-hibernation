@@ -26,13 +26,6 @@ type servTerminal struct {
 // lastLine is a channel used to communicate the last line got from the printer function
 var lastLine = make(chan string)
 
-// constants to print color text on terminal
-const (
-	COLOR_RESET  = "\033[0m"
-	COLOR_CYAN   = "\033[36m"
-	COLOR_YELLOW = "\033[33m"
-)
-
 // Execute executes a command on ServTerm
 // [non-blocking]
 func Execute(command, origin string) (string, *errco.Error) {
@@ -47,7 +40,7 @@ func Execute(command, origin string) (string, *errco.Error) {
 			return "", errco.NewErr(errco.SERVER_NOT_ONLINE_ERROR, errco.LVL_C, "Execute", "server not online")
 		}
 
-		errco.Logln(errco.LVL_C, "terminal execute: %s%s%s\t(origin: %s)", COLOR_YELLOW, com, COLOR_RESET, origin)
+		errco.Logln(errco.LVL_C, "terminal execute: %s%s%s\t(origin: %s)", errco.COLOR_GRAY, com, errco.COLOR_RESET, origin)
 
 		// write to cmd (\n indicates the enter key)
 		_, err := ServTerm.inPipe.Write([]byte(com + "\n"))
@@ -136,7 +129,7 @@ func printerOutErr() {
 		for scanner.Scan() {
 			line = scanner.Text()
 
-			errco.Logln(errco.LVL_C, "%s%s%s", COLOR_CYAN, line, COLOR_RESET)
+			errco.Logln(errco.LVL_C, "%s%s%s", errco.COLOR_GRAY, line, errco.COLOR_RESET)
 
 			// communicate to lastLine so that func Execute() can return the first line after the command
 			select {
@@ -232,7 +225,7 @@ func printerOutErr() {
 		for scanner.Scan() {
 			line = scanner.Text()
 
-			errco.Logln(errco.LVL_C, "%s%s%s", COLOR_CYAN, line, COLOR_RESET)
+			errco.Logln(errco.LVL_C, "%s%s%s", errco.COLOR_GRAY, line, errco.COLOR_RESET)
 		}
 	}()
 }

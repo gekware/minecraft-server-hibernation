@@ -2,6 +2,7 @@ package errco
 
 import (
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -17,17 +18,30 @@ const (
 	LVL_E = 4 // BYTE: connection bytes log
 )
 
+// constants to print color text on terminal
+const (
+	COLOR_RESET = "\033[0m"
+
+	COLOR_GRAY   = "\033[1;30m" // used for server logs
+	COLOR_RED    = "\033[0;31m" // used for errors
+	COLOR_GREEN  = "\033[0;32m"
+	COLOR_YELLOW = "\033[0;33m" // used for commands
+	COLOR_BLUE   = "\033[0;34m"
+	COLOR_PURPLE = "\033[0;35m"
+	COLOR_CYAN   = "\033[0;36m"
+)
+
 // Logln prints the args if debug option is set to true
 func Logln(lvl int, s string, args ...interface{}) {
 	if lvl <= DebugLvl {
-		dt := time.Now().Format("2006/01/02 15:04:05")
-		fmt.Printf(dt+" "+s+"\n", args...)
+		header := fmt.Sprintf("%s [%sinfo  %s%-4s]", time.Now().Format("2006/01/02 15:04:05"), COLOR_BLUE, COLOR_RESET, strings.Repeat("*", 4-lvl))
+		fmt.Printf(header+" "+s+"\n", args...)
 	}
 }
 
 func LogMshErr(errMsh *Error) {
 	if errMsh.Lvl <= DebugLvl {
-		dt := time.Now().Format("2006/01/02 15:04:05")
-		fmt.Printf(dt + " " + errMsh.Ori + ": " + errMsh.Str + "\n")
+		header := fmt.Sprintf("%s [%serror %s%-4s]", time.Now().Format("2006/01/02 15:04:05"), COLOR_RED, COLOR_RESET, strings.Repeat("*", 4-errMsh.Lvl))
+		fmt.Printf(header + " " + errMsh.Ori + ": " + errMsh.Str + "\n")
 	}
 }

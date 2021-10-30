@@ -48,7 +48,7 @@ func StopMS(playersCheck bool) *errco.Error {
 		// check if enough time has passed since last player disconnected
 
 		if atomic.LoadInt32(&Stats.StopMSRequests) > 0 {
-			return errco.NewErr(errco.SERVER_MUST_WAIT_ERROR, errco.LVL_D, "StopMS", "not enough time has passed since last player disconnected (StopMSRequests: "+fmt.Sprint(Stats.StopMSRequests)+" )")
+			return errco.NewErr(errco.SERVER_MUST_WAIT_ERROR, errco.LVL_D, "StopMS", fmt.Sprintf("not enough time has passed since last player disconnected (StopMSRequests: %d )", Stats.StopMSRequests))
 		}
 	}
 
