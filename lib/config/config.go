@@ -102,7 +102,7 @@ func LoadConfig() *errco.Error {
 	if errMsh != nil {
 		return errMsh.AddTrace("LoadConfig")
 	}
-	errco.Logln(errco.LVL_D, "msh proxy setup:\t%s:%s --> %s:%s", ListenHost, ListenPort, TargetHost, TargetPort)
+	errco.Logln(errco.LVL_D, "msh proxy setup: %s:%s --> %s:%s", ListenHost, ListenPort, TargetHost, TargetPort)
 
 	// set server icon
 	ServerIcon, errMsh = loadIcon(ConfigRuntime.Server.Folder)
