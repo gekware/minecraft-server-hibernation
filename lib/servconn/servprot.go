@@ -3,19 +3,39 @@ package servconn
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
+	"encoding/json"
 	"net"
 	"strconv"
 	"strings"
 
 	"msh/lib/config"
 	"msh/lib/errco"
+	"msh/lib/utility"
 )
+
+type dataTxt struct {
+	Text string `json:"text"`
+}
+
+type dataInfo struct {
+	Description struct {
+		Text string `json:"text"`
+	} `json:"description"`
+	Players struct {
+		Max    int `json:"max"`
+		Online int `json:"online"`
+	} `json:"players"`
+	Version struct {
+		Name     string `json:"name"`
+		Protocol int    `json:"protocol"`
+	} `json:"version"`
+	Favicon string `json:"favicon"`
+}
 
 // buildMessage takes the message format (TXT/INFO) and a message to write to the client
 func buildMessage(messageFormat int, message string) []byte {
 	// mountHeader mounts the full header to a specified message
-	var mountHeader = func(messageStr string) []byte {
+	var mountHeader = func(data []byte) []byte {
 		//                  ┌--------------------full header--------------------┐
 		// scheme:          [ sub-header1     | sub-header2 | sub-header3       | message   ]
 		// bytes used:      [ 2               | 1           | 2                 | 0 - 16379 ]
@@ -34,48 +54,57 @@ func buildMessage(messageFormat int, message string) []byte {
 			return append([]byte{byte(firstByte), byte(secondByte)}, message...)
 		}
 
-		messageByte := []byte(messageStr)
-
 		// sub-header3 calculation
-		messageByte = addSubHeader(messageByte)
+		data = addSubHeader(data)
 
 		// sub-header2 calculation
-		messageByte = append([]byte{0}, messageByte...)
+		data = append([]byte{0}, data...)
 
 		// sub-header1 calculation
-		messageByte = addSubHeader(messageByte)
+		data = addSubHeader(data)
 
-		return messageByte
+		return data
 	}
 
 	switch messageFormat {
 	case errco.MESSAGE_FORMAT_TXT:
 		// send text to be shown in the loadscreen
 
-		messageJSON := fmt.Sprint(
-			"{",
-			"\"text\":\"", message, "\"",
-			"}",
-		)
+		messageStruct := &dataTxt{}
+		messageStruct.Text = message
 
-		return mountHeader(messageJSON)
+		dataTxtJSON, err := json.Marshal(messageStruct)
+		if err != nil {
+			// don't return error, just log it
+			errco.LogMshErr(errco.NewErr(errco.JSON_MARSHAL_ERROR, errco.LVL_D, "buildMessage", err.Error()))
+			return nil
+		}
+
+		return mountHeader(dataTxtJSON)
 
 	case errco.MESSAGE_FORMAT_INFO:
 		// send server info
 
-		// "\n" should be encoded as "\xc2\xa7r\\n"
-		// "&"  should be encoded as "\xc2\xa7"
-		message = strings.ReplaceAll(strings.ReplaceAll(message, "\n", "&r\\n"), "&", "\xc2\xa7")
+		// "&" [\x26] is converted to "§" [\xc2\xa7]
+		// this step is not strictly necessary if in msh-config is used the character "§"
+		message = strings.ReplaceAll(message, "&", "§")
 
-		messageJSON := fmt.Sprint("{",
-			"\"description\":{\"text\":\"", message, "\"},",
-			"\"players\":{\"max\":0,\"online\":0},",
-			"\"version\":{\"name\":\"", config.ConfigRuntime.Server.Version, "\",\"protocol\":", fmt.Sprint(config.ConfigRuntime.Server.Protocol), "},",
-			"\"favicon\":\"data:image/png;base64,", config.ServerIcon, "\"",
-			"}",
-		)
+		messageStruct := &dataInfo{}
+		messageStruct.Description.Text = message
+		messageStruct.Players.Max = 0
+		messageStruct.Players.Online = 0
+		messageStruct.Version.Name = config.ConfigRuntime.Server.Version
+		messageStruct.Version.Protocol = config.ConfigRuntime.Server.Protocol
+		messageStruct.Favicon = "data:image/png;base64," + config.ServerIcon
 
-		return mountHeader(messageJSON)
+		dataInfJSON, err := json.Marshal(messageStruct)
+		if err != nil {
+			// don't return error, just log it
+			errco.LogMshErr(errco.NewErr(errco.JSON_MARSHAL_ERROR, errco.LVL_D, "buildMessage", err.Error()))
+			return nil
+		}
+
+		return mountHeader(dataInfJSON)
 
 	default:
 		return nil
@@ -215,20 +244,31 @@ func extractPlayerName(data, reqFlagJoin []byte, clientSocket net.Conn) string {
 func extractVersionProtocol(data []byte) *errco.Error {
 	// if data contains "\"version\":{\"name\":\"" and ",\"protocol\":" --> extract the serverVersion and serverProtocol
 	if bytes.Contains(data, []byte("\"version\":{\"name\":\"")) && bytes.Contains(data, []byte(",\"protocol\":")) {
-		newServerVersion := string(bytes.Split(bytes.Split(data, []byte("\"version\":{\"name\":\""))[1], []byte("\","))[0])
-		newServerProtocol := string(bytes.Split(bytes.Split(data, []byte(",\"protocol\":"))[1], []byte("}"))[0])
+		newServVersData, errMsh := utility.BytBetween(data, []byte("\"version\":{\"name\":\""), []byte("\","))
+		if errMsh != nil {
+			return errMsh.AddTrace("extractVersionProtocol")
+		}
+		newServProtData, errMsh := utility.BytBetween(data, []byte(",\"protocol\":"), []byte("}"))
+		if errMsh != nil {
+			return errMsh.AddTrace("extractVersionProtocol")
+		}
+		newServVers := string(newServVersData)
+		newServProt, err := strconv.Atoi(string(newServProtData))
+		if err != nil {
+			return errco.NewErr(errco.CONVERSION_ERROR, errco.LVL_D, "extractVersionProtocol", err.Error())
+		}
 
 		// if serverVersion or serverProtocol are different from the ones specified in config file --> update them
-		if newServerVersion != config.ConfigRuntime.Server.Version || newServerProtocol != config.ConfigRuntime.Server.Protocol {
-			errco.Logln(errco.LVL_C, "server version found! serverVersion: %s serverProtocol: %s", newServerVersion, newServerProtocol)
+		if newServVers != config.ConfigRuntime.Server.Version || newServProt != config.ConfigRuntime.Server.Protocol {
+			errco.Logln(errco.LVL_C, "server version found! serverVersion: %s serverProtocol: %s", newServVers, newServProt)
 
 			// update the runtime config
-			config.ConfigRuntime.Server.Version = newServerVersion
-			config.ConfigRuntime.Server.Protocol = newServerProtocol
+			config.ConfigRuntime.Server.Version = newServVers
+			config.ConfigRuntime.Server.Protocol = newServProt
 
 			// update the file config
-			config.ConfigDefault.Server.Version = newServerVersion
-			config.ConfigDefault.Server.Protocol = newServerProtocol
+			config.ConfigDefault.Server.Version = newServVers
+			config.ConfigDefault.Server.Protocol = newServProt
 
 			errMsh := config.SaveConfigDefault()
 			if errMsh != nil {

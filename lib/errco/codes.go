@@ -50,7 +50,7 @@ const (
 	PIPE_LOAD_ERROR           = 0x0000f004 // error while loading pipe
 	SERVER_NOT_EMPTY_ERROR    = 0x0000f005 // minecraft server is not empty
 	SERVER_MUST_WAIT_ERROR    = 0x0000f006 // msh issued ms stop ahead of specified wait time
-	STRING_CONVERSION_ERROR   = 0x0000f007 // error while converting string
+	CONVERSION_ERROR          = 0x0000f007 // error while converting variable
 	SERVER_UNEXP_OUTPUT_ERROR = 0x0000f008 // server output does not adhere to expected log format
 	SERVER_KILL_ERROR         = 0x0000f009 // error while killing server process
 
@@ -65,6 +65,7 @@ const (
 	BUILD_REQ_FLAG_ERROR     = 0x0002f001 // error while building request flag
 	CLIENT_SOCKET_READ_ERROR = 0x0002f002 // error while reading client socket
 	SERVER_DIAL_ERROR        = 0x0002f003 // error while dialing ms server
+	JSON_MARSHAL_ERROR       = 0x0002f004 // error while building json object
 
 	// config package
 
@@ -79,7 +80,7 @@ const (
 
 	// utility package
 
-	STRING_ANALYSIS_ERROR = 0x0005f001 // error while analyzing substring
+	ANALYSIS_ERROR = 0x0005f001 // error while analyzing data
 
 	// main
 

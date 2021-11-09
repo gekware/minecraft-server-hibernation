@@ -36,7 +36,7 @@ func getPlayersByListCom() (int, *errco.Error) {
 	}
 	players, err := strconv.Atoi(playersStr)
 	if err != nil {
-		return 0, errco.NewErr(errco.STRING_CONVERSION_ERROR, errco.LVL_D, "getPlayersByListCom", err.Error())
+		return 0, errco.NewErr(errco.CONVERSION_ERROR, errco.LVL_D, "getPlayersByListCom", err.Error())
 	}
 
 	return players, nil

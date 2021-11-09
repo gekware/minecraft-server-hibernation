@@ -1,6 +1,7 @@
 package utility
 
 import (
+	"bytes"
 	"strings"
 
 	"msh/lib/errco"
@@ -27,22 +28,42 @@ func Boxify(strList []string) string {
 	return textBox
 }
 
-// StrBetween returns the substring between 2 substrings
-func StrBetween(str string, a string, b string) (string, *errco.Error) {
+// StrBetween returns the string between 2 substrings
+func StrBetween(str, a, b string) (string, *errco.Error) {
 	aIndex := strings.Index(str, a)
 	if aIndex == -1 {
-		return "", errco.NewErr(errco.STRING_ANALYSIS_ERROR, errco.LVL_D, "StrBetween", "first substring not found")
+		return "", errco.NewErr(errco.ANALYSIS_ERROR, errco.LVL_D, "StrBetween", "first substring not found")
 	}
 	bIndex := strings.Index(str, b)
 	if bIndex == -1 {
-		return "", errco.NewErr(errco.STRING_ANALYSIS_ERROR, errco.LVL_D, "StrBetween", "second substring not found")
+		return "", errco.NewErr(errco.ANALYSIS_ERROR, errco.LVL_D, "StrBetween", "second substring not found")
 	}
 
 	// the position of the last letter of a is needed
 	aEndIndex := aIndex + len(a)
 	if aEndIndex >= bIndex {
-		return "", errco.NewErr(errco.STRING_ANALYSIS_ERROR, errco.LVL_D, "StrBetween", "second substring index is before first")
+		return "", errco.NewErr(errco.ANALYSIS_ERROR, errco.LVL_D, "StrBetween", "second substring index is before first")
 	}
 
 	return str[aEndIndex:bIndex], nil
+}
+
+// BytBetween returns the bytearray between 2 subbytearrays
+func BytBetween(data, a, b []byte) ([]byte, *errco.Error) {
+	aIndex := bytes.Index(data, a)
+	if aIndex == -1 {
+		return nil, errco.NewErr(errco.ANALYSIS_ERROR, errco.LVL_D, "BytBetween", "first subbytearray not found")
+	}
+	bIndex := bytes.Index(data, b)
+	if bIndex == -1 {
+		return nil, errco.NewErr(errco.ANALYSIS_ERROR, errco.LVL_D, "BytBetween", "second subbytearray not found")
+	}
+
+	// the position of the last letter of a is needed
+	aEndIndex := aIndex + len(a)
+	if aEndIndex >= bIndex {
+		return nil, errco.NewErr(errco.ANALYSIS_ERROR, errco.LVL_D, "BytBetween", "second subbytearray index is before first")
+	}
+
+	return data[aEndIndex:bIndex], nil
 }

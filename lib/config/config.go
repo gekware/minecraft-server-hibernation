@@ -39,8 +39,8 @@ type configuration struct {
 	Server struct {
 		Folder   string `yaml:"Folder"`
 		FileName string `yaml:"FileName"`
-		Protocol string `yaml:"Protocol"`
 		Version  string `yaml:"Version"`
+		Protocol int    `yaml:"Protocol"`
 	} `yaml:"Server"`
 	Commands struct {
 		StartServer         string `yaml:"StartServer"`
