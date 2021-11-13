@@ -89,7 +89,8 @@ const (
 
 	// input package
 
-	COMMAND_INPUT_ERROR   = 0x0007f000 // general error while reading command input
-	COMMAND_UNKNOWN_ERROR = 0x0007f001 // command is unknown
-	READ_INPUT_ERROR      = 0x0007f001 // error while reading input)
+	COMMAND_INPUT_ERROR     = 0x0007f000 // general error while reading command input
+	COMMAND_UNKNOWN_ERROR   = 0x0007f001 // command is unknown
+	READ_INPUT_ERROR        = 0x0007f002 // error while reading input)
+	INPUT_UNAVAILABLE_ERROR = 0x0007f003 // stdin is not available
 )
