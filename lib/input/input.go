@@ -2,6 +2,7 @@ package input
 
 import (
 	"bufio"
+	"io"
 	"os"
 	"strings"
 
@@ -20,6 +21,10 @@ func GetInput() {
 	for {
 		line, err = reader.ReadString('\n')
 		if err != nil {
+			if err == io.EOF {
+				errco.Logln(errco.LVL_B, "input unavailable, stop listening...")
+				return
+			}
 			errco.LogMshErr(errco.NewErr(errco.READ_INPUT_ERROR, errco.LVL_D, "GetInput", err.Error()))
 			continue
 		}
