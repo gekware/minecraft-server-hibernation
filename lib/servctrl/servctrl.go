@@ -7,6 +7,7 @@ import (
 
 	"msh/lib/config"
 	"msh/lib/errco"
+	"msh/lib/servstats"
 )
 
 // StartMS starts the minecraft server
@@ -24,11 +25,11 @@ func StartMS() *errco.Error {
 // When playersCheck == true, it checks for StopMSRequests/Players and orders the server shutdown
 func StopMS(playersCheck bool) *errco.Error {
 	// wait for the starting server to go online
-	for Stats.Status == errco.SERVER_STATUS_STARTING {
+	for servstats.Stats.Status == errco.SERVER_STATUS_STARTING {
 		time.Sleep(1 * time.Second)
 	}
 	// if server is not online return
-	if Stats.Status != errco.SERVER_STATUS_ONLINE {
+	if servstats.Stats.Status != errco.SERVER_STATUS_ONLINE {
 		return errco.NewErr(errco.SERVER_NOT_ONLINE_ERROR, errco.LVL_D, "StopMS", "server is not online")
 	}
 
@@ -36,7 +37,7 @@ func StopMS(playersCheck bool) *errco.Error {
 	if playersCheck {
 		// check that there is only one StopMSRequest running and players <= 0,
 		// if so proceed with server shutdown
-		atomic.AddInt32(&Stats.StopMSRequests, -1)
+		atomic.AddInt32(&servstats.Stats.StopMSRequests, -1)
 
 		// check how many players are on the server
 		playerCount, isFromServer := countPlayerSafe()
@@ -47,8 +48,8 @@ func StopMS(playersCheck bool) *errco.Error {
 
 		// check if enough time has passed since last player disconnected
 
-		if atomic.LoadInt32(&Stats.StopMSRequests) > 0 {
-			return errco.NewErr(errco.SERVER_MUST_WAIT_ERROR, errco.LVL_D, "StopMS", fmt.Sprintf("not enough time has passed since last player disconnected (StopMSRequests: %d )", Stats.StopMSRequests))
+		if atomic.LoadInt32(&servstats.Stats.StopMSRequests) > 0 {
+			return errco.NewErr(errco.SERVER_MUST_WAIT_ERROR, errco.LVL_D, "StopMS", fmt.Sprintf("not enough time has passed since last player disconnected (StopMSRequests: %d )", servstats.Stats.StopMSRequests))
 		}
 	}
 
@@ -69,7 +70,7 @@ func StopMS(playersCheck bool) *errco.Error {
 // StopMSRequest increases StopMSRequests by one and starts the timer to execute StopMS(true) (with playersCheck)
 // [goroutine]
 func StopMSRequest() {
-	atomic.AddInt32(&Stats.StopMSRequests, 1)
+	atomic.AddInt32(&servstats.Stats.StopMSRequests, 1)
 
 	// [goroutine]
 	time.AfterFunc(
@@ -91,7 +92,7 @@ func killMSifOnlineAfterTimeout() {
 
 	for countdown > 0 {
 		// if server goes offline it's the correct behaviour -> return
-		if Stats.Status == errco.SERVER_STATUS_OFFLINE {
+		if servstats.Stats.Status == errco.SERVER_STATUS_OFFLINE {
 			return
 		}
 

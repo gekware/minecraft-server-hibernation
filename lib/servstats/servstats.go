@@ -1,8 +1,7 @@
-package servctrl
+package servstats
 
 import (
 	"sync"
-	"time"
 
 	"msh/lib/errco"
 )
@@ -29,23 +28,5 @@ func init() {
 		LoadProgress:   "0%",
 		BytesToClients: 0,
 		BytesToServer:  0,
-	}
-}
-
-// PrintDataUsage prints each second bytes/s to clients and to server.
-// (must be launched after ServTerm.IsActive has been set to true)
-// [goroutine]
-func printDataUsage() {
-	for ServTerm.IsActive {
-		if Stats.BytesToClients != 0 || Stats.BytesToServer != 0 {
-			errco.Logln(errco.LVL_D, "data/s: %8.3f KB/s to clients | %8.3f KB/s to server", Stats.BytesToClients/1024, Stats.BytesToServer/1024)
-
-			Stats.M.Lock()
-			Stats.BytesToClients = 0
-			Stats.BytesToServer = 0
-			Stats.M.Unlock()
-		}
-
-		time.Sleep(time.Second)
 	}
 }

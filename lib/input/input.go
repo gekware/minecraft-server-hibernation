@@ -8,6 +8,7 @@ import (
 
 	"msh/lib/errco"
 	"msh/lib/servctrl"
+	"msh/lib/servstats"
 )
 
 // GetInput is used to read input from user.
@@ -85,7 +86,7 @@ func GetInput() {
 			}
 
 			// check if server is online
-			if servctrl.Stats.Status != errco.SERVER_STATUS_ONLINE {
+			if servstats.Stats.Status != errco.SERVER_STATUS_ONLINE {
 				errco.LogMshErr(errco.NewErr(errco.SERVER_NOT_ONLINE_ERROR, errco.LVL_A, "GetInput", "minecraft server is not online (try \"msh start\")"))
 				continue
 			}

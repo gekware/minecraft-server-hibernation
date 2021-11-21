@@ -2,8 +2,10 @@ package servctrl
 
 import (
 	"strconv"
+	"time"
 
 	"msh/lib/errco"
+	"msh/lib/servstats"
 	"msh/lib/utility"
 )
 
@@ -18,7 +20,7 @@ func countPlayerSafe() (int, bool) {
 	if errMsh != nil {
 		// no need to return an error since the less reliable internal player count is available
 		errco.LogMshErr(errMsh.AddTrace("countPlayerSafe"))
-		return Stats.PlayerCount, false
+		return servstats.Stats.PlayerCount, false
 	}
 
 	return playerCount, true
@@ -40,4 +42,22 @@ func getPlayersByListCom() (int, *errco.Error) {
 	}
 
 	return players, nil
+}
+
+// printDataUsage prints each second bytes/s to clients and to server.
+// (must be launched after ServTerm.IsActive has been set to true)
+// [goroutine]
+func printDataUsage() {
+	for ServTerm.IsActive {
+		if servstats.Stats.BytesToClients != 0 || servstats.Stats.BytesToServer != 0 {
+			errco.Logln(errco.LVL_D, "data/s: %8.3f KB/s to clients | %8.3f KB/s to server", servstats.Stats.BytesToClients/1024, servstats.Stats.BytesToServer/1024)
+
+			servstats.Stats.M.Lock()
+			servstats.Stats.BytesToClients = 0
+			servstats.Stats.BytesToServer = 0
+			servstats.Stats.M.Unlock()
+		}
+
+		time.Sleep(time.Second)
+	}
 }

@@ -16,6 +16,7 @@ import (
 	"msh/lib/config"
 	"msh/lib/errco"
 	"msh/lib/servctrl"
+	"msh/lib/servstats"
 )
 
 // InterruptListener listen for interrupt signals and forcefully stop the minecraft server before exiting msh.
@@ -37,7 +38,7 @@ func InterruptListener() {
 		// wait 1 second to let the server go into stopping mode
 		time.Sleep(time.Second)
 
-		switch servctrl.Stats.Status {
+		switch servstats.Stats.Status {
 		case errco.SERVER_STATUS_STOPPING:
 			// if server is correctly stopping, wait for minecraft server to exit
 			errco.Logln(errco.LVL_D, "InterruptListener: waiting for minecraft server terminal to exit (server is stopping)")

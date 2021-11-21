@@ -9,6 +9,7 @@ import (
 
 	"msh/lib/errco"
 	"msh/lib/opsys"
+	"msh/lib/servstats"
 )
 
 var ServTerm *servTerminal = &servTerminal{}
@@ -36,7 +37,7 @@ func Execute(command, origin string) (string, *errco.Error) {
 	commands := strings.Split(command, "\n")
 
 	for _, com := range commands {
-		if Stats.Status != errco.SERVER_STATUS_ONLINE {
+		if servstats.Stats.Status != errco.SERVER_STATUS_ONLINE {
 			return "", errco.NewErr(errco.SERVER_NOT_ONLINE_ERROR, errco.LVL_C, "Execute", "server not online")
 		}
 
@@ -71,9 +72,9 @@ func cmdStart(dir, command string) *errco.Error {
 	go printDataUsage()
 
 	// initialization
-	Stats.Status = errco.SERVER_STATUS_STARTING
-	Stats.LoadProgress = "0%"
-	Stats.PlayerCount = 0
+	servstats.Stats.Status = errco.SERVER_STATUS_STARTING
+	servstats.Stats.LoadProgress = "0%"
+	servstats.Stats.PlayerCount = 0
 	errco.Logln(errco.LVL_B, "MINECRAFT SERVER IS STARTING!")
 
 	return nil
@@ -137,7 +138,7 @@ func printerOutErr() {
 			default:
 			}
 
-			switch Stats.Status {
+			switch servstats.Stats.Status {
 
 			case errco.SERVER_STATUS_STARTING:
 				// for modded server terminal compatibility, use separate check for "INFO" and flag-word
@@ -145,13 +146,13 @@ func printerOutErr() {
 
 				// "Preparing spawn area: " -> update ServStats.LoadProgress
 				if strings.Contains(line, "INFO") && strings.Contains(line, "Preparing spawn area: ") {
-					Stats.LoadProgress = strings.Split(strings.Split(line, "Preparing spawn area: ")[1], "\n")[0]
+					servstats.Stats.LoadProgress = strings.Split(strings.Split(line, "Preparing spawn area: ")[1], "\n")[0]
 				}
 
 				// ": Done (" -> set ServStats.Status = ONLINE
 				// using ": Done (" instead of "Done" to avoid false positives (issue #112)
 				if strings.Contains(line, "INFO") && strings.Contains(line, ": Done (") {
-					Stats.Status = errco.SERVER_STATUS_ONLINE
+					servstats.Stats.Status = errco.SERVER_STATUS_ONLINE
 					errco.Logln(errco.LVL_B, "MINECRAFT SERVER IS ONLINE!")
 
 					// launch a StopMSRequests so that if no players connect the server will shutdown
@@ -193,19 +194,19 @@ func printerOutErr() {
 					// player joins the server
 					// using "UUID of player" since minecraft server v1.12.2 does not use "joined the game"
 					case strings.Contains(lineContent, "UUID of player"):
-						Stats.PlayerCount++
-						errco.Logln(errco.LVL_C, "A PLAYER JOINED THE SERVER! - %d players online", Stats.PlayerCount)
+						servstats.Stats.PlayerCount++
+						errco.Logln(errco.LVL_C, "A PLAYER JOINED THE SERVER! - %d players online", servstats.Stats.PlayerCount)
 
 					// player leaves the server
 					// using "lost connection" (instead of "left the game") because it's more general (issue #116)
 					case strings.Contains(lineContent, "lost connection"):
-						Stats.PlayerCount--
-						errco.Logln(errco.LVL_C, "A PLAYER LEFT THE SERVER! - %d players online", Stats.PlayerCount)
+						servstats.Stats.PlayerCount--
+						errco.Logln(errco.LVL_C, "A PLAYER LEFT THE SERVER! - %d players online", servstats.Stats.PlayerCount)
 						StopMSRequest()
 
 					// the server is stopping
 					case strings.Contains(lineContent, "Stopping"):
-						Stats.Status = errco.SERVER_STATUS_STOPPING
+						servstats.Stats.Status = errco.SERVER_STATUS_STOPPING
 						errco.Logln(errco.LVL_B, "MINECRAFT SERVER IS STOPPING!")
 					}
 				}
@@ -245,6 +246,6 @@ func waitForExit() {
 	ServTerm.IsActive = false
 	errco.Logln(errco.LVL_D, "waitForExit: terminal exited")
 
-	Stats.Status = errco.SERVER_STATUS_OFFLINE
+	servstats.Stats.Status = errco.SERVER_STATUS_OFFLINE
 	errco.Logln(errco.LVL_B, "MINECRAFT SERVER IS OFFLINE!")
 }

@@ -8,7 +8,7 @@ import (
 
 	"msh/lib/config"
 	"msh/lib/errco"
-	"msh/lib/servctrl"
+	"msh/lib/servstats"
 )
 
 // forward takes a source and a destination net.Conn and forwards them.
@@ -54,15 +54,15 @@ func forward(source, destination net.Conn, isServerToClient bool, stopC chan boo
 
 		// calculate bytes/s to client/server
 		if errco.DebugLvl >= errco.LVL_D {
-			servctrl.Stats.M.Lock()
+			servstats.Stats.M.Lock()
 			if isServerToClient {
-				servctrl.Stats.BytesToClients = servctrl.Stats.BytesToClients + float64(dataLen)
+				servstats.Stats.BytesToClients = servstats.Stats.BytesToClients + float64(dataLen)
 				errco.Logln(errco.LVL_E, "server --> client:%v", data[:dataLen])
 			} else {
-				servctrl.Stats.BytesToServer = servctrl.Stats.BytesToServer + float64(dataLen)
+				servstats.Stats.BytesToServer = servstats.Stats.BytesToServer + float64(dataLen)
 				errco.Logln(errco.LVL_E, "client --> server:%v", data[:dataLen])
 			}
-			servctrl.Stats.M.Unlock()
+			servstats.Stats.M.Unlock()
 		}
 
 		// version/protocol are only found in serverToClient connection in the first buffer that is read

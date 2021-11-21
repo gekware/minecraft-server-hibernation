@@ -8,6 +8,7 @@ import (
 	"msh/lib/config"
 	"msh/lib/errco"
 	"msh/lib/servctrl"
+	"msh/lib/servstats"
 )
 
 // HandleClientSocket handles a client that is connecting.
@@ -18,7 +19,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 	li := strings.LastIndex(clientSocket.RemoteAddr().String(), ":")
 	clientAddress := clientSocket.RemoteAddr().String()[:li]
 
-	switch servctrl.Stats.Status {
+	switch servstats.Stats.Status {
 	case errco.SERVER_STATUS_OFFLINE:
 		reqType, playerName, errMsh := getReqType(clientSocket)
 		if errMsh != nil {
@@ -52,7 +53,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 			} else {
 				// log to msh console and answer client with text in the loadscreen
 				errco.Logln(errco.LVL_D, "%s tried to join from %s:%d to %s:%d", playerName, clientAddress, config.ListenPort, config.TargetHost, config.TargetPort)
-				clientSocket.Write(buildMessage(errco.MESSAGE_FORMAT_TXT, "Server start command issued. Please wait... "+servctrl.Stats.LoadProgress))
+				clientSocket.Write(buildMessage(errco.MESSAGE_FORMAT_TXT, "Server start command issued. Please wait... "+servstats.Stats.LoadProgress))
 			}
 		}
 
@@ -87,7 +88,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 
 			// log to msh console and answer to client with text in the loadscreen
 			errco.Logln(errco.LVL_D, "%s tried to join from %s:%d to %s:%d during server startup", playerName, clientAddress, config.ListenPort, config.TargetHost, config.TargetPort)
-			clientSocket.Write(buildMessage(errco.MESSAGE_FORMAT_TXT, "Server is starting. Please wait... "+servctrl.Stats.LoadProgress))
+			clientSocket.Write(buildMessage(errco.MESSAGE_FORMAT_TXT, "Server is starting. Please wait... "+servstats.Stats.LoadProgress))
 		}
 
 		// close the client connection
