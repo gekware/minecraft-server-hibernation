@@ -2,6 +2,7 @@ package utility
 
 import (
 	"bytes"
+	"fmt"
 	"strings"
 
 	"msh/lib/errco"
@@ -30,40 +31,36 @@ func Boxify(strList []string) string {
 
 // StrBetween returns the string between 2 substrings
 func StrBetween(str, a, b string) (string, *errco.Error) {
+	// ┌--------str---------┐
+	// [ ... a target b ... ]
+
 	aIndex := strings.Index(str, a)
 	if aIndex == -1 {
-		return "", errco.NewErr(errco.ANALYSIS_ERROR, errco.LVL_D, "StrBetween", "first substring not found")
+		return "", errco.NewErr(errco.ANALYSIS_ERROR, errco.LVL_D, "StrBetween", fmt.Sprintf("first substring not found (%s)", b))
 	}
-	bIndex := strings.Index(str, b)
+
+	bIndex := strings.Index(str[aIndex+len(a):], b)
 	if bIndex == -1 {
-		return "", errco.NewErr(errco.ANALYSIS_ERROR, errco.LVL_D, "StrBetween", "second substring not found")
+		return "", errco.NewErr(errco.ANALYSIS_ERROR, errco.LVL_D, "StrBetween", fmt.Sprintf("second substring not found (%s)", b))
 	}
 
-	// the position of the last letter of a is needed
-	aEndIndex := aIndex + len(a)
-	if aEndIndex >= bIndex {
-		return "", errco.NewErr(errco.ANALYSIS_ERROR, errco.LVL_D, "StrBetween", "second substring index is before first")
-	}
-
-	return str[aEndIndex:bIndex], nil
+	return str[aIndex+len(a):][:bIndex], nil
 }
 
 // BytBetween returns the bytearray between 2 subbytearrays
 func BytBetween(data, a, b []byte) ([]byte, *errco.Error) {
+	// ┌--------data--------┐
+	// [ ... a target b ... ]
+
 	aIndex := bytes.Index(data, a)
 	if aIndex == -1 {
-		return nil, errco.NewErr(errco.ANALYSIS_ERROR, errco.LVL_D, "BytBetween", "first subbytearray not found")
+		return nil, errco.NewErr(errco.ANALYSIS_ERROR, errco.LVL_D, "BytBetween", fmt.Sprintf("first subbytearray not found (%v)", b))
 	}
-	bIndex := bytes.Index(data, b)
+
+	bIndex := bytes.Index(data[aIndex+len(a):], b)
 	if bIndex == -1 {
-		return nil, errco.NewErr(errco.ANALYSIS_ERROR, errco.LVL_D, "BytBetween", "second subbytearray not found")
+		return nil, errco.NewErr(errco.ANALYSIS_ERROR, errco.LVL_D, "BytBetween", fmt.Sprintf("second subbytearray not found (%v)", b))
 	}
 
-	// the position of the last letter of a is needed
-	aEndIndex := aIndex + len(a)
-	if aEndIndex >= bIndex {
-		return nil, errco.NewErr(errco.ANALYSIS_ERROR, errco.LVL_D, "BytBetween", "second subbytearray index is before first")
-	}
-
-	return data[aEndIndex:bIndex], nil
+	return data[aIndex+len(a):][:bIndex], nil
 }
