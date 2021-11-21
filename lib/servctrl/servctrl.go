@@ -40,8 +40,8 @@ func StopMS(playersCheck bool) *errco.Error {
 		atomic.AddInt32(&servstats.Stats.StopMSRequests, -1)
 
 		// check how many players are on the server
-		playerCount, isFromServer := countPlayerSafe()
-		errco.Logln(errco.LVL_C, "%d online players - number got from server: %t", playerCount, isFromServer)
+		playerCount, method := countPlayerSafe()
+		errco.Logln(errco.LVL_C, "%d online players - method for player count: %s", playerCount, method)
 		if playerCount > 0 {
 			return errco.NewErr(errco.SERVER_NOT_EMPTY_ERROR, errco.LVL_D, "StopMS", "server is not empty")
 		}

@@ -101,7 +101,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 		// just open a connection with the server and connect it with the client
 		serverSocket, err := net.Dial("tcp", fmt.Sprintf("%s:%d", config.TargetHost, config.TargetPort))
 		if err != nil {
-			errco.LogMshErr(errco.NewErr(errco.SERVER_DIAL_ERROR, errco.LVL_D, "HandleClientSocket", "error while dialing local minecraft server"))
+			errco.LogMshErr(errco.NewErr(errco.SERVER_DIAL_ERROR, errco.LVL_D, "HandleClientSocket", err.Error()))
 			// report dial error to client with text in the loadscreen
 			clientSocket.Write(buildMessage(errco.MESSAGE_FORMAT_TXT, "can't connect to server... check if minecraft server is running and set the correct targetPort"))
 			return
@@ -123,9 +123,6 @@ func HandleClientSocket(clientSocket net.Conn) {
 // [goroutine]
 func forward(source, destination net.Conn, isServerToClient bool, stopC chan bool) {
 	data := make([]byte, 1024)
-
-	// set to false after the first for cycle
-	firstBuf := true
 
 	for {
 		// if stopC receives true, close the source connection, otherwise continue
@@ -170,17 +167,6 @@ func forward(source, destination net.Conn, isServerToClient bool, stopC chan boo
 				errco.Logln(errco.LVL_E, "client --> server:%v", data[:dataLen])
 			}
 			servstats.Stats.M.Unlock()
-		}
-
-		// version/protocol are only found in serverToClient connection in the first buffer that is read
-		if firstBuf && isServerToClient {
-			errMsh := extractVersionProtocol(data[:dataLen])
-			if errMsh != nil {
-				errco.LogMshErr(errMsh.AddTrace("forward"))
-			}
-
-			// first cycle is finished, set firstBuf = false
-			firstBuf = false
 		}
 	}
 }

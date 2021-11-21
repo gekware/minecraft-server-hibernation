@@ -5,13 +5,11 @@ import (
 	"encoding/json"
 	"math/big"
 	"net"
-	"strconv"
 	"strings"
 
 	"msh/lib/config"
 	"msh/lib/errco"
 	"msh/lib/model"
-	"msh/lib/utility"
 )
 
 // buildMessage takes the message format (TXT/INFO) and a message to write to the client
@@ -202,44 +200,4 @@ func extractPlayerName(data, reqFlagJoin []byte, clientSocket net.Conn) string {
 
 		return string(data[3:])
 	}
-}
-
-// extractVersionProtocol finds the serverVersion and serverProtocol in (data []byte) and writes them in the config file
-func extractVersionProtocol(data []byte) *errco.Error {
-	// if data contains "\"version\":{\"name\":\"" and ",\"protocol\":" --> extract the serverVersion and serverProtocol
-	if bytes.Contains(data, []byte("\"version\":{\"name\":\"")) && bytes.Contains(data, []byte(",\"protocol\":")) {
-		newServVersData, errMsh := utility.BytBetween(data, []byte("\"version\":{\"name\":\""), []byte("\","))
-		if errMsh != nil {
-			return errMsh.AddTrace("extractVersionProtocol")
-		}
-		newServProtData, errMsh := utility.BytBetween(data, []byte(",\"protocol\":"), []byte("}"))
-		if errMsh != nil {
-			return errMsh.AddTrace("extractVersionProtocol")
-		}
-		newServVers := string(newServVersData)
-		newServProt, err := strconv.Atoi(string(newServProtData))
-		if err != nil {
-			return errco.NewErr(errco.CONVERSION_ERROR, errco.LVL_D, "extractVersionProtocol", err.Error())
-		}
-
-		// if serverVersion or serverProtocol are different from the ones specified in config file --> update them
-		if newServVers != config.ConfigRuntime.Server.Version || newServProt != config.ConfigRuntime.Server.Protocol {
-			errco.Logln(errco.LVL_C, "server version found! serverVersion: %s serverProtocol: %s", newServVers, newServProt)
-
-			// update the runtime config
-			config.ConfigRuntime.Server.Version = newServVers
-			config.ConfigRuntime.Server.Protocol = newServProt
-
-			// update the file config
-			config.ConfigDefault.Server.Version = newServVers
-			config.ConfigDefault.Server.Protocol = newServProt
-
-			errMsh := config.SaveConfigDefault()
-			if errMsh != nil {
-				return errMsh.AddTrace("extractVersionProtocol")
-			}
-		}
-	}
-
-	return nil
 }
