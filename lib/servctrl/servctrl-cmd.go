@@ -69,8 +69,6 @@ func cmdStart(dir, command string) *errco.Error {
 
 	go waitForExit()
 
-	go printDataUsage()
-
 	// initialization
 	servstats.Stats.Status = errco.SERVER_STATUS_STARTING
 	servstats.Stats.LoadProgress = "0%"
