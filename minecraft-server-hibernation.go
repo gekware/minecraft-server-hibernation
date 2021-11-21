@@ -6,10 +6,10 @@ import (
 	"os"
 
 	"msh/lib/config"
+	"msh/lib/conn"
 	"msh/lib/errco"
 	"msh/lib/input"
 	"msh/lib/progmgr"
-	"msh/lib/servconn"
 	"msh/lib/utility"
 )
 
@@ -69,6 +69,6 @@ func main() {
 			continue
 		}
 
-		go servconn.HandleClientSocket(clientSocket)
+		go conn.HandleClientSocket(clientSocket)
 	}
 }
