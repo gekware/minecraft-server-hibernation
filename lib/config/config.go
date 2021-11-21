@@ -14,6 +14,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"msh/lib/errco"
+	"msh/lib/model"
 	"msh/lib/opsys"
 	"msh/lib/utility"
 )
@@ -23,8 +24,8 @@ const configFileName string = "msh-config.yml"
 
 var (
 	// Config variables contain the configuration parameters for config file and runtime
-	ConfigDefault configuration
-	ConfigRuntime configuration
+	ConfigDefault model.Configuration
+	ConfigRuntime model.Configuration
 
 	// ServerIcon contains the minecraft server icon
 	ServerIcon string
@@ -35,30 +36,6 @@ var (
 	TargetHost string
 	TargetPort int
 )
-
-// struct adapted to config file
-type configuration struct {
-	Server struct {
-		Folder   string `yaml:"Folder"`
-		FileName string `yaml:"FileName"`
-		Version  string `yaml:"Version"`
-		Protocol int    `yaml:"Protocol"`
-	} `yaml:"Server"`
-	Commands struct {
-		StartServer         string `yaml:"StartServer"`
-		StartServerParam    string `yaml:"StartServerParam"`
-		StopServer          string `yaml:"StopServer"`
-		StopServerAllowKill int    `yaml:"StopServerAllowKill"`
-	} `yaml:"Commands"`
-	Msh struct {
-		Debug                         int    `yaml:"Debug"`
-		InfoHibernation               string `yaml:"InfoHibernation"`
-		InfoStarting                  string `yaml:"InfoStarting"`
-		NotifyUpdate                  bool   `yaml:"NotifyUpdate"`
-		ListenPort                    int    `yaml:"ListenPort"`
-		TimeBeforeStoppingEmptyServer int64  `yaml:"TimeBeforeStoppingEmptyServer"`
-	} `yaml:"Msh"`
-}
 
 // LoadConfig loads json data from config file into config
 func LoadConfig() *errco.Error {
@@ -138,7 +115,7 @@ func SaveConfigDefault() *errco.Error {
 }
 
 // generateConfigRuntime parses start arguments into ConfigRuntime and replaces placeholders
-func generateConfigRuntime() configuration {
+func generateConfigRuntime() model.Configuration {
 	// initialize with ConfigDefault
 	ConfigRuntime = ConfigDefault
 

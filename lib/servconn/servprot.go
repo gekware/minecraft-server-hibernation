@@ -5,32 +5,12 @@ import (
 	"encoding/json"
 	"math/big"
 	"net"
-	"strconv"
 	"strings"
 
 	"msh/lib/config"
 	"msh/lib/errco"
-	"msh/lib/utility"
+	"msh/lib/model"
 )
-
-type dataTxt struct {
-	Text string `json:"text"`
-}
-
-type dataInfo struct {
-	Description struct {
-		Text string `json:"text"`
-	} `json:"description"`
-	Players struct {
-		Max    int `json:"max"`
-		Online int `json:"online"`
-	} `json:"players"`
-	Version struct {
-		Name     string `json:"name"`
-		Protocol int    `json:"protocol"`
-	} `json:"version"`
-	Favicon string `json:"favicon"`
-}
 
 // buildMessage takes the message format (TXT/INFO) and a message to write to the client
 func buildMessage(messageFormat int, message string) []byte {
@@ -70,7 +50,7 @@ func buildMessage(messageFormat int, message string) []byte {
 	case errco.MESSAGE_FORMAT_TXT:
 		// send text to be shown in the loadscreen
 
-		messageStruct := &dataTxt{}
+		messageStruct := &model.DataTxt{}
 		messageStruct.Text = message
 
 		dataTxtJSON, err := json.Marshal(messageStruct)
@@ -89,7 +69,7 @@ func buildMessage(messageFormat int, message string) []byte {
 		// this step is not strictly necessary if in msh-config is used the character "§"
 		message = strings.ReplaceAll(message, "&", "§")
 
-		messageStruct := &dataInfo{}
+		messageStruct := &model.DataInfo{}
 		messageStruct.Description.Text = message
 		messageStruct.Players.Max = 0
 		messageStruct.Players.Online = 0
@@ -111,18 +91,6 @@ func buildMessage(messageFormat int, message string) []byte {
 	}
 }
 
-// buildReqFlag generates the INFO flag and JOIN flag using the msh port
-func buildReqFlag(listenPort int) ([]byte, []byte) {
-	// calculates listen port in BigEndian bytes
-	mshPortByt := big.NewInt(int64(listenPort)).Bytes()
-
-	// generate flags
-	reqFlagInfo := append(mshPortByt, byte(1)) // flag contained in INFO request packet (first packet of client) -> [99 211 1]
-	reqFlagJoin := append(mshPortByt, byte(2)) // flag contained in JOIN request packet (first packet of client) -> [99 211 2]
-
-	return reqFlagInfo, reqFlagJoin
-}
-
 // getReqType returns the request type (INFO or JOIN) and playerName of the client
 func getReqType(clientSocket net.Conn) (int, string, *errco.Error) {
 	reqPacket, errMsh := getClientPacket(clientSocket)
@@ -130,7 +98,11 @@ func getReqType(clientSocket net.Conn) (int, string, *errco.Error) {
 		return errco.CLIENT_REQ_ERROR, "", errMsh.AddTrace("getReqType")
 	}
 
-	reqFlagInfo, reqFlagJoin := buildReqFlag(config.ListenPort)
+	// generate flags
+	listenPortByt := big.NewInt(int64(config.ListenPort)).Bytes() // calculates listen port in BigEndian bytes
+	reqFlagInfo := append(listenPortByt, byte(1))                 // flag contained in INFO request packet -> [99 211 1]
+	reqFlagJoin := append(listenPortByt, byte(2))                 // flag contained in JOIN request packet -> [99 211 2]
+
 	playerName := extractPlayerName(reqPacket, reqFlagJoin, clientSocket)
 
 	switch {
@@ -230,42 +202,42 @@ func extractPlayerName(data, reqFlagJoin []byte, clientSocket net.Conn) string {
 	}
 }
 
-// extractVersionProtocol finds the serverVersion and serverProtocol in (data []byte) and writes them in the config file
-func extractVersionProtocol(data []byte) *errco.Error {
-	// if data contains "\"version\":{\"name\":\"" and ",\"protocol\":" --> extract the serverVersion and serverProtocol
-	if bytes.Contains(data, []byte("\"version\":{\"name\":\"")) && bytes.Contains(data, []byte(",\"protocol\":")) {
-		newServVersData, errMsh := utility.BytBetween(data, []byte("\"version\":{\"name\":\""), []byte("\","))
-		if errMsh != nil {
-			return errMsh.AddTrace("extractVersionProtocol")
-		}
-		newServProtData, errMsh := utility.BytBetween(data, []byte(",\"protocol\":"), []byte("}"))
-		if errMsh != nil {
-			return errMsh.AddTrace("extractVersionProtocol")
-		}
-		newServVers := string(newServVersData)
-		newServProt, err := strconv.Atoi(string(newServProtData))
-		if err != nil {
-			return errco.NewErr(errco.CONVERSION_ERROR, errco.LVL_D, "extractVersionProtocol", err.Error())
-		}
+// // extractVersionProtocol finds the serverVersion and serverProtocol in (data []byte) and writes them in the config file
+// func extractVersionProtocol(data []byte) *errco.Error {
+// 	// if data contains "\"version\":{\"name\":\"" and ",\"protocol\":" --> extract the serverVersion and serverProtocol
+// 	if bytes.Contains(data, []byte("\"version\":{\"name\":\"")) && bytes.Contains(data, []byte(",\"protocol\":")) {
+// 		newServVersData, errMsh := utility.BytBetween(data, []byte("\"version\":{\"name\":\""), []byte("\","))
+// 		if errMsh != nil {
+// 			return errMsh.AddTrace("extractVersionProtocol")
+// 		}
+// 		newServProtData, errMsh := utility.BytBetween(data, []byte(",\"protocol\":"), []byte("}"))
+// 		if errMsh != nil {
+// 			return errMsh.AddTrace("extractVersionProtocol")
+// 		}
+// 		newServVers := string(newServVersData)
+// 		newServProt, err := strconv.Atoi(string(newServProtData))
+// 		if err != nil {
+// 			return errco.NewErr(errco.CONVERSION_ERROR, errco.LVL_D, "extractVersionProtocol", err.Error())
+// 		}
 
-		// if serverVersion or serverProtocol are different from the ones specified in config file --> update them
-		if newServVers != config.ConfigRuntime.Server.Version || newServProt != config.ConfigRuntime.Server.Protocol {
-			errco.Logln(errco.LVL_C, "server version found! serverVersion: %s serverProtocol: %s", newServVers, newServProt)
+// 		// if serverVersion or serverProtocol are different from the ones specified in config file --> update them
+// 		if newServVers != config.ConfigRuntime.Server.Version || newServProt != config.ConfigRuntime.Server.Protocol {
+// 			errco.Logln(errco.LVL_C, "server version found! serverVersion: %s serverProtocol: %s", newServVers, newServProt)
 
-			// update the runtime config
-			config.ConfigRuntime.Server.Version = newServVers
-			config.ConfigRuntime.Server.Protocol = newServProt
+// 			// update the runtime config
+// 			config.ConfigRuntime.Server.Version = newServVers
+// 			config.ConfigRuntime.Server.Protocol = newServProt
 
-			// update the file config
-			config.ConfigDefault.Server.Version = newServVers
-			config.ConfigDefault.Server.Protocol = newServProt
+// 			// update the file config
+// 			config.ConfigDefault.Server.Version = newServVers
+// 			config.ConfigDefault.Server.Protocol = newServProt
 
-			errMsh := config.SaveConfigDefault()
-			if errMsh != nil {
-				return errMsh.AddTrace("extractVersionProtocol")
-			}
-		}
-	}
+// 			errMsh := config.SaveConfigDefault()
+// 			if errMsh != nil {
+// 				return errMsh.AddTrace("extractVersionProtocol")
+// 			}
+// 		}
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
