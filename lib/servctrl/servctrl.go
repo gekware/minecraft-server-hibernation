@@ -41,7 +41,7 @@ func StopMS(playersCheck bool) *errco.Error {
 
 		// check how many players are on the server
 		playerCount, method := countPlayerSafe()
-		errco.Logln(errco.LVL_C, "%d online players - method for player count: %s", playerCount, method)
+		errco.Logln(errco.LVL_B, "%d online players - method for player count: %s", playerCount, method)
 		if playerCount > 0 {
 			return errco.NewErr(errco.SERVER_NOT_EMPTY_ERROR, errco.LVL_D, "StopMS", "server is not empty")
 		}

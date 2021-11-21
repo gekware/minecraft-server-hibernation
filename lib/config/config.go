@@ -1,7 +1,6 @@
 package config
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -31,13 +30,13 @@ var (
 	ServerIcon string
 
 	// Listen and Target host/port used for proxy connection
-	ListenHost string
+	ListenHost string = "0.0.0.0"
 	ListenPort int
-	TargetHost string
+	TargetHost string = "127.0.0.1"
 	TargetPort int
 )
 
-// LoadConfig loads json data from config file into config
+// LoadConfig loads yaml data from config file into config
 func LoadConfig() *errco.Error {
 	errco.Logln(errco.LVL_D, "checking OS support...")
 	// check if OS is supported.
@@ -97,19 +96,19 @@ func LoadConfig() *errco.Error {
 
 // SaveConfigDefault saves ConfigDefault to the config file
 func SaveConfigDefault() *errco.Error {
-	// write the struct config to json data
-	configData, err := json.MarshalIndent(ConfigDefault, "", "  ")
+	// write the struct config to yaml data
+	configData, err := yaml.Marshal(ConfigDefault)
 	if err != nil {
 		return errco.NewErr(errco.SAVE_CONFIG_ERROR, errco.LVL_D, "SaveConfigDefault", "could not marshal from config file")
 	}
 
-	// write json data to config file
+	// write yaml data to config file
 	err = ioutil.WriteFile(configFileName, configData, 0644)
 	if err != nil {
 		return errco.NewErr(errco.SAVE_CONFIG_ERROR, errco.LVL_D, "SaveConfigDefault", "could not write to config file")
 	}
 
-	errco.Logln(errco.LVL_B, "SaveConfigDefault: saved to config file")
+	errco.Logln(errco.LVL_D, "SaveConfigDefault: saved to config file")
 
 	return nil
 }
@@ -190,5 +189,5 @@ func getIpPorts() (string, int, string, int, *errco.Error) {
 	}
 
 	// return ListenHost, TargetHost, TargetPort, nil
-	return "0.0.0.0", ConfigRuntime.Msh.ListenPort, "127.0.0.1", TargetPort, nil
+	return ListenHost, ConfigRuntime.Msh.ListenPort, TargetHost, TargetPort, nil
 }

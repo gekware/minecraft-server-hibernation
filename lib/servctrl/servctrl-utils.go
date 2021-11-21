@@ -22,6 +22,8 @@ import (
 // (might be more or less reliable depending from where it retrieved).
 // The method used to count players is returned as second parameter.
 func countPlayerSafe() (int, string) {
+	errco.Logln(errco.LVL_B, "retrieving  player count...")
+
 	playerCount, errMsh := getPlayersByServInfo()
 	if errMsh == nil {
 		return playerCount, "server info"
@@ -67,8 +69,6 @@ func getPlayersByServInfo() (int, *errco.Error) {
 
 // getServInfo returns server info after emulating a server info request to the minecraft server
 func getServInfo() (*model.DataInfo, *errco.Error) {
-	fmt.Println("exeuting getServInfo")
-
 	if servstats.Stats.Status != errco.SERVER_STATUS_ONLINE {
 		return &model.DataInfo{}, errco.NewErr(errco.SERVER_NOT_ONLINE_ERROR, errco.LVL_D, "getServInfo", "")
 	}
