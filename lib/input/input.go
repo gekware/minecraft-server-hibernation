@@ -2,6 +2,7 @@ package input
 
 import (
 	"bufio"
+	"io"
 	"os"
 	"strings"
 
@@ -20,6 +21,14 @@ func GetInput() {
 	for {
 		line, err = reader.ReadString('\n')
 		if err != nil {
+			// if stdin is unavailable (msh running as service)
+			// exit from input goroutine to avoid an infinite loop
+			if err == io.EOF {
+				// in case input goroutine returns abnormally while msh is running in terminal,
+				// the user must be notified with errco.LVL_B
+				errco.LogMshErr(errco.NewErr(errco.INPUT_UNAVAILABLE_ERROR, errco.LVL_B, "GetInput", "stdin unavailable, exiting input goroutine"))
+				return
+			}
 			errco.LogMshErr(errco.NewErr(errco.READ_INPUT_ERROR, errco.LVL_D, "GetInput", err.Error()))
 			continue
 		}
