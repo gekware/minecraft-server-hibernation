@@ -28,25 +28,25 @@ func loadIcon(serverDirPath string) (string, *errco.Error) {
 		// open file
 		f, err := os.Open(userIconPath)
 		if err != nil {
-			return defaultServerIcon, errco.NewErr(errco.LOAD_ICON_ERROR, errco.LVL_D, "loadIcon", err.Error())
+			return defaultServerIcon, errco.NewErr(errco.ERROR_ICON_LOAD, errco.LVL_D, "loadIcon", err.Error())
 		}
 		defer f.Close()
 
 		// decode png
 		pngIm, err := png.Decode(f)
 		if err != nil {
-			return defaultServerIcon, errco.NewErr(errco.LOAD_ICON_ERROR, errco.LVL_D, "loadIcon", err.Error())
+			return defaultServerIcon, errco.NewErr(errco.ERROR_ICON_LOAD, errco.LVL_D, "loadIcon", err.Error())
 		}
 
 		// return if image is not 64x64
 		if pngIm.Bounds().Max != image.Pt(64, 64) {
-			return defaultServerIcon, errco.NewErr(errco.LOAD_ICON_ERROR, errco.LVL_D, "loadIcon", fmt.Sprintf("incorrect server-icon-frozen.png size. Current size: %dx%d", pngIm.Bounds().Max.X, pngIm.Bounds().Max.Y))
+			return defaultServerIcon, errco.NewErr(errco.ERROR_ICON_LOAD, errco.LVL_D, "loadIcon", fmt.Sprintf("incorrect server-icon-frozen.png size. Current size: %dx%d", pngIm.Bounds().Max.X, pngIm.Bounds().Max.Y))
 		}
 
 		// encode png
 		err = enc.Encode(buff, pngIm)
 		if err != nil {
-			return defaultServerIcon, errco.NewErr(errco.LOAD_ICON_ERROR, errco.LVL_D, "loadIcon", err.Error())
+			return defaultServerIcon, errco.NewErr(errco.ERROR_ICON_LOAD, errco.LVL_D, "loadIcon", err.Error())
 		}
 
 		// return user specified server icon as base64 encoded string

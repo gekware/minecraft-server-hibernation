@@ -51,7 +51,7 @@ func getPlayersByListCom() (int, *errco.Error) {
 	}
 	players, err := strconv.Atoi(playersStr)
 	if err != nil {
-		return 0, errco.NewErr(errco.CONVERSION_ERROR, errco.LVL_D, "getPlayersByListCom", err.Error())
+		return 0, errco.NewErr(errco.ERROR_CONVERSION, errco.LVL_D, "getPlayersByListCom", err.Error())
 	}
 
 	return players, nil
@@ -70,13 +70,13 @@ func getPlayersByServInfo() (int, *errco.Error) {
 // getServInfo returns server info after emulating a server info request to the minecraft server
 func getServInfo() (*model.DataInfo, *errco.Error) {
 	if servstats.Stats.Status != errco.SERVER_STATUS_ONLINE {
-		return &model.DataInfo{}, errco.NewErr(errco.SERVER_NOT_ONLINE_ERROR, errco.LVL_D, "getServInfo", "")
+		return &model.DataInfo{}, errco.NewErr(errco.ERROR_SERVER_NOT_ONLINE, errco.LVL_D, "getServInfo", "")
 	}
 
 	// open connection to minecraft server
 	serverSocket, err := net.Dial("tcp", fmt.Sprintf("%s:%d", config.TargetHost, config.TargetPort))
 	if err != nil {
-		return nil, errco.NewErr(errco.SERVER_DIAL_ERROR, errco.LVL_D, "getServInfo", err.Error())
+		return nil, errco.NewErr(errco.ERROR_SERVER_DIAL, errco.LVL_D, "getServInfo", err.Error())
 	}
 	defer serverSocket.Close()
 
@@ -103,7 +103,7 @@ func getServInfo() (*model.DataInfo, *errco.Error) {
 			if err, ok := err.(net.Error); ok && err.Timeout() {
 				break
 			}
-			return &model.DataInfo{}, errco.NewErr(errco.SERVER_INFO_REQUEST_ERROR, errco.LVL_D, "getServInfo", err.Error())
+			return &model.DataInfo{}, errco.NewErr(errco.ERROR_SERVER_REQUEST_INFO, errco.LVL_D, "getServInfo", err.Error())
 		}
 
 		recInfoData = append(recInfoData, buf[:n]...)
@@ -116,7 +116,7 @@ func getServInfo() (*model.DataInfo, *errco.Error) {
 	recInfo := &model.DataInfo{}
 	err = json.Unmarshal(recInfoData, recInfo)
 	if err != nil {
-		return &model.DataInfo{}, errco.NewErr(errco.JSON_UNMARSHAL_ERROR, errco.LVL_D, "getServInfo", err.Error())
+		return &model.DataInfo{}, errco.NewErr(errco.ERROR_JSON_UNMARSHAL, errco.LVL_D, "getServInfo", err.Error())
 	}
 
 	// update server version and protocol in config

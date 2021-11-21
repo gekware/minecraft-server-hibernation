@@ -55,7 +55,7 @@ func main() {
 	// open a listener
 	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", config.ListenHost, config.ListenPort))
 	if err != nil {
-		errco.LogMshErr(errco.NewErr(errco.CLIENT_LISTEN_ERROR, errco.LVL_D, "main", err.Error()))
+		errco.LogMshErr(errco.NewErr(errco.ERROR_CLIENT_LISTEN, errco.LVL_D, "main", err.Error()))
 		os.Exit(1)
 	}
 
@@ -65,7 +65,7 @@ func main() {
 	for {
 		clientSocket, err := listener.Accept()
 		if err != nil {
-			errco.LogMshErr(errco.NewErr(errco.CLIENT_ACCEPT_ERROR, errco.LVL_D, "main", err.Error()))
+			errco.LogMshErr(errco.NewErr(errco.ERROR_CLIENT_ACCEPT, errco.LVL_D, "main", err.Error()))
 			continue
 		}
 

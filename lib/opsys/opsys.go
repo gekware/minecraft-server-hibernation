@@ -13,7 +13,7 @@ func OsSupported() *errco.Error {
 	ros := runtime.GOOS
 
 	if ros != "linux" && ros != "windows" && ros != "darwin" {
-		return errco.NewErr(errco.OS_NOT_SUPPORTED_ERROR, errco.LVL_B, "OsSupported", "OS is not supported")
+		return errco.NewErr(errco.ERROR_OS_NOT_SUPPORTED, errco.LVL_B, "OsSupported", "OS is not supported")
 	}
 
 	return nil

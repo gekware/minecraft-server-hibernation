@@ -101,7 +101,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 		// just open a connection with the server and connect it with the client
 		serverSocket, err := net.Dial("tcp", fmt.Sprintf("%s:%d", config.TargetHost, config.TargetPort))
 		if err != nil {
-			errco.LogMshErr(errco.NewErr(errco.SERVER_DIAL_ERROR, errco.LVL_D, "HandleClientSocket", err.Error()))
+			errco.LogMshErr(errco.NewErr(errco.ERROR_SERVER_DIAL, errco.LVL_D, "HandleClientSocket", err.Error()))
 			// report dial error to client with text in the loadscreen
 			clientSocket.Write(buildMessage(errco.MESSAGE_FORMAT_TXT, "can't connect to server... check if minecraft server is running and set the correct targetPort"))
 			return

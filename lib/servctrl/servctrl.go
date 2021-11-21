@@ -30,7 +30,7 @@ func StopMS(playersCheck bool) *errco.Error {
 	}
 	// if server is not online return
 	if servstats.Stats.Status != errco.SERVER_STATUS_ONLINE {
-		return errco.NewErr(errco.SERVER_NOT_ONLINE_ERROR, errco.LVL_D, "StopMS", "server is not online")
+		return errco.NewErr(errco.ERROR_SERVER_NOT_ONLINE, errco.LVL_D, "StopMS", "server is not online")
 	}
 
 	// player/StopMSRequests check
@@ -43,13 +43,13 @@ func StopMS(playersCheck bool) *errco.Error {
 		playerCount, method := countPlayerSafe()
 		errco.Logln(errco.LVL_B, "%d online players - method for player count: %s", playerCount, method)
 		if playerCount > 0 {
-			return errco.NewErr(errco.SERVER_NOT_EMPTY_ERROR, errco.LVL_D, "StopMS", "server is not empty")
+			return errco.NewErr(errco.ERROR_SERVER_NOT_EMPTY, errco.LVL_D, "StopMS", "server is not empty")
 		}
 
 		// check if enough time has passed since last player disconnected
 
 		if atomic.LoadInt32(&servstats.Stats.StopMSRequests) > 0 {
-			return errco.NewErr(errco.SERVER_MUST_WAIT_ERROR, errco.LVL_D, "StopMS", fmt.Sprintf("not enough time has passed since last player disconnected (StopMSRequests: %d )", servstats.Stats.StopMSRequests))
+			return errco.NewErr(errco.ERROR_SERVER_MUST_WAIT, errco.LVL_D, "StopMS", fmt.Sprintf("not enough time has passed since last player disconnected (StopMSRequests: %d )", servstats.Stats.StopMSRequests))
 		}
 	}
 
@@ -79,7 +79,7 @@ func StopMSRequest() {
 			errMsh := StopMS(true)
 			if errMsh != nil {
 				// avoid logging "server is not online" error since it can be very frequent
-				if errMsh.Cod != errco.SERVER_NOT_ONLINE_ERROR {
+				if errMsh.Cod != errco.ERROR_SERVER_NOT_ONLINE {
 					errco.LogMshErr(errMsh.AddTrace("StopMSRequest"))
 				}
 			}
@@ -111,6 +111,6 @@ func killMSifOnlineAfterTimeout() {
 	errco.Logln(errco.LVL_D, "minecraft server process won't stop normally: sending kill signal")
 	err := ServTerm.cmd.Process.Kill()
 	if err != nil {
-		errco.LogMshErr(errco.NewErr(errco.SERVER_KILL_ERROR, errco.LVL_D, "killMSifOnlineAfterTimeout", err.Error()))
+		errco.LogMshErr(errco.NewErr(errco.ERROR_SERVER_KILL, errco.LVL_D, "killMSifOnlineAfterTimeout", err.Error()))
 	}
 }

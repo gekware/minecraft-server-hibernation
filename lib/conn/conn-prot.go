@@ -56,7 +56,7 @@ func buildMessage(messageFormat int, message string) []byte {
 		dataTxtJSON, err := json.Marshal(messageStruct)
 		if err != nil {
 			// don't return error, just log it
-			errco.LogMshErr(errco.NewErr(errco.JSON_MARSHAL_ERROR, errco.LVL_D, "buildMessage", err.Error()))
+			errco.LogMshErr(errco.NewErr(errco.ERROR_JSON_MARSHAL, errco.LVL_D, "buildMessage", err.Error()))
 			return nil
 		}
 
@@ -80,7 +80,7 @@ func buildMessage(messageFormat int, message string) []byte {
 		dataInfJSON, err := json.Marshal(messageStruct)
 		if err != nil {
 			// don't return error, just log it
-			errco.LogMshErr(errco.NewErr(errco.JSON_MARSHAL_ERROR, errco.LVL_D, "buildMessage", err.Error()))
+			errco.LogMshErr(errco.NewErr(errco.ERROR_JSON_MARSHAL, errco.LVL_D, "buildMessage", err.Error()))
 			return nil
 		}
 
@@ -95,7 +95,7 @@ func buildMessage(messageFormat int, message string) []byte {
 func getReqType(clientSocket net.Conn) (int, string, *errco.Error) {
 	reqPacket, errMsh := getClientPacket(clientSocket)
 	if errMsh != nil {
-		return errco.CLIENT_REQ_ERROR, "", errMsh.AddTrace("getReqType")
+		return errco.ERROR_CLIENT_REQ, "", errMsh.AddTrace("getReqType")
 	}
 
 	// generate flags
@@ -159,7 +159,7 @@ func getClientPacket(clientSocket net.Conn) ([]byte, *errco.Error) {
 	// read first packet
 	dataLen, err := clientSocket.Read(buf)
 	if err != nil {
-		return nil, errco.NewErr(errco.CLIENT_SOCKET_READ_ERROR, errco.LVL_D, "getClientPacket", "error during clientSocket.Read()")
+		return nil, errco.NewErr(errco.ERROR_CLIENT_SOCKET_READ, errco.LVL_D, "getClientPacket", "error during clientSocket.Read()")
 	}
 
 	return buf[:dataLen], nil

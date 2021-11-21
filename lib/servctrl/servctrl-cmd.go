@@ -31,14 +31,14 @@ var lastLine = make(chan string)
 // [non-blocking]
 func Execute(command, origin string) (string, *errco.Error) {
 	if !ServTerm.IsActive {
-		return "", errco.NewErr(errco.TERMINAL_NOT_ACTIVE_ERROR, errco.LVL_C, "Execute", "terminal not active")
+		return "", errco.NewErr(errco.ERROR_TERMINAL_NOT_ACTIVE, errco.LVL_C, "Execute", "terminal not active")
 	}
 
 	commands := strings.Split(command, "\n")
 
 	for _, com := range commands {
 		if servstats.Stats.Status != errco.SERVER_STATUS_ONLINE {
-			return "", errco.NewErr(errco.SERVER_NOT_ONLINE_ERROR, errco.LVL_C, "Execute", "server not online")
+			return "", errco.NewErr(errco.ERROR_SERVER_NOT_ONLINE, errco.LVL_C, "Execute", "server not online")
 		}
 
 		errco.Logln(errco.LVL_C, "terminal execute: %s%s%s\t(origin: %s)", errco.COLOR_YELLOW, com, errco.COLOR_RESET, origin)
@@ -46,7 +46,7 @@ func Execute(command, origin string) (string, *errco.Error) {
 		// write to cmd (\n indicates the enter key)
 		_, err := ServTerm.inPipe.Write([]byte(com + "\n"))
 		if err != nil {
-			return "", errco.NewErr(errco.INPUT_PIPE_WRITE_ERROR, errco.LVL_C, "Execute", err.Error())
+			return "", errco.NewErr(errco.ERROR_PIPE_INPUT_WRITE, errco.LVL_C, "Execute", err.Error())
 		}
 	}
 
@@ -64,7 +64,7 @@ func cmdStart(dir, command string) *errco.Error {
 
 	err := ServTerm.cmd.Start()
 	if err != nil {
-		return errco.NewErr(errco.TERMINAL_START_ERROR, errco.LVL_D, "cmdStart", err.Error())
+		return errco.NewErr(errco.ERROR_TERMINAL_START, errco.LVL_D, "cmdStart", err.Error())
 	}
 
 	go waitForExit()
@@ -94,15 +94,15 @@ func loadTerm(dir, command string) *errco.Error {
 	var err error
 	ServTerm.outPipe, err = ServTerm.cmd.StdoutPipe()
 	if err != nil {
-		return errco.NewErr(errco.PIPE_LOAD_ERROR, errco.LVL_D, "loadTerm", "StdoutPipe load: "+err.Error())
+		return errco.NewErr(errco.ERROR_PIPE_LOAD, errco.LVL_D, "loadTerm", "StdoutPipe load: "+err.Error())
 	}
 	ServTerm.errPipe, err = ServTerm.cmd.StderrPipe()
 	if err != nil {
-		return errco.NewErr(errco.PIPE_LOAD_ERROR, errco.LVL_D, "loadTerm", "StderrPipe load: "+err.Error())
+		return errco.NewErr(errco.ERROR_PIPE_LOAD, errco.LVL_D, "loadTerm", "StderrPipe load: "+err.Error())
 	}
 	ServTerm.inPipe, err = ServTerm.cmd.StdinPipe()
 	if err != nil {
-		return errco.NewErr(errco.PIPE_LOAD_ERROR, errco.LVL_D, "loadTerm", "StdinPipe load: "+err.Error())
+		return errco.NewErr(errco.ERROR_PIPE_LOAD, errco.LVL_D, "loadTerm", "StdinPipe load: "+err.Error())
 	}
 
 	return nil
@@ -174,7 +174,7 @@ func printerOutErr() {
 				// Continue if line does not contain ": "
 				// (it does not adhere to expected log format or it is a multiline java exception)
 				if !strings.Contains(line, ": ") {
-					errco.LogMshErr(errco.NewErr(errco.SERVER_UNEXP_OUTPUT_ERROR, errco.LVL_C, "printerOutErr", "line does not adhere to expected log format"))
+					errco.LogMshErr(errco.NewErr(errco.ERROR_SERVER_UNEXP_OUTPUT, errco.LVL_C, "printerOutErr", "line does not adhere to expected log format"))
 					continue
 				}
 

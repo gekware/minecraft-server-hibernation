@@ -124,7 +124,7 @@ func checkUpdate(clientProtV, clientVersion, respHeader string) (int, string, *e
 	url := "http://minecraft-server-hibernation.heliohost.us/latest-version.php?v=" + clientProtV + "&version=" + clientVersion
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return errco.VERSION_ERROR, "error", errco.NewErr(errco.VERSION_ERROR, errco.LVL_D, "checkUpdate", err.Error())
+		return errco.ERROR_VERSION, "error", errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "checkUpdate", err.Error())
 	}
 	req.Header.Add("User-Agent", "msh ("+userAgentOs+") msh/"+clientVersion)
 
@@ -132,14 +132,14 @@ func checkUpdate(clientProtV, clientVersion, respHeader string) (int, string, *e
 	client := &http.Client{Timeout: 4 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		return errco.VERSION_ERROR, "error", errco.NewErr(errco.VERSION_ERROR, errco.LVL_D, "checkUpdate", err.Error())
+		return errco.ERROR_VERSION, "error", errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "checkUpdate", err.Error())
 	}
 	defer resp.Body.Close()
 
 	// read http response
 	respByte, err := ioutil.ReadAll(resp.Body)
 	if err != nil || !strings.Contains(string(respByte), respHeader) {
-		return errco.VERSION_ERROR, "error", errco.NewErr(errco.VERSION_ERROR, errco.LVL_D, "checkUpdate", err.Error())
+		return errco.ERROR_VERSION, "error", errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "checkUpdate", err.Error())
 	}
 
 	// no error and respByte contains respHeader
@@ -148,7 +148,7 @@ func checkUpdate(clientProtV, clientVersion, respHeader string) (int, string, *e
 	// check which version is more recent
 	delta, errMsh := deltaVersion(onlineVersion, clientVersion)
 	if errMsh != nil {
-		return errco.VERSION_ERROR, "error", errMsh.AddTrace("checkUpdate")
+		return errco.ERROR_VERSION, "error", errMsh.AddTrace("checkUpdate")
 	}
 
 	switch {
@@ -188,11 +188,11 @@ func deltaVersion(onlineVersion, clientVersion string) (int, *errco.Error) {
 
 	clientVersionInt, err := digitize(clientVersion)
 	if err != nil {
-		return 0, errco.NewErr(errco.VERSION_COMPARISON_ERROR, errco.LVL_D, "deltaVersion", err.Error())
+		return 0, errco.NewErr(errco.ERROR_VERSION_COMPARISON, errco.LVL_D, "deltaVersion", err.Error())
 	}
 	onlineVersionInt, err := digitize(onlineVersion)
 	if err != nil {
-		return 0, errco.NewErr(errco.VERSION_COMPARISON_ERROR, errco.LVL_D, "deltaVersion", err.Error())
+		return 0, errco.NewErr(errco.ERROR_VERSION_COMPARISON, errco.LVL_D, "deltaVersion", err.Error())
 	}
 
 	return onlineVersionInt - clientVersionInt, nil

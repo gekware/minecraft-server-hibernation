@@ -36,12 +36,12 @@ func StrBetween(str, a, b string) (string, *errco.Error) {
 
 	aIndex := strings.Index(str, a)
 	if aIndex == -1 {
-		return "", errco.NewErr(errco.ANALYSIS_ERROR, errco.LVL_D, "StrBetween", fmt.Sprintf("first substring not found (%s)", b))
+		return "", errco.NewErr(errco.ERROR_ANALYSIS, errco.LVL_D, "StrBetween", fmt.Sprintf("first substring not found (%s)", b))
 	}
 
 	bIndex := strings.Index(str[aIndex+len(a):], b)
 	if bIndex == -1 {
-		return "", errco.NewErr(errco.ANALYSIS_ERROR, errco.LVL_D, "StrBetween", fmt.Sprintf("second substring not found (%s)", b))
+		return "", errco.NewErr(errco.ERROR_ANALYSIS, errco.LVL_D, "StrBetween", fmt.Sprintf("second substring not found (%s)", b))
 	}
 
 	return str[aIndex+len(a):][:bIndex], nil
@@ -54,12 +54,12 @@ func BytBetween(data, a, b []byte) ([]byte, *errco.Error) {
 
 	aIndex := bytes.Index(data, a)
 	if aIndex == -1 {
-		return nil, errco.NewErr(errco.ANALYSIS_ERROR, errco.LVL_D, "BytBetween", fmt.Sprintf("first subbytearray not found (%v)", b))
+		return nil, errco.NewErr(errco.ERROR_ANALYSIS, errco.LVL_D, "BytBetween", fmt.Sprintf("first subbytearray not found (%v)", b))
 	}
 
 	bIndex := bytes.Index(data[aIndex+len(a):], b)
 	if bIndex == -1 {
-		return nil, errco.NewErr(errco.ANALYSIS_ERROR, errco.LVL_D, "BytBetween", fmt.Sprintf("second subbytearray not found (%v)", b))
+		return nil, errco.NewErr(errco.ERROR_ANALYSIS, errco.LVL_D, "BytBetween", fmt.Sprintf("second subbytearray not found (%v)", b))
 	}
 
 	return data[aIndex+len(a):][:bIndex], nil

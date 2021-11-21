@@ -49,13 +49,13 @@ func LoadConfig() *errco.Error {
 	// read config file
 	configData, err := ioutil.ReadFile(configFileName)
 	if err != nil {
-		return errco.NewErr(errco.LOAD_CONFIG_ERROR, errco.LVL_B, "LoadConfig", err.Error())
+		return errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_B, "LoadConfig", err.Error())
 	}
 
 	// write read data into ConfigDefault
 	err = yaml.Unmarshal(configData, &ConfigDefault)
 	if err != nil {
-		return errco.NewErr(errco.LOAD_CONFIG_ERROR, errco.LVL_B, "LoadConfig", err.Error())
+		return errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_B, "LoadConfig", err.Error())
 	}
 
 	// generate runtime config
@@ -99,13 +99,13 @@ func SaveConfigDefault() *errco.Error {
 	// write the struct config to yaml data
 	configData, err := yaml.Marshal(ConfigDefault)
 	if err != nil {
-		return errco.NewErr(errco.SAVE_CONFIG_ERROR, errco.LVL_D, "SaveConfigDefault", "could not marshal from config file")
+		return errco.NewErr(errco.ERROR_CONFIG_SAVE, errco.LVL_D, "SaveConfigDefault", "could not marshal from config file")
 	}
 
 	// write yaml data to config file
 	err = ioutil.WriteFile(configFileName, configData, 0644)
 	if err != nil {
-		return errco.NewErr(errco.SAVE_CONFIG_ERROR, errco.LVL_D, "SaveConfigDefault", "could not write to config file")
+		return errco.NewErr(errco.ERROR_CONFIG_SAVE, errco.LVL_D, "SaveConfigDefault", "could not write to config file")
 	}
 
 	errco.Logln(errco.LVL_D, "SaveConfigDefault: saved to config file")
@@ -153,13 +153,13 @@ func checkConfigRuntime() *errco.Error {
 	serverFileFolderPath := filepath.Join(ConfigRuntime.Server.Folder, ConfigRuntime.Server.FileName)
 	_, err := os.Stat(serverFileFolderPath)
 	if os.IsNotExist(err) {
-		return errco.NewErr(errco.CHECK_CONFIG_ERROR, errco.LVL_B, "checkConfigRuntime", "specified server file/folder does not exist: "+serverFileFolderPath)
+		return errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_B, "checkConfigRuntime", "specified server file/folder does not exist: "+serverFileFolderPath)
 	}
 
 	// check if java is installed
 	_, err = exec.LookPath("java")
 	if err != nil {
-		return errco.NewErr(errco.CHECK_CONFIG_ERROR, errco.LVL_B, "checkConfigRuntime", "java not installed")
+		return errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_B, "checkConfigRuntime", "java not installed")
 	}
 
 	return nil
@@ -169,7 +169,7 @@ func checkConfigRuntime() *errco.Error {
 func getIpPorts() (string, int, string, int, *errco.Error) {
 	data, err := ioutil.ReadFile(filepath.Join(ConfigRuntime.Server.Folder, "server.properties"))
 	if err != nil {
-		return "", -1, "", -1, errco.NewErr(errco.LOAD_CONFIG_ERROR, errco.LVL_B, "getIpPorts", err.Error())
+		return "", -1, "", -1, errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_B, "getIpPorts", err.Error())
 	}
 
 	dataStr := strings.ReplaceAll(string(data), "\r", "")
@@ -181,11 +181,11 @@ func getIpPorts() (string, int, string, int, *errco.Error) {
 
 	TargetPort, err = strconv.Atoi(TargetPortStr)
 	if err != nil {
-		return "", -1, "", -1, errco.NewErr(errco.CONVERSION_ERROR, errco.LVL_D, "getIpPorts", err.Error())
+		return "", -1, "", -1, errco.NewErr(errco.ERROR_CONVERSION, errco.LVL_D, "getIpPorts", err.Error())
 	}
 
 	if TargetPort == ConfigRuntime.Msh.ListenPort {
-		return "", -1, "", -1, errco.NewErr(errco.LOAD_CONFIG_ERROR, errco.LVL_B, "getIpPorts", "TargetPort and ListenPort appear to be the same, please change one of them")
+		return "", -1, "", -1, errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_B, "getIpPorts", "TargetPort and ListenPort appear to be the same, please change one of them")
 	}
 
 	// return ListenHost, TargetHost, TargetPort, nil
