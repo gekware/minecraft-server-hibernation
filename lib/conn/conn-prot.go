@@ -1,4 +1,4 @@
-package servconn
+package conn
 
 import (
 	"bytes"

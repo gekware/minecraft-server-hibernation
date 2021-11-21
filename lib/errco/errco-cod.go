@@ -61,11 +61,13 @@ const (
 
 	// server connection package
 
-	CLIENT_REQ_ERROR         = 0x0002f000 // client request error
-	BUILD_REQ_FLAG_ERROR     = 0x0002f001 // error while building request flag
-	CLIENT_SOCKET_READ_ERROR = 0x0002f002 // error while reading client socket
-	SERVER_DIAL_ERROR        = 0x0002f003 // error while dialing ms server
-	JSON_MARSHAL_ERROR       = 0x0002f004 // error while building json object
+	CLIENT_REQ_ERROR          = 0x0002f000 // client request error
+	BUILD_REQ_FLAG_ERROR      = 0x0002f001 // error while building request flag
+	CLIENT_SOCKET_READ_ERROR  = 0x0002f002 // error while reading client socket
+	SERVER_DIAL_ERROR         = 0x0002f003 // error while dialing ms server
+	JSON_MARSHAL_ERROR        = 0x0002f004 // error while exporting struct to json bytes
+	JSON_UNMARSHAL_ERROR      = 0x0002f004 // error while importing struct from json bytes
+	SERVER_INFO_REQUEST_ERROR = 0x0002f006 // error while msh server info request
 
 	// config package
 
