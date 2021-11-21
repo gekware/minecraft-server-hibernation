@@ -53,13 +53,13 @@ func main() {
 	go input.GetInput()
 
 	// open a listener
-	listener, err := net.Listen("tcp", config.ListenHost+":"+config.ListenPort)
+	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", config.ListenHost, config.ListenPort))
 	if err != nil {
 		errco.LogMshErr(errco.NewErr(errco.CLIENT_LISTEN_ERROR, errco.LVL_D, "main", err.Error()))
 		os.Exit(1)
 	}
 
-	errco.Logln(errco.LVL_D, "listening for new clients to connect on %s:%s...", config.ListenHost, config.ListenPort)
+	errco.Logln(errco.LVL_D, "listening for new clients to connect on %s:%d...", config.ListenHost, config.ListenPort)
 
 	// infinite cycle to accept clients. when a clients connects it is passed to handleClientSocket()
 	for {

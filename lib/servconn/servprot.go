@@ -2,8 +2,8 @@ package servconn
 
 import (
 	"bytes"
-	"encoding/binary"
 	"encoding/json"
+	"math/big"
 	"net"
 	"strconv"
 	"strings"
@@ -112,23 +112,13 @@ func buildMessage(messageFormat int, message string) []byte {
 }
 
 // buildReqFlag generates the INFO flag and JOIN flag using the msh port
-func buildReqFlag(mshPort string) ([]byte, []byte) {
+func buildReqFlag(listenPort int) ([]byte, []byte) {
 	// calculates listen port in BigEndian bytes
-
-	listenPortUint64, err := strconv.ParseUint(mshPort, 10, 16) // bitSize: 16 -> since it will be converted to Uint16
-	if err != nil {
-		errco.LogMshErr(errco.NewErr(errco.BUILD_REQ_FLAG_ERROR, errco.LVL_D, "buildReqFlag", err.Error()))
-		return nil, nil
-	}
-
-	listenPortUint16 := uint16(listenPortUint64)
-	listenPortBytes := make([]byte, 2)
-	binary.BigEndian.PutUint16(listenPortBytes, listenPortUint16) // 25555 -> [99 211] / hex[63 D3]
+	mshPortByt := big.NewInt(int64(listenPort)).Bytes()
 
 	// generate flags
-
-	reqFlagInfo := append(listenPortBytes, byte(1)) // flag contained in INFO request packet (first packet of client) -> [99 211 1]
-	reqFlagJoin := append(listenPortBytes, byte(2)) // flag contained in JOIN request packet (first packet of client) -> [99 211 2]
+	reqFlagInfo := append(mshPortByt, byte(1)) // flag contained in INFO request packet (first packet of client) -> [99 211 1]
+	reqFlagJoin := append(mshPortByt, byte(2)) // flag contained in JOIN request packet (first packet of client) -> [99 211 2]
 
 	return reqFlagInfo, reqFlagJoin
 }

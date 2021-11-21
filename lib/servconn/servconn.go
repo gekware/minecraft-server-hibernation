@@ -1,6 +1,7 @@
 package servconn
 
 import (
+	"fmt"
 	"net"
 	"strings"
 
@@ -28,7 +29,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 		switch reqType {
 		case errco.CLIENT_REQ_INFO:
 			// client requests "server info"
-			errco.Logln(errco.LVL_D, "%s requested server info from %s:%s to %s:%s", playerName, clientAddress, config.ListenPort, config.TargetHost, config.TargetPort)
+			errco.Logln(errco.LVL_D, "%s requested server info from %s:%d to %s:%d", playerName, clientAddress, config.ListenPort, config.TargetHost, config.TargetPort)
 
 			// answer to client with emulated server info
 			clientSocket.Write(buildMessage(errco.MESSAGE_FORMAT_INFO, config.ConfigRuntime.Msh.InfoHibernation))
@@ -50,7 +51,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 				clientSocket.Write(buildMessage(errco.MESSAGE_FORMAT_TXT, "An error occurred while starting the server: check the msh log"))
 			} else {
 				// log to msh console and answer client with text in the loadscreen
-				errco.Logln(errco.LVL_D, "%s tried to join from %s:%s to %s:%s", playerName, clientAddress, config.ListenPort, config.TargetHost, config.TargetPort)
+				errco.Logln(errco.LVL_D, "%s tried to join from %s:%d to %s:%d", playerName, clientAddress, config.ListenPort, config.TargetHost, config.TargetPort)
 				clientSocket.Write(buildMessage(errco.MESSAGE_FORMAT_TXT, "Server start command issued. Please wait... "+servctrl.Stats.LoadProgress))
 			}
 		}
@@ -70,7 +71,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 		case errco.CLIENT_REQ_INFO:
 			// client requests "INFO"
 
-			errco.Logln(errco.LVL_D, "%s requested server info from %s:%s to %s:%s during server startup", playerName, clientAddress, config.ListenPort, config.TargetHost, config.TargetPort)
+			errco.Logln(errco.LVL_D, "%s requested server info from %s:%d to %s:%d during server startup", playerName, clientAddress, config.ListenPort, config.TargetHost, config.TargetPort)
 
 			// answer to client with emulated server info
 			clientSocket.Write(buildMessage(errco.MESSAGE_FORMAT_INFO, config.ConfigRuntime.Msh.InfoStarting))
@@ -85,7 +86,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 			// client requests "JOIN"
 
 			// log to msh console and answer to client with text in the loadscreen
-			errco.Logln(errco.LVL_D, "%s tried to join from %s:%s to %s:%s during server startup", playerName, clientAddress, config.ListenPort, config.TargetHost, config.TargetPort)
+			errco.Logln(errco.LVL_D, "%s tried to join from %s:%d to %s:%d during server startup", playerName, clientAddress, config.ListenPort, config.TargetHost, config.TargetPort)
 			clientSocket.Write(buildMessage(errco.MESSAGE_FORMAT_TXT, "Server is starting. Please wait... "+servctrl.Stats.LoadProgress))
 		}
 
@@ -95,7 +96,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 
 	case errco.SERVER_STATUS_ONLINE:
 		// just open a connection with the server and connect it with the client
-		serverSocket, err := net.Dial("tcp", config.TargetHost+":"+config.TargetPort)
+		serverSocket, err := net.Dial("tcp", fmt.Sprintf("%s:%d", config.TargetHost, config.TargetPort))
 		if err != nil {
 			errco.LogMshErr(errco.NewErr(errco.SERVER_DIAL_ERROR, errco.LVL_D, "HandleClientSocket", "error while dialing local minecraft server"))
 			// report dial error to client with text in the loadscreen

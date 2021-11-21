@@ -8,12 +8,14 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"gopkg.in/yaml.v2"
 
 	"msh/lib/errco"
 	"msh/lib/opsys"
+	"msh/lib/utility"
 )
 
 // configFileName is the config file name
@@ -29,9 +31,9 @@ var (
 
 	// Listen and Target host/port used for proxy connection
 	ListenHost string
-	ListenPort string
+	ListenPort int
 	TargetHost string
-	TargetPort string
+	TargetPort int
 )
 
 // struct adapted to config file
@@ -53,7 +55,7 @@ type configuration struct {
 		InfoHibernation               string `yaml:"InfoHibernation"`
 		InfoStarting                  string `yaml:"InfoStarting"`
 		NotifyUpdate                  bool   `yaml:"NotifyUpdate"`
-		Port                          string `yaml:"Port"`
+		ListenPort                    int    `yaml:"ListenPort"`
 		TimeBeforeStoppingEmptyServer int64  `yaml:"TimeBeforeStoppingEmptyServer"`
 	} `yaml:"Msh"`
 }
@@ -102,7 +104,8 @@ func LoadConfig() *errco.Error {
 	if errMsh != nil {
 		return errMsh.AddTrace("LoadConfig")
 	}
-	errco.Logln(errco.LVL_D, "msh proxy setup: %s:%s --> %s:%s", ListenHost, ListenPort, TargetHost, TargetPort)
+
+	errco.Logln(errco.LVL_D, "msh proxy setup: %s:%d --> %s:%d", ListenHost, ListenPort, TargetHost, TargetPort)
 
 	// set server icon
 	ServerIcon, errMsh = loadIcon(ConfigRuntime.Server.Folder)
@@ -145,7 +148,7 @@ func generateConfigRuntime() configuration {
 
 	flag.StringVar(&ConfigRuntime.Commands.StartServerParam, "P", ConfigRuntime.Commands.StartServerParam, "Specify start server parameters.")
 
-	flag.StringVar(&ConfigRuntime.Msh.Port, "p", ConfigRuntime.Msh.Port, "Specify msh port.")
+	flag.IntVar(&ConfigRuntime.Msh.ListenPort, "p", ConfigRuntime.Msh.ListenPort, "Specify msh port.")
 	flag.StringVar(&ConfigRuntime.Msh.InfoHibernation, "h", ConfigRuntime.Msh.InfoHibernation, "Specify hibernation info.")
 	flag.StringVar(&ConfigRuntime.Msh.InfoStarting, "s", ConfigRuntime.Msh.InfoStarting, "Specify starting info.")
 	flag.IntVar(&ConfigRuntime.Msh.Debug, "d", ConfigRuntime.Msh.Debug, "Specify debug level.")
@@ -187,21 +190,28 @@ func checkConfigRuntime() *errco.Error {
 }
 
 // getIpPorts reads server.properties server file and returns the correct ports
-func getIpPorts() (string, string, string, string, *errco.Error) {
-	serverPropertiesFilePath := filepath.Join(ConfigRuntime.Server.Folder, "server.properties")
-	data, err := ioutil.ReadFile(serverPropertiesFilePath)
+func getIpPorts() (string, int, string, int, *errco.Error) {
+	data, err := ioutil.ReadFile(filepath.Join(ConfigRuntime.Server.Folder, "server.properties"))
 	if err != nil {
-		return "", "", "", "", errco.NewErr(errco.LOAD_CONFIG_ERROR, errco.LVL_B, "setIpPorts", err.Error())
+		return "", -1, "", -1, errco.NewErr(errco.LOAD_CONFIG_ERROR, errco.LVL_B, "getIpPorts", err.Error())
 	}
 
-	dataStr := string(data)
-	dataStr = strings.ReplaceAll(dataStr, "\r", "")
-	TargetPort = strings.Split(strings.Split(dataStr, "server-port=")[1], "\n")[0]
+	dataStr := strings.ReplaceAll(string(data), "\r", "")
 
-	if TargetPort == ConfigRuntime.Msh.Port {
-		return "", "", "", "", errco.NewErr(errco.LOAD_CONFIG_ERROR, errco.LVL_B, "setIpPorts", "TargetPort and ListenPort appear to be the same, please change one of them")
+	TargetPortStr, errMsh := utility.StrBetween(dataStr, "server-port=", "\n")
+	if err != nil {
+		return "", -1, "", -1, errMsh.AddTrace("getIpPorts")
+	}
+
+	TargetPort, err = strconv.Atoi(TargetPortStr)
+	if err != nil {
+		return "", -1, "", -1, errco.NewErr(errco.CONVERSION_ERROR, errco.LVL_D, "getIpPorts", err.Error())
+	}
+
+	if TargetPort == ConfigRuntime.Msh.ListenPort {
+		return "", -1, "", -1, errco.NewErr(errco.LOAD_CONFIG_ERROR, errco.LVL_B, "getIpPorts", "TargetPort and ListenPort appear to be the same, please change one of them")
 	}
 
 	// return ListenHost, TargetHost, TargetPort, nil
-	return "0.0.0.0", ConfigRuntime.Msh.Port, "127.0.0.1", TargetPort, nil
+	return "0.0.0.0", ConfigRuntime.Msh.ListenPort, "127.0.0.1", TargetPort, nil
 }

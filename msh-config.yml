@@ -13,5 +13,5 @@ Msh:
   InfoHibernation: "                   §fserver status:\n                   §b§lHIBERNATING"
   InfoStarting: "                   §fserver status:\n                    §6§lWARMING UP"
   NotifyUpdate: true
-  Port: "25555"
+  ListenPort: 25555
   TimeBeforeStoppingEmptyServer: 30
