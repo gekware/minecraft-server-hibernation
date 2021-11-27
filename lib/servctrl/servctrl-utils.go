@@ -84,8 +84,8 @@ func getServInfo() (*model.DataInfo, *errco.Error) {
 	serverSocket.SetDeadline(time.Now().Add(100 * time.Millisecond))
 
 	// building byte array to request minecraft server info
-	// [16 0 244 5 9 49 50 55 46 48 46 48 46 49 99 211 1    ]
-	//                                          └port┘ └info
+	// [16 0 244 5 9 49 50 55 46 48 46 48 46 49 99 211 1 1 0 ]
+	//                                          └port┘ └info┘
 	reqInfoMessage := bytes.NewBuffer([]byte{16, 0, 244, 5, 9, 49, 50, 55, 46, 48, 46, 48, 46, 49})
 	reqInfoMessage.Write(big.NewInt(int64(config.ListenPort)).Bytes())
 	reqInfoMessage.Write([]byte{1, 1, 0})
