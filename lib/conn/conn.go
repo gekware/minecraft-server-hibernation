@@ -35,7 +35,9 @@ func HandleClientSocket(clientSocket net.Conn) {
 			errco.Logln(errco.LVL_D, "%s requested server info from %s:%d to %s:%d", playerName, clientAddress, config.ListenPort, config.TargetHost, config.TargetPort)
 
 			// answer to client with emulated server info
-			clientSocket.Write(buildMessage(errco.MESSAGE_FORMAT_INFO, config.ConfigRuntime.Msh.InfoHibernation))
+			mes := buildMessage(errco.MESSAGE_FORMAT_INFO, config.ConfigRuntime.Msh.InfoHibernation)
+			clientSocket.Write(mes)
+			errco.Logln(errco.LVL_E, "%smsh --> client%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
 
 			// answer to client ping
 			errMsh := getPing(clientSocket)
@@ -51,11 +53,15 @@ func HandleClientSocket(clientSocket net.Conn) {
 			if errMsh != nil {
 				// log to msh console and warn client with text in the loadscreen
 				errco.LogMshErr(errMsh.AddTrace("HandleClientSocket"))
-				clientSocket.Write(buildMessage(errco.MESSAGE_FORMAT_TXT, "An error occurred while starting the server: check the msh log"))
+				mes := buildMessage(errco.MESSAGE_FORMAT_TXT, "An error occurred while starting the server: check the msh log")
+				clientSocket.Write(mes)
+				errco.Logln(errco.LVL_E, "%smsh --> client%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
 			} else {
 				// log to msh console and answer client with text in the loadscreen
 				errco.Logln(errco.LVL_D, "%s tried to join from %s:%d to %s:%d", playerName, clientAddress, config.ListenPort, config.TargetHost, config.TargetPort)
-				clientSocket.Write(buildMessage(errco.MESSAGE_FORMAT_TXT, "Server start command issued. Please wait... "+servstats.Stats.LoadProgress))
+				mes := buildMessage(errco.MESSAGE_FORMAT_TXT, "Server start command issued. Please wait... "+servstats.Stats.LoadProgress)
+				clientSocket.Write(mes)
+				errco.Logln(errco.LVL_E, "%smsh --> client%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
 			}
 		}
 
@@ -77,7 +83,9 @@ func HandleClientSocket(clientSocket net.Conn) {
 			errco.Logln(errco.LVL_D, "%s requested server info from %s:%d to %s:%d during server startup", playerName, clientAddress, config.ListenPort, config.TargetHost, config.TargetPort)
 
 			// answer to client with emulated server info
-			clientSocket.Write(buildMessage(errco.MESSAGE_FORMAT_INFO, config.ConfigRuntime.Msh.InfoStarting))
+			mes := buildMessage(errco.MESSAGE_FORMAT_INFO, config.ConfigRuntime.Msh.InfoStarting)
+			clientSocket.Write(mes)
+			errco.Logln(errco.LVL_E, "%smsh --> client%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
 
 			// answer to client ping
 			errMsh = getPing(clientSocket)
@@ -90,7 +98,9 @@ func HandleClientSocket(clientSocket net.Conn) {
 
 			// log to msh console and answer to client with text in the loadscreen
 			errco.Logln(errco.LVL_D, "%s tried to join from %s:%d to %s:%d during server startup", playerName, clientAddress, config.ListenPort, config.TargetHost, config.TargetPort)
-			clientSocket.Write(buildMessage(errco.MESSAGE_FORMAT_TXT, "Server is starting. Please wait... "+servstats.Stats.LoadProgress))
+			mes := buildMessage(errco.MESSAGE_FORMAT_TXT, "Server is starting. Please wait... "+servstats.Stats.LoadProgress)
+			clientSocket.Write(mes)
+			errco.Logln(errco.LVL_E, "%smsh --> client%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
 		}
 
 		// close the client connection
@@ -103,7 +113,9 @@ func HandleClientSocket(clientSocket net.Conn) {
 		if err != nil {
 			errco.LogMshErr(errco.NewErr(errco.ERROR_SERVER_DIAL, errco.LVL_D, "HandleClientSocket", err.Error()))
 			// report dial error to client with text in the loadscreen
-			clientSocket.Write(buildMessage(errco.MESSAGE_FORMAT_TXT, "can't connect to server... check if minecraft server is running and set the correct targetPort"))
+			mes := buildMessage(errco.MESSAGE_FORMAT_TXT, "can't connect to server... check if minecraft server is running and set the correct targetPort")
+			clientSocket.Write(mes)
+			errco.Logln(errco.LVL_E, "%smsh --> client%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
 			return
 		}
 
@@ -161,10 +173,10 @@ func forward(source, destination net.Conn, isServerToClient bool, stopC chan boo
 			servstats.Stats.M.Lock()
 			if isServerToClient {
 				servstats.Stats.BytesToClients = servstats.Stats.BytesToClients + float64(dataLen)
-				errco.Logln(errco.LVL_E, "server --> client:%v", data[:dataLen])
+				errco.Logln(errco.LVL_E, "%sserver --> client%s:%v", errco.COLOR_BLUE, errco.COLOR_RESET, data[:dataLen])
 			} else {
 				servstats.Stats.BytesToServer = servstats.Stats.BytesToServer + float64(dataLen)
-				errco.Logln(errco.LVL_E, "client --> server:%v", data[:dataLen])
+				errco.Logln(errco.LVL_E, "%sclient --> server%s:%v", errco.COLOR_GREEN, errco.COLOR_RESET, data[:dataLen])
 			}
 			servstats.Stats.M.Unlock()
 		}

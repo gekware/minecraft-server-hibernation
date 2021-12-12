@@ -90,13 +90,15 @@ func getServInfo() (*model.DataInfo, *errco.Error) {
 	reqInfoMessage.Write(big.NewInt(int64(config.ListenPort)).Bytes())
 	reqInfoMessage.Write([]byte{1, 1, 0})
 
-	serverSocket.Write(reqInfoMessage.Bytes())
+	mes := reqInfoMessage.Bytes()
+	serverSocket.Write(mes)
+	errco.Logln(errco.LVL_E, "%smsh --> server%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
 
 	// read response from server
 	recInfoData := []byte{}
 	buf := make([]byte, 1024)
 	for {
-		n, err := serverSocket.Read(buf)
+		dataLen, err := serverSocket.Read(buf)
 		if err != nil {
 			// cannot break on io.EOF since it's not sent, so break happens on timeout
 			// using io.EOF would be better
@@ -106,11 +108,16 @@ func getServInfo() (*model.DataInfo, *errco.Error) {
 			return &model.DataInfo{}, errco.NewErr(errco.ERROR_SERVER_REQUEST_INFO, errco.LVL_D, "getServInfo", err.Error())
 		}
 
-		recInfoData = append(recInfoData, buf[:n]...)
+		errco.Logln(errco.LVL_E, "%sserver --> msh%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, buf[:dataLen])
+
+		recInfoData = append(recInfoData, buf[:dataLen]...)
 	}
 
 	// remove first 5 bytes that are used as header to get only the json data
 	// [178 88 0 175 88]{"description":{ ...
+	if len(recInfoData) < 5 {
+		return &model.DataInfo{}, errco.NewErr(errco.ERROR_SERVER_REQUEST_INFO, errco.LVL_D, "getServInfo", "received data unexpected format")
+	}
 	recInfoData = recInfoData[5:]
 
 	recInfo := &model.DataInfo{}

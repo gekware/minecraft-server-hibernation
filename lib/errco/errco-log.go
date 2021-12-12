@@ -34,7 +34,12 @@ const (
 // Logln prints the args if debug option is set to true
 func Logln(lvl int, s string, args ...interface{}) {
 	if lvl <= DebugLvl {
-		header := fmt.Sprintf("%s [%sinfo  %s%-4s]", time.Now().Format("2006/01/02 15:04:05"), COLOR_BLUE, COLOR_RESET, strings.Repeat("*", 4-lvl))
+		dataType := "info"
+		if lvl == LVL_E {
+			dataType = "byte"
+		}
+
+		header := fmt.Sprintf("%s [%s%s%s  %-4s]", time.Now().Format("2006/01/02 15:04:05"), COLOR_BLUE, dataType, COLOR_RESET, strings.Repeat("*", 4-lvl))
 
 		// make important logs more visible
 		if lvl == LVL_A {

@@ -149,6 +149,8 @@ func getPing(clientSocket net.Conn) *errco.Error {
 	// answer ping
 	clientSocket.Write(pingData)
 
+	errco.Logln(errco.LVL_E, "%smsh --> client%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, pingData)
+
 	return nil
 }
 
@@ -161,6 +163,8 @@ func getClientPacket(clientSocket net.Conn) ([]byte, *errco.Error) {
 	if err != nil {
 		return nil, errco.NewErr(errco.ERROR_CLIENT_SOCKET_READ, errco.LVL_D, "getClientPacket", "error during clientSocket.Read()")
 	}
+
+	errco.Logln(errco.LVL_E, "%sclient --> msh%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, buf[:dataLen])
 
 	return buf[:dataLen], nil
 }
