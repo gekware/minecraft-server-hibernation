@@ -3,25 +3,25 @@ package model
 // struct adapted to config file
 type Configuration struct {
 	Server struct {
-		Folder   string `yaml:"Folder"`
-		FileName string `yaml:"FileName"`
-		Version  string `yaml:"Version"`
-		Protocol int    `yaml:"Protocol"`
-	} `yaml:"Server"`
+		Folder   string `json:"Folder"`
+		FileName string `json:"FileName"`
+		Version  string `json:"Version"`
+		Protocol int    `json:"Protocol"`
+	} `json:"Server"`
 	Commands struct {
-		StartServer         string `yaml:"StartServer"`
-		StartServerParam    string `yaml:"StartServerParam"`
-		StopServer          string `yaml:"StopServer"`
-		StopServerAllowKill int    `yaml:"StopServerAllowKill"`
-	} `yaml:"Commands"`
+		StartServer         string `json:"StartServer"`
+		StartServerParam    string `json:"StartServerParam"`
+		StopServer          string `json:"StopServer"`
+		StopServerAllowKill int    `json:"StopServerAllowKill"`
+	} `json:"Commands"`
 	Msh struct {
-		Debug                         int    `yaml:"Debug"`
-		InfoHibernation               string `yaml:"InfoHibernation"`
-		InfoStarting                  string `yaml:"InfoStarting"`
-		NotifyUpdate                  bool   `yaml:"NotifyUpdate"`
-		ListenPort                    int    `yaml:"ListenPort"`
-		TimeBeforeStoppingEmptyServer int64  `yaml:"TimeBeforeStoppingEmptyServer"`
-	} `yaml:"Msh"`
+		Debug                         int    `json:"Debug"`
+		InfoHibernation               string `json:"InfoHibernation"`
+		InfoStarting                  string `json:"InfoStarting"`
+		NotifyUpdate                  bool   `json:"NotifyUpdate"`
+		ListenPort                    int    `json:"ListenPort"`
+		TimeBeforeStoppingEmptyServer int64  `json:"TimeBeforeStoppingEmptyServer"`
+	} `json:"Msh"`
 }
 
 type DataTxt struct {

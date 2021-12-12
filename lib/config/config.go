@@ -1,6 +1,7 @@
 package config
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -10,8 +11,6 @@ import (
 	"strconv"
 	"strings"
 
-	"gopkg.in/yaml.v2"
-
 	"msh/lib/errco"
 	"msh/lib/model"
 	"msh/lib/opsys"
@@ -19,7 +18,7 @@ import (
 )
 
 // configFileName is the config file name
-const configFileName string = "msh-config.yml"
+const configFileName string = "msh-config.json"
 
 var (
 	// Config variables contain the configuration parameters for config file and runtime
@@ -36,8 +35,10 @@ var (
 	TargetPort int
 )
 
-// LoadConfig loads yaml data from config file into config
+// LoadConfig loads config file into ConfigDefault and ConfigRuntime
 func LoadConfig() *errco.Error {
+	// ---------------- OS support ----------------- //
+
 	errco.Logln(errco.LVL_D, "checking OS support...")
 	// check if OS is supported.
 	errMsh := opsys.OsSupported()
@@ -45,24 +46,19 @@ func LoadConfig() *errco.Error {
 		return errMsh.AddTrace("LoadConfig")
 	}
 
-	errco.Logln(errco.LVL_D, "loading config file...")
-	// read config file
-	configData, err := ioutil.ReadFile(configFileName)
-	if err != nil {
-		return errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_B, "LoadConfig", err.Error())
-	}
+	// --------------- ConfigDefault --------------- //
 
-	// write read data into ConfigDefault
-	err = yaml.Unmarshal(configData, &ConfigDefault)
-	if err != nil {
-		return errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_B, "LoadConfig", err.Error())
-	}
+	errco.Logln(errco.LVL_D, "loading config default...")
+
+	ConfigDefaultFileRead()
 
 	// generate runtime config
 	ConfigRuntime = generateConfigRuntime()
 
 	// --------------- ConfigRuntime --------------- //
 	// from now on only ConfigRuntime should be used //
+
+	errco.Logln(errco.LVL_D, "loading config runtime...")
 
 	errMsh = checkConfigRuntime()
 	if errMsh != nil {
@@ -94,21 +90,38 @@ func LoadConfig() *errco.Error {
 	return nil
 }
 
-// SaveConfigDefault saves ConfigDefault to the config file
-func SaveConfigDefault() *errco.Error {
-	// write the struct config to yaml data
-	configData, err := yaml.Marshal(ConfigDefault)
+// ConfigDefaultFileRead loads config file to config default
+func ConfigDefaultFileRead() *errco.Error {
+	// read config file
+	configData, err := ioutil.ReadFile(configFileName)
 	if err != nil {
-		return errco.NewErr(errco.ERROR_CONFIG_SAVE, errco.LVL_D, "SaveConfigDefault", "could not marshal from config file")
+		return errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_B, "ConfigDefaultFileRead", err.Error())
 	}
 
-	// write yaml data to config file
+	// write data to ConfigDefault
+	err = json.Unmarshal(configData, &ConfigDefault)
+	if err != nil {
+		return errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_B, "ConfigDefaultFileRead", err.Error())
+	}
+
+	return nil
+}
+
+// ConfigDefaultFileWrite saves ConfigDefault to the config file
+func ConfigDefaultFileWrite() *errco.Error {
+	// encode the struct config
+	configData, err := json.MarshalIndent(ConfigDefault, "", "  ")
+	if err != nil {
+		return errco.NewErr(errco.ERROR_CONFIG_SAVE, errco.LVL_D, "ConfigDefaultFileWrite", "could not marshal from config file")
+	}
+
+	// write to config file
 	err = ioutil.WriteFile(configFileName, configData, 0644)
 	if err != nil {
-		return errco.NewErr(errco.ERROR_CONFIG_SAVE, errco.LVL_D, "SaveConfigDefault", "could not write to config file")
+		return errco.NewErr(errco.ERROR_CONFIG_SAVE, errco.LVL_D, "ConfigDefaultFileWrite", "could not write to config file")
 	}
 
-	errco.Logln(errco.LVL_D, "SaveConfigDefault: saved to config file")
+	errco.Logln(errco.LVL_D, "ConfigDefaultFileWrite: saved to config file")
 
 	return nil
 }

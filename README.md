@@ -60,20 +60,20 @@ _only text in braces needs to be modified (remember to remove all braces)_
 
 Location of server folder and executable. You can find protocol/version [here](https://wiki.vg/Protocol_version_numbers) (but msh should set them automatically):
 ```yaml
-"Server":{
+"Server": {
   "Folder": "{path/to/server/folder}",
   "FileName": "{server.jar}",
-  "Version": "1.17.1",
-  "Protocol": "756"
+  "Protocol": 756,
+  "Version": "1.17.1"
 }
 ```
 Commands to start and stop minecraft server:
 ```yaml
-"Commands":{
-    "StartServer": "java <Commands.StartServerParam> -jar <Server.FileName> nogui" ,
-    "StartServerParam": "-Xmx1024M -Xms1024M" ,
-    "StopServer": "stop",
-    "StopServerAllowKill": 10
+"Commands": {
+  "StartServer": "java <Commands.StartServerParam> -jar <Server.FileName> nogui",
+  "StartServerParam": "-Xmx1024M -Xms1024M",
+  "StopServer": "stop",
+  "StopServerAllowKill": 10
 }
 # if StopServerAllowKill is more than 0, then the specified number is the amount of seconds
 # given to the minecraft server to go offline, after which it is killed
@@ -89,8 +89,8 @@ Set the logging level for debug purposes
 ```
 Hibernation and Starting server description
 ```yaml
-"InfoHibernation": "                   \u0026fserver status:\n                   \u0026b\u0026lHIBERNATING",
-"InfoStarting": "                   \u0026fserver status:\n                    \u00266\u0026lWARMING UP"
+"InfoHibernation": "                   §fserver status:\n                   §b§lHIBERNATING",
+"InfoStarting": "                   §fserver status:\n                    §6§lWARMING UP",
 ```
 Set to false if you don't want to notify updates in game chat (every 20 minutes)
 ```yaml
@@ -98,7 +98,7 @@ Set to false if you don't want to notify updates in game chat (every 20 minutes)
 ```
 *60 seconds* is the time (after the last player disconnected) that the script waits before hibernating the minecraft server
 ```yaml
-"TimeBeforeStoppingEmptyServer": 60     #any parameter more than 30s is recommended
+"TimeBeforeStoppingEmptyServer": 30     #any parameter more than 30s is recommended
 ```
 
 _Some of these parameters can be configured with command-line arguments (--help to know which)_
