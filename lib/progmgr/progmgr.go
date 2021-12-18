@@ -62,21 +62,21 @@ var CheckedUpdateC chan bool = make(chan bool, 1)
 
 // UpdateManager checks for updates and notify the user via terminal/gamechat
 // [goroutine]
-func UpdateManager(clientVersion string) {
+func UpdateManager(versClient string) {
 	// protocol version number:		1
 	// connection every:			4 hours
-	// parameters passed to php:	clientProtV, clientVersion
+	// parameters passed to php:	v (prot), version (client)
 	// request headers:				HTTP_USER_AGENT
 	// response:					"latest version: $officialVersion"
 
-	clientProtV := "1"
+	versProt := "1"
 	deltaT := 4 * time.Hour
 	respHeader := "latest version: "
 
 	for {
 		errco.Logln(errco.LVL_D, "checking version...")
 
-		status, onlineVersion, errMsh := checkUpdate(clientProtV, clientVersion, respHeader)
+		status, versOnline, errMsh := checkUpdate(versProt, versClient, respHeader)
 		if errMsh != nil {
 			// since UpdateManager is a goroutine, don't return and just log the error
 			errco.LogMshErr(errMsh.AddTrace("UpdateManager"))
@@ -85,16 +85,16 @@ func UpdateManager(clientVersion string) {
 		if config.ConfigRuntime.Msh.NotifyUpdate {
 			switch status {
 			case errco.VERSION_UPDATED:
-				errco.Logln(errco.LVL_A, "msh (%s) is updated", clientVersion)
+				errco.Logln(errco.LVL_A, "msh (%s) is updated", versClient)
 
 			case errco.VERSION_UPDATEAVAILABLE:
-				notification := fmt.Sprintf("msh (%s) is now available: visit github to update!", onlineVersion)
+				notification := fmt.Sprintf("msh (%s) is now available: visit github to update!", versOnline)
 				errco.Logln(errco.LVL_A, notification)
 				// notify to game chat every 20 minutes for deltaT time
 				go notifyGameChat(20*time.Minute, deltaT, notification)
 
 			case errco.VERSION_UNOFFICIALVERSION:
-				errco.Logln(errco.LVL_A, "msh (%s) is running an unofficial release", clientVersion)
+				errco.Logln(errco.LVL_A, "msh (%s) is running an unofficial release", versClient)
 			}
 		}
 
@@ -109,7 +109,7 @@ func UpdateManager(clientVersion string) {
 
 // checkUpdate checks for updates. Returns (update available, online version, error)
 // if error occurred, online version will be "error"
-func checkUpdate(clientProtV, clientVersion, respHeader string) (int, string, *errco.Error) {
+func checkUpdate(versProt, versClient, respHeader string) (int, string, *errco.Error) {
 	userAgentOs := "osNotSupported"
 	switch runtime.GOOS {
 	case "windows":
@@ -121,12 +121,12 @@ func checkUpdate(clientProtV, clientVersion, respHeader string) (int, string, *e
 	}
 
 	// build http request
-	url := "http://minecraft-server-hibernation.heliohost.us/latest-version.php?v=" + clientProtV + "&version=" + clientVersion
+	url := "http://minecraft-server-hibernation.heliohost.us/latest-version.php?v=" + versProt + "&version=" + versClient
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return errco.ERROR_VERSION, "error", errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "checkUpdate", err.Error())
 	}
-	req.Header.Add("User-Agent", "msh ("+userAgentOs+") msh/"+clientVersion)
+	req.Header.Add("User-Agent", "msh ("+userAgentOs+") msh/"+versClient)
 
 	// execute http request
 	client := &http.Client{Timeout: 4 * time.Second}
@@ -143,10 +143,10 @@ func checkUpdate(clientProtV, clientVersion, respHeader string) (int, string, *e
 	}
 
 	// no error and respByte contains respHeader
-	onlineVersion := strings.ReplaceAll(string(respByte), respHeader, "")
+	versOnline := strings.ReplaceAll(string(respByte), respHeader, "")
 
 	// check which version is more recent
-	delta, errMsh := deltaVersion(onlineVersion, clientVersion)
+	delta, errMsh := deltaVersion(versOnline, versClient)
 	if errMsh != nil {
 		return errco.ERROR_VERSION, "error", errMsh.AddTrace("checkUpdate")
 	}
@@ -154,21 +154,21 @@ func checkUpdate(clientProtV, clientVersion, respHeader string) (int, string, *e
 	switch {
 	case delta > 0:
 		// an update is available
-		return errco.VERSION_UPDATEAVAILABLE, onlineVersion, nil
+		return errco.VERSION_UPDATEAVAILABLE, versOnline, nil
 	case delta < 0:
 		// the runtime version has not yet been officially released
-		return errco.VERSION_UNOFFICIALVERSION, onlineVersion, nil
+		return errco.VERSION_UNOFFICIALVERSION, versOnline, nil
 	default:
 		// no update available
-		return errco.VERSION_UPDATED, onlineVersion, nil
+		return errco.VERSION_UPDATED, versOnline, nil
 	}
 }
 
-// deltaVersion returns the difference between onlineVersion and clientVersion:
+// deltaVersion returns the difference between versOnline and versClient:
 // =0	versions are equal or an error occurred.
-// >0	if onlineVersion is more recent.
-// <0	if onlineVersion is less recent.
-func deltaVersion(onlineVersion, clientVersion string) (int, *errco.Error) {
+// >0	if official version is more recent.
+// <0	if official version is less recent.
+func deltaVersion(versOnline, versClient string) (int, *errco.Error) {
 	// digitize transforms a string "vx.x.x" into an integer x000x000x000
 	digitize := func(Version string) (int, error) {
 		versionInt := 0
@@ -186,16 +186,16 @@ func deltaVersion(onlineVersion, clientVersion string) (int, *errco.Error) {
 		return versionInt, nil
 	}
 
-	clientVersionInt, err := digitize(clientVersion)
+	versClientInt, err := digitize(versClient)
 	if err != nil {
 		return 0, errco.NewErr(errco.ERROR_VERSION_COMPARISON, errco.LVL_D, "deltaVersion", err.Error())
 	}
-	onlineVersionInt, err := digitize(onlineVersion)
+	versOnlineInt, err := digitize(versOnline)
 	if err != nil {
 		return 0, errco.NewErr(errco.ERROR_VERSION_COMPARISON, errco.LVL_D, "deltaVersion", err.Error())
 	}
 
-	return onlineVersionInt - clientVersionInt, nil
+	return versOnlineInt - versClientInt, nil
 }
 
 // notifyGameChat sends a string with the command "say"
