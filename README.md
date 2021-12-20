@@ -1,16 +1,16 @@
 # Minecraft Server Hibernation  
 
-[![msh - loc](https://tokei.rs/b1/github/gekigek99/minecraft-server-hibernation)](https://github.com/gekigek99/minecraft-vanilla-server-hibernation)
-[![msh - release](https://img.shields.io/github/release/gekigek99/minecraft-server-hibernation?color=05aefc)](https://github.com/gekigek99/minecraft-server-hibernation/releases)
-[![msh - goreport](https://goreportcard.com/badge/github.com/gekigek99/minecraft-server-hibernation)](https://goreportcard.com/report/github.com/gekigek99/minecraft-server-hibernation)
-[![msh - license](https://img.shields.io/github/license/gekigek99/minecraft-server-hibernation?color=6fff00)](https://github.com/gekigek99/minecraft-server-hibernation/blob/master/LICENSE)
-[![msh - stars](https://img.shields.io/github/stars/gekigek99/minecraft-server-hibernation?color=ffbd19)](https://github.com/gekigek99/minecraft-server-hibernation/stargazers)
+[![msh - loc](https://tokei.rs/b1/github/gekware/minecraft-server-hibernation)](https://github.com/gekware/minecraft-vanilla-server-hibernation)
+[![msh - release](https://img.shields.io/github/release/gekware/minecraft-server-hibernation?color=05aefc)](https://github.com/gekware/minecraft-server-hibernation/releases)
+[![msh - goreport](https://goreportcard.com/badge/github.com/gekware/minecraft-server-hibernation)](https://goreportcard.com/report/github.com/gekware/minecraft-server-hibernation)
+[![msh - license](https://img.shields.io/github/license/gekware/minecraft-server-hibernation?color=6fff00)](https://github.com/gekware/minecraft-server-hibernation/blob/master/LICENSE)
+[![msh - stars](https://img.shields.io/github/stars/gekware/minecraft-server-hibernation?color=ffbd19)](https://github.com/gekware/minecraft-server-hibernation/stargazers)
 
 Avoid wasting of resources by **automatically starting** your minecraft server when a player join **and stopping** it when no one is online  
 _(for vanilla/modded on linux/windows/macos)_  
 
 <p align="center" >
-    <a href="https://github.com/gekigek99/minecraft-server-hibernation" >
+    <a href="https://github.com/gekware/minecraft-server-hibernation" >
         <img src="https://user-images.githubusercontent.com/53654579/90397372-09a9df80-e098-11ea-925c-29e9bdfc0b48.png" >
     </a>
 </p>
@@ -18,7 +18,7 @@ _(for vanilla/modded on linux/windows/macos)_
 version: v2.4.4  
 Copyright (C) 2019-2021 [gekigek99](https://github.com/gekigek99)  
 
-Check the [releases](https://github.com/gekigek99/minecraft-server-hibernation/releases) to download the binaries (for linux, windows and macos)
+Check the [releases](https://github.com/gekware/minecraft-server-hibernation/releases) to download the binaries (for linux, windows and macos)
 
 _You can compile msh from the dev branch to access a more updated version but beware that it might still need testing_
 
@@ -27,7 +27,7 @@ _You can compile msh from the dev branch to access a more updated version but be
 This version was successfully compiled in go version 1.15  
 Compilation procedure:
 ```
-git clone https://github.com/gekigek99/minecraft-server-hibernation.git  
+git clone https://github.com/gekware/minecraft-server-hibernation.git  
 cd minecraft-server-hibernation/  
 go build .
 ```
@@ -123,11 +123,11 @@ _If you wish to contribute, please create a pull request using the dev branch as
 </p>
 
 <h4 align="center" >
-    Give a star to this repository on <a href="https://github.com/gekigek99/minecraft-server-hibernation" > github</a>!
+    Give a star to this repository on <a href="https://github.com/gekware/minecraft-server-hibernation" > github</a>!
 </h4>
 
 <p align="center" >
-    <a href="https://github.com/gekigek99/minecraft-server-hibernation/stargazers" >
-        <img src="https://reporoster.com/stars/gekigek99/minecraft-server-hibernation" >
+    <a href="https://github.com/gekware/minecraft-server-hibernation/stargazers" >
+        <img src="https://reporoster.com/stars/gekware/minecraft-server-hibernation" >
     </a>
 </p>
