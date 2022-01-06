@@ -22,7 +22,7 @@ var intro []string = []string{
 	"| '_ ` _ \\/ __| '_ \\ ",
 	"| | | | | \\__ \\ | | |",
 	"|_| |_| |_|___/_| |_| " + version,
-	"Copyright (C) 2019-2021 gekigek99",
+	"Copyright (C) 2019-2022 gekigek99",
 	"github: https://github.com/gekigek99",
 	"remember to give a star to this repository!",
 }

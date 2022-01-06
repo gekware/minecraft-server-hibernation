@@ -1,6 +1,6 @@
 # Minecraft Server Hibernation  
 
-[![msh - loc](https://tokei.rs/b1/github/gekware/minecraft-server-hibernation)](https://github.com/gekware/minecraft-vanilla-server-hibernation)
+[![msh - loc](https://tokei.rs/b1/github/gekware/minecraft-server-hibernation)](https://github.com/gekware/minecraft-server-hibernation)
 [![msh - release](https://img.shields.io/github/release/gekware/minecraft-server-hibernation?color=05aefc)](https://github.com/gekware/minecraft-server-hibernation/releases)
 [![msh - goreport](https://goreportcard.com/badge/github.com/gekware/minecraft-server-hibernation)](https://goreportcard.com/report/github.com/gekware/minecraft-server-hibernation)
 [![msh - license](https://img.shields.io/github/license/gekware/minecraft-server-hibernation?color=6fff00)](https://github.com/gekware/minecraft-server-hibernation/blob/master/LICENSE)
@@ -16,7 +16,7 @@ _(for vanilla/modded on linux/windows/macos)_
 </p>
 
 version: v2.4.4  
-Copyright (C) 2019-2021 [gekigek99](https://github.com/gekigek99)  
+Copyright (C) 2019-2022 [gekigek99](https://github.com/gekigek99)  
 
 Check the [releases](https://github.com/gekware/minecraft-server-hibernation/releases) to download the binaries (for linux, windows and macos)
 
