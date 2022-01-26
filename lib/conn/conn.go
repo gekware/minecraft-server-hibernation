@@ -48,21 +48,35 @@ func HandleClientSocket(clientSocket net.Conn) {
 		case errco.CLIENT_REQ_JOIN:
 			// client requests "server join"
 
-			// server is OFFLINE --> issue StartMS()
-			errMsh := servctrl.StartMS()
+			// check if the client is whitelisted
+			// clientAddress, playerName
+			errMsh := config.IsWhitelisted(playerName, clientAddress)
 			if errMsh != nil {
+				// client is not whitelisted
+				// log to msh console and warn client with text in the loadscreen
+				errco.LogMshErr(errMsh.AddTrace("HandleClientSocket"))
+				mes := buildMessage(errco.MESSAGE_FORMAT_TXT, "You don't have permission to start this server")
+				clientSocket.Write(mes)
+				errco.Logln(errco.LVL_E, "%smsh --> client%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
+				return
+			}
+
+			// server is OFFLINE --> issue StartMS()
+			errMsh = servctrl.StartMS()
+			if errMsh != nil {
+				// error occurred while starting the server
 				// log to msh console and warn client with text in the loadscreen
 				errco.LogMshErr(errMsh.AddTrace("HandleClientSocket"))
 				mes := buildMessage(errco.MESSAGE_FORMAT_TXT, "An error occurred while starting the server: check the msh log")
 				clientSocket.Write(mes)
 				errco.Logln(errco.LVL_E, "%smsh --> client%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
-			} else {
-				// log to msh console and answer client with text in the loadscreen
-				errco.Logln(errco.LVL_D, "%s tried to join from %s:%d to %s:%d", playerName, clientAddress, config.ListenPort, config.TargetHost, config.TargetPort)
-				mes := buildMessage(errco.MESSAGE_FORMAT_TXT, "Server start command issued. Please wait... "+servstats.Stats.LoadProgress)
-				clientSocket.Write(mes)
-				errco.Logln(errco.LVL_E, "%smsh --> client%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
 			}
+
+			// log to msh console and answer client with text in the loadscreen
+			errco.Logln(errco.LVL_D, "%s tried to join from %s:%d to %s:%d", playerName, clientAddress, config.ListenPort, config.TargetHost, config.TargetPort)
+			mes := buildMessage(errco.MESSAGE_FORMAT_TXT, "Server start command issued. Please wait... "+servstats.Stats.LoadProgress)
+			clientSocket.Write(mes)
+			errco.Logln(errco.LVL_E, "%smsh --> client%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
 		}
 
 		// close the client connection

@@ -40,6 +40,7 @@ go build .
     - FileName
     - StartServerParam
     - StopServer
+	- Whitelist
     - \* StopServerAllowKill
     - \* HibernationInfo and StartingInfo
     - \* TimeBeforeStoppingEmptyServer
@@ -77,6 +78,12 @@ Commands to start and stop minecraft server:
 }
 # if StopServerAllowKill is more than 0, then the specified number is the amount of seconds
 # given to the minecraft server to go offline, after which it is killed
+```
+Whitelist addresses or IPs that are allowed to start the server:
+```yaml
+# leave empty to allow everyone
+# unknown clients are not allowed to start the server, they can still join
+"Whitelist": ["{127.0.0.1}", "{gekigek99}"]
 ```
 Set the logging level for debug purposes
 ```yaml

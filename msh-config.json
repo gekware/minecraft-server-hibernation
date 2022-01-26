@@ -17,6 +17,7 @@
     "InfoStarting": "                   §fserver status:\n                    §6§lWARMING UP",
     "NotifyUpdate": true,
     "ListenPort": 25555,
-    "TimeBeforeStoppingEmptyServer": 30
+    "TimeBeforeStoppingEmptyServer": 30,
+	"Whitelist": ["{127.0.0.1}", "{gekigek99}"]
   }
 }

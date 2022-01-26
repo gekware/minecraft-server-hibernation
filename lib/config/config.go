@@ -204,3 +204,27 @@ func getIpPorts() (string, int, string, int, *errco.Error) {
 	// return ListenHost, TargetHost, TargetPort, nil
 	return ListenHost, ConfigRuntime.Msh.ListenPort, TargetHost, TargetPort, nil
 }
+
+// IsWhitelisted checks if the playerName or clientAddress is whitelisted
+func IsWhitelisted(params ...string) *errco.Error {
+	// check if whitelist is enabled
+	// if empty then it is not enabled and no checks are needed
+	if len(ConfigRuntime.Msh.Whitelist) == 0 {
+		errco.Logln(errco.LVL_D, "whitelist not enabled")
+		return nil
+	}
+
+	errco.Logln(errco.LVL_D, "checking whitelist for: %s", strings.Join(params, ", "))
+
+	// check if playerName or clientAddress are in whitelist
+	for _, p := range params {
+		if utility.SliceContain(p, ConfigRuntime.Msh.Whitelist) {
+			errco.Logln(errco.LVL_D, "playerName or clientAddress is whitelisted!")
+			return nil
+		}
+	}
+
+	// playerName or clientAddress not found in whitelist
+	errco.Logln(errco.LVL_D, "playerName or clientAddress is not whitelisted!")
+	return errco.NewErr(errco.ERROR_PLAYER_NOT_IN_WHITELIST, errco.LVL_B, "IsWhitelisted", "playerName or clientAddress is not whitelisted")
+}

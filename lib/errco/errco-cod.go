@@ -71,10 +71,11 @@ const (
 
 	// config package
 
-	ERROR_CONFIG_LOAD  = 0x0003f000 // error while loading config
-	ERROR_CONFIG_SAVE  = 0x0003f001 // error while saving config to file
-	ERROR_CONFIG_CHECK = 0x0003f002 // error while checking config
-	ERROR_ICON_LOAD    = 0x0003f100 // error while loading icon
+	ERROR_CONFIG_LOAD             = 0x0003f000 // error while loading config
+	ERROR_CONFIG_SAVE             = 0x0003f001 // error while saving config to file
+	ERROR_CONFIG_CHECK            = 0x0003f002 // error while checking config
+	ERROR_ICON_LOAD               = 0x0003f100 // error while loading icon
+	ERROR_PLAYER_NOT_IN_WHITELIST = 0x0003f200 // player is not in whitelist
 
 	// operative system package
 

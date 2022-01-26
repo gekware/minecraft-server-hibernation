@@ -3,6 +3,7 @@ package utility
 import (
 	"bytes"
 	"fmt"
+	"reflect"
 	"strings"
 
 	"msh/lib/errco"
@@ -63,4 +64,30 @@ func BytBetween(data, a, b []byte) ([]byte, *errco.Error) {
 	}
 
 	return data[aIndex+len(a):][:bIndex], nil
+}
+
+// SliceContain returns true if the slice contains the element.
+// in case of error, false is returned
+func SliceContain(e, sli interface{}) bool {
+	// check if e and sli types are the same
+	if reflect.TypeOf(sli).Elem().Kind() != reflect.TypeOf(e).Kind() {
+		return false
+	}
+
+	switch sli := sli.(type) {
+	case []string:
+		for _, slie := range sli {
+			if e == slie {
+				return true
+			}
+		}
+	case []int:
+		for _, slie := range sli {
+			if e == slie {
+				return true
+			}
+		}
+	}
+
+	return false
 }
