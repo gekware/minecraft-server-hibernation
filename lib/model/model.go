@@ -108,3 +108,9 @@ type GameRawMessage struct {
 	Color string `json:"color"`
 	Bold  bool   `json:"bold"`
 }
+
+// struct for version.json of server JAR
+type VersionInfo struct {
+	Version  string `json:"release_target"`
+	Protocol int    `json:"protocol_version"`
+}

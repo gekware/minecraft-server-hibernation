@@ -1,6 +1,7 @@
 package config
 
 import (
+	"archive/zip"
 	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
@@ -28,6 +29,9 @@ var (
 	Javav string // Javav is the java version on the system. format: "java 16.0.1 2021-04-20"
 
 	ServerIcon string // ServerIcon contains the minecraft server icon
+
+	Protocol int
+	Version  string
 
 	ListenHost string = "0.0.0.0"   // ListenHost is the ip address for clients to connect to msh
 	ListenPort int                  // ListenPort is the port for clients to connect to msh
@@ -83,6 +87,23 @@ func LoadConfig() *errco.Error {
 	}
 
 	errco.Logln(errco.LVL_D, "msh proxy setup: %s:%d --> %s:%d", ListenHost, ListenPort, TargetHost, TargetPort)
+
+	// set server and protocol version from server JAR file if not manually set in the config.
+	// required for backward-compatibility and for Minecraft versions without a version.info inside the JAR file
+	// (see https://minecraft.fandom.com/wiki/Version.json)
+	if ConfigRuntime.Server.Version == "" || ConfigRuntime.Server.Protocol == 0 {
+		var version, protocol, errMsh = getVersionInfo()
+		if errMsh != nil {
+			return errMsh.AddTrace("LoadConfig")
+		}
+
+		if ConfigRuntime.Server.Version == "" {
+			ConfigRuntime.Server.Version = version
+		}
+		if ConfigRuntime.Server.Protocol == 0 {
+			ConfigRuntime.Server.Protocol = protocol
+		}
+	}
 
 	// set server icon
 	ServerIcon, errMsh = ConfigRuntime.loadIcon()
@@ -213,4 +234,42 @@ func (c *Configuration) loadRuntime(base *Configuration) *errco.Error {
 	}
 
 	return nil
+}
+
+// getVersionInfo reads version.json from the server JAR file and returns the correct Minecraft version and protocol version
+func getVersionInfo() (string, int, *errco.Error) {
+	serverFileFolderPath := filepath.Join(ConfigRuntime.Server.Folder, ConfigRuntime.Server.FileName)
+	reader, err := zip.OpenReader(serverFileFolderPath)
+	if err != nil {
+		return "", -1, errco.NewErr(errco.ERROR_VERSION_LOAD, errco.LVL_D, "getVersionInfo", err.Error())
+	}
+	defer reader.Close()
+
+	for _, file := range reader.File {
+		if file.Name != "version.json" {
+			continue
+		}
+
+		versionsReader, err := file.Open()
+		if err != nil {
+			return "", -1, errco.NewErr(errco.ERROR_VERSION_LOAD, errco.LVL_D, "getVersionInfo", err.Error())
+		}
+		defer versionsReader.Close()
+
+		versionsBytes, err := ioutil.ReadAll(versionsReader)
+		if err != nil {
+			return "", -1, errco.NewErr(errco.ERROR_VERSION_LOAD, errco.LVL_D, "getVersionInfo", err.Error())
+		}
+
+		var result model.VersionInfo
+		err = json.Unmarshal(versionsBytes, &result)
+		if err != nil {
+			return "", -1, errco.NewErr(errco.ERROR_VERSION_LOAD, errco.LVL_D, "getVersionInfo", err.Error())
+		}
+
+		return result.Version, result.Protocol, nil
+	}
+
+	return "", -1, errco.NewErr(errco.ERROR_VERSION_LOAD, errco.LVL_B, "getVersionInfo",
+		"version.json not found in server JAR file. Please manually specify Version and Protocol in the config under \"Server\"")
 }
