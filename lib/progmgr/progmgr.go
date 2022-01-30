@@ -69,14 +69,14 @@ func UpdateManager(versClient string) {
 	// request headers:				HTTP_USER_AGENT
 	// response:					"latest version: $officialVersion"
 
-	versProt := "1"
+	protv := 1
 	deltaT := 4 * time.Hour
 	respHeader := "latest version: "
 
 	for {
 		errco.Logln(errco.LVL_D, "checking version...")
 
-		status, versOnline, errMsh := checkUpdate(versProt, versClient, respHeader)
+		status, versOnline, errMsh := checkUpdate(protv, versClient, respHeader)
 		if errMsh != nil {
 			// since UpdateManager is a goroutine, don't return and just log the error
 			errco.LogMshErr(errMsh.AddTrace("UpdateManager"))
@@ -109,7 +109,7 @@ func UpdateManager(versClient string) {
 
 // checkUpdate checks for updates. Returns (update available, online version, error)
 // if error occurred, online version will be "error"
-func checkUpdate(versProt, versClient, respHeader string) (int, string, *errco.Error) {
+func checkUpdate(protv int, versClient, respHeader string) (int, string, *errco.Error) {
 	userAgentOs := "osNotSupported"
 	switch runtime.GOOS {
 	case "windows":
@@ -121,7 +121,7 @@ func checkUpdate(versProt, versClient, respHeader string) (int, string, *errco.E
 	}
 
 	// build http request
-	url := "http://minecraft-server-hibernation.heliohost.us/latest-version.php?v=" + versProt + "&version=" + versClient
+	url := "http://minecraft-server-hibernation.heliohost.us/latest-version.php?v=" + fmt.Sprint(protv) + "&version=" + versClient
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return errco.ERROR_VERSION, "error", errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "checkUpdate", err.Error())
