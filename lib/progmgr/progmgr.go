@@ -58,6 +58,8 @@ func InterruptListener() {
 	}
 }
 
+// CheckedUpdateC communicates to main func that the first update check
+// has been done and msh can continue
 var CheckedUpdateC chan bool = make(chan bool, 1)
 
 // UpdateManager checks for updates and notify the user via terminal/gamechat
