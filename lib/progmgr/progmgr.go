@@ -138,8 +138,11 @@ func checkUpdate(protv int, versClient, respHeader string) (int, string, *errco.
 
 	// read http response
 	respByte, err := ioutil.ReadAll(resp.Body)
-	if err != nil || !strings.Contains(string(respByte), respHeader) {
+	if err != nil {
 		return errco.ERROR_VERSION, "error", errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "checkUpdate", err.Error())
+	}
+	if !strings.Contains(string(respByte), respHeader) {
+		return errco.ERROR_VERSION, "error", errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "checkUpdate", "missing response header")
 	}
 
 	// no error and respByte contains respHeader
