@@ -12,6 +12,7 @@ import (
 	"msh/lib/servstats"
 )
 
+// ServTerm is the variable that represent the running minecraft server
 var ServTerm *servTerminal = &servTerminal{}
 
 // servTerminal is the minecraft server terminal
