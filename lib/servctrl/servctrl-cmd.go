@@ -154,8 +154,8 @@ func printerOutErr() {
 					servstats.Stats.Status = errco.SERVER_STATUS_ONLINE
 					errco.Logln(errco.LVL_B, "MINECRAFT SERVER IS ONLINE!")
 
-					// launch a StopMSRequests so that if no players connect the server will shutdown
-					StopMSRequest()
+					// launch a FreezeMSRequests so that if no players connect the server will shutdown
+					FreezeMSRequest()
 				}
 
 			case errco.SERVER_STATUS_ONLINE:
@@ -201,7 +201,7 @@ func printerOutErr() {
 					case strings.Contains(lineContent, "lost connection"):
 						servstats.Stats.PlayerCount--
 						errco.Logln(errco.LVL_C, "A PLAYER LEFT THE SERVER! - %d players online", servstats.Stats.PlayerCount)
-						StopMSRequest()
+						FreezeMSRequest()
 
 					// the server is stopping
 					case strings.Contains(lineContent, "Stopping"):

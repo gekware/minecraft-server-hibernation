@@ -61,8 +61,8 @@ func HandleClientSocket(clientSocket net.Conn) {
 				return
 			}
 
-			// server is OFFLINE --> issue StartMS()
-			errMsh = servctrl.StartMS()
+			// server is OFFLINE --> issue WarmMS()
+			errMsh = servctrl.WarmMS()
 			if errMsh != nil {
 				// error occurred while starting the server
 				// log to msh console and warn client with text in the loadscreen

@@ -56,18 +56,18 @@ func GetInput() {
 
 			switch lineSplit[1] {
 			case "start":
-				errMsh := servctrl.StartMS()
+				errMsh := servctrl.WarmMS()
 				if errMsh != nil {
 					errco.LogMshErr(errMsh.AddTrace("GetInput"))
 				}
 			case "freeze":
 				// stop minecraft server with no player check
-				errMsh := servctrl.StopMS(false)
+				errMsh := servctrl.FreezeMS(false)
 				if errMsh != nil {
 					errco.LogMshErr(errMsh.AddTrace("GetInput"))
 				}
 			case "exit":
-				errMsh := servctrl.StopMS(false)
+				errMsh := servctrl.FreezeMS(false)
 				if errMsh != nil {
 					errco.LogMshErr(errMsh.AddTrace("GetInput"))
 				}

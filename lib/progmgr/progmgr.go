@@ -30,7 +30,7 @@ func InterruptListener() {
 		<-c
 
 		// stop the minecraft server with no player check
-		errMsh := servctrl.StopMS(false)
+		errMsh := servctrl.FreezeMS(false)
 		if errMsh != nil {
 			errco.LogMshErr(errMsh.AddTrace("InterruptListener"))
 		}

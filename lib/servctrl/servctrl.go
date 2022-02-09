@@ -10,53 +10,53 @@ import (
 	"msh/lib/servstats"
 )
 
-// StartMS starts the minecraft server
-func StartMS() *errco.Error {
+// WarmMS starts the minecraft server
+func WarmMS() *errco.Error {
 	// start server terminal
 	errMsh := cmdStart(config.ConfigRuntime.Server.Folder, config.ConfigRuntime.Commands.StartServer)
 	if errMsh != nil {
-		return errMsh.AddTrace("StartMS")
+		return errMsh.AddTrace("WarmMS")
 	}
 
 	return nil
 }
 
-// StopMS executes "stop" command on the minecraft server.
-// When playersCheck == true, it checks for StopMSRequests/Players and orders the server shutdown
-func StopMS(playersCheck bool) *errco.Error {
+// FreezeMS executes "stop" command on the minecraft server.
+// When playersCheck == true, it checks for FreezeMSRequests/Players and orders the server shutdown
+func FreezeMS(playersCheck bool) *errco.Error {
 	// wait for the starting server to go online
 	for servstats.Stats.Status == errco.SERVER_STATUS_STARTING {
 		time.Sleep(1 * time.Second)
 	}
 	// if server is not online return
 	if servstats.Stats.Status != errco.SERVER_STATUS_ONLINE {
-		return errco.NewErr(errco.ERROR_SERVER_NOT_ONLINE, errco.LVL_D, "StopMS", "server is not online")
+		return errco.NewErr(errco.ERROR_SERVER_NOT_ONLINE, errco.LVL_D, "FreezeMS", "server is not online")
 	}
 
-	// player/StopMSRequests check
+	// player/FreezeMSRequests check
 	if playersCheck {
-		// check that there is only one StopMSRequest running and players <= 0,
+		// check that there is only one FreezeMSRequest running and players <= 0,
 		// if so proceed with server shutdown
-		atomic.AddInt32(&servstats.Stats.StopMSRequests, -1)
+		atomic.AddInt32(&servstats.Stats.FreezeMSRequests, -1)
 
 		// check how many players are on the server
 		playerCount, method := countPlayerSafe()
 		errco.Logln(errco.LVL_B, "%d online players - method for player count: %s", playerCount, method)
 		if playerCount > 0 {
-			return errco.NewErr(errco.ERROR_SERVER_NOT_EMPTY, errco.LVL_D, "StopMS", "server is not empty")
+			return errco.NewErr(errco.ERROR_SERVER_NOT_EMPTY, errco.LVL_D, "FreezeMS", "server is not empty")
 		}
 
 		// check if enough time has passed since last player disconnected
 
-		if atomic.LoadInt32(&servstats.Stats.StopMSRequests) > 0 {
-			return errco.NewErr(errco.ERROR_SERVER_MUST_WAIT, errco.LVL_D, "StopMS", fmt.Sprintf("not enough time has passed since last player disconnected (StopMSRequests: %d )", servstats.Stats.StopMSRequests))
+		if atomic.LoadInt32(&servstats.Stats.FreezeMSRequests) > 0 {
+			return errco.NewErr(errco.ERROR_SERVER_MUST_WAIT, errco.LVL_D, "FreezeMS", fmt.Sprintf("not enough time has passed since last player disconnected (FreezeMSRequests: %d )", servstats.Stats.FreezeMSRequests))
 		}
 	}
 
 	// execute stop command
-	_, errMsh := Execute(config.ConfigRuntime.Commands.StopServer, "StopMS")
+	_, errMsh := Execute(config.ConfigRuntime.Commands.StopServer, "FreezeMS")
 	if errMsh != nil {
-		return errMsh.AddTrace("StopMS")
+		return errMsh.AddTrace("FreezeMS")
 	}
 
 	// if sigint is allowed, launch a function to check the shutdown of minecraft server
@@ -67,20 +67,20 @@ func StopMS(playersCheck bool) *errco.Error {
 	return nil
 }
 
-// StopMSRequest increases StopMSRequests by one and starts the timer to execute StopMS(true) (with playersCheck)
+// FreezeMSRequest increases FreezeMSRequests by one and starts the timer to execute FreezeMS(true) (with playersCheck)
 // [goroutine]
-func StopMSRequest() {
-	atomic.AddInt32(&servstats.Stats.StopMSRequests, 1)
+func FreezeMSRequest() {
+	atomic.AddInt32(&servstats.Stats.FreezeMSRequests, 1)
 
 	// [goroutine]
 	time.AfterFunc(
 		time.Duration(config.ConfigRuntime.Msh.TimeBeforeStoppingEmptyServer)*time.Second,
 		func() {
-			errMsh := StopMS(true)
+			errMsh := FreezeMS(true)
 			if errMsh != nil {
 				// avoid logging "server is not online" error since it can be very frequent
 				if errMsh.Cod != errco.ERROR_SERVER_NOT_ONLINE {
-					errco.LogMshErr(errMsh.AddTrace("StopMSRequest"))
+					errco.LogMshErr(errMsh.AddTrace("FreezeMSRequest"))
 				}
 			}
 		})
