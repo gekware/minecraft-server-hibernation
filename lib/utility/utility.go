@@ -68,22 +68,28 @@ func BytBetween(data, a, b []byte) ([]byte, *errco.Error) {
 
 // SliceContain returns true if the slice contains the element.
 // in case of error, false is returned
-func SliceContain(e, sli interface{}) bool {
+func SliceContain(ele, sli interface{}) bool {
 	// check if e and sli types are the same
-	if reflect.TypeOf(sli).Elem().Kind() != reflect.TypeOf(e).Kind() {
+	if reflect.TypeOf(sli).Elem().Kind() != reflect.TypeOf(ele).Kind() {
 		return false
 	}
 
 	switch sli := sli.(type) {
 	case []string:
-		for _, slie := range sli {
-			if e == slie {
+		for _, e := range sli {
+			if e == ele {
 				return true
 			}
 		}
 	case []int:
-		for _, slie := range sli {
-			if e == slie {
+		for _, e := range sli {
+			if e == ele {
+				return true
+			}
+		}
+	case []uint32:
+		for _, e := range sli {
+			if e == ele {
 				return true
 			}
 		}

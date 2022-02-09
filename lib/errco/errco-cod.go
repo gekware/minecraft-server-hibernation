@@ -75,11 +75,17 @@ const (
 	ERROR_CONFIG_SAVE             = 0x0003f001 // error while saving config to file
 	ERROR_CONFIG_CHECK            = 0x0003f002 // error while checking config
 	ERROR_ICON_LOAD               = 0x0003f100 // error while loading icon
-	ERROR_PLAYER_NOT_IN_WHITELIST = 0x0003f200 // player is not in whitelist
+	ERROR_PLAYER_NOT_IN_WHITELIST = 0x0003f200 // error player is not in whitelist
 
 	// operative system package
 
-	ERROR_OS_NOT_SUPPORTED = 0x0004f000 // OS not supported
+	ERROR_OS_NOT_SUPPORTED        = 0x0004f000 // error OS not supported
+	ERROR_PROCESS_OPEN            = 0x0004f100 // error while opening process
+	ERROR_PROCESS_SUSPEND_CALL    = 0x0004f200 // error while executing suspend call to process handle
+	ERROR_PROCESS_RESUME_CALL     = 0x0004f201 // error while executing resume call to process handle
+	ERROR_PROCESS_SYSTEM_SNAPSHOT = 0x0004f300 // error while building system processes snapshot
+	ERROR_PROCESS_ENTRY           = 0x0004f301 // error while setting first process entry in snapshot
+	ERROR_PROCESS_NOT_FOUND       = 0x0004f400 // error process pid was not found
 
 	// utility package
 
@@ -93,7 +99,7 @@ const (
 	// input package
 
 	ERROR_COMMAND_INPUT     = 0x0007f000 // general error while reading command input
-	ERROR_COMMAND_UNKNOWN   = 0x0007f001 // command is unknown
-	ERROR_INPUT_READ        = 0x0007f100 // error while reading input)
-	ERROR_INPUT_UNAVAILABLE = 0x0007f101 // stdin is not available
+	ERROR_COMMAND_UNKNOWN   = 0x0007f001 // error unknown command
+	ERROR_INPUT_READ        = 0x0007f100 // error while reading input
+	ERROR_INPUT_UNAVAILABLE = 0x0007f101 // error stdin is not available
 )
