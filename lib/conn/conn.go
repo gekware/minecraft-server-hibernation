@@ -23,6 +23,12 @@ func HandleClientSocket(clientSocket net.Conn) {
 
 	switch servstats.Stats.Status {
 	case errco.SERVER_STATUS_OFFLINE:
+		// close the client connection at the end
+		defer func() {
+			errco.Logln(errco.LVL_D, "closing connection for: %s", clientAddress)
+			clientSocket.Close()
+		}()
+
 		reqType, playerName, errMsh := getReqType(clientSocket)
 		if errMsh != nil {
 			errco.LogMshErr(errMsh.AddTrace("HandleClientSocket"))
@@ -79,11 +85,13 @@ func HandleClientSocket(clientSocket net.Conn) {
 			errco.Logln(errco.LVL_E, "%smsh --> client%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
 		}
 
-		// close the client connection
-		errco.Logln(errco.LVL_D, "closing connection for: %s", clientAddress)
-		clientSocket.Close()
-
 	case errco.SERVER_STATUS_STARTING:
+		// close the client connection at the end
+		defer func() {
+			errco.Logln(errco.LVL_D, "closing connection for: %s", clientAddress)
+			clientSocket.Close()
+		}()
+
 		reqType, playerName, errMsh := getReqType(clientSocket)
 		if errMsh != nil {
 			errco.LogMshErr(errMsh.AddTrace("HandleClientSocket"))
@@ -116,10 +124,6 @@ func HandleClientSocket(clientSocket net.Conn) {
 			clientSocket.Write(mes)
 			errco.Logln(errco.LVL_E, "%smsh --> client%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
 		}
-
-		// close the client connection
-		errco.Logln(errco.LVL_D, "closing connection for: %s", clientAddress)
-		clientSocket.Close()
 
 	case errco.SERVER_STATUS_ONLINE:
 		// just open a connection with the server and connect it with the client
