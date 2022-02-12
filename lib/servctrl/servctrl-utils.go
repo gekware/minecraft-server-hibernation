@@ -76,7 +76,7 @@ func getServInfo() (*model.DataInfo, *errco.Error) {
 	// open connection to minecraft server
 	serverSocket, err := net.Dial("tcp", fmt.Sprintf("%s:%d", config.TargetHost, config.TargetPort))
 	if err != nil {
-		return nil, errco.NewErr(errco.ERROR_SERVER_DIAL, errco.LVL_D, "getServInfo", err.Error())
+		return &model.DataInfo{}, errco.NewErr(errco.ERROR_SERVER_DIAL, errco.LVL_D, "getServInfo", err.Error())
 	}
 	defer serverSocket.Close()
 
