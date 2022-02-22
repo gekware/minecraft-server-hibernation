@@ -21,8 +21,10 @@ import (
 const configFileName string = "msh-config.json"
 
 var (
-	// Config variables contain the configuration parameters for config file and runtime
+	// ConfigDefault contains the configuration parameters of config in file
 	ConfigDefault model.Configuration
+	// ConfigRuntime contains the configuration parameters of config during runtime.
+	// (can be altered during runtime without affecting the config file)
 	ConfigRuntime model.Configuration
 
 	// ServerIcon contains the minecraft server icon
