@@ -30,7 +30,8 @@ func Boxify(strList []string) string {
 	return textBox
 }
 
-// StrBetween returns the string between 2 substrings
+// StrBetween returns the string between 2 substrings.
+// In case of error the returned parameters are "" and error
 func StrBetween(str, a, b string) (string, *errco.Error) {
 	// ┌--------str---------┐
 	// [ ... a target b ... ]
