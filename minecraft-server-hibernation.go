@@ -13,15 +13,12 @@ import (
 	"msh/lib/utility"
 )
 
-// script version
-var version string = "v2.4.5"
-
 // contains intro to script and program
 var intro []string = []string{
 	" _ __ ___  ___| |__  ",
 	"| '_ ` _ \\/ __| '_ \\ ",
 	"| | | | | \\__ \\ | | |",
-	"|_| |_| |_|___/_| |_| " + version,
+	"|_| |_| |_|___/_| |_| " + progmgr.MshVersion,
 	"Copyright (C) 2019-2022 gekigek99",
 	"github: https://github.com/gekigek99",
 	"remember to give a star to this repository!",
@@ -41,13 +38,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	// launch update manager to check for updates
-	go progmgr.UpdateManager(version)
+	// launch msh manager
+	go progmgr.MshMgr()
 	// wait for the initial update check
 	<-progmgr.CheckedUpdateC
-
-	// listen for interrupt signals
-	go progmgr.InterruptListener()
 
 	// launch GetInput()
 	go input.GetInput()

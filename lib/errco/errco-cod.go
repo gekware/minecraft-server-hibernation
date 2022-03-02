@@ -25,9 +25,11 @@ const (
 
 	// program manager package
 
-	VERSION_UPDATED           = 0x00010000 // check update result: msh updated
-	VERSION_UPDATEAVAILABLE   = 0x00010001 // check update result: update available
-	VERSION_UNOFFICIALVERSION = 0x00010002 // check update result: msh is running unofficial version
+	VERSION_DEP = 0x00010000 // check update result: msh is running deprecated version
+	VERSION_UPD = 0x00010001 // check update result: update available
+	VERSION_OK  = 0x00010002 // check update result: msh updated
+	VERSION_DEV = 0x00010003 // check update result: msh is running dev version
+	VERSION_UNO = 0x00010004 // check update result: msh is running unofficial version
 
 	// server connection package
 
@@ -56,8 +58,10 @@ const (
 
 	// program manager package
 
-	ERROR_VERSION            = 0x0001f000 // check update error
-	ERROR_VERSION_COMPARISON = 0x0001f001 // delta version calculation error
+	ERROR_VERSION         = 0x0001f000 // check update error
+	ERROR_VERSION_INVALID = 0x0001f001 // version format is invalid
+	ERROR_GET_CORES       = 0x0001f100 // error getting system cores count
+	ERROR_GET_MEMORY      = 0x0001f101 // error getting system memory info
 
 	// server connection package
 

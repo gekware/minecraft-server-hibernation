@@ -27,6 +27,10 @@ var (
 	// (can be altered during runtime without affecting the config file)
 	ConfigRuntime model.Configuration
 
+	// Javav is the java version on the system.
+	// format: "16.0.1"
+	Javav string
+
 	// ServerIcon contains the minecraft server icon
 	ServerIcon string
 
@@ -176,6 +180,19 @@ func checkConfigRuntime() *errco.Error {
 		return errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_B, "checkConfigRuntime", "java not installed")
 	}
 
+	// check java version
+	if out, err := exec.Command("java", "--version").Output(); err != nil {
+		// non blocking error
+		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_D, "checkConfigRuntime", "could not execute 'java -version' command"))
+		Javav = "unknown"
+	} else if j, errMsh := utility.StrBetween(string(out), "java ", " "); errMsh != nil {
+		// non blocking error
+		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_D, "checkConfigRuntime", "could not extract java version"))
+		Javav = "unknown"
+	} else {
+		Javav = j
+	}
+
 	return nil
 }
 
@@ -189,7 +206,7 @@ func getIpPorts() (string, int, string, int, *errco.Error) {
 	dataStr := strings.ReplaceAll(string(data), "\r", "")
 
 	TargetPortStr, errMsh := utility.StrBetween(dataStr, "server-port=", "\n")
-	if err != nil {
+	if errMsh != nil {
 		return "", -1, "", -1, errMsh.AddTrace("getIpPorts")
 	}
 

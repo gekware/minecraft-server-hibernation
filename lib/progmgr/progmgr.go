@@ -1,6 +1,8 @@
 package progmgr
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"math"
@@ -10,214 +12,480 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
 	"msh/lib/config"
 	"msh/lib/errco"
+	"msh/lib/model"
 	"msh/lib/servctrl"
 	"msh/lib/servstats"
+
+	"github.com/shirou/gopsutil/cpu"
+	"github.com/shirou/gopsutil/mem"
+	"github.com/shirou/gopsutil/process"
 )
 
-// InterruptListener listen for interrupt signals and forcefully stop the minecraft server before exiting msh.
-// [goroutine]
-func InterruptListener() {
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+var (
+	// msh version
+	MshVersion string = "v2.4.5"
 
-	for {
-		// wait for termination signal
-		<-c
+	// CheckedUpdateC communicates to main func that the first update check
+	// has been done and msh can continue
+	CheckedUpdateC chan bool = make(chan bool, 1)
 
-		// stop the minecraft server with no player check
-		errMsh := servctrl.StopMS(false)
-		if errMsh != nil {
-			errco.LogMshErr(errMsh.AddTrace("InterruptListener"))
-		}
+	// api protocol version
+	protv int = 2
 
-		// wait 1 second to let the server go into stopping mode
-		time.Sleep(time.Second)
+	// msh program
+	msh *program
 
-		switch servstats.Stats.Status {
-		case errco.SERVER_STATUS_STOPPING:
-			// if server is correctly stopping, wait for minecraft server to exit
-			errco.Logln(errco.LVL_D, "InterruptListener: waiting for minecraft server terminal to exit (server is stopping)")
-			servctrl.ServTerm.Wg.Wait()
+	// segment used for stats
+	sgm *segment
+)
 
-		case errco.SERVER_STATUS_OFFLINE:
-			// if server is offline, then it's safe to continue
-			errco.Logln(errco.LVL_D, "InterruptListener: minecraft server terminal already exited (server is offline)")
+type program struct {
+	startTime time.Time      // msh program start time
+	sigExit   chan os.Signal // channel through which OS termination signals are notified
+}
 
-		default:
-			errco.Logln(errco.LVL_D, "InterruptListener: stop command does not seem to be stopping server during forceful shutdown")
-		}
+type segment struct {
+	m *sync.Mutex // segment mutex
 
-		// exit
-		errco.Logln(errco.LVL_A, "exiting msh")
-		os.Exit(0)
+	tk          *time.Ticker  // segment ticker (every second)
+	defDuration time.Duration // segment default duration
+	startTime   time.Time     // segment start time
+	end         *time.Timer   // segment end timer
+
+	// stats are reset when segment reset is invoked
+	stats struct {
+		seconds     int
+		secondsHibe int
+		cpuUsage    float64
+		memUsage    float64
+		playerSec   int
+		preTerm     bool
+	}
+
+	// push contains data for user notification
+	push struct {
+		tk      *time.Ticker // time ticker to send an update notification in chat
+		message string       // the message shown by the notification
 	}
 }
 
-// CheckedUpdateC communicates to main func that the first update check
-// has been done and msh can continue
-var CheckedUpdateC chan bool = make(chan bool, 1)
-
-// UpdateManager checks for updates and notify the user via terminal/gamechat
+// MshMgr handles exit signal and updates for msh
 // [goroutine]
-func UpdateManager(versClient string) {
-	// protocol version number:		1
-	// connection every:			4 hours
-	// parameters passed to php:	v (prot), version (client)
-	// request headers:				HTTP_USER_AGENT
-	// response:					"latest version: $officialVersion"
+func MshMgr() {
+	msh = &program{
+		startTime: time.Now(),
+		sigExit:   make(chan os.Signal, 1),
+	}
 
-	protv := 1
-	deltaT := 4 * time.Hour
-	respHeader := "latest version: "
+	// set sigExit to relay termination signals
+	signal.Notify(msh.sigExit, syscall.SIGINT, syscall.SIGHUP, syscall.SIGTERM, syscall.SIGQUIT)
+
+	// segment initialized to 0 so that update check can be executed immediately
+	// must be reset to initialize all variables
+	sgm = sgmReset(0)
+
+	// start segment manager
+	go sgm.sgmMgr()
 
 	for {
-		errco.Logln(errco.LVL_D, "checking version...")
+		select {
+		// msh termination signal is received
+		case <-msh.sigExit:
+			// stop the minecraft server with no player check
+			errMsh := servctrl.StopMS(false)
+			if errMsh != nil {
+				errco.LogMshErr(errMsh.AddTrace("InterruptListener"))
+			}
 
-		status, versOnline, errMsh := checkUpdate(protv, versClient, respHeader)
-		if errMsh != nil {
-			// since UpdateManager is a goroutine, don't return and just log the error
-			errco.LogMshErr(errMsh.AddTrace("UpdateManager"))
-		}
+			// send last statistics before exiting
+			go checkUpdReq(true)
 
-		if config.ConfigRuntime.Msh.NotifyUpdate {
-			switch status {
-			case errco.VERSION_UPDATED:
-				errco.Logln(errco.LVL_A, "msh (%s) is updated", versClient)
+			// wait 1 second to let the server go into stopping mode
+			time.Sleep(time.Second)
 
-			case errco.VERSION_UPDATEAVAILABLE:
-				notification := fmt.Sprintf("msh (%s) is now available: visit github to update!", versOnline)
-				errco.Logln(errco.LVL_A, notification)
-				// notify to game chat every 20 minutes for deltaT time
-				go notifyGameChat(20*time.Minute, deltaT, notification)
+			switch servstats.Stats.Status {
+			case errco.SERVER_STATUS_STOPPING:
+				// if server is correctly stopping, wait for minecraft server to exit
+				errco.Logln(errco.LVL_D, "InterruptListener: waiting for minecraft server terminal to exit (server is stopping)")
+				servctrl.ServTerm.Wg.Wait()
 
-			case errco.VERSION_UNOFFICIALVERSION:
-				errco.Logln(errco.LVL_A, "msh (%s) is running an unofficial release", versClient)
+			case errco.SERVER_STATUS_OFFLINE:
+				// if server is offline, then it's safe to continue
+				errco.Logln(errco.LVL_D, "InterruptListener: minecraft server terminal already exited (server is offline)")
+
+			default:
+				errco.Logln(errco.LVL_D, "InterruptListener: stop command does not seem to be stopping server during forceful shutdown")
+			}
+
+			// exit
+			errco.Logln(errco.LVL_A, "exiting msh")
+			os.Exit(0)
+
+		// check for update when segment ends
+		case <-sgm.end.C:
+			// send check update request
+			errco.Logln(errco.LVL_D, "sending check update request...")
+			res, errMsh := checkUpdReq(false)
+			if errMsh != nil {
+				errco.LogMshErr(errMsh.AddTrace("UpdateManager"))
+				sgm.prolong(10 * time.Minute) // retry in 10 min
+				continue
+			}
+
+			// data successfully received by server, reset segment
+			errco.Logln(errco.LVL_D, "resetting segment...")
+			sgm = sgmReset(sgm.defDuration)
+
+			// analyze check update response
+			errco.Logln(errco.LVL_D, "analyzing check update response...")
+			errMsh = checkUpdAnalyze(res)
+			if errMsh != nil {
+				errco.LogMshErr(errMsh.AddTrace("UpdateManager"))
+				continue
 			}
 		}
 
+		// reminder: if you add here replace `continue` with `break` in select block
+	}
+}
+
+// checkUpdReq logs segment stats and checks for updates.
+func checkUpdReq(preTerm bool) (*http.Response, *errco.Error) {
+	// before returning, communicate that update check is done
+	defer func() {
 		select {
 		case CheckedUpdateC <- true:
 		default:
 		}
+	}()
 
-		time.Sleep(deltaT)
-	}
-}
+	// build request struct
+	reqJson := buildReq(preTerm)
 
-// checkUpdate checks for updates. Returns (update available, online version, error)
-// if error occurred, online version will be "error"
-func checkUpdate(protv int, versClient, respHeader string) (int, string, *errco.Error) {
-	userAgentOs := "osNotSupported"
-	switch runtime.GOOS {
-	case "windows":
-		userAgentOs = "windows"
-	case "linux":
-		userAgentOs = "linux"
-	case "darwin":
-		userAgentOs = "macintosh"
+	// marshal request struct
+	reqByte, err := json.Marshal(reqJson)
+	if err != nil {
+		return nil, errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "checkUpdReq", err.Error())
 	}
 
 	// build http request
-	url := "http://minecraft-server-hibernation.heliohost.us/latest-version.php?v=" + fmt.Sprint(protv) + "&version=" + versClient
-	req, err := http.NewRequest("GET", url, nil)
+	url := fmt.Sprintf("http://msh.gekware.net/api/v%d", protv)
+	req, err := http.NewRequest("GET", url, bytes.NewReader(reqByte))
 	if err != nil {
-		return errco.ERROR_VERSION, "error", errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "checkUpdate", err.Error())
+		return nil, errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "checkUpdReq", err.Error())
 	}
-	req.Header.Add("User-Agent", "msh ("+userAgentOs+") msh/"+versClient)
+
+	// add header User-Agent: msh/<msh-version> (<system-information>) <platform> (<platform-details>) <extensions>
+	req.Header.Add("User-Agent", fmt.Sprintf("msh/%s (%s) %s", MshVersion, runtime.GOOS, runtime.GOARCH))
+
+	errco.Logln(errco.LVL_E, "%smsh --> mshc%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, reqByte)
 
 	// execute http request
 	client := &http.Client{Timeout: 4 * time.Second}
-	resp, err := client.Do(req)
+	res, err := client.Do(req)
 	if err != nil {
-		return errco.ERROR_VERSION, "error", errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "checkUpdate", err.Error())
+		return nil, errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "checkUpdReq", err.Error())
 	}
-	defer resp.Body.Close()
+
+	if res.StatusCode != 200 {
+		return nil, errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "checkUpdReq", "response status code is "+res.Status)
+	}
+
+	return res, nil
+}
+
+// checkUpdAnalyze analyzes server response
+func checkUpdAnalyze(res *http.Response) *errco.Error {
+	defer res.Body.Close()
 
 	// read http response
-	respByte, err := ioutil.ReadAll(resp.Body)
+	resByte, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return errco.ERROR_VERSION, "error", errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "checkUpdate", err.Error())
-	}
-	if !strings.Contains(string(respByte), respHeader) {
-		return errco.ERROR_VERSION, "error", errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "checkUpdate", "missing response header")
+		return errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "checkUpdAnalyze", err.Error())
 	}
 
-	// no error and respByte contains respHeader
-	versOnline := strings.ReplaceAll(string(respByte), respHeader, "")
+	errco.Logln(errco.LVL_E, "%smshc --> msh%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, resByte)
 
-	// check which version is more recent
-	delta, errMsh := deltaVersion(versOnline, versClient)
+	// load res data into resJson
+	var resJson *model.Api2Res
+	err = json.Unmarshal(resByte, &resJson)
+	if err != nil {
+		return errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "checkUpdAnalyze", err.Error())
+	}
+
+	// compare MshVersion to versions from mshc server
+	vStatus, errMsh := compareVersion(resJson, MshVersion)
 	if errMsh != nil {
-		return errco.ERROR_VERSION, "error", errMsh.AddTrace("checkUpdate")
+		return errMsh.AddTrace("checkUpdAnalyze")
 	}
 
-	switch {
-	case delta > 0:
-		// an update is available
-		return errco.VERSION_UPDATEAVAILABLE, versOnline, nil
-	case delta < 0:
-		// the runtime version has not yet been officially released
-		return errco.VERSION_UNOFFICIALVERSION, versOnline, nil
-	default:
-		// no update available
-		return errco.VERSION_UPDATED, versOnline, nil
+	// check version status
+	switch vStatus {
+	case errco.VERSION_DEP:
+		// don't check if NotifyUpdate is set to true
+		// override ConfigRuntime variables to display deprecated error message
+		config.ConfigRuntime.Msh.InfoHibernation = "                   §fserver status:\n                   §b§lHIBERNATING\n                   §b§cmsh version DEPRECATED"
+		config.ConfigRuntime.Msh.InfoStarting = "                   §fserver status:\n                    §6§lWARMING UP\n                   §b§cmsh version DEPRECATED"
+		config.ConfigRuntime.Msh.NotifyUpdate = true
+
+		notification := fmt.Sprintf("msh (%s) is deprecated: please update msh to %s!", MshVersion, resJson.Official.Version)
+
+		// write in console log
+		errco.Logln(errco.LVL_A, notification)
+
+		// set push notification message
+		sgm.push.message = notification
+
+	case errco.VERSION_UPD:
+		if config.ConfigRuntime.Msh.NotifyUpdate {
+			notification := fmt.Sprintf("msh (%s) is now available: visit github to update!", resJson.Official.Version)
+
+			// write in console log
+			errco.Logln(errco.LVL_A, notification)
+
+			// set push notification message
+			sgm.push.message = notification
+		}
+
+	case errco.VERSION_OK:
+		if config.ConfigRuntime.Msh.NotifyUpdate {
+			// write in console log
+			errco.Logln(errco.LVL_A, "msh (%s) is updated", MshVersion)
+		}
+
+	case errco.VERSION_DEV:
+		if config.ConfigRuntime.Msh.NotifyUpdate {
+			// write in console log
+			errco.Logln(errco.LVL_A, "msh (%s) is running a dev release", MshVersion)
+		}
+
+	case errco.VERSION_UNO:
+		if config.ConfigRuntime.Msh.NotifyUpdate {
+			// write in console log
+			errco.Logln(errco.LVL_A, "msh (%s) is running an unofficial release", MshVersion)
+		}
 	}
+
+	return nil
 }
 
-// deltaVersion returns the difference between versOnline and versClient:
-// =0	versions are equal or an error occurred.
-// >0	if official version is more recent.
-// <0	if official version is less recent.
-func deltaVersion(versOnline, versClient string) (int, *errco.Error) {
-	// digitize transforms a string "vx.x.x" into an integer x000x000x000
-	digitize := func(Version string) (int, error) {
-		versionInt := 0
+// buildReq builds Api2Req
+func buildReq(preTerm bool) *model.Api2Req {
+	reqJson := &model.Api2Req{}
 
-		// replace and split version (input: "vx.x.x") to get a list of integers
-		versionSplit := strings.Split(strings.ReplaceAll(Version, "v", ""), ".")
-		for n, digit := range versionSplit {
-			digitInt, err := strconv.Atoi(digit)
+	reqJson.Protv = protv
+
+	reqJson.Msh.Mshv = MshVersion
+	reqJson.Msh.ID = config.ConfigRuntime.Msh.ID
+	reqJson.Msh.Uptime = int(time.Since(msh.startTime).Seconds())
+	reqJson.Msh.AllowSuspend = config.ConfigRuntime.Msh.AllowSuspend
+	reqJson.Msh.Sgm.Seconds = sgm.stats.seconds
+	reqJson.Msh.Sgm.SecondsHibe = sgm.stats.secondsHibe
+	reqJson.Msh.Sgm.CpuUsage = sgm.stats.cpuUsage
+	reqJson.Msh.Sgm.MemUsage = sgm.stats.memUsage
+	reqJson.Msh.Sgm.PlayerSec = sgm.stats.playerSec
+	reqJson.Msh.Sgm.PreTerm = preTerm
+
+	reqJson.Machine.Os = runtime.GOOS
+	reqJson.Machine.Platform = runtime.GOARCH
+	reqJson.Machine.Javav = config.Javav
+	reqJson.Machine.Stats.CoresMsh = runtime.NumCPU()
+	if cores, err := cpu.Counts(true); err != nil {
+		errco.LogMshErr(errco.NewErr(errco.ERROR_GET_CORES, errco.LVL_D, "buildReq", err.Error())) // non blocking error
+		reqJson.Machine.Stats.Cores = -1
+	} else {
+		reqJson.Machine.Stats.Cores = cores
+	}
+	if memInfo, err := mem.VirtualMemory(); err != nil {
+		errco.LogMshErr(errco.NewErr(errco.ERROR_GET_MEMORY, errco.LVL_D, "buildReq", err.Error())) // non blocking error
+		reqJson.Machine.Stats.Mem = -1
+	} else {
+		reqJson.Machine.Stats.Mem = int(memInfo.Total)
+	}
+
+	reqJson.Server.Uptime = servctrl.TermUpTime()
+	reqJson.Server.Minev = config.ConfigRuntime.Server.Version
+	reqJson.Server.MineProt = config.ConfigRuntime.Server.Protocol
+
+	return reqJson
+}
+
+// compareVersion compares version struct received from server with local version
+func compareVersion(resJson *model.Api2Res, v string) (int, *errco.Error) {
+	// check if there is a result
+	if resJson.Result == "" {
+		return 0, errco.NewErr(errco.ERROR_VERSION_INVALID, errco.LVL_D, "compareVersion", "result is invalid")
+	}
+
+	// digitize transforms a string "vx.x.x" into an integer x000x000x
+	// returns errco.ERROR_VERSION_INVALID in case of error
+	digitize := func(v string) int {
+		vInt := 0
+
+		// split version ("vx.x.x") to get a list of 3 integers
+		vSplit := strings.Split(strings.ReplaceAll(v, "v", ""), ".")
+
+		// vSplit should be 3 numbers
+		if len(vSplit) != 3 {
+			return errco.ERROR_VERSION_INVALID
+		}
+
+		// convert version to a single integer
+		for i := 0; i < 3; i++ {
+			digit, err := strconv.Atoi(vSplit[i])
 			if err != nil {
-				return 0, err
+				return errco.ERROR_VERSION_INVALID
 			}
-			versionInt += digitInt * int(math.Pow(1000, float64(len(versionSplit)-n)))
+			vInt += digit * int(math.Pow(1000, float64(2-i)))
 		}
-		// versionInt has this format: x000x000x000
-		return versionInt, nil
+
+		// format: x000x000x
+		return vInt
 	}
 
-	versClientInt, err := digitize(versClient)
-	if err != nil {
-		return 0, errco.NewErr(errco.ERROR_VERSION_COMPARISON, errco.LVL_D, "deltaVersion", err.Error())
-	}
-	versOnlineInt, err := digitize(versOnline)
-	if err != nil {
-		return 0, errco.NewErr(errco.ERROR_VERSION_COMPARISON, errco.LVL_D, "deltaVersion", err.Error())
+	// check that all versions have valid format
+	switch errco.ERROR_VERSION_INVALID {
+	case digitize(v):
+		return 0, errco.NewErr(errco.ERROR_VERSION_INVALID, errco.LVL_D, "compareVersion", "msh local version is invalid")
+	case digitize(resJson.Deprecated.Version):
+		return 0, errco.NewErr(errco.ERROR_VERSION_INVALID, errco.LVL_D, "compareVersion", "msh deprecated version is invalid")
+	case digitize(resJson.Official.Version):
+		return 0, errco.NewErr(errco.ERROR_VERSION_INVALID, errco.LVL_D, "compareVersion", "msh official version is invalid")
+	case digitize(resJson.Dev.Version):
+		return 0, errco.NewErr(errco.ERROR_VERSION_INVALID, errco.LVL_D, "compareVersion", "msh dev version is invalid")
 	}
 
-	return versOnlineInt - versClientInt, nil
+	// compare versions
+	switch {
+	case digitize(v) <= digitize(resJson.Deprecated.Version):
+		return errco.VERSION_DEP, nil
+	case digitize(v) < digitize(resJson.Official.Version):
+		return errco.VERSION_UPD, nil
+	case digitize(v) == digitize(resJson.Official.Version):
+		return errco.VERSION_OK, nil
+	case digitize(v) <= digitize(resJson.Dev.Version):
+		return errco.VERSION_DEV, nil
+	default:
+		// v is greater than dev
+		return errco.VERSION_UNO, nil
+	}
 }
 
-// notifyGameChat sends a string with the command "say"
-// every specified amount of time for a specified amount of time
-// [goroutine]
-func notifyGameChat(deltaNotification, deltaToEnd time.Duration, notificationString string) {
-	endT := time.Now().Add(deltaToEnd)
+// ------------------------ segment ------------------------ //
 
-	for time.Now().Before(endT) {
-		// check if terminal is active to avoid Execute() returning an error
-		if servctrl.ServTerm.IsActive {
-			_, errMsh := servctrl.Execute("say "+notificationString, "notifyGameChat")
-			if errMsh != nil {
-				errco.LogMshErr(errMsh.AddTrace("notifyGameChat"))
+// sgmMgr handles segment and all variables related
+// [goroutine]
+func (sgm *segment) sgmMgr() {
+	for {
+		select {
+
+		// segment 1 second tick
+		case <-sgm.tk.C:
+			sgm.m.Lock()
+
+			// increment segment second counter
+			sgm.stats.seconds += 1
+
+			// increment work/hibernation second counter
+			if !servctrl.ServTerm.IsActive {
+				sgm.stats.secondsHibe += 1
+			}
+
+			// treePid returns the list of tree pids (also original ppid)
+			var treePid func(pid int) []int
+			treePid = func(pid int) []int {
+				proc, err := process.NewProcess(int32(pid))
+				if err != nil {
+					return []int{-1}
+				}
+				children, err := proc.Children()
+				if err != nil {
+					return []int{-1}
+				}
+
+				tree := []int{pid}
+				for _, child := range children {
+					tree = append(tree, treePid(int(child.Pid))...)
+				}
+				return tree
+			}
+
+			// update segment average cpu/memory usage
+			var mshTreeCpu, mshTreeMem float64 = 0, 0
+			for _, pid := range treePid(os.Getpid()) {
+				if p, err := process.NewProcess(int32(pid)); err != nil {
+					mshTreeCpu = -1
+					mshTreeMem = -1
+					break
+				} else if pCpu, err := p.CPUPercent(); err != nil {
+					mshTreeCpu = -1
+					mshTreeMem = -1
+					break
+				} else if pMem, err := p.MemoryPercent(); err != nil {
+					mshTreeCpu = -1
+					mshTreeMem = -1
+					break
+				} else {
+					mshTreeCpu += float64(pCpu)
+					mshTreeMem += float64(pMem)
+				}
+			}
+
+			sgm.stats.cpuUsage = (sgm.stats.cpuUsage*float64(sgm.stats.seconds-1) + float64(mshTreeCpu)) / float64(sgm.stats.seconds) // sgm.stats.seconds-1 because the average is updated to 1 sec ago
+			sgm.stats.memUsage = (sgm.stats.memUsage*float64(sgm.stats.seconds-1) + float64(mshTreeMem)) / float64(sgm.stats.seconds)
+
+			// update play seconds sum
+			sgm.stats.playerSec = servstats.Stats.PlayerCount
+
+			sgm.m.Unlock() // not using defer since it's an infinite loop
+
+		// send a notification in game chat for players to see.
+		// (should not send notification in console)
+		case <-sgm.push.tk.C:
+			if config.ConfigRuntime.Msh.NotifyUpdate && sgm.push.message != "" && servctrl.ServTerm.IsActive {
+				_, errMsh := servctrl.Execute("say "+sgm.push.message, "sgmMgr")
+				if errMsh != nil {
+					errco.LogMshErr(errMsh.AddTrace("sgmMgr"))
+				}
 			}
 		}
-
-		time.Sleep(deltaNotification)
 	}
+}
+
+// reset resets segment variables
+func sgmReset(sgmDur time.Duration) *segment {
+	sgm = &segment{}
+
+	sgm.m = &sync.Mutex{}
+
+	sgm.tk = time.NewTicker(time.Second)
+	sgm.defDuration = 4 * time.Hour
+	sgm.startTime = time.Now()
+	sgm.end = time.NewTimer(sgmDur)
+
+	sgm.stats.seconds = 0
+	sgm.stats.secondsHibe = 0
+	sgm.stats.cpuUsage = 0
+	sgm.stats.memUsage = 0
+	sgm.stats.playerSec = 0
+	sgm.stats.preTerm = false
+
+	sgm.push.tk = time.NewTicker(20 * time.Minute)
+	sgm.push.message = ""
+
+	return sgm
+}
+
+// prolong prolongs segment end timer. Should be called only when sgm.(*time.Timer).C has been drained
+func (sgm *segment) prolong(sgmDur time.Duration) {
+	sgm.m.Lock()
+	defer sgm.m.Unlock()
+
+	sgm.end.Reset(sgmDur)
 }
