@@ -13,7 +13,7 @@ import (
 // StartMS starts the minecraft server
 func StartMS() *errco.Error {
 	// start server terminal
-	errMsh := cmdStart(config.ConfigRuntime.Server.Folder, config.ConfigRuntime.Commands.StartServer)
+	errMsh := termStart(config.ConfigRuntime.Server.Folder, config.ConfigRuntime.Commands.StartServer)
 	if errMsh != nil {
 		return errMsh.AddTrace("StartMS")
 	}
