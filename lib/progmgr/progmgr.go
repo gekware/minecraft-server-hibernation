@@ -5,13 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"math"
 	"net/http"
 	"os"
 	"os/signal"
 	"runtime"
-	"strconv"
-	"strings"
 	"syscall"
 	"time"
 
@@ -189,15 +186,11 @@ func checkUpdAnalyze(res *http.Response) *errco.Error {
 		return errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "checkUpdAnalyze", err.Error())
 	}
 
-	// compare MshVersion to versions from mshc server
-	vStatus, errMsh := compareVersion(resJson, MshVersion)
-	if errMsh != nil {
-		return errMsh.AddTrace("checkUpdAnalyze")
-	}
+	// check version result
+	switch resJson.Result {
 
-	// check version status
-	switch vStatus {
-	case errco.VERSION_DEP:
+	// local version deprecated
+	case "dep":
 		// don't check if NotifyUpdate is set to true
 		// override ConfigRuntime variables to display deprecated error message
 		config.ConfigRuntime.Msh.InfoHibernation = "                   §fserver status:\n                   §b§lHIBERNATING\n                   §b§cmsh version DEPRECATED"
@@ -212,7 +205,8 @@ func checkUpdAnalyze(res *http.Response) *errco.Error {
 		// set push notification message
 		sgm.push.message = notification
 
-	case errco.VERSION_UPD:
+	// local version to update
+	case "upd":
 		if config.ConfigRuntime.Msh.NotifyUpdate {
 			notification := fmt.Sprintf("msh (%s) is now available: visit github to update!", resJson.Official.Version)
 
@@ -223,23 +217,30 @@ func checkUpdAnalyze(res *http.Response) *errco.Error {
 			sgm.push.message = notification
 		}
 
-	case errco.VERSION_OK:
+	// local version is ok
+	case "ok":
 		if config.ConfigRuntime.Msh.NotifyUpdate {
 			// write in console log
 			errco.Logln(errco.LVL_A, "msh (%s) is updated", MshVersion)
 		}
 
-	case errco.VERSION_DEV:
+	// local version is a developement version
+	case "dev":
 		if config.ConfigRuntime.Msh.NotifyUpdate {
 			// write in console log
 			errco.Logln(errco.LVL_A, "msh (%s) is running a dev release", MshVersion)
 		}
 
-	case errco.VERSION_UNO:
+	// local version is unofficial
+	case "uno":
 		if config.ConfigRuntime.Msh.NotifyUpdate {
 			// write in console log
 			errco.Logln(errco.LVL_A, "msh (%s) is running an unofficial release", MshVersion)
 		}
+
+	// an error occurred
+	default:
+		return errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "checkUpdAnalyze", "invalid response from server")
 	}
 
 	return nil
@@ -284,65 +285,4 @@ func buildReq(preTerm bool) *model.Api2Req {
 	reqJson.Server.MineProt = config.ConfigRuntime.Server.Protocol
 
 	return reqJson
-}
-
-// compareVersion compares version struct received from server with local version
-func compareVersion(resJson *model.Api2Res, v string) (int, *errco.Error) {
-	// check if there is a result
-	if resJson.Result == "" {
-		return 0, errco.NewErr(errco.ERROR_VERSION_INVALID, errco.LVL_D, "compareVersion", "result is invalid")
-	}
-
-	// digitize transforms a string "vx.x.x" into an integer x000x000x
-	// returns errco.ERROR_VERSION_INVALID in case of error
-	digitize := func(v string) int {
-		vInt := 0
-
-		// split version ("vx.x.x") to get a list of 3 integers
-		vSplit := strings.Split(strings.ReplaceAll(v, "v", ""), ".")
-
-		// vSplit should be 3 numbers
-		if len(vSplit) != 3 {
-			return errco.ERROR_VERSION_INVALID
-		}
-
-		// convert version to a single integer
-		for i := 0; i < 3; i++ {
-			digit, err := strconv.Atoi(vSplit[i])
-			if err != nil {
-				return errco.ERROR_VERSION_INVALID
-			}
-			vInt += digit * int(math.Pow(1000, float64(2-i)))
-		}
-
-		// format: x000x000x
-		return vInt
-	}
-
-	// check that all versions have valid format
-	switch errco.ERROR_VERSION_INVALID {
-	case digitize(v):
-		return 0, errco.NewErr(errco.ERROR_VERSION_INVALID, errco.LVL_D, "compareVersion", "msh local version is invalid")
-	case digitize(resJson.Deprecated.Version):
-		return 0, errco.NewErr(errco.ERROR_VERSION_INVALID, errco.LVL_D, "compareVersion", "msh deprecated version is invalid")
-	case digitize(resJson.Official.Version):
-		return 0, errco.NewErr(errco.ERROR_VERSION_INVALID, errco.LVL_D, "compareVersion", "msh official version is invalid")
-	case digitize(resJson.Dev.Version):
-		return 0, errco.NewErr(errco.ERROR_VERSION_INVALID, errco.LVL_D, "compareVersion", "msh dev version is invalid")
-	}
-
-	// compare versions
-	switch {
-	case digitize(v) <= digitize(resJson.Deprecated.Version):
-		return errco.VERSION_DEP, nil
-	case digitize(v) < digitize(resJson.Official.Version):
-		return errco.VERSION_UPD, nil
-	case digitize(v) == digitize(resJson.Official.Version):
-		return errco.VERSION_OK, nil
-	case digitize(v) <= digitize(resJson.Dev.Version):
-		return errco.VERSION_DEV, nil
-	default:
-		// v is greater than dev
-		return errco.VERSION_UNO, nil
-	}
 }
