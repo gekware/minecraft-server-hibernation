@@ -397,37 +397,32 @@ func (sgm *segment) sgmMgr() {
 				sgm.stats.secondsHibe += 1
 			}
 
-			// treePid returns the list of tree pids (also original ppid)
-			var treePid func(pid int) []int
-			treePid = func(pid int) []int {
-				proc, err := process.NewProcess(int32(pid))
-				if err != nil {
-					return []int{-1}
-				}
+			// treeProc returns the list of tree pids (also original ppid)
+			var treeProc func(pid *process.Process) []*process.Process
+			treeProc = func(proc *process.Process) []*process.Process {
 				children, err := proc.Children()
 				if err != nil {
-					return []int{-1}
+					// set pid to -1 to indicate that an error occurred
+					proc.Pid = -1
+					return []*process.Process{proc}
 				}
 
-				tree := []int{pid}
+				tree := []*process.Process{proc}
 				for _, child := range children {
-					tree = append(tree, treePid(int(child.Pid))...)
+					tree = append(tree, treeProc(child)...)
 				}
 				return tree
 			}
 
 			// update segment average cpu/memory usage
 			var mshTreeCpu, mshTreeMem float64 = 0, 0
-			for _, pid := range treePid(os.Getpid()) {
-				if p, err := process.NewProcess(int32(pid)); err != nil {
+			mshProc, _ := process.NewProcess(int32(os.Getpid())) // don't check for error, if mshProc *process.Process is invalid it will be caught in treeProc()
+			for _, c := range treeProc(mshProc) {
+				if pCpu, err := c.CPUPercent(); err != nil {
 					mshTreeCpu = -1
 					mshTreeMem = -1
 					break
-				} else if pCpu, err := p.CPUPercent(); err != nil {
-					mshTreeCpu = -1
-					mshTreeMem = -1
-					break
-				} else if pMem, err := p.MemoryPercent(); err != nil {
+				} else if pMem, err := c.MemoryPercent(); err != nil {
 					mshTreeCpu = -1
 					mshTreeMem = -1
 					break
