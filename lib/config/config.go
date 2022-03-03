@@ -1,9 +1,13 @@
 package config
 
 import (
+	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"flag"
 	"fmt"
+	"image"
+	"image/png"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -44,7 +48,8 @@ var (
 	TargetPort int                  // TargetPort is the port for msh to connect to minecraft server
 )
 
-// LoadConfig loads config file into ConfigDefault and ConfigRuntime
+// LoadConfig loads config file into ConfigDefault and ConfigRuntime.
+// should be the first function to be called by main.
 func LoadConfig() *errco.Error {
 	// ---------------- OS support ----------------- //
 
@@ -104,6 +109,49 @@ func LoadConfig() *errco.Error {
 	return nil
 }
 
+// Save saves config to the config file
+func (c *Configuration) Save() *errco.Error {
+	// encode the struct config
+	configData, err := json.MarshalIndent(c, "", "  ")
+	if err != nil {
+		return errco.NewErr(errco.ERROR_CONFIG_SAVE, errco.LVL_D, "Save", "could not marshal from config file")
+	}
+
+	// write to config file
+	err = ioutil.WriteFile(configFileName, configData, 0644)
+	if err != nil {
+		return errco.NewErr(errco.ERROR_CONFIG_SAVE, errco.LVL_D, "Save", "could not write to config file")
+	}
+
+	errco.Logln(errco.LVL_D, "Save: saved to config file")
+
+	return nil
+}
+
+// InWhitelist checks if the playerName or clientAddress is in config whitelist
+func (c *Configuration) InWhitelist(params ...string) *errco.Error {
+	// check if whitelist is enabled
+	// if empty then it is not enabled and no checks are needed
+	if len(c.Msh.Whitelist) == 0 {
+		errco.Logln(errco.LVL_D, "whitelist not enabled")
+		return nil
+	}
+
+	errco.Logln(errco.LVL_D, "checking whitelist for: %s", strings.Join(params, ", "))
+
+	// check if playerName or clientAddress are in whitelist
+	for _, p := range params {
+		if utility.SliceContain(p, c.Msh.Whitelist) {
+			errco.Logln(errco.LVL_D, "playerName or clientAddress is whitelisted!")
+			return nil
+		}
+	}
+
+	// playerName or clientAddress not found in whitelist
+	errco.Logln(errco.LVL_D, "playerName or clientAddress is not whitelisted!")
+	return errco.NewErr(errco.ERROR_PLAYER_NOT_IN_WHITELIST, errco.LVL_B, "InWhitelist", "playerName or clientAddress is not whitelisted")
+}
+
 // loadDefault loads config file to config variable
 func (c *Configuration) loadDefault() *errco.Error {
 	// read config file
@@ -119,6 +167,48 @@ func (c *Configuration) loadDefault() *errco.Error {
 	}
 
 	return nil
+}
+
+// loadIcon return server logo (base-64 encoded and compressed).
+// If image is missing or error, the default image is returned
+func (c *Configuration) loadIcon() (string, *errco.Error) {
+	// get the path of the user specified server icon
+	userIconPath := filepath.Join(c.Server.Folder, "server-icon-frozen.png")
+
+	// check if user specified icon exists
+	_, err := os.Stat(userIconPath)
+	if os.IsNotExist(err) {
+		// return default server icon (user specified server icon not found)
+		return defaultServerIcon, errco.NewErr(errco.ERROR_ICON_LOAD, errco.LVL_D, "loadIcon", err.Error())
+	}
+
+	// open file
+	f, err := os.Open(userIconPath)
+	if err != nil {
+		return defaultServerIcon, errco.NewErr(errco.ERROR_ICON_LOAD, errco.LVL_D, "loadIcon", err.Error())
+	}
+	defer f.Close()
+
+	// decode png
+	pngIm, err := png.Decode(f)
+	if err != nil {
+		return defaultServerIcon, errco.NewErr(errco.ERROR_ICON_LOAD, errco.LVL_D, "loadIcon", err.Error())
+	}
+
+	// check that image is 64x64
+	if pngIm.Bounds().Max != image.Pt(64, 64) {
+		return defaultServerIcon, errco.NewErr(errco.ERROR_ICON_LOAD, errco.LVL_D, "loadIcon", fmt.Sprintf("incorrect server-icon-frozen.png size. Current size: %dx%d", pngIm.Bounds().Max.X, pngIm.Bounds().Max.Y))
+	}
+
+	// encode png
+	enc, buff := &png.Encoder{CompressionLevel: -3}, &bytes.Buffer{} // -3: best compression
+	err = enc.Encode(buff, pngIm)
+	if err != nil {
+		return defaultServerIcon, errco.NewErr(errco.ERROR_ICON_LOAD, errco.LVL_D, "loadIcon", err.Error())
+	}
+
+	// return user specified server icon as base64 encoded string
+	return base64.RawStdEncoding.EncodeToString(buff.Bytes()), nil
 }
 
 // loadRuntime parses start arguments into config and replaces placeholders
@@ -150,25 +240,6 @@ func (c *Configuration) loadRuntime(base *Configuration) *errco.Error {
 	// replace placeholders
 	c.Commands.StartServer = strings.ReplaceAll(c.Commands.StartServer, "<Server.FileName>", c.Server.FileName)
 	c.Commands.StartServer = strings.ReplaceAll(c.Commands.StartServer, "<Commands.StartServerParam>", c.Commands.StartServerParam)
-
-	return nil
-}
-
-// Save saves config to the config file
-func (c *Configuration) Save() *errco.Error {
-	// encode the struct config
-	configData, err := json.MarshalIndent(c, "", "  ")
-	if err != nil {
-		return errco.NewErr(errco.ERROR_CONFIG_SAVE, errco.LVL_D, "save", "could not marshal from config file")
-	}
-
-	// write to config file
-	err = ioutil.WriteFile(configFileName, configData, 0644)
-	if err != nil {
-		return errco.NewErr(errco.ERROR_CONFIG_SAVE, errco.LVL_D, "save", "could not write to config file")
-	}
-
-	errco.Logln(errco.LVL_D, "save: saved to config file")
 
 	return nil
 }
@@ -224,34 +295,10 @@ func (c *Configuration) getIpPorts() (string, int, string, int, *errco.Error) {
 		return "", -1, "", -1, errco.NewErr(errco.ERROR_CONVERSION, errco.LVL_D, "getIpPorts", err.Error())
 	}
 
-	if TargetPort == ConfigRuntime.Msh.ListenPort {
+	if TargetPort == c.Msh.ListenPort {
 		return "", -1, "", -1, errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_B, "getIpPorts", "TargetPort and ListenPort appear to be the same, please change one of them")
 	}
 
 	// return ListenHost, TargetHost, TargetPort, nil
-	return ListenHost, ConfigRuntime.Msh.ListenPort, TargetHost, TargetPort, nil
-}
-
-// IsWhitelisted checks if the playerName or clientAddress is whitelisted
-func IsWhitelisted(params ...string) *errco.Error {
-	// check if whitelist is enabled
-	// if empty then it is not enabled and no checks are needed
-	if len(ConfigRuntime.Msh.Whitelist) == 0 {
-		errco.Logln(errco.LVL_D, "whitelist not enabled")
-		return nil
-	}
-
-	errco.Logln(errco.LVL_D, "checking whitelist for: %s", strings.Join(params, ", "))
-
-	// check if playerName or clientAddress are in whitelist
-	for _, p := range params {
-		if utility.SliceContain(p, ConfigRuntime.Msh.Whitelist) {
-			errco.Logln(errco.LVL_D, "playerName or clientAddress is whitelisted!")
-			return nil
-		}
-	}
-
-	// playerName or clientAddress not found in whitelist
-	errco.Logln(errco.LVL_D, "playerName or clientAddress is not whitelisted!")
-	return errco.NewErr(errco.ERROR_PLAYER_NOT_IN_WHITELIST, errco.LVL_B, "IsWhitelisted", "playerName or clientAddress is not whitelisted")
+	return ListenHost, c.Msh.ListenPort, TargetHost, TargetPort, nil
 }

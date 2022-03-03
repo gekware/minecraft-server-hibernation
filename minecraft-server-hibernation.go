@@ -29,9 +29,7 @@ func main() {
 	// not using errco.Logln since log time is not needed
 	fmt.Println(utility.Boxify(intro))
 
-	// load configuration from config file
-	// load server-icon-frozen.png if present
-	// LoadConfig is the second function to be called
+	// load configuration from msh config file
 	errMsh := config.LoadConfig()
 	if errMsh != nil {
 		errco.LogMshErr(errMsh.AddTrace("main"))
