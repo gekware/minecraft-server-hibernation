@@ -14,7 +14,7 @@ import (
 )
 
 // segment used for stats
-var sgm *segment
+var sgm *segment = &segment{}
 
 type segment struct {
 	m *sync.Mutex // segment mutex
@@ -116,9 +116,7 @@ func (sgm *segment) sgmMgr() {
 }
 
 // reset resets segment variables
-func sgmReset(sgmDur time.Duration) *segment {
-	sgm = &segment{}
-
+func (sgm *segment) reset(sgmDur time.Duration) *segment {
 	sgm.m = &sync.Mutex{}
 
 	sgm.tk = time.NewTicker(time.Second)

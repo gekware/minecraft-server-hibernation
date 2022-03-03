@@ -34,7 +34,10 @@ var (
 	protv int = 2
 
 	// msh program
-	msh *program
+	msh *program = &program{
+		startTime: time.Now(),
+		sigExit:   make(chan os.Signal, 1),
+	}
 )
 
 type program struct {
@@ -45,17 +48,11 @@ type program struct {
 // MshMgr handles exit signal and updates for msh
 // [goroutine]
 func MshMgr() {
-	msh = &program{
-		startTime: time.Now(),
-		sigExit:   make(chan os.Signal, 1),
-	}
-
 	// set sigExit to relay termination signals
 	signal.Notify(msh.sigExit, syscall.SIGINT, syscall.SIGHUP, syscall.SIGTERM, syscall.SIGQUIT)
 
-	// segment initialized to 0 so that update check can be executed immediately
-	// must be reset to initialize all variables
-	sgm = sgmReset(0)
+	// initialize sgm variables
+	sgm.reset(0) // segment duration initialized to 0 so that update check can be executed immediately
 
 	// start segment manager
 	go sgm.sgmMgr()
@@ -107,7 +104,7 @@ func MshMgr() {
 
 			// data successfully received by server, reset segment
 			errco.Logln(errco.LVL_D, "resetting segment...")
-			sgm = sgmReset(sgm.defDuration)
+			sgm.reset(sgm.defDuration)
 
 			// analyze check update response
 			errco.Logln(errco.LVL_D, "analyzing check update response...")
