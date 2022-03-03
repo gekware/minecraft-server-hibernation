@@ -14,10 +14,12 @@ import (
 )
 
 // segment used for stats
-var sgm *segment = &segment{}
+var sgm *segment = &segment{
+	m: &sync.Mutex{},
+}
 
 type segment struct {
-	m *sync.Mutex // segment mutex
+	m *sync.Mutex // segment mutex (initialized with sgm and not affected by reset function)
 
 	tk          *time.Ticker  // segment ticker (every second)
 	defDuration time.Duration // segment default duration
@@ -100,8 +102,6 @@ func (sgm *segment) sgmMgr() {
 
 // reset resets segment variables
 func (sgm *segment) reset(sgmDur time.Duration) *segment {
-	sgm.m = &sync.Mutex{}
-
 	sgm.tk = time.NewTicker(time.Second)
 	sgm.defDuration = 4 * time.Hour
 	sgm.startTime = time.Now()
