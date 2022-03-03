@@ -20,12 +20,16 @@ import (
 // configFileName is the config file name
 const configFileName string = "msh-config.json"
 
+type Configuration struct {
+	model.Configuration
+}
+
 var (
 	// ConfigDefault contains the configuration parameters of config in file
-	ConfigDefault model.Configuration
+	ConfigDefault *Configuration = &Configuration{}
 	// ConfigRuntime contains the configuration parameters of config during runtime.
 	// (can be altered during runtime without affecting the config file)
-	ConfigRuntime model.Configuration
+	ConfigRuntime *Configuration = &Configuration{}
 
 	// Javav is the java version on the system.
 	// format: "16.0.1"
@@ -45,39 +49,44 @@ func LoadConfig() *errco.Error {
 	// ---------------- OS support ----------------- //
 
 	errco.Logln(errco.LVL_D, "checking OS support...")
+
 	// check if OS is supported.
 	errMsh := opsys.OsSupported()
 	if errMsh != nil {
 		return errMsh.AddTrace("LoadConfig")
 	}
 
-	// --------------- ConfigDefault --------------- //
+	// ---------------- load config ---------------- //
 
-	errco.Logln(errco.LVL_D, "loading config default...")
+	errco.Logln(errco.LVL_D, "loading config...")
 
-	ConfigDefaultFileRead()
-
-	// generate runtime config
-	ConfigRuntime = generateConfigRuntime()
-
-	// --------------- ConfigRuntime --------------- //
-	// from now on only ConfigRuntime should be used //
-
-	errco.Logln(errco.LVL_D, "loading config runtime...")
-
-	errMsh = checkConfigRuntime()
+	// load config default
+	errMsh = ConfigDefault.loadDefault()
 	if errMsh != nil {
 		return errMsh.AddTrace("LoadConfig")
 	}
 
-	// as soon as the Config variable is set, set debug level
+	// load config runtime
+	errMsh = ConfigRuntime.loadRuntime(ConfigDefault)
+	if errMsh != nil {
+		return errMsh.AddTrace("LoadConfig")
+	}
+
+	errMsh = ConfigRuntime.check()
+	if errMsh != nil {
+		return errMsh.AddTrace("LoadConfig")
+	}
+
+	// --------------- config runtime -------------- //
+	// from now on only ConfigRuntime should be used //
+
+	// as soon as the config variables are set, set debug level
 	// (up until now the default errco.DebugLvl is LVL_E)
+	errco.Logln(errco.LVL_A, "setting log level to: %d", ConfigRuntime.Msh.Debug)
 	errco.DebugLvl = ConfigRuntime.Msh.Debug
-	// LVL_A log level is used to always notice the user of the log level
-	errco.Logln(errco.LVL_A, "log level set to: %d", errco.DebugLvl)
 
 	// initialize ip and ports for connection
-	ListenHost, ListenPort, TargetHost, TargetPort, errMsh = getIpPorts()
+	ListenHost, ListenPort, TargetHost, TargetPort, errMsh = ConfigRuntime.getIpPorts()
 	if errMsh != nil {
 		return errMsh.AddTrace("LoadConfig")
 	}
@@ -85,7 +94,7 @@ func LoadConfig() *errco.Error {
 	errco.Logln(errco.LVL_D, "msh proxy setup: %s:%d --> %s:%d", ListenHost, ListenPort, TargetHost, TargetPort)
 
 	// set server icon
-	ServerIcon, errMsh = loadIcon(ConfigRuntime.Server.Folder)
+	ServerIcon, errMsh = ConfigRuntime.loadIcon()
 	if errMsh != nil {
 		// it's enough to log it without returning
 		// since the default icon is loaded by default
@@ -95,57 +104,38 @@ func LoadConfig() *errco.Error {
 	return nil
 }
 
-// ConfigDefaultFileRead loads config file to config default
-func ConfigDefaultFileRead() *errco.Error {
+// loadDefault loads config file to config variable
+func (c *Configuration) loadDefault() *errco.Error {
 	// read config file
 	configData, err := ioutil.ReadFile(configFileName)
 	if err != nil {
-		return errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_B, "ConfigDefaultFileRead", err.Error())
+		return errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_B, "loadDefault", err.Error())
 	}
 
-	// write data to ConfigDefault
-	err = json.Unmarshal(configData, &ConfigDefault)
+	// write data to config variable
+	err = json.Unmarshal(configData, &c)
 	if err != nil {
-		return errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_B, "ConfigDefaultFileRead", err.Error())
+		return errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_B, "loadDefault", err.Error())
 	}
 
 	return nil
 }
 
-// ConfigDefaultFileWrite saves ConfigDefault to the config file
-func ConfigDefaultFileWrite() *errco.Error {
-	// encode the struct config
-	configData, err := json.MarshalIndent(ConfigDefault, "", "  ")
-	if err != nil {
-		return errco.NewErr(errco.ERROR_CONFIG_SAVE, errco.LVL_D, "ConfigDefaultFileWrite", "could not marshal from config file")
-	}
-
-	// write to config file
-	err = ioutil.WriteFile(configFileName, configData, 0644)
-	if err != nil {
-		return errco.NewErr(errco.ERROR_CONFIG_SAVE, errco.LVL_D, "ConfigDefaultFileWrite", "could not write to config file")
-	}
-
-	errco.Logln(errco.LVL_D, "ConfigDefaultFileWrite: saved to config file")
-
-	return nil
-}
-
-// generateConfigRuntime parses start arguments into ConfigRuntime and replaces placeholders
-func generateConfigRuntime() model.Configuration {
-	// initialize with ConfigDefault
-	ConfigRuntime = ConfigDefault
+// loadRuntime parses start arguments into config and replaces placeholders
+func (c *Configuration) loadRuntime(base *Configuration) *errco.Error {
+	// initialize config to base
+	*c = *base
 
 	// specify arguments
-	flag.StringVar(&ConfigRuntime.Server.FileName, "f", ConfigRuntime.Server.FileName, "Specify server file name.")
-	flag.StringVar(&ConfigRuntime.Server.Folder, "F", ConfigRuntime.Server.Folder, "Specify server folder path.")
+	flag.StringVar(&c.Server.FileName, "f", c.Server.FileName, "Specify server file name.")
+	flag.StringVar(&c.Server.Folder, "F", c.Server.Folder, "Specify server folder path.")
 
-	flag.StringVar(&ConfigRuntime.Commands.StartServerParam, "P", ConfigRuntime.Commands.StartServerParam, "Specify start server parameters.")
+	flag.StringVar(&c.Commands.StartServerParam, "P", c.Commands.StartServerParam, "Specify start server parameters.")
 
-	flag.IntVar(&ConfigRuntime.Msh.ListenPort, "p", ConfigRuntime.Msh.ListenPort, "Specify msh port.")
-	flag.StringVar(&ConfigRuntime.Msh.InfoHibernation, "h", ConfigRuntime.Msh.InfoHibernation, "Specify hibernation info.")
-	flag.StringVar(&ConfigRuntime.Msh.InfoStarting, "s", ConfigRuntime.Msh.InfoStarting, "Specify starting info.")
-	flag.IntVar(&ConfigRuntime.Msh.Debug, "d", ConfigRuntime.Msh.Debug, "Specify debug level.")
+	flag.IntVar(&c.Msh.ListenPort, "p", c.Msh.ListenPort, "Specify msh port.")
+	flag.StringVar(&c.Msh.InfoHibernation, "h", c.Msh.InfoHibernation, "Specify hibernation info.")
+	flag.StringVar(&c.Msh.InfoStarting, "s", c.Msh.InfoStarting, "Specify starting info.")
+	flag.IntVar(&c.Msh.Debug, "d", c.Msh.Debug, "Specify debug level.")
 
 	// specify the usage when there is an error in the arguments
 	flag.Usage = func() {
@@ -157,37 +147,56 @@ func generateConfigRuntime() model.Configuration {
 	// parse arguments
 	flag.Parse()
 
-	// replace placeholders in ConfigRuntime StartServer command
-	ConfigRuntime.Commands.StartServer = strings.ReplaceAll(ConfigRuntime.Commands.StartServer, "<Server.FileName>", ConfigRuntime.Server.FileName)
-	ConfigRuntime.Commands.StartServer = strings.ReplaceAll(ConfigRuntime.Commands.StartServer, "<Commands.StartServerParam>", ConfigRuntime.Commands.StartServerParam)
+	// replace placeholders
+	c.Commands.StartServer = strings.ReplaceAll(c.Commands.StartServer, "<Server.FileName>", c.Server.FileName)
+	c.Commands.StartServer = strings.ReplaceAll(c.Commands.StartServer, "<Commands.StartServerParam>", c.Commands.StartServerParam)
 
-	return ConfigRuntime
+	return nil
 }
 
-// checkConfigRuntime checks different parameters in ConfigRuntime
-func checkConfigRuntime() *errco.Error {
+// Save saves config to the config file
+func (c *Configuration) Save() *errco.Error {
+	// encode the struct config
+	configData, err := json.MarshalIndent(c, "", "  ")
+	if err != nil {
+		return errco.NewErr(errco.ERROR_CONFIG_SAVE, errco.LVL_D, "save", "could not marshal from config file")
+	}
+
+	// write to config file
+	err = ioutil.WriteFile(configFileName, configData, 0644)
+	if err != nil {
+		return errco.NewErr(errco.ERROR_CONFIG_SAVE, errco.LVL_D, "save", "could not write to config file")
+	}
+
+	errco.Logln(errco.LVL_D, "save: saved to config file")
+
+	return nil
+}
+
+// check checks different parameters in config
+func (c *Configuration) check() *errco.Error {
 	// check if serverFile/serverFolder exists
 	// (if config.Basic.ServerFileName == "", then it will just check if the server folder exist)
-	serverFileFolderPath := filepath.Join(ConfigRuntime.Server.Folder, ConfigRuntime.Server.FileName)
+	serverFileFolderPath := filepath.Join(c.Server.Folder, c.Server.FileName)
 	_, err := os.Stat(serverFileFolderPath)
 	if os.IsNotExist(err) {
-		return errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_B, "checkConfigRuntime", "specified server file/folder does not exist: "+serverFileFolderPath)
+		return errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_B, "check", "specified server file/folder does not exist: "+serverFileFolderPath)
 	}
 
 	// check if java is installed
 	_, err = exec.LookPath("java")
 	if err != nil {
-		return errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_B, "checkConfigRuntime", "java not installed")
+		return errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_B, "check", "java not installed")
 	}
 
 	// check java version
 	if out, err := exec.Command("java", "--version").Output(); err != nil {
 		// non blocking error
-		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_D, "checkConfigRuntime", "could not execute 'java -version' command"))
+		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_D, "check", "could not execute 'java -version' command"))
 		Javav = "unknown"
 	} else if j, errMsh := utility.StrBetween(string(out), "java ", " "); errMsh != nil {
 		// non blocking error
-		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_D, "checkConfigRuntime", "could not extract java version"))
+		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_D, "check", "could not extract java version"))
 		Javav = "unknown"
 	} else {
 		Javav = j
@@ -197,8 +206,8 @@ func checkConfigRuntime() *errco.Error {
 }
 
 // getIpPorts reads server.properties server file and returns the correct ports
-func getIpPorts() (string, int, string, int, *errco.Error) {
-	data, err := ioutil.ReadFile(filepath.Join(ConfigRuntime.Server.Folder, "server.properties"))
+func (c *Configuration) getIpPorts() (string, int, string, int, *errco.Error) {
+	data, err := ioutil.ReadFile(filepath.Join(c.Server.Folder, "server.properties"))
 	if err != nil {
 		return "", -1, "", -1, errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_B, "getIpPorts", err.Error())
 	}
