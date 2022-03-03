@@ -48,7 +48,7 @@ var (
 	TargetPort int                  // TargetPort is the port for msh to connect to minecraft server
 )
 
-// LoadConfig loads config file into ConfigDefault and ConfigRuntime.
+// LoadConfig loads config file into default/runtime config.
 // should be the first function to be called by main.
 func LoadConfig() *errco.Error {
 	// ---------------- OS support ----------------- //
@@ -77,13 +77,8 @@ func LoadConfig() *errco.Error {
 		return errMsh.AddTrace("LoadConfig")
 	}
 
-	errMsh = ConfigRuntime.check()
-	if errMsh != nil {
-		return errMsh.AddTrace("LoadConfig")
-	}
-
 	// --------------- config runtime -------------- //
-	// from now on only ConfigRuntime should be used //
+	//  from now only config runtime should be used  //
 
 	// as soon as the config variables are set, set debug level
 	// (up until now the default errco.DebugLvl is LVL_E)
@@ -166,49 +161,9 @@ func (c *Configuration) loadDefault() *errco.Error {
 		return errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_B, "loadDefault", err.Error())
 	}
 
+	// ------------------- checks ------------------ //
+
 	return nil
-}
-
-// loadIcon return server logo (base-64 encoded and compressed).
-// If image is missing or error, the default image is returned
-func (c *Configuration) loadIcon() (string, *errco.Error) {
-	// get the path of the user specified server icon
-	userIconPath := filepath.Join(c.Server.Folder, "server-icon-frozen.png")
-
-	// check if user specified icon exists
-	_, err := os.Stat(userIconPath)
-	if os.IsNotExist(err) {
-		// return default server icon (user specified server icon not found)
-		return defaultServerIcon, errco.NewErr(errco.ERROR_ICON_LOAD, errco.LVL_D, "loadIcon", err.Error())
-	}
-
-	// open file
-	f, err := os.Open(userIconPath)
-	if err != nil {
-		return defaultServerIcon, errco.NewErr(errco.ERROR_ICON_LOAD, errco.LVL_D, "loadIcon", err.Error())
-	}
-	defer f.Close()
-
-	// decode png
-	pngIm, err := png.Decode(f)
-	if err != nil {
-		return defaultServerIcon, errco.NewErr(errco.ERROR_ICON_LOAD, errco.LVL_D, "loadIcon", err.Error())
-	}
-
-	// check that image is 64x64
-	if pngIm.Bounds().Max != image.Pt(64, 64) {
-		return defaultServerIcon, errco.NewErr(errco.ERROR_ICON_LOAD, errco.LVL_D, "loadIcon", fmt.Sprintf("incorrect server-icon-frozen.png size. Current size: %dx%d", pngIm.Bounds().Max.X, pngIm.Bounds().Max.Y))
-	}
-
-	// encode png
-	enc, buff := &png.Encoder{CompressionLevel: -3}, &bytes.Buffer{} // -3: best compression
-	err = enc.Encode(buff, pngIm)
-	if err != nil {
-		return defaultServerIcon, errco.NewErr(errco.ERROR_ICON_LOAD, errco.LVL_D, "loadIcon", err.Error())
-	}
-
-	// return user specified server icon as base64 encoded string
-	return base64.RawStdEncoding.EncodeToString(buff.Bytes()), nil
 }
 
 // loadRuntime parses start arguments into config and replaces placeholders
@@ -241,27 +196,20 @@ func (c *Configuration) loadRuntime(base *Configuration) *errco.Error {
 	c.Commands.StartServer = strings.ReplaceAll(c.Commands.StartServer, "<Server.FileName>", c.Server.FileName)
 	c.Commands.StartServer = strings.ReplaceAll(c.Commands.StartServer, "<Commands.StartServerParam>", c.Commands.StartServerParam)
 
-	return nil
-}
+	// ------------------- checks ------------------ //
 
-// check checks different parameters in config
-func (c *Configuration) check() *errco.Error {
 	// check if serverFile/serverFolder exists
-	// (if config.Basic.ServerFileName == "", then it will just check if the server folder exist)
 	serverFileFolderPath := filepath.Join(c.Server.Folder, c.Server.FileName)
 	_, err := os.Stat(serverFileFolderPath)
 	if os.IsNotExist(err) {
 		return errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_B, "check", "specified server file/folder does not exist: "+serverFileFolderPath)
 	}
 
-	// check if java is installed
+	// check if java is installed and get java version
 	_, err = exec.LookPath("java")
 	if err != nil {
 		return errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_B, "check", "java not installed")
-	}
-
-	// check java version
-	if out, err := exec.Command("java", "--version").Output(); err != nil {
+	} else if out, err := exec.Command("java", "--version").Output(); err != nil {
 		// non blocking error
 		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_D, "check", "could not execute 'java -version' command"))
 		Javav = "unknown"
@@ -274,6 +222,49 @@ func (c *Configuration) check() *errco.Error {
 	}
 
 	return nil
+}
+
+// loadIcon return server logo (base-64 encoded and compressed).
+// If image is missing or error, the default image is returned
+func (c *Configuration) loadIcon() (string, *errco.Error) {
+	// get the path of the user specified server icon
+	userIconPath := filepath.Join(c.Server.Folder, "server-icon-frozen.png")
+
+	// check if user specified icon exists
+	_, err := os.Stat(userIconPath)
+	if os.IsNotExist(err) {
+		// user specified server icon not found
+		// return default server icon, but no error should be reported
+		return defaultServerIcon, nil
+	}
+
+	// open file
+	f, err := os.Open(userIconPath)
+	if err != nil {
+		return defaultServerIcon, errco.NewErr(errco.ERROR_ICON_LOAD, errco.LVL_D, "loadIcon", err.Error())
+	}
+	defer f.Close()
+
+	// decode png
+	pngIm, err := png.Decode(f)
+	if err != nil {
+		return defaultServerIcon, errco.NewErr(errco.ERROR_ICON_LOAD, errco.LVL_D, "loadIcon", err.Error())
+	}
+
+	// check that image is 64x64
+	if pngIm.Bounds().Max != image.Pt(64, 64) {
+		return defaultServerIcon, errco.NewErr(errco.ERROR_ICON_LOAD, errco.LVL_D, "loadIcon", fmt.Sprintf("incorrect server-icon-frozen.png size. Current size: %dx%d", pngIm.Bounds().Max.X, pngIm.Bounds().Max.Y))
+	}
+
+	// encode png
+	enc, buff := &png.Encoder{CompressionLevel: -3}, &bytes.Buffer{} // -3: best compression
+	err = enc.Encode(buff, pngIm)
+	if err != nil {
+		return defaultServerIcon, errco.NewErr(errco.ERROR_ICON_LOAD, errco.LVL_D, "loadIcon", err.Error())
+	}
+
+	// return user specified server icon as base64 encoded string
+	return base64.RawStdEncoding.EncodeToString(buff.Bytes()), nil
 }
 
 // getIpPorts reads server.properties server file and returns the correct ports
