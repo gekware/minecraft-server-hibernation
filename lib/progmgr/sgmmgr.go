@@ -59,23 +59,6 @@ func (sgm *segment) sgmMgr() {
 				sgm.stats.secondsHibe += 1
 			}
 
-			// treeProc returns the list of tree pids (also original ppid)
-			var treeProc func(pid *process.Process) []*process.Process
-			treeProc = func(proc *process.Process) []*process.Process {
-				children, err := proc.Children()
-				if err != nil {
-					// set pid to -1 to indicate that an error occurred
-					proc.Pid = -1
-					return []*process.Process{proc}
-				}
-
-				tree := []*process.Process{proc}
-				for _, child := range children {
-					tree = append(tree, treeProc(child)...)
-				}
-				return tree
-			}
-
 			// update segment average cpu/memory usage
 			var mshTreeCpu, mshTreeMem float64 = 0, 0
 			mshProc, _ := process.NewProcess(int32(os.Getpid())) // don't check for error, if mshProc *process.Process is invalid it will be caught in treeProc()
@@ -143,4 +126,22 @@ func (sgm *segment) prolong(sgmDur time.Duration) {
 	defer sgm.m.Unlock()
 
 	sgm.end.Reset(sgmDur)
+}
+
+// ------------------- utils ------------------- //
+
+// treeProc returns the list of tree pids (also original ppid)
+func treeProc(proc *process.Process) []*process.Process {
+	children, err := proc.Children()
+	if err != nil {
+		// set pid to -1 to indicate that an error occurred
+		proc.Pid = -1
+		return []*process.Process{proc}
+	}
+
+	tree := []*process.Process{proc}
+	for _, child := range children {
+		tree = append(tree, treeProc(child)...)
+	}
+	return tree
 }
