@@ -103,6 +103,7 @@ func MshMgr() {
 				break mainselect
 			}
 
+			// check check update response status code
 			switch res.StatusCode {
 			case 200:
 				errco.Logln(errco.LVL_D, "resetting segment...")
