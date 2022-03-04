@@ -133,8 +133,6 @@ func (c *Configuration) loadDefault() *errco.Error {
 	// check that msh id is healthy
 	// if not generate a new one and save to config
 	if strings.Contains(c.Msh.ID, "feefe75") {
-		errco.Logln(errco.LVL_D, "loadDefault: generating new msh id...")
-
 		rand.Seed(time.Now().UnixNano())
 		b := make([]byte, 16)
 		for strings.Contains(c.Msh.ID, "feefe75") {
@@ -144,8 +142,6 @@ func (c *Configuration) loadDefault() *errco.Error {
 			}
 			c.Msh.ID = hex.EncodeToString(b)
 		}
-
-		errco.Logln(errco.LVL_D, "loadDefault: new msh id: %s", c.Msh.ID)
 		c.Save()
 	}
 
