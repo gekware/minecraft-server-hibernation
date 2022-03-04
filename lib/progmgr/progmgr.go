@@ -58,6 +58,7 @@ func MshMgr() {
 	go sgm.sgmMgr()
 
 	for {
+	mainselect:
 		select {
 		// msh termination signal is received
 		case <-msh.sigExit:
@@ -98,24 +99,78 @@ func MshMgr() {
 			res, errMsh := checkUpdReq(false)
 			if errMsh != nil {
 				errco.LogMshErr(errMsh.AddTrace("UpdateManager"))
-				sgm.prolong(10 * time.Minute) // retry in 10 min
-				continue
+				sgm.prolong(10 * time.Minute)
+				break mainselect
 			}
 
-			// data successfully received by server, reset segment
-			errco.Logln(errco.LVL_D, "resetting segment...")
-			sgm.reset(sgm.defDuration)
+			switch res.StatusCode {
+			case 200:
+				errco.Logln(errco.LVL_D, "resetting segment...")
+				sgm.reset(sgm.defDuration)
+			case 403:
+				errco.LogMshErr(errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "MshMgr", "client is unauthorized"))
+				os.Exit(1)
+			default:
+				errco.LogMshErr(errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "MshMgr", "response status code is "+res.Status))
+				errco.Logln(errco.LVL_D, "prolonging segment...")
+				sgm.prolong(sgm.defDuration)
+				break mainselect
+			}
 
 			// analyze check update response
 			errco.Logln(errco.LVL_D, "analyzing check update response...")
-			errMsh = checkUpdAnalyze(res)
+			resJson, errMsh := checkUpdAnalyze(res)
 			if errMsh != nil {
 				errco.LogMshErr(errMsh.AddTrace("UpdateManager"))
-				continue
+				break mainselect
+			}
+
+			// check version result
+			switch resJson.Result {
+			case "dep": // local version deprecated
+				// don't check if NotifyUpdate is set to true
+				// override ConfigRuntime variables to display deprecated error message
+				config.ConfigRuntime.Msh.InfoHibernation = "                   §fserver status:\n                   §b§lHIBERNATING\n                   §b§cmsh version DEPRECATED"
+				config.ConfigRuntime.Msh.InfoStarting = "                   §fserver status:\n                    §6§lWARMING UP\n                   §b§cmsh version DEPRECATED"
+				config.ConfigRuntime.Msh.NotifyUpdate = true
+
+				notification := fmt.Sprintf("msh (%s) is deprecated: please update msh to %s!", MshVersion, resJson.Official.Version)
+
+				// write in console log
+				errco.Logln(errco.LVL_A, notification)
+
+				// set push notification message
+				sgm.push.message = notification
+			case "upd": // local version to update
+				if config.ConfigRuntime.Msh.NotifyUpdate {
+					notification := fmt.Sprintf("msh (%s) is now available: visit github to update!", resJson.Official.Version)
+
+					// write in console log
+					errco.Logln(errco.LVL_A, notification)
+
+					// set push notification message
+					sgm.push.message = notification
+				}
+			case "ok": // local version is ok
+				if config.ConfigRuntime.Msh.NotifyUpdate {
+					// write in console log
+					errco.Logln(errco.LVL_A, "msh (%s) is updated", MshVersion)
+				}
+			case "dev": // local version is a developement version
+				if config.ConfigRuntime.Msh.NotifyUpdate {
+					// write in console log
+					errco.Logln(errco.LVL_A, "msh (%s) is running a dev release", MshVersion)
+				}
+			case "uno": // local version is unofficial
+				if config.ConfigRuntime.Msh.NotifyUpdate {
+					// write in console log
+					errco.Logln(errco.LVL_A, "msh (%s) is running an unofficial release", MshVersion)
+				}
+			default: // an error occurred
+				errco.LogMshErr(errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "checkUpdAnalyze", "invalid result from server"))
+				break mainselect
 			}
 		}
-
-		// reminder: if you add here replace `continue` with `break` in select block
 	}
 }
 
@@ -157,21 +212,17 @@ func checkUpdReq(preTerm bool) (*http.Response, *errco.Error) {
 		return nil, errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "checkUpdReq", err.Error())
 	}
 
-	if res.StatusCode != 200 {
-		return nil, errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "checkUpdReq", "response status code is "+res.Status)
-	}
-
 	return res, nil
 }
 
 // checkUpdAnalyze analyzes server response
-func checkUpdAnalyze(res *http.Response) *errco.Error {
+func checkUpdAnalyze(res *http.Response) (*model.Api2Res, *errco.Error) {
 	defer res.Body.Close()
 
 	// read http response
 	resByte, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "checkUpdAnalyze", err.Error())
+		return nil, errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "checkUpdAnalyze", err.Error())
 	}
 
 	errco.Logln(errco.LVL_E, "%smshc --> msh%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, resByte)
@@ -180,67 +231,10 @@ func checkUpdAnalyze(res *http.Response) *errco.Error {
 	var resJson *model.Api2Res
 	err = json.Unmarshal(resByte, &resJson)
 	if err != nil {
-		return errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "checkUpdAnalyze", err.Error())
+		return nil, errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "checkUpdAnalyze", err.Error())
 	}
 
-	// check version result
-	switch resJson.Result {
-
-	// local version deprecated
-	case "dep":
-		// don't check if NotifyUpdate is set to true
-		// override ConfigRuntime variables to display deprecated error message
-		config.ConfigRuntime.Msh.InfoHibernation = "                   §fserver status:\n                   §b§lHIBERNATING\n                   §b§cmsh version DEPRECATED"
-		config.ConfigRuntime.Msh.InfoStarting = "                   §fserver status:\n                    §6§lWARMING UP\n                   §b§cmsh version DEPRECATED"
-		config.ConfigRuntime.Msh.NotifyUpdate = true
-
-		notification := fmt.Sprintf("msh (%s) is deprecated: please update msh to %s!", MshVersion, resJson.Official.Version)
-
-		// write in console log
-		errco.Logln(errco.LVL_A, notification)
-
-		// set push notification message
-		sgm.push.message = notification
-
-	// local version to update
-	case "upd":
-		if config.ConfigRuntime.Msh.NotifyUpdate {
-			notification := fmt.Sprintf("msh (%s) is now available: visit github to update!", resJson.Official.Version)
-
-			// write in console log
-			errco.Logln(errco.LVL_A, notification)
-
-			// set push notification message
-			sgm.push.message = notification
-		}
-
-	// local version is ok
-	case "ok":
-		if config.ConfigRuntime.Msh.NotifyUpdate {
-			// write in console log
-			errco.Logln(errco.LVL_A, "msh (%s) is updated", MshVersion)
-		}
-
-	// local version is a developement version
-	case "dev":
-		if config.ConfigRuntime.Msh.NotifyUpdate {
-			// write in console log
-			errco.Logln(errco.LVL_A, "msh (%s) is running a dev release", MshVersion)
-		}
-
-	// local version is unofficial
-	case "uno":
-		if config.ConfigRuntime.Msh.NotifyUpdate {
-			// write in console log
-			errco.Logln(errco.LVL_A, "msh (%s) is running an unofficial release", MshVersion)
-		}
-
-	// an error occurred
-	default:
-		return errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "checkUpdAnalyze", "invalid response from server")
-	}
-
-	return nil
+	return resJson, nil
 }
 
 // buildReq builds Api2Req
