@@ -65,7 +65,7 @@ func MshMgr() {
 			// stop the minecraft server with no player check
 			errMsh := servctrl.StopMS(false)
 			if errMsh != nil {
-				errco.LogMshErr(errMsh.AddTrace("InterruptListener"))
+				errco.LogMshErr(errMsh.AddTrace("MshMgr"))
 			}
 
 			// send last statistics before exiting
@@ -77,15 +77,15 @@ func MshMgr() {
 			switch servstats.Stats.Status {
 			case errco.SERVER_STATUS_STOPPING:
 				// if server is correctly stopping, wait for minecraft server to exit
-				errco.Logln(errco.LVL_D, "InterruptListener: waiting for minecraft server terminal to exit (server is stopping)")
+				errco.Logln(errco.LVL_D, "MshMgr: waiting for minecraft server terminal to exit (server is stopping)")
 				servctrl.ServTerm.Wg.Wait()
 
 			case errco.SERVER_STATUS_OFFLINE:
 				// if server is offline, then it's safe to continue
-				errco.Logln(errco.LVL_D, "InterruptListener: minecraft server terminal already exited (server is offline)")
+				errco.Logln(errco.LVL_D, "MshMgr: minecraft server terminal already exited (server is offline)")
 
 			default:
-				errco.Logln(errco.LVL_D, "InterruptListener: stop command does not seem to be stopping server during forceful shutdown")
+				errco.Logln(errco.LVL_D, "MshMgr: stop command does not seem to be stopping server during forceful shutdown")
 			}
 
 			// exit
