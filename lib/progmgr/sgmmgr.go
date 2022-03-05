@@ -1,7 +1,9 @@
 package progmgr
 
 import (
+	"net/http"
 	"os"
+	"strconv"
 	"sync"
 	"time"
 
@@ -129,6 +131,15 @@ func (sgm *segment) prolong(sgmDur time.Duration) {
 }
 
 // ------------------- utils ------------------- //
+
+// getRatelimit returns response header "x-ratelimit-reset" as time.Duration
+func (sgm *segment) getRatelimit(res *http.Response) time.Duration {
+	xrr, err := strconv.Atoi(res.Header.Get("x-ratelimit-reset"))
+	if err != nil {
+		return sgm.defDuration
+	}
+	return time.Duration(xrr) * time.Second
+}
 
 // treeProc returns the list of tree pids (also original ppid)
 func treeProc(proc *process.Process) []*process.Process {

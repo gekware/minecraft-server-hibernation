@@ -107,14 +107,14 @@ func MshMgr() {
 			switch res.StatusCode {
 			case 200:
 				errco.Logln(errco.LVL_D, "resetting segment...")
-				sgm.reset(sgm.defDuration)
+				sgm.reset(sgm.getRatelimit(res))
 			case 403:
 				errco.LogMshErr(errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "MshMgr", "client is unauthorized"))
 				os.Exit(1)
 			default:
 				errco.LogMshErr(errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "MshMgr", "response status code is "+res.Status))
 				errco.Logln(errco.LVL_D, "prolonging segment...")
-				sgm.prolong(sgm.defDuration)
+				sgm.prolong(sgm.getRatelimit(res))
 				break mainselect
 			}
 
