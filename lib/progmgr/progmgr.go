@@ -126,6 +126,11 @@ func MshMgr() {
 				break mainselect
 			}
 
+			// log res message
+			for _, m := range resJson.Messages {
+				errco.Logln(errco.LVL_B, m)
+			}
+
 			// check version result
 			switch resJson.Result {
 			case "dep": // local version deprecated
