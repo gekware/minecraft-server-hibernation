@@ -16,7 +16,6 @@ import (
 	"msh/lib/errco"
 	"msh/lib/model"
 	"msh/lib/opsys"
-	"msh/lib/utility"
 )
 
 var (
@@ -25,7 +24,7 @@ var (
 	ConfigDefault *Configuration = &Configuration{} // ConfigDefault contains parameters of config in file
 	ConfigRuntime *Configuration = &Configuration{} // ConfigRuntime contains parameters of config in runtime.
 
-	Javav string // Javav is the java version on the system. format: "16.0.1"
+	Javav string // Javav is the java version on the system. format: "java 16.0.1 2021-04-20"
 
 	ServerIcon string // ServerIcon contains the minecraft server icon
 
@@ -195,12 +194,8 @@ func (c *Configuration) loadRuntime(base *Configuration) *errco.Error {
 		// non blocking error
 		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_D, "check", "could not execute 'java -version' command"))
 		Javav = "unknown"
-	} else if j, errMsh := utility.StrBetween(string(out), "java ", " "); errMsh != nil {
-		// non blocking error
-		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_D, "check", "could not extract java version"))
-		Javav = "unknown"
 	} else {
-		Javav = j
+		Javav = strings.Split(string(out), "\n")[0]
 	}
 
 	return nil
