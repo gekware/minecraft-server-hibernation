@@ -195,7 +195,7 @@ func (c *Configuration) loadRuntime(base *Configuration) *errco.Error {
 		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_D, "check", "could not execute 'java -version' command"))
 		Javav = "unknown"
 	} else {
-		Javav = strings.Split(string(out), "\n")[0]
+		Javav = strings.ReplaceAll(strings.Split(string(out), "\n")[0], "\r", "")
 	}
 
 	return nil

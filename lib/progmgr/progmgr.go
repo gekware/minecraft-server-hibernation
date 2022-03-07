@@ -249,8 +249,8 @@ func buildReq(preTerm bool) *model.Api2Req {
 
 	reqJson.Protv = protv
 
-	reqJson.Msh.Mshv = MshVersion
 	reqJson.Msh.ID = config.ConfigRuntime.Msh.ID
+	reqJson.Msh.Mshv = MshVersion
 	reqJson.Msh.Uptime = int(time.Since(msh.startTime).Seconds())
 	reqJson.Msh.AllowSuspend = config.ConfigRuntime.Msh.AllowSuspend
 	reqJson.Msh.Sgm.Seconds = sgm.stats.seconds
@@ -261,25 +261,43 @@ func buildReq(preTerm bool) *model.Api2Req {
 	reqJson.Msh.Sgm.PreTerm = preTerm
 
 	reqJson.Machine.Os = runtime.GOOS
-	reqJson.Machine.Platform = runtime.GOARCH
+	reqJson.Machine.Arch = runtime.GOARCH
 	reqJson.Machine.Javav = config.Javav
-	reqJson.Machine.Stats.CoresMsh = runtime.NumCPU()
+
+	// get cpu model and vendor
+	if cpuInfo, err := cpu.Info(); err != nil {
+		errco.LogMshErr(errco.NewErr(errco.ERROR_GET_CPU_INFO, errco.LVL_D, "buildReq", err.Error())) // non blocking error
+		reqJson.Machine.CpuModel = ""
+		reqJson.Machine.CpuVendor = ""
+	} else {
+		if reqJson.Machine.CpuModel = cpuInfo[0].ModelName; reqJson.Machine.CpuModel == "" {
+			reqJson.Machine.CpuModel = cpuInfo[0].Model
+		}
+		reqJson.Machine.CpuVendor = cpuInfo[0].VendorID
+	}
+
+	// get cores dedicated to msh
+	reqJson.Machine.CoresMsh = runtime.NumCPU()
+
+	// get cores dedicated to system
 	if cores, err := cpu.Counts(true); err != nil {
 		errco.LogMshErr(errco.NewErr(errco.ERROR_GET_CORES, errco.LVL_D, "buildReq", err.Error())) // non blocking error
-		reqJson.Machine.Stats.Cores = -1
+		reqJson.Machine.CoresSys = -1
 	} else {
-		reqJson.Machine.Stats.Cores = cores
+		reqJson.Machine.CoresSys = cores
 	}
+
+	// get memory dedicated to system
 	if memInfo, err := mem.VirtualMemory(); err != nil {
 		errco.LogMshErr(errco.NewErr(errco.ERROR_GET_MEMORY, errco.LVL_D, "buildReq", err.Error())) // non blocking error
-		reqJson.Machine.Stats.Mem = -1
+		reqJson.Machine.Mem = -1
 	} else {
-		reqJson.Machine.Stats.Mem = int(memInfo.Total)
+		reqJson.Machine.Mem = int(memInfo.Total)
 	}
 
 	reqJson.Server.Uptime = servctrl.TermUpTime()
-	reqJson.Server.Minev = config.ConfigRuntime.Server.Version
-	reqJson.Server.MineProt = config.ConfigRuntime.Server.Protocol
+	reqJson.Server.Msv = config.ConfigRuntime.Server.Version
+	reqJson.Server.MsProt = config.ConfigRuntime.Server.Protocol
 
 	return reqJson
 }

@@ -61,7 +61,8 @@ const (
 	ERROR_VERSION         = 0x0001f000 // check update error
 	ERROR_VERSION_INVALID = 0x0001f001 // version format is invalid
 	ERROR_GET_CORES       = 0x0001f100 // error getting system cores count
-	ERROR_GET_MEMORY      = 0x0001f101 // error getting system memory info
+	ERROR_GET_CPU_INFO    = 0x0001f101 // error getting cpu info
+	ERROR_GET_MEMORY      = 0x0001f102 // error getting system memory info
 
 	// server connection package
 

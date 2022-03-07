@@ -49,8 +49,8 @@ type DataInfo struct {
 type Api2Req struct {
 	Protv int `json:"prot-v"` // msh protocol version
 	Msh   struct {
-		Mshv         string `json:"msh-v"`         // msh version
 		ID           string `json:"id"`            // msh id
+		Mshv         string `json:"msh-v"`         // msh version
 		Uptime       int    `json:"uptime"`        // msh uptime
 		AllowSuspend bool   `json:"allow-suspend"` // specify if msh hibernates ms by suspending process
 		Sgm          struct {
@@ -63,19 +63,19 @@ type Api2Req struct {
 		} `json:"sgm"`
 	} `json:"msh"`
 	Machine struct {
-		Os       string `json:"os"`
-		Platform string `json:"platform"`
-		Javav    string `json:"java-v"`
-		Stats    struct {
-			CoresMsh int `json:"cores-msh"` // cores for msh
-			Cores    int `json:"cores"`     // cores for system
-			Mem      int `json:"mem"`       // memory dedicated to system
-		} `json:"stats"`
+		Os        string `json:"os"`
+		Arch      string `json:"arch"`
+		Javav     string `json:"java-v"`
+		CpuModel  string `json:"cpu-model"`  // cpu model
+		CpuVendor string `json:"cpu-vendor"` // cpu vendor
+		CoresMsh  int    `json:"cores-msh"`  // cores for msh
+		CoresSys  int    `json:"cores-sys"`  // cores for system
+		Mem       int    `json:"mem"`        // system memory
 	} `json:"machine"`
 	Server struct {
-		Uptime   int    `json:"uptime"`    // mc server uptime
-		Minev    string `json:"mine-v"`    // mc server version
-		MineProt int    `json:"mine-prot"` // mc server protocol
+		Uptime int    `json:"uptime"`  // mc server uptime
+		Msv    string `json:"ms-v"`    // mc server version
+		MsProt int    `json:"ms-prot"` // mc server protocol
 	} `json:"server"`
 }
 
