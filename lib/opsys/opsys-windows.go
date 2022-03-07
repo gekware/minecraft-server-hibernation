@@ -3,6 +3,7 @@
 package opsys
 
 import (
+	"fmt"
 	"syscall"
 	"unsafe"
 
@@ -14,10 +15,11 @@ import (
 
 // suspend process
 // https://github.com/iDigitalFlame/XMT/blob/819fc4e4eeeed6d78b55ea88415f918990666b1b/cmd/cmd_windows.go
+// https://github.com/shirou/gopsutil/blob/03f9f5557169e3e2cdefcd31351812e5252fba89/process/process_windows.go
 var (
 	dllNtdll             = windows.NewLazySystemDLL("ntdll.dll")
-	funcNtResumeProcess  = dllNtdll.NewProc("NtResumeProcess")
-	funcNtSuspendProcess = dllNtdll.NewProc("NtSuspendProcess")
+	procNtResumeProcess  = dllNtdll.NewProc("NtResumeProcess")
+	procNtSuspendProcess = dllNtdll.NewProc("NtSuspendProcess")
 )
 
 func newProcGroupAttr() *syscall.SysProcAttr {
@@ -29,6 +31,25 @@ func newProcGroupAttr() *syscall.SysProcAttr {
 }
 
 func suspendProcTree(ppid uint32) *errco.Error {
+	// suspendProc suspends a process by pid
+	suspendProc := func(pid uint32) *errco.Error {
+		// https://github.com/shirou/gopsutil/blob/03f9f5557169e3e2cdefcd31351812e5252fba89/process/process_windows.go#L759-L773
+
+		h, err := windows.OpenProcess(windows.PROCESS_SUSPEND_RESUME, false, pid)
+		if err != nil {
+			return errco.NewErr(errco.ERROR_PROCESS_OPEN, errco.LVL_D, "suspendProc", err.Error())
+		}
+		defer windows.CloseHandle(h)
+
+		r1, _, _ := procNtSuspendProcess.Call(uintptr(h))
+		if r1 != 0 {
+			// See https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-erref/596a1078-e883-4972-9bbc-49e60bebca55
+			return errco.NewErr(errco.ERROR_PROCESS_SUSPEND_CALL, errco.LVL_D, "suspendProc", fmt.Sprintf("NtStatus='0x%.8X'", r1))
+		}
+
+		return nil
+	}
+
 	// get process tree
 	treePid, errMsh := getTreePids(uint32(ppid))
 	if errMsh != nil {
@@ -39,15 +60,9 @@ func suspendProcTree(ppid uint32) *errco.Error {
 
 	// suspend all processes in tree
 	for _, pid := range treePid {
-		// https://github.com/iDigitalFlame/XMT/blob/819fc4e4eeeed6d78b55ea88415f918990666b1b/cmd/cmd_windows.go#L122
-
-		h, err := windows.OpenProcess(windows.PROCESS_SUSPEND_RESUME, false, pid)
-		if err != nil {
-			return errco.NewErr(errco.ERROR_PROCESS_OPEN, errco.LVL_D, "suspendProcTree", err.Error())
-		}
-		r, _, err := funcNtSuspendProcess.Call(uintptr(h))
-		if windows.CloseHandle(h); r != 0 {
-			return errco.NewErr(errco.ERROR_PROCESS_SUSPEND_CALL, errco.LVL_D, "suspendProcTree", err.Error())
+		errMsh := suspendProc(pid)
+		if errMsh != nil {
+			return errMsh.AddTrace("suspendProcTree")
 		}
 	}
 
@@ -55,6 +70,25 @@ func suspendProcTree(ppid uint32) *errco.Error {
 }
 
 func resumeProcTree(ppid uint32) *errco.Error {
+	// resumeProc resumes a process by pid
+	resumeProc := func(pid uint32) *errco.Error {
+		// https://github.com/shirou/gopsutil/blob/03f9f5557169e3e2cdefcd31351812e5252fba89/process/process_windows.go#L775-L789
+
+		h, err := windows.OpenProcess(windows.PROCESS_SUSPEND_RESUME, false, pid)
+		if err != nil {
+			return errco.NewErr(errco.ERROR_PROCESS_OPEN, errco.LVL_D, "resumeProc", err.Error())
+		}
+		defer windows.CloseHandle(h)
+
+		r1, _, _ := procNtResumeProcess.Call(uintptr(h))
+		if r1 != 0 {
+			// See https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-erref/596a1078-e883-4972-9bbc-49e60bebca55
+			return errco.NewErr(errco.ERROR_PROCESS_SUSPEND_CALL, errco.LVL_D, "resumeProc", fmt.Sprintf("NtStatus='0x%.8X'", r1))
+		}
+
+		return nil
+	}
+
 	// get process tree
 	treePid, errMsh := getTreePids(uint32(ppid))
 	if errMsh != nil {
@@ -63,17 +97,11 @@ func resumeProcTree(ppid uint32) *errco.Error {
 
 	errco.Logln(errco.LVL_D, "resumeProcTree: tree pid is %v", treePid)
 
-	// suspend all processes in tree
+	// resume all processes in tree
 	for _, pid := range treePid {
-		// https://github.com/iDigitalFlame/XMT/blob/819fc4e4eeeed6d78b55ea88415f918990666b1b/cmd/cmd_windows.go#L106
-
-		h, err := windows.OpenProcess(windows.PROCESS_SUSPEND_RESUME, false, pid)
-		if err != nil {
-			return errco.NewErr(errco.ERROR_PROCESS_OPEN, errco.LVL_D, "resumeProcTree", err.Error())
-		}
-		r, _, err := funcNtResumeProcess.Call(uintptr(h))
-		if windows.CloseHandle(h); r != 0 {
-			return errco.NewErr(errco.ERROR_PROCESS_RESUME_CALL, errco.LVL_D, "resumeProcTree", err.Error())
+		errMsh := resumeProc(pid)
+		if errMsh != nil {
+			return errMsh.AddTrace("resumeProcTree")
 		}
 	}
 
