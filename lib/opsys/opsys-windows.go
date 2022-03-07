@@ -108,6 +108,8 @@ func resumeProcTree(ppid uint32) *errco.Error {
 	return nil
 }
 
+// ------------------- utils ------------------- //
+
 // getTreePids will return a list of pids that represent the tree of process pids originating from the specified one.
 // (they are ordered: [parent, 1 gen children, 2 gen children, ...])
 func getTreePids(rootPid uint32) ([]uint32, *errco.Error) {
