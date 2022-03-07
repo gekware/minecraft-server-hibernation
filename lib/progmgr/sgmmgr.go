@@ -146,8 +146,13 @@ func (sgm *segment) getRatelimit(res *http.Response) time.Duration {
 // treeProc returns the list of tree pids (also original ppid)
 func treeProc(proc *process.Process) []*process.Process {
 	children, err := proc.Children()
-	if err != nil && err.Error() != "process does not have children" { // on linux, if a process does not have children an error != nil is returned
-		return []*process.Process{{Pid: -1}} // return pid -1 to indicate that an error occurred
+	if err != nil {
+		// on linux, if a process does not have children an error is returned
+		if err.Error() != "process does not have children" {
+			return []*process.Process{proc}
+		}
+		// return pid -1 to indicate that an error occurred
+		return []*process.Process{{Pid: -1}}
 	}
 
 	tree := []*process.Process{proc}
