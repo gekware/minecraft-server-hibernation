@@ -91,8 +91,14 @@ func LoadConfig() *errco.Error {
 
 // ConfigDefaultFileRead loads config file to config default
 func ConfigDefaultFileRead() *errco.Error {
+	// get msh executable path
+	mshPath, err := os.Executable()
+	if err != nil {
+		return errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_B, "ConfigDefaultFileRead", err.Error())
+	}
+
 	// read config file
-	configData, err := ioutil.ReadFile(configFileName)
+	configData, err := ioutil.ReadFile(filepath.Join(filepath.Dir(mshPath), configFileName))
 	if err != nil {
 		return errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_B, "ConfigDefaultFileRead", err.Error())
 	}
