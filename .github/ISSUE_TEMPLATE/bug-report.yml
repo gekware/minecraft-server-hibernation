@@ -47,7 +47,7 @@ body:
     required: true
 
 - type: input
-  id: Minecraft Version
+  id: Minecraft-Version
   attributes:
     label: Minecraft Version
     description: The version of Minecraft you are using.
@@ -56,7 +56,7 @@ body:
     required: true
 
 - type: input
-  id: Minecraft Server Software
+  id: Minecraft-Server-Software
   attributes:
     label: Minecraft Server Software
     description: The software you are using to run your Minecraft server.
