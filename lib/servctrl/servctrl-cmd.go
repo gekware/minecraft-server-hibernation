@@ -54,8 +54,14 @@ func Execute(command, origin string) (string, *errco.Error) {
 	return <-lastLine, nil
 }
 
-// cmdStart starts a new terminal (non-blocking) and returns a servTerm object
+// cmdStart starts a new terminal (non-blocking) and returns a ServTerm object
+// if server terminal is already active it returns without doing anything
 func cmdStart(dir, command string) *errco.Error {
+	if ServTerm.IsActive {
+		errco.LogMshErr(errco.NewErr(errco.ERROR_TERMINAL_START, errco.LVL_D, "cmdStart", "server terminal is already active"))
+		return nil
+	}
+
 	errMsh := loadTerm(dir, command)
 	if errMsh != nil {
 		return errMsh.AddTrace("cmdStart")
