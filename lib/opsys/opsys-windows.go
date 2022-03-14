@@ -30,7 +30,7 @@ func newProcGroupAttr() *syscall.SysProcAttr {
 	return newProcGroupAttr
 }
 
-func suspendProcTree(ppid uint32) *errco.Error {
+func procTreeSuspend(ppid uint32) *errco.Error {
 	// suspendProc suspends a process by pid
 	suspendProc := func(pid uint32) *errco.Error {
 		// https://github.com/shirou/gopsutil/blob/03f9f5557169e3e2cdefcd31351812e5252fba89/process/process_windows.go#L759-L773
@@ -53,23 +53,23 @@ func suspendProcTree(ppid uint32) *errco.Error {
 	// get process tree
 	treePid, errMsh := getTreePids(uint32(ppid))
 	if errMsh != nil {
-		return errMsh.AddTrace("suspendProcTree")
+		return errMsh.AddTrace("procTreeSuspend")
 	}
 
-	errco.Logln(errco.LVL_D, "suspendProcTree: tree pid is %v", treePid)
+	errco.Logln(errco.LVL_D, "procTreeSuspend: tree pid is %v", treePid)
 
 	// suspend all processes in tree
 	for _, pid := range treePid {
 		errMsh := suspendProc(pid)
 		if errMsh != nil {
-			return errMsh.AddTrace("suspendProcTree")
+			return errMsh.AddTrace("procTreeSuspend")
 		}
 	}
 
 	return nil
 }
 
-func resumeProcTree(ppid uint32) *errco.Error {
+func procTreeResume(ppid uint32) *errco.Error {
 	// resumeProc resumes a process by pid
 	resumeProc := func(pid uint32) *errco.Error {
 		// https://github.com/shirou/gopsutil/blob/03f9f5557169e3e2cdefcd31351812e5252fba89/process/process_windows.go#L775-L789
@@ -92,16 +92,16 @@ func resumeProcTree(ppid uint32) *errco.Error {
 	// get process tree
 	treePid, errMsh := getTreePids(uint32(ppid))
 	if errMsh != nil {
-		return errMsh.AddTrace("resumeProcTree")
+		return errMsh.AddTrace("procTreeResume")
 	}
 
-	errco.Logln(errco.LVL_D, "resumeProcTree: tree pid is %v", treePid)
+	errco.Logln(errco.LVL_D, "procTreeResume: tree pid is %v", treePid)
 
 	// resume all processes in tree
 	for _, pid := range treePid {
 		errMsh := resumeProc(pid)
 		if errMsh != nil {
-			return errMsh.AddTrace("resumeProcTree")
+			return errMsh.AddTrace("procTreeResume")
 		}
 	}
 

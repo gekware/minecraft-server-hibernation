@@ -24,20 +24,20 @@ func NewProcGroupAttr() *syscall.SysProcAttr {
 	return newProcGroupAttr()
 }
 
-// SuspendProcTree suspends a process tree by pid
-func SuspendProcTree(pid uint32) *errco.Error {
-	errMsh := suspendProcTree(pid)
+// ProcTreeSuspend suspends a process tree by pid
+func ProcTreeSuspend(ppid uint32) *errco.Error {
+	errMsh := procTreeSuspend(ppid)
 	if errMsh != nil {
-		return errMsh.AddTrace("SuspendProcTree")
+		return errMsh.AddTrace("ProcTreeSuspend")
 	}
 	return nil
 }
 
-// ResumeProcTree resumes a process tree by pid
-func ResumeProcTree(pid uint32) *errco.Error {
-	errMsh := resumeProcTree(pid)
+// ProcTreeResume resumes a process tree by pid
+func ProcTreeResume(ppid uint32) *errco.Error {
+	errMsh := procTreeResume(ppid)
 	if errMsh != nil {
-		return errMsh.AddTrace("ResumeProcTree")
+		return errMsh.AddTrace("ProcTreeResume")
 	}
 	return nil
 }
