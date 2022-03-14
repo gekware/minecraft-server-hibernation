@@ -64,7 +64,7 @@ func (sgm *segment) sgmMgr() {
 			}
 
 			// update segment average cpu/memory usage
-			var mshTreeCpu, mshTreeMem float64 = -1, -1 // initialize with error value
+			var mshTreeCpu, mshTreeMem float64 = 0, 0
 			if mshProc, err := process.NewProcess(int32(os.Getpid())); err != nil {
 				break
 			} else {
@@ -83,7 +83,7 @@ func (sgm *segment) sgmMgr() {
 					}
 				}
 			}
-			sgm.stats.cpuUsage = (sgm.stats.cpuUsage*float64(sgm.stats.seconds-1) + float64(mshTreeCpu)) / float64(sgm.stats.seconds) // sgm.stats.seconds-1 because the average is updated to 1 sec ago
+			sgm.stats.cpuUsage = (sgm.stats.cpuUsage*float64(sgm.stats.seconds-1) + float64(mshTreeCpu)) / float64(sgm.stats.seconds) // sgm.stats.seconds-1 because the average is relative to 1 sec ago
 			sgm.stats.memUsage = (sgm.stats.memUsage*float64(sgm.stats.seconds-1) + float64(mshTreeMem)) / float64(sgm.stats.seconds)
 
 			// update play seconds sum

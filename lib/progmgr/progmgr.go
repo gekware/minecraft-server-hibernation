@@ -191,10 +191,10 @@ func checkUpdReq(preTerm bool) (*http.Response, *errco.Error) {
 	}()
 
 	// build request struct
-	reqJson := buildReq(preTerm)
+	reqApi2 := buildReq(preTerm)
 
 	// marshal request struct
-	reqByte, err := json.Marshal(reqJson)
+	reqByte, err := json.Marshal(reqApi2)
 	if err != nil {
 		return nil, errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "checkUpdReq", err.Error())
 	}
