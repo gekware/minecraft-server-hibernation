@@ -23,8 +23,8 @@ import (
 )
 
 var (
-	// msh version
-	MshVersion string = "v2.4.5"
+	MshVersion string = "v2.4.5"  // msh version
+	MshCommit  string = "-------" // msh commit
 
 	// CheckedUpdateC communicates to main func that the first update check
 	// has been done and msh can continue

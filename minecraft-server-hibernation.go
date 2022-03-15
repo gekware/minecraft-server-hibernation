@@ -17,8 +17,8 @@ import (
 var intro []string = []string{
 	" _ __ ___  ___| |__  ",
 	"| '_ ` _ \\/ __| '_ \\ ",
-	"| | | | | \\__ \\ | | |",
-	"|_| |_| |_|___/_| |_| " + progmgr.MshVersion,
+	"| | | | | \\__ \\ | | | " + progmgr.MshVersion,
+	"|_| |_| |_|___/_| |_| " + progmgr.MshCommit,
 	"Copyright (C) 2019-2022 gekigek99",
 	"github: https://github.com/gekigek99",
 	"remember to give a star to this repository!",
