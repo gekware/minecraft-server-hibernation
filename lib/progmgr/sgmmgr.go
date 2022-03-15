@@ -70,12 +70,12 @@ func (sgm *segment) sgmMgr() {
 			} else {
 				for _, c := range treeProc(mshProc) {
 					if pCpu, err := c.CPUPercent(); err != nil {
-						mshTreeCpu = -1
-						mshTreeMem = -1
+						mshTreeCpu = sgm.stats.cpuUsage
+						mshTreeMem = sgm.stats.memUsage
 						break
 					} else if pMem, err := c.MemoryPercent(); err != nil {
-						mshTreeCpu = -1
-						mshTreeMem = -1
+						mshTreeCpu = sgm.stats.cpuUsage
+						mshTreeMem = sgm.stats.memUsage
 						break
 					} else {
 						mshTreeCpu += float64(pCpu)
