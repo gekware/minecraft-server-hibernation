@@ -1,21 +1,22 @@
 package config
 
 import (
+	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
-	"math/rand"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"msh/lib/errco"
 	"msh/lib/model"
 	"msh/lib/opsys"
+
+	"github.com/denisbrodbeck/machineid"
 )
 
 var (
@@ -131,17 +132,22 @@ func (c *Configuration) loadDefault() *errco.Error {
 
 	// check that msh id is healthy
 	// if not generate a new one and save to config
-	if strings.Contains(c.Msh.ID, "feefe75") {
-		rand.Seed(time.Now().UnixNano())
-		b := make([]byte, 16)
-		for strings.Contains(c.Msh.ID, "feefe75") {
-			_, err := rand.Read(b)
-			if err != nil {
-				return errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_B, "loadDefault", err.Error())
+
+	if id, err := machineid.ProtectedID("msh"); err != nil {
+		return errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_D, "loadDefault", err.Error())
+	} else if ex, err := os.Executable(); err != nil {
+		return errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_D, "loadDefault", err.Error())
+	} else {
+		hasher := sha1.New()
+		hasher.Write([]byte(id + filepath.Dir(ex)))
+		clientID := hex.EncodeToString(hasher.Sum(nil))
+		if c.Msh.ID != clientID {
+			c.Msh.ID = clientID
+			errMsh := c.Save()
+			if errMsh != nil {
+				return errMsh.AddTrace("loadDefault")
 			}
-			c.Msh.ID = hex.EncodeToString(b)
 		}
-		c.Save()
 	}
 
 	return nil

@@ -3,6 +3,7 @@ module msh
 go 1.15
 
 require (
+	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/shirou/gopsutil v3.21.11+incompatible
 	github.com/stretchr/testify v1.7.0 // indirect
 	github.com/tklauser/go-sysconf v0.3.10 // indirect
