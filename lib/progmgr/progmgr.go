@@ -69,7 +69,7 @@ func MshMgr() {
 			}
 
 			// send last statistics before exiting
-			go checkUpdReq(true)
+			go checkUpdReq(fmt.Sprintf("http://msh.gekware.net/api/v%d", protv), true)
 
 			// wait 1 second to let the server go into stopping mode
 			time.Sleep(time.Second)
@@ -96,7 +96,7 @@ func MshMgr() {
 		case <-sgm.end.C:
 			// send check update request
 			errco.Logln(errco.LVL_D, "sending check update request...")
-			res, errMsh := checkUpdReq(false)
+			res, errMsh := checkUpdReq(fmt.Sprintf("http://msh.gekware.net/api/v%d", protv), false)
 			if errMsh != nil {
 				errco.LogMshErr(errMsh.AddTrace("UpdateManager"))
 				sgm.prolong(10 * time.Minute)
@@ -118,9 +118,8 @@ func MshMgr() {
 				break mainselect
 			}
 
-			// analyze check update response
-			errco.Logln(errco.LVL_D, "analyzing check update response...")
-			resJson, errMsh := checkUpdAnalyze(res)
+			// get server response into struct
+			resJson, errMsh := checkUpdUnmarshal(res)
 			if errMsh != nil {
 				errco.LogMshErr(errMsh.AddTrace("UpdateManager"))
 				break mainselect
@@ -181,7 +180,7 @@ func MshMgr() {
 }
 
 // checkUpdReq logs segment stats and checks for updates.
-func checkUpdReq(preTerm bool) (*http.Response, *errco.Error) {
+func checkUpdReq(url string, preTerm bool) (*http.Response, *errco.Error) {
 	// before returning, communicate that update check is done
 	defer func() {
 		select {
@@ -200,7 +199,6 @@ func checkUpdReq(preTerm bool) (*http.Response, *errco.Error) {
 	}
 
 	// build http request
-	url := fmt.Sprintf("http://msh.gekware.net/api/v%d", protv)
 	req, err := http.NewRequest("GET", url, bytes.NewReader(reqByte))
 	if err != nil {
 		return nil, errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "checkUpdReq", err.Error())
@@ -221,8 +219,8 @@ func checkUpdReq(preTerm bool) (*http.Response, *errco.Error) {
 	return res, nil
 }
 
-// checkUpdAnalyze analyzes server response
-func checkUpdAnalyze(res *http.Response) (*model.Api2Res, *errco.Error) {
+// checkUpdUnmarshal returns server response in api2 format
+func checkUpdUnmarshal(res *http.Response) (*model.Api2Res, *errco.Error) {
 	defer res.Body.Close()
 
 	// read http response
