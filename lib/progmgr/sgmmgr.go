@@ -7,7 +7,6 @@ import (
 	"sync"
 	"time"
 
-	"msh/lib/config"
 	"msh/lib/errco"
 	"msh/lib/servctrl"
 	"msh/lib/servstats"
@@ -40,8 +39,8 @@ type segment struct {
 
 	// push contains data for user notification
 	push struct {
-		tk      *time.Ticker // time ticker to send an update notification in chat
-		message string       // the message shown by the notification
+		tk       *time.Ticker // time ticker to send an update notification in chat
+		messages []string     // the message shown by the notification
 	}
 }
 
@@ -94,10 +93,12 @@ func (sgm *segment) sgmMgr() {
 		// send a notification in game chat for players to see.
 		// (should not send notification in console)
 		case <-sgm.push.tk.C:
-			if config.ConfigRuntime.Msh.NotifyUpdate && sgm.push.message != "" && servctrl.ServTerm.IsActive {
-				_, errMsh := servctrl.Execute("say "+sgm.push.message, "sgmMgr")
-				if errMsh != nil {
-					errco.LogMshErr(errMsh.AddTrace("sgmMgr"))
+			if len(sgm.push.messages) != 0 && servstats.Stats.PlayerCount > 0 {
+				for _, m := range sgm.push.messages {
+					_, errMsh := servctrl.Execute("say "+m, "sgmMgr")
+					if errMsh != nil {
+						errco.LogMshErr(errMsh.AddTrace("sgmMgr"))
+					}
 				}
 			}
 		}
@@ -133,7 +134,7 @@ func (sgm *segment) reset(i interface{}) *segment {
 	sgm.stats.preTerm = false
 
 	sgm.push.tk = time.NewTicker(20 * time.Minute)
-	sgm.push.message = ""
+	sgm.push.messages = []string{}
 
 	return sgm
 }

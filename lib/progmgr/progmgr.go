@@ -123,7 +123,7 @@ func MshMgr() {
 
 			// log res message
 			for _, m := range resJson.Messages {
-				errco.Logln(errco.LVL_B, m)
+				errco.Logln(errco.LVL_B, "message from the moon: %s", m)
 			}
 
 			// check version result
@@ -133,36 +133,41 @@ func MshMgr() {
 				// override ConfigRuntime variables to display deprecated error message
 				config.ConfigRuntime.Msh.InfoHibernation = "                   §fserver status:\n                   §b§lHIBERNATING\n                   §b§cmsh version DEPRECATED"
 				config.ConfigRuntime.Msh.InfoStarting = "                   §fserver status:\n                    §6§lWARMING UP\n                   §b§cmsh version DEPRECATED"
-				config.ConfigRuntime.Msh.NotifyUpdate = true
 
-				notification := fmt.Sprintf("msh (%s) is deprecated: please update msh to %s!", MshVersion, resJson.Official.Version)
-				errco.Logln(errco.LVL_A, notification)
-				sgm.push.message = notification
+				updResult := fmt.Sprintf("msh (%s) is deprecated: please update msh to %s!", MshVersion, resJson.Official.Version)
+				errco.Logln(errco.LVL_A, updResult)
+				sgm.push.messages = append([]string{updResult}, resJson.Messages...)
 
 			case "upd": // local version to update
 				if config.ConfigRuntime.Msh.NotifyUpdate {
-					notification := fmt.Sprintf("msh (%s) is now available: visit github to update!", resJson.Official.Version)
-					errco.Logln(errco.LVL_A, notification)
-					sgm.push.message = notification
+					updResult := fmt.Sprintf("msh (%s) is now available: visit github to update!", resJson.Official.Version)
+					errco.Logln(errco.LVL_A, updResult)
+					sgm.push.messages = append([]string{updResult}, resJson.Messages...)
 				}
 
 			case "off": // local version is official
 				if config.ConfigRuntime.Msh.NotifyUpdate {
-					errco.Logln(errco.LVL_A, "msh (%s) is updated", MshVersion)
+					updResult := fmt.Sprintf("msh (%s) is updated", MshVersion)
+					errco.Logln(errco.LVL_A, updResult)
+					sgm.push.messages = resJson.Messages
 				}
 
 			case "dev": // local version is a developement version
 				if config.ConfigRuntime.Msh.NotifyUpdate {
-					errco.Logln(errco.LVL_A, "msh (%s) is running a dev release", MshVersion)
+					updResult := fmt.Sprintf("msh (%s) is running a dev release", MshVersion)
+					errco.Logln(errco.LVL_A, updResult)
+					sgm.push.messages = resJson.Messages
 				}
 
 			case "uno": // local version is unofficial
 				if config.ConfigRuntime.Msh.NotifyUpdate {
-					errco.Logln(errco.LVL_A, "msh (%s) is running an unofficial release", MshVersion)
+					updResult := fmt.Sprintf("msh (%s) is running an unofficial release", MshVersion)
+					errco.Logln(errco.LVL_A, updResult)
+					sgm.push.messages = resJson.Messages
 				}
 
 			default: // an error occurred
-				errco.LogMshErr(errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "MshMgr", "invalid result from server"))
+				errco.LogMshErr(errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "MshMgr", "invalid version result from server"))
 				break mainselect
 			}
 		}
