@@ -60,7 +60,7 @@ func Execute(command, origin string) (string, *errco.Error) {
 // in case of error -1 is returned.
 func TermUpTime() int {
 	if !ServTerm.IsActive {
-		return -1
+		return 0
 	}
 
 	return int(time.Since(ServTerm.startTime).Seconds())
