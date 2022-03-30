@@ -169,7 +169,7 @@ func MshMgr() {
 	}
 }
 
-// sendApi2Req logs segment stats and checks for updates.
+// sendApi2Req sends api2 request
 func sendApi2Req(url string, api2req *model.Api2Req) (*http.Response, *errco.Error) {
 	// before returning, communicate that update check is done
 	defer func() {
@@ -179,7 +179,7 @@ func sendApi2Req(url string, api2req *model.Api2Req) (*http.Response, *errco.Err
 		}
 	}()
 
-	errco.Logln(errco.LVL_D, "sendApi2Req: sending check update request...")
+	errco.Logln(errco.LVL_D, "sendApi2Req: sending request...")
 
 	// marshal request struct
 	reqByte, err := json.Marshal(api2req)
@@ -208,9 +208,11 @@ func sendApi2Req(url string, api2req *model.Api2Req) (*http.Response, *errco.Err
 	return res, nil
 }
 
-// readApi2Res returns server response in api2 format
+// readApi2Res returns response in api2 struct
 func readApi2Res(res *http.Response) (*model.Api2Res, *errco.Error) {
 	defer res.Body.Close()
+
+	errco.Logln(errco.LVL_D, "readApi2Res: reading response...")
 
 	// read http response
 	resByte, err := ioutil.ReadAll(res.Body)
