@@ -104,12 +104,26 @@ func (sgm *segment) sgmMgr() {
 	}
 }
 
-// reset resets segment variables
-func (sgm *segment) reset(sgmDur time.Duration) *segment {
+// reset segment variables
+// accepted parameters types: int, time.Duration, *http.Response
+func (sgm *segment) reset(i interface{}) *segment {
 	sgm.tk = time.NewTicker(time.Second)
 	sgm.defDuration = 4 * time.Hour
 	sgm.startTime = time.Now()
-	sgm.end = time.NewTimer(sgmDur)
+	switch v := i.(type) {
+	case int:
+		sgm.end = time.NewTimer(time.Duration(v) * time.Second)
+	case time.Duration:
+		sgm.end = time.NewTimer(v)
+	case *http.Response:
+		if xrr, err := strconv.Atoi(v.Header.Get("x-ratelimit-reset")); err == nil {
+			sgm.end = time.NewTimer(time.Duration(xrr) * time.Second)
+		} else {
+			sgm.end = time.NewTimer(sgm.defDuration)
+		}
+	default:
+		sgm.end = time.NewTimer(sgm.defDuration)
+	}
 
 	sgm.stats.seconds = 0
 	sgm.stats.secondsHibe = 0
@@ -125,39 +139,23 @@ func (sgm *segment) reset(sgmDur time.Duration) *segment {
 }
 
 // prolong prolongs segment end timer. Should be called only when sgm.(*time.Timer).C has been drained
-func (sgm *segment) prolong(sgmDur time.Duration) {
+// accepted parameters types: int, time.Duration, *http.Response
+func (sgm *segment) prolong(i interface{}) {
 	sgm.m.Lock()
 	defer sgm.m.Unlock()
 
-	sgm.end.Reset(sgmDur)
-}
-
-// ------------------- utils ------------------- //
-
-// getRatelimit returns response header "x-ratelimit-reset" as time.Duration
-func (sgm *segment) getRatelimit(res *http.Response) time.Duration {
-	xrr, err := strconv.Atoi(res.Header.Get("x-ratelimit-reset"))
-	if err != nil {
-		return sgm.defDuration
-	}
-	return time.Duration(xrr) * time.Second
-}
-
-// treeProc returns the list of tree pids (also original ppid)
-func treeProc(proc *process.Process) []*process.Process {
-	children, err := proc.Children()
-	if err != nil {
-		// on linux, if a process does not have children an error is returned
-		if err.Error() != "process does not have children" {
-			return []*process.Process{proc}
+	switch v := i.(type) {
+	case int:
+		sgm.end.Reset(time.Duration(v) * time.Second)
+	case time.Duration:
+		sgm.end = time.NewTimer(v)
+	case *http.Response:
+		if xrr, err := strconv.Atoi(v.Header.Get("x-ratelimit-reset")); err == nil {
+			sgm.end.Reset(time.Duration(xrr) * time.Second)
+		} else {
+			sgm.end.Reset(sgm.defDuration)
 		}
-		// return pid -1 to indicate that an error occurred
-		return []*process.Process{{Pid: -1}}
+	default:
+		sgm.end.Reset(sgm.defDuration)
 	}
-
-	tree := []*process.Process{proc}
-	for _, child := range children {
-		tree = append(tree, treeProc(child)...)
-	}
-	return tree
 }
