@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"runtime"
 	"time"
 
@@ -140,7 +141,32 @@ func readApi2Res(res *http.Response) (*model.Api2Res, *errco.Error) {
 	return resJson, nil
 }
 
-// treeProc returns the list of tree pids (also original ppid)
+// getMshTreeStats returns current msh tree cpu/mem usage
+func getMshTreeStats() (float64, float64) {
+	var mshTreeCpu, mshTreeMem float64 = 0, 0
+
+	if mshProc, err := process.NewProcess(int32(os.Getpid())); err != nil {
+		// return current avg usage in case of error
+		return sgm.stats.cpuUsage, sgm.stats.memUsage
+	} else {
+		for _, c := range treeProc(mshProc) {
+			if pCpu, err := c.CPUPercent(); err != nil {
+				// return current avg usage in case of error
+				return sgm.stats.cpuUsage, sgm.stats.memUsage
+			} else if pMem, err := c.MemoryPercent(); err != nil {
+				// return current avg usage in case of error
+				return sgm.stats.cpuUsage, sgm.stats.memUsage
+			} else {
+				mshTreeCpu += float64(pCpu)
+				mshTreeMem += float64(pMem)
+			}
+		}
+	}
+
+	return mshTreeCpu, mshTreeMem
+}
+
+// treeProc returns the list of tree pids (with ppid)
 func treeProc(proc *process.Process) []*process.Process {
 	children, err := proc.Children()
 	if err != nil {

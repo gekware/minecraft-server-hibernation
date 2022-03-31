@@ -12,8 +12,6 @@ import (
 	"msh/lib/errco"
 	"msh/lib/servctrl"
 	"msh/lib/servstats"
-
-	"github.com/shirou/gopsutil/process"
 )
 
 var (
@@ -77,25 +75,7 @@ func sgmMgr() {
 			}
 
 			// update segment average cpu/memory usage
-			var mshTreeCpu, mshTreeMem float64 = 0, 0
-			if mshProc, err := process.NewProcess(int32(os.Getpid())); err != nil {
-				break
-			} else {
-				for _, c := range treeProc(mshProc) {
-					if pCpu, err := c.CPUPercent(); err != nil {
-						mshTreeCpu = sgm.stats.cpuUsage
-						mshTreeMem = sgm.stats.memUsage
-						break
-					} else if pMem, err := c.MemoryPercent(); err != nil {
-						mshTreeCpu = sgm.stats.cpuUsage
-						mshTreeMem = sgm.stats.memUsage
-						break
-					} else {
-						mshTreeCpu += float64(pCpu)
-						mshTreeMem += float64(pMem)
-					}
-				}
-			}
+			mshTreeCpu, mshTreeMem := getMshTreeStats()
 			sgm.stats.cpuUsage = (sgm.stats.cpuUsage*float64(sgm.stats.seconds-1) + float64(mshTreeCpu)) / float64(sgm.stats.seconds) // sgm.stats.seconds-1 because the average is relative to 1 sec ago
 			sgm.stats.memUsage = (sgm.stats.memUsage*float64(sgm.stats.seconds-1) + float64(mshTreeMem)) / float64(sgm.stats.seconds)
 
