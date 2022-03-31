@@ -18,6 +18,7 @@
     "InfoHibernation": "                   §fserver status:\n                   §b§lHIBERNATING",
     "InfoStarting": "                   §fserver status:\n                    §6§lWARMING UP",
     "NotifyUpdate": true,
+    "NotifyMessage": true,
     "ListenPort": 25555,
     "TimeBeforeStoppingEmptyServer": 30,
     "Whitelist": [
