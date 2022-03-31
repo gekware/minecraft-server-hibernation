@@ -27,8 +27,8 @@ var (
 	// has been done and msh can continue
 	CheckedUpdateC chan bool = make(chan bool, 1)
 
-	protv   int    = 2                                                                 // api protocol version
-	updAddr string = fmt.Sprintf("https://mshdev.gekware.net/api/v%d/versions", protv) // server address to check update
+	protv   int    = 2                                                              // api protocol version
+	updAddr string = fmt.Sprintf("https://msh.gekware.net/api/v%d/versions", protv) // server address to get version info
 
 	// msh program
 	msh *program = &program{
