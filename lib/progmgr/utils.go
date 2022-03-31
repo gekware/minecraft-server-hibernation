@@ -1,6 +1,11 @@
 package progmgr
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"net/http"
 	"runtime"
 	"time"
 
@@ -71,6 +76,68 @@ func buildApi2Req(preTerm bool) *model.Api2Req {
 	reqJson.Server.MsProt = config.ConfigRuntime.Server.Protocol
 
 	return reqJson
+}
+
+// sendApi2Req sends api2 request
+func sendApi2Req(url string, api2req *model.Api2Req) (*http.Response, *errco.Error) {
+	// before returning, communicate that request has been sent
+	defer func() {
+		select {
+		case ReqSent <- true:
+		default:
+		}
+	}()
+
+	errco.Logln(errco.LVL_D, "sendApi2Req: sending request...")
+
+	// marshal request struct
+	reqByte, err := json.Marshal(api2req)
+	if err != nil {
+		return nil, errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "sendApi2Req", err.Error())
+	}
+
+	// create http request
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(reqByte))
+	if err != nil {
+		return nil, errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "sendApi2Req", err.Error())
+	}
+
+	// add header User-Agent, Content-Type
+	req.Header.Add("User-Agent", fmt.Sprintf("msh/%s (%s) %s", MshVersion, runtime.GOOS, runtime.GOARCH)) // format: msh/vx.x.x (linux) i386
+	req.Header.Set("Content-Type", "application/json")                                                    // necessary for post request
+
+	// execute http request
+	errco.Logln(errco.LVL_E, "%smsh --> mshc%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, string(reqByte))
+	client := &http.Client{Timeout: 4 * time.Second}
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "sendApi2Req", err.Error())
+	}
+
+	return res, nil
+}
+
+// readApi2Res returns response in api2 struct
+func readApi2Res(res *http.Response) (*model.Api2Res, *errco.Error) {
+	defer res.Body.Close()
+
+	errco.Logln(errco.LVL_D, "readApi2Res: reading response...")
+
+	// read http response
+	resByte, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "readApi2Res", err.Error())
+	}
+	errco.Logln(errco.LVL_E, "%smshc --> msh%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, resByte)
+
+	// load res data into resJson
+	var resJson *model.Api2Res
+	err = json.Unmarshal(resByte, &resJson)
+	if err != nil {
+		return nil, errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "readApi2Res", err.Error())
+	}
+
+	return resJson, nil
 }
 
 // treeProc returns the list of tree pids (also original ppid)

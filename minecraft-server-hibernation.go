@@ -39,7 +39,7 @@ func main() {
 	// launch msh manager
 	go progmgr.MshMgr()
 	// wait for the initial update check
-	<-progmgr.CheckedUpdateC
+	<-progmgr.ReqSent
 
 	// launch GetInput()
 	go input.GetInput()

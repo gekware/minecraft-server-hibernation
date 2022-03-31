@@ -1,12 +1,14 @@
 package progmgr
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"strconv"
 	"sync"
 	"time"
 
+	"msh/lib/config"
 	"msh/lib/errco"
 	"msh/lib/servctrl"
 	"msh/lib/servstats"
@@ -14,10 +16,18 @@ import (
 	"github.com/shirou/gopsutil/process"
 )
 
-// segment used for stats
-var sgm *segment = &segment{
-	m: &sync.Mutex{},
-}
+var (
+	// ReqSent communicates to main func that the first request is completed and msh can continue
+	ReqSent chan bool = make(chan bool, 1)
+
+	protv   int    = 2                                                                 // api protocol version
+	updAddr string = fmt.Sprintf("https://mshdev.gekware.net/api/v%d/versions", protv) // server address to get version info //!!!
+
+	// segment used for stats
+	sgm *segment = &segment{
+		m: &sync.Mutex{},
+	}
+)
 
 type segment struct {
 	m *sync.Mutex // segment mutex (initialized with sgm and not affected by reset function)
@@ -46,8 +56,12 @@ type segment struct {
 
 // sgmMgr handles segment and all variables related
 // [goroutine]
-func (sgm *segment) sgmMgr() {
+func sgmMgr() {
+	// initialize sgm variables
+	sgm.reset(0) // segment duration initialized to 0 so that the first request can be executed immediately
+
 	for {
+	mainselect:
 		select {
 
 		// segment 1 second tick
@@ -100,6 +114,88 @@ func (sgm *segment) sgmMgr() {
 						errco.LogMshErr(errMsh.AddTrace("sgmMgr"))
 					}
 				}
+			}
+
+		// send request when segment ends
+		case <-sgm.end.C:
+			// send statistics
+			res, errMsh := sendApi2Req(updAddr, buildApi2Req(false))
+			if errMsh != nil {
+				errco.LogMshErr(errMsh.AddTrace("UpdateManager"))
+				sgm.prolong(10 * time.Minute)
+				break mainselect
+			}
+
+			// check response status code
+			switch res.StatusCode {
+			case 200:
+				errco.Logln(errco.LVL_D, "resetting segment...")
+				sgm.reset(5)
+			case 403:
+				errco.LogMshErr(errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "MshMgr", "client is unauthorized"))
+				os.Exit(1)
+			default:
+				errco.LogMshErr(errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "MshMgr", "response status code is "+res.Status))
+				errco.Logln(errco.LVL_D, "prolonging segment...")
+				sgm.prolong(res)
+				break mainselect
+			}
+
+			// get server response into struct
+			resJson, errMsh := readApi2Res(res)
+			if errMsh != nil {
+				errco.LogMshErr(errMsh.AddTrace("UpdateManager"))
+				break mainselect
+			}
+
+			// log res message
+			for _, m := range resJson.Messages {
+				errco.Logln(errco.LVL_B, "message from the moon: %s", m)
+			}
+
+			// check version result
+			switch resJson.Result {
+			case "dep": // local version deprecated
+				// don't check if NotifyUpdate is set to true
+				// override ConfigRuntime variables to display deprecated error message
+				config.ConfigRuntime.Msh.InfoHibernation = "                   §fserver status:\n                   §b§lHIBERNATING\n                   §b§cmsh version DEPRECATED"
+				config.ConfigRuntime.Msh.InfoStarting = "                   §fserver status:\n                    §6§lWARMING UP\n                   §b§cmsh version DEPRECATED"
+
+				updResult := fmt.Sprintf("msh (%s) is deprecated: please update msh to %s!", MshVersion, resJson.Official.Version)
+				errco.Logln(errco.LVL_A, updResult)
+				sgm.push.messages = append([]string{updResult}, resJson.Messages...)
+
+			case "upd": // local version to update
+				if config.ConfigRuntime.Msh.NotifyUpdate {
+					updResult := fmt.Sprintf("msh (%s) is now available: visit github to update!", resJson.Official.Version)
+					errco.Logln(errco.LVL_A, updResult)
+					sgm.push.messages = append([]string{updResult}, resJson.Messages...)
+				}
+
+			case "off": // local version is official
+				if config.ConfigRuntime.Msh.NotifyUpdate {
+					updResult := fmt.Sprintf("msh (%s) is updated", MshVersion)
+					errco.Logln(errco.LVL_A, updResult)
+					sgm.push.messages = resJson.Messages
+				}
+
+			case "dev": // local version is a developement version
+				if config.ConfigRuntime.Msh.NotifyUpdate {
+					updResult := fmt.Sprintf("msh (%s) is running a dev release", MshVersion)
+					errco.Logln(errco.LVL_A, updResult)
+					sgm.push.messages = resJson.Messages
+				}
+
+			case "uno": // local version is unofficial
+				if config.ConfigRuntime.Msh.NotifyUpdate {
+					updResult := fmt.Sprintf("msh (%s) is running an unofficial release", MshVersion)
+					errco.Logln(errco.LVL_A, updResult)
+					sgm.push.messages = resJson.Messages
+				}
+
+			default: // an error occurred
+				errco.LogMshErr(errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "MshMgr", "invalid version result from server"))
+				break mainselect
 			}
 		}
 	}
