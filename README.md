@@ -11,7 +11,7 @@ _(for vanilla/modded on linux/windows/macos)_
 
 <p align="center" >
     <a href="https://github.com/gekware/minecraft-server-hibernation" >
-        <img src="https://user-images.githubusercontent.com/53654579/90397372-09a9df80-e098-11ea-925c-29e9bdfc0b48.png" >
+        <img src="https://raw.githubusercontent.com/gekware/minecraft-server-hibernation/c6a80ea835bea9f9a795c0805ab0e99ba326273c/res/icon/msh.png" >
     </a>
 </p>
 
@@ -125,7 +125,7 @@ _If you wish to contribute, please create a pull request using the dev branch as
 
 <p align="center" >
     <a href="https://www.buymeacoffee.com/gekigek99" >
-        <img src="https://user-images.githubusercontent.com/53654579/98535501-81963900-2286-11eb-94a4-359adb64afe2.png" >
+        <img src="https://raw.githubusercontent.com/gekware/minecraft-server-hibernation/c6a80ea835bea9f9a795c0805ab0e99ba326273c/res/icon/buymeacoffee.png" >
     </a>
 </p>
 
