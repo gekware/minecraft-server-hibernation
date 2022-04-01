@@ -104,7 +104,7 @@ Set to false if you don't want notifications (every 20 minutes)
 "NotifyUpdate": true
 "NotifyMessage": true
 ```
-*60 seconds* is the time (after the last player disconnected) that the script waits before hibernating the minecraft server
+*30 seconds* is the time (after the last player disconnected) that the script waits before hibernating the minecraft server
 ```yaml
 "TimeBeforeStoppingEmptyServer": 30	#any parameter more than 30s is recommended
 ```
