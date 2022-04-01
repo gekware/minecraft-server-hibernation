@@ -2,61 +2,102 @@ package servctrl
 
 import (
 	"bufio"
+	"encoding/json"
 	"io"
 	"os/exec"
 	"strings"
 	"sync"
+	"time"
 
 	"msh/lib/errco"
+	"msh/lib/model"
 	"msh/lib/opsys"
 	"msh/lib/servstats"
 )
 
 // ServTerm is the variable that represent the running minecraft server
-var ServTerm *servTerminal = &servTerminal{}
+var ServTerm *servTerminal = &servTerminal{IsActive: false}
 
 // servTerminal is the minecraft server terminal
 type servTerminal struct {
-	IsActive bool
-	Wg       sync.WaitGroup
-	cmd      *exec.Cmd
-	outPipe  io.ReadCloser
-	errPipe  io.ReadCloser
-	inPipe   io.WriteCloser
+	IsActive  bool
+	Wg        sync.WaitGroup
+	startTime time.Time // uptime of minecraft server
+	cmd       *exec.Cmd
+	outPipe   io.ReadCloser
+	errPipe   io.ReadCloser
+	inPipe    io.WriteCloser
 }
 
 // lastLine is a channel used to communicate the last line got from the printer function
 var lastLine = make(chan string)
 
-// Execute executes a command on ServTerm
+// Execute executes a command on ms.
+// Be careful as some commands are not printed on terminal but only gamechat (this can lead to <-lastLine channel hanging).
 // [non-blocking]
 func Execute(command, origin string) (string, *errco.Error) {
 	if !ServTerm.IsActive {
 		return "", errco.NewErr(errco.ERROR_TERMINAL_NOT_ACTIVE, errco.LVL_C, "Execute", "terminal not active")
 	}
 
-	commands := strings.Split(command, "\n")
+	if servstats.Stats.Status != errco.SERVER_STATUS_ONLINE {
+		return "", errco.NewErr(errco.ERROR_SERVER_NOT_ONLINE, errco.LVL_C, "Execute", "server not online")
+	}
 
-	for _, com := range commands {
-		if servstats.Stats.Status != errco.SERVER_STATUS_ONLINE {
-			return "", errco.NewErr(errco.ERROR_SERVER_NOT_ONLINE, errco.LVL_C, "Execute", "server not online")
-		}
+	errco.Logln(errco.LVL_C, "ms command: %s%s%s\t(origin: %s)", errco.COLOR_YELLOW, command, errco.COLOR_RESET, origin)
 
-		errco.Logln(errco.LVL_C, "terminal execute: %s%s%s\t(origin: %s)", errco.COLOR_YELLOW, com, errco.COLOR_RESET, origin)
-
-		// write to cmd (\n indicates the enter key)
-		_, err := ServTerm.inPipe.Write([]byte(com + "\n"))
-		if err != nil {
-			return "", errco.NewErr(errco.ERROR_PIPE_INPUT_WRITE, errco.LVL_C, "Execute", err.Error())
-		}
+	// write to server terminal (\n indicates the enter key)
+	_, err := ServTerm.inPipe.Write([]byte(command + "\n"))
+	if err != nil {
+		return "", errco.NewErr(errco.ERROR_PIPE_INPUT_WRITE, errco.LVL_C, "Execute", err.Error())
 	}
 
 	return <-lastLine, nil
 }
 
-// cmdStart starts a new terminal (non-blocking) and returns a servTerm object
-func cmdStart(dir, command string) *errco.Error {
-	errMsh := loadTerm(dir, command)
+// TellRaw executes a tellraw on ms
+// [non-blocking]
+func TellRaw(reason, text, origin string) *errco.Error {
+	if !ServTerm.IsActive {
+		return errco.NewErr(errco.ERROR_TERMINAL_NOT_ACTIVE, errco.LVL_C, "TellRaw", "terminal not active")
+	}
+
+	if servstats.Stats.Status != errco.SERVER_STATUS_ONLINE {
+		return errco.NewErr(errco.ERROR_SERVER_NOT_ONLINE, errco.LVL_C, "TellRaw", "server not online")
+	}
+
+	gameMessage, err := json.Marshal(&model.GameRawMessage{Text: "[MSH] " + reason + ": " + text, Color: "aqua", Bold: false})
+	if err != nil {
+		return errco.NewErr(errco.ERROR_JSON_MARSHAL, errco.LVL_C, "TellRaw", err.Error())
+	}
+
+	gameMessage = append([]byte("tellraw @a "), gameMessage...)
+	gameMessage = append(gameMessage, []byte("\n")...)
+
+	errco.Logln(errco.LVL_C, "ms tellraw: %s%s%s\t(origin: %s)", errco.COLOR_YELLOW, string(gameMessage), errco.COLOR_RESET, origin)
+
+	// write to server terminal (\n indicates the enter key)
+	_, err = ServTerm.inPipe.Write(gameMessage)
+	if err != nil {
+		return errco.NewErr(errco.ERROR_PIPE_INPUT_WRITE, errco.LVL_C, "TellRaw", err.Error())
+	}
+
+	return nil
+}
+
+// TermUpTime returns the current minecraft server uptime.
+// In case of error 0 is returned.
+func TermUpTime() int {
+	if !ServTerm.IsActive {
+		return 0
+	}
+
+	return int(time.Since(ServTerm.startTime).Seconds())
+}
+
+// termStart starts a new terminal (non-blocking) and returns a servTerm object
+func termStart(dir, command string) *errco.Error {
+	errMsh := termLoad(dir, command)
 	if errMsh != nil {
 		return errMsh.AddTrace("cmdStart")
 	}
@@ -71,16 +112,14 @@ func cmdStart(dir, command string) *errco.Error {
 	go waitForExit()
 
 	// initialization
-	servstats.Stats.Status = errco.SERVER_STATUS_STARTING
 	servstats.Stats.LoadProgress = "0%"
 	servstats.Stats.PlayerCount = 0
-	errco.Logln(errco.LVL_B, "MINECRAFT SERVER IS STARTING!")
 
 	return nil
 }
 
-// loadTerm loads cmd/pipes into ServTerm
-func loadTerm(dir, command string) *errco.Error {
+// termLoad loads cmd/pipes into ServTerm
+func termLoad(dir, command string) *errco.Error {
 	cSplit := strings.Split(command, " ")
 
 	// set terminal cmd
@@ -233,7 +272,14 @@ func printerOutErr() {
 // waitForExit manages ServTerm.isActive parameter and set ServStats.Status = OFFLINE when minecraft server process exits.
 // [goroutine]
 func waitForExit() {
+	servstats.Stats.Status = errco.SERVER_STATUS_STARTING
+	errco.Logln(errco.LVL_B, "MINECRAFT SERVER IS STARTING!")
+
 	ServTerm.IsActive = true
+	errco.Logln(errco.LVL_D, "waitForExit: terminal started")
+
+	// set terminal start time
+	ServTerm.startTime = time.Now()
 
 	// wait for printer out/err to exit
 	ServTerm.Wg.Wait()

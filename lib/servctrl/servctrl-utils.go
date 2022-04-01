@@ -138,7 +138,7 @@ func getServInfo() (*model.DataInfo, *errco.Error) {
 		config.ConfigDefault.Server.Version = recInfo.Version.Name
 		config.ConfigDefault.Server.Protocol = recInfo.Version.Protocol
 
-		errMsh := config.ConfigDefaultFileWrite()
+		errMsh := config.ConfigDefault.Save()
 		if errMsh != nil {
 			return nil, errMsh.AddTrace("getServInfo")
 		}

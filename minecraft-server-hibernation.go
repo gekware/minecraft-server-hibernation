@@ -13,15 +13,12 @@ import (
 	"msh/lib/utility"
 )
 
-// script version
-var version string = "v2.4.5"
-
 // contains intro to script and program
 var intro []string = []string{
 	" _ __ ___  ___| |__  ",
 	"| '_ ` _ \\/ __| '_ \\ ",
-	"| | | | | \\__ \\ | | |",
-	"|_| |_| |_|___/_| |_| " + version,
+	"| | | | | \\__ \\ | | | " + progmgr.MshVersion,
+	"|_| |_| |_|___/_| |_| " + progmgr.MshCommit,
 	"Copyright (C) 2019-2022 gekigek99",
 	"github: https://github.com/gekigek99",
 	"remember to give a star to this repository!",
@@ -32,22 +29,17 @@ func main() {
 	// not using errco.Logln since log time is not needed
 	fmt.Println(utility.Boxify(intro))
 
-	// load configuration from config file
-	// load server-icon-frozen.png if present
-	// LoadConfig is the second function to be called
+	// load configuration from msh config file
 	errMsh := config.LoadConfig()
 	if errMsh != nil {
 		errco.LogMshErr(errMsh.AddTrace("main"))
 		os.Exit(1)
 	}
 
-	// launch update manager to check for updates
-	go progmgr.UpdateManager(version)
+	// launch msh manager
+	go progmgr.MshMgr()
 	// wait for the initial update check
-	<-progmgr.CheckedUpdateC
-
-	// listen for interrupt signals
-	go progmgr.InterruptListener()
+	<-progmgr.ReqSent
 
 	// launch GetInput()
 	go input.GetInput()

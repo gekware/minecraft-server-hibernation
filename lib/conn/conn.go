@@ -56,7 +56,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 
 			// check if the client is whitelisted
 			// clientAddress, playerName
-			errMsh := config.IsWhitelisted(playerName, clientAddress)
+			errMsh := config.ConfigRuntime.InWhitelist(playerName, clientAddress)
 			if errMsh != nil {
 				// client is not whitelisted
 				// log to msh console and warn client with text in the loadscreen
