@@ -89,7 +89,7 @@ func sgmMgr() {
 		// (should not send notification in console)
 		case <-sgm.push.tk.C:
 			if sgm.push.verCheck != "" && servstats.Stats.PlayerCount > 0 {
-				_, errMsh := servctrl.Execute("say "+sgm.push.verCheck, "sgmMgr")
+				errMsh := servctrl.TellRaw("manager", sgm.push.verCheck, "sgmMgr")
 				if errMsh != nil {
 					errco.LogMshErr(errMsh.AddTrace("sgmMgr"))
 				}
@@ -97,7 +97,7 @@ func sgmMgr() {
 
 			if len(sgm.push.messages) != 0 && servstats.Stats.PlayerCount > 0 {
 				for _, m := range sgm.push.messages {
-					_, errMsh := servctrl.Execute("say "+m, "sgmMgr")
+					errMsh := servctrl.TellRaw("message", m, "sgmMgr")
 					if errMsh != nil {
 						errco.LogMshErr(errMsh.AddTrace("sgmMgr"))
 					}
@@ -106,7 +106,7 @@ func sgmMgr() {
 
 		// send request when segment ends
 		case <-sgm.end.C:
-			// send statistics
+			// send request
 			res, errMsh := sendApi2Req(updAddr, buildApi2Req(false))
 			if errMsh != nil {
 				errco.LogMshErr(errMsh.AddTrace("UpdateManager"))

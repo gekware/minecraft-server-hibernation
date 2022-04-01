@@ -28,10 +28,12 @@ type Configuration struct {
 	} `json:"Msh"`
 }
 
+// struct for message format txt
 type DataTxt struct {
 	Text string `json:"text"`
 }
 
+// struct for message format info
 type DataInfo struct {
 	Description struct {
 		Text string `json:"text"`
@@ -98,4 +100,11 @@ type Api2Res struct {
 		Commit  string `json:"commit"`
 	} `json:"deprecated"`
 	Messages []string `json:"messages"`
+}
+
+// struct for in game raw message
+type GameRawMessage struct {
+	Text  string `json:"text"`
+	Color string `json:"color"`
+	Bold  bool   `json:"bold"`
 }
