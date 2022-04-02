@@ -1,7 +1,6 @@
 package config
 
 import (
-	"bytes"
 	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
@@ -217,9 +216,23 @@ func (c *Configuration) loadRuntime(base *Configuration) *errco.Error {
 	eulaFilePath := filepath.Join(c.Server.Folder, "eula.txt")
 	eulaData, err := ioutil.ReadFile(eulaFilePath)
 	if err != nil {
-		return errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_B, "loadRuntime", "could not read eula.txt file: "+eulaFilePath)
+		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_B, "loadRuntime", "could not read eula.txt file: "+eulaFilePath))
+
+		// start server to generate eula.txt (and server.properties)
+		errco.Logln(errco.LVL_D, "starting minecraft server to generate eula.txt file...")
+		cSplit := strings.Split(c.Commands.StartServer, " ")
+		cmd := exec.Command(cSplit[0], cSplit[1:]...)
+		cmd.Dir = c.Server.Folder
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		fmt.Print(errco.COLOR_CYAN) // set color to server log color
+		err = cmd.Run()
+		fmt.Print(errco.COLOR_RESET) // reset color
+		if err != nil {
+			return errco.NewErr(errco.ERROR_TERMINAL_START, errco.LVL_B, "loadRuntime", "couldn't start minecraft server to generate eula.txt: ["+err.Error()+"]")
+		}
 	}
-	if !bytes.Contains(bytes.ReplaceAll(eulaData, []byte(" "), []byte("")), []byte("eula=true")) {
+	if !strings.Contains(strings.ReplaceAll(strings.ToLower(string(eulaData)), " ", ""), "eula=true") {
 		return errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_B, "loadRuntime", "please set eula.txt to true: "+eulaFilePath)
 	}
 
