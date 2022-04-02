@@ -1,6 +1,7 @@
 package config
 
 import (
+	"bytes"
 	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
@@ -197,19 +198,29 @@ func (c *Configuration) loadRuntime(base *Configuration) *errco.Error {
 	serverFileFolderPath := filepath.Join(c.Server.Folder, c.Server.FileName)
 	_, err := os.Stat(serverFileFolderPath)
 	if os.IsNotExist(err) {
-		return errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_B, "check", "specified server file/folder does not exist: "+serverFileFolderPath)
+		return errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_B, "loadRuntime", "specified server file/folder does not exist: "+serverFileFolderPath)
 	}
 
 	// check if java is installed and get java version
 	_, err = exec.LookPath("java")
 	if err != nil {
-		return errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_B, "check", "java not installed")
+		return errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_B, "loadRuntime", "java not installed")
 	} else if out, err := exec.Command("java", "--version").Output(); err != nil {
 		// non blocking error
-		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_D, "check", "could not execute 'java -version' command"))
+		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_B, "loadRuntime", "could not execute 'java -version' command"))
 		Javav = "unknown"
 	} else {
 		Javav = strings.ReplaceAll(strings.Split(string(out), "\n")[0], "\r", "")
+	}
+
+	// check if eula.txt exists and is set to true
+	eulaFilePath := filepath.Join(c.Server.Folder, "eula.txt")
+	eulaData, err := ioutil.ReadFile(eulaFilePath)
+	if err != nil {
+		return errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_B, "loadRuntime", "could not read eula.txt file: "+eulaFilePath)
+	}
+	if !bytes.Contains(bytes.ReplaceAll(eulaData, []byte(" "), []byte("")), []byte("eula=true")) {
+		return errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_B, "loadRuntime", "please set eula.txt to true: "+eulaFilePath)
 	}
 
 	return nil
