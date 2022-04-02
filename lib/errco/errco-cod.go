@@ -11,6 +11,7 @@ package errco
 0x0005xxxx: utility package
 0x0006xxxx: main
 0x0007xxxx: input package
+0x0008xxxx: errco package
 */
 
 // ------------------- codes ------------------- //
@@ -101,4 +102,7 @@ const (
 	ERROR_COMMAND_UNKNOWN   = 0x0007f001 // command is unknown
 	ERROR_INPUT_READ        = 0x0007f100 // error while reading input)
 	ERROR_INPUT_UNAVAILABLE = 0x0007f101 // stdin is not available
+
+	// errco package
+	ERROR_COLOR_ENABLE = 0x0008f000 // error while trying to enable colors on terminal
 )
