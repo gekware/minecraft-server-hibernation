@@ -2,12 +2,8 @@ package errco
 
 import (
 	"fmt"
-	"os"
-	"runtime"
 	"strings"
 	"time"
-
-	"golang.org/x/sys/windows"
 )
 
 // DebugLvl specify the level of debugging
@@ -34,19 +30,6 @@ var (
 	COLOR_PURPLE = "\033[0;35m"
 	COLOR_CYAN   = "\033[0;36m" // used for important logs
 )
-
-func init() {
-	// enable virtual terminal processing to enable colors on windows terminal
-	if runtime.GOOS == "windows" {
-		stdout := windows.Handle(os.Stdout.Fd())
-		var originalMode uint32
-		if err := windows.GetConsoleMode(stdout, &originalMode); err != nil {
-			LogMshErr(NewErr(ERROR_COLOR_ENABLE, LVL_D, "errco init", "error while enabling colors on terminal"))
-		} else if windows.SetConsoleMode(stdout, originalMode|windows.ENABLE_VIRTUAL_TERMINAL_PROCESSING); err != nil {
-			LogMshErr(NewErr(ERROR_COLOR_ENABLE, LVL_D, "errco init", "error while enabling colors on terminal"))
-		}
-	}
-}
 
 // Logln prints the args if debug option is set to true
 func Logln(lvl int, s string, args ...interface{}) {
