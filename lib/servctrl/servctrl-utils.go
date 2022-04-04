@@ -130,17 +130,15 @@ func getServInfo() (*model.DataInfo, *errco.Error) {
 	if recInfo.Version.Name != config.ConfigRuntime.Server.Version || recInfo.Version.Protocol != config.ConfigRuntime.Server.Protocol {
 		errco.Logln(errco.LVL_D, "server version found! serverVersion: %s serverProtocol: %d", recInfo.Version.Name, recInfo.Version.Protocol)
 
-		// update the runtime config if version is not specified
+		// update runtime config if version is not specified
 		if config.ConfigRuntime.Server.Version == "" {
 			config.ConfigRuntime.Server.Version = recInfo.Version.Name
 			config.ConfigRuntime.Server.Protocol = recInfo.Version.Protocol
 		}
 
-		// update the file config
+		// update and save default config
 		config.ConfigDefault.Server.Version = recInfo.Version.Name
 		config.ConfigDefault.Server.Protocol = recInfo.Version.Protocol
-
-		// save default config to file
 		errMsh := config.ConfigDefault.Save()
 		if errMsh != nil {
 			return nil, errMsh.AddTrace("getServInfo")
