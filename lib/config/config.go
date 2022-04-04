@@ -30,9 +30,6 @@ var (
 
 	ServerIcon string // ServerIcon contains the minecraft server icon
 
-	Protocol int
-	Version  string
-
 	ListenHost string = "0.0.0.0"   // ListenHost is the ip address for clients to connect to msh
 	ListenPort int                  // ListenPort is the port for clients to connect to msh
 	TargetHost string = "127.0.0.1" // TargetHost is the ip address for msh to connect to minecraft server
