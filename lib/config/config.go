@@ -270,6 +270,14 @@ func (c *Configuration) extractVersionInfo() *errco.Error {
 		if c.Server.Protocol == 0 {
 			c.Server.Protocol = info.Protocol
 		}
+
+		// update and save default config
+		ConfigDefault.Server.Version = info.Version
+		ConfigDefault.Server.Protocol = info.Protocol
+		errMsh := ConfigDefault.Save()
+		if errMsh != nil {
+			return errMsh.AddTrace("extractVersionInfo")
+		}
 	}
 
 	// just log the error since version and protocol are not vital for connection to clients
