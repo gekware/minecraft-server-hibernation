@@ -1,7 +1,6 @@
 package config
 
 import (
-	"archive/zip"
 	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
@@ -85,14 +84,6 @@ func LoadConfig() *errco.Error {
 
 	errco.Logln(errco.LVL_D, "msh proxy setup: %s:%d --> %s:%d", ListenHost, ListenPort, TargetHost, TargetPort)
 
-	// set server and protocol version from server JAR file if not specified in config/arguments.
-	// required for backward-compatibility and for minecraft versions without a version.info inside the JAR file.
-	// (see https://minecraft.fandom.com/wiki/Version.json)
-	errMsh = ConfigRuntime.extractVersionInfo()
-	if errMsh != nil {
-		return errMsh.AddTrace("LoadConfig")
-	}
-
 	// set server icon
 	ServerIcon, errMsh = ConfigRuntime.loadIcon()
 	if errMsh != nil {
@@ -145,6 +136,9 @@ func (c *Configuration) loadDefault() *errco.Error {
 
 	// ------------------- checks ------------------ //
 
+	// saveReq if set to true, the config will be saved at the end of the function
+	var saveReq bool = false
+
 	// check that msh id is healthy
 	// if not generate a new one and save to config
 
@@ -156,12 +150,32 @@ func (c *Configuration) loadDefault() *errco.Error {
 		hasher := sha1.New()
 		hasher.Write([]byte(id + filepath.Dir(ex)))
 		clientID := hex.EncodeToString(hasher.Sum(nil))
+		c.Msh.ID = clientID
 		if c.Msh.ID != clientID {
-			c.Msh.ID = clientID
-			errMsh := c.Save()
-			if errMsh != nil {
-				return errMsh.AddTrace("loadDefault")
-			}
+			saveReq = true
+		}
+	}
+
+	// set server and protocol version from server JAR file if not specified in config/arguments.
+	// required for backward-compatibility and for minecraft versions without a version.info inside the JAR file.
+	// (see https://minecraft.fandom.com/wiki/Version.json)
+	if c.Server.Version == "" || c.Server.Protocol == 0 {
+		version, protocol, errMsh := c.getVersionInfo()
+		if errMsh != nil {
+			// just log error since ms server/protocol are not vital for the connection with clients
+			errco.LogMshErr(errMsh.AddTrace("LoadConfig"))
+		} else {
+			c.Server.Version = version
+			c.Server.Protocol = protocol
+			saveReq = true
+		}
+	}
+
+	// save to file if required
+	if saveReq {
+		errMsh := c.Save()
+		if errMsh != nil {
+			return errMsh.AddTrace("loadDefault")
 		}
 	}
 
@@ -221,64 +235,5 @@ func (c *Configuration) loadRuntime(base *Configuration) *errco.Error {
 		Javav = strings.ReplaceAll(strings.Split(string(out), "\n")[0], "\r", "")
 	}
 
-	return nil
-}
-
-// extractVersionInfo reads version.json from the server JAR file
-// and sets the correct minecraft version and protocol in config
-func (c *Configuration) extractVersionInfo() *errco.Error {
-	if c.Server.Version != "" && c.Server.Protocol != 0 {
-		errco.LogMshErr(errco.NewErr(errco.ERROR_VERSION_LOAD, errco.LVL_D, "extractVersionInfo", "minecraft server version and protocol already specified"))
-		return nil
-	}
-
-	reader, err := zip.OpenReader(filepath.Join(c.Server.Folder, c.Server.FileName))
-	if err != nil {
-		return errco.NewErr(errco.ERROR_VERSION_LOAD, errco.LVL_D, "extractVersionInfo", err.Error())
-	}
-	defer reader.Close()
-
-	for _, file := range reader.File {
-		// search for version.json file
-		if file.Name != "version.json" {
-			continue
-		}
-
-		f, err := file.Open()
-		if err != nil {
-			return errco.NewErr(errco.ERROR_VERSION_LOAD, errco.LVL_D, "extractVersionInfo", err.Error())
-		}
-		defer f.Close()
-
-		versionsBytes, err := ioutil.ReadAll(f)
-		if err != nil {
-			return errco.NewErr(errco.ERROR_VERSION_LOAD, errco.LVL_D, "extractVersionInfo", err.Error())
-		}
-
-		var info model.VersionInfo
-		err = json.Unmarshal(versionsBytes, &info)
-		if err != nil {
-			return errco.NewErr(errco.ERROR_VERSION_LOAD, errco.LVL_D, "extractVersionInfo", err.Error())
-		}
-
-		if c.Server.Version == "" {
-			c.Server.Version = info.Version
-		}
-		if c.Server.Protocol == 0 {
-			c.Server.Protocol = info.Protocol
-		}
-
-		// update and save default config
-		ConfigDefault.Server.Version = info.Version
-		ConfigDefault.Server.Protocol = info.Protocol
-		errMsh := ConfigDefault.Save()
-		if errMsh != nil {
-			return errMsh.AddTrace("extractVersionInfo")
-		}
-	}
-
-	// just log the error since version and protocol are not vital for connection to clients
-	// (and might still be extracted while retrieving server info)
-	errco.LogMshErr(errco.NewErr(errco.ERROR_VERSION_LOAD, errco.LVL_D, "extractVersionInfo", "minecraft server version and protocol could not be extracted from version.json"))
 	return nil
 }
