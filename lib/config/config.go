@@ -150,8 +150,8 @@ func (c *Configuration) loadDefault() *errco.Error {
 		hasher := sha1.New()
 		hasher.Write([]byte(id + filepath.Dir(ex)))
 		clientID := hex.EncodeToString(hasher.Sum(nil))
-		c.Msh.ID = clientID
 		if c.Msh.ID != clientID {
+			c.Msh.ID = clientID
 			saveReq = true
 		}
 	}
