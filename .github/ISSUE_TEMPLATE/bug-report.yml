@@ -27,6 +27,13 @@ body:
     description: Please be as detailed as possible when providing steps to reproduce, failure to provide steps will result in this issue being closed.
   validations:
     required: true
+    
+- type: textarea      
+  attributes:
+    label: MSH Logs
+    description: You can paste your console output or just upload a screenshot, please make sure the screenshot is not cutting off some lines.
+  validations:
+    required: false
 
 - type: input
   id: MSH-Version
