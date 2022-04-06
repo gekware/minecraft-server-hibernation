@@ -69,6 +69,9 @@ func buildMessage(messageFormat int, message string) []byte {
 		// this step is not strictly necessary if in msh-config is used the character "§"
 		message = strings.ReplaceAll(message, "&", "§")
 
+		// replace "\\n" with "\n" in case the new line was set as msh parameter
+		message = strings.ReplaceAll(message, "\\n", "\n")
+
 		messageStruct := &model.DataInfo{}
 		messageStruct.Description.Text = message
 		messageStruct.Players.Max = 0
