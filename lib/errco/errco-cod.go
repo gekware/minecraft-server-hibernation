@@ -12,6 +12,7 @@ package errco
 0x0006xxxx: main
 0x0007xxxx: input package
 0x0008xxxx: errco package
+0x0009xxxx: servstats package
 */
 
 // ------------------- codes ------------------- //
@@ -105,4 +106,7 @@ const (
 
 	// errco package
 	ERROR_COLOR_ENABLE = 0x0008f000 // error while trying to enable colors on terminal
+
+	// servstats package
+	ERROR_MINECRAFT_SERVER = 0x0009f000 // major error while starting minecraft server (will be communicated to clients trying to join)
 )

@@ -15,6 +15,7 @@ import (
 	"msh/lib/errco"
 	"msh/lib/model"
 	"msh/lib/opsys"
+	"msh/lib/servstats"
 
 	"github.com/denisbrodbeck/machineid"
 )
@@ -197,13 +198,17 @@ func (c *Configuration) loadRuntime(base *Configuration) *errco.Error {
 	serverFileFolderPath := filepath.Join(c.Server.Folder, c.Server.FileName)
 	_, err := os.Stat(serverFileFolderPath)
 	if os.IsNotExist(err) {
-		return errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_B, "loadRuntime", "specified server file/folder does not exist: "+serverFileFolderPath)
+		servstats.Stats.Error = errco.NewErr(errco.ERROR_MINECRAFT_SERVER, errco.LVL_D, "loadRuntime", "specified minecraft server folder/file does not exist")
+		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_B, "loadRuntime", "specified server file/folder does not exist: "+serverFileFolderPath))
+		return nil
 	}
 
 	// check if java is installed and get java version
 	_, err = exec.LookPath("java")
 	if err != nil {
-		return errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_B, "loadRuntime", "java not installed")
+		servstats.Stats.Error = errco.NewErr(errco.ERROR_MINECRAFT_SERVER, errco.LVL_D, "loadRuntime", "java not installed")
+		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_B, "loadRuntime", "java not installed"))
+		return nil
 	} else if out, err := exec.Command("java", "--version").Output(); err != nil {
 		// non blocking error
 		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_B, "loadRuntime", "could not execute 'java -version' command"))
@@ -229,11 +234,15 @@ func (c *Configuration) loadRuntime(base *Configuration) *errco.Error {
 		err = cmd.Run()
 		fmt.Print(errco.COLOR_RESET) // reset color
 		if err != nil {
-			return errco.NewErr(errco.ERROR_TERMINAL_START, errco.LVL_B, "loadRuntime", "couldn't start minecraft server to generate eula.txt: ["+err.Error()+"]")
+			servstats.Stats.Error = errco.NewErr(errco.ERROR_MINECRAFT_SERVER, errco.LVL_D, "loadRuntime", "couldn't start minecraft server to generate eula.txt\n(are you using the correct java version?)")
+			errco.LogMshErr(errco.NewErr(errco.ERROR_TERMINAL_START, errco.LVL_B, "loadRuntime", "couldn't start minecraft server to generate eula.txt: ["+err.Error()+"]"))
+			return nil
 		}
 	}
 	if !strings.Contains(strings.ReplaceAll(strings.ToLower(string(eulaData)), " ", ""), "eula=true") {
-		return errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_B, "loadRuntime", "please set eula.txt to true: "+eulaFilePath)
+		servstats.Stats.Error = errco.NewErr(errco.ERROR_MINECRAFT_SERVER, errco.LVL_D, "loadRuntime", "please accept minecraft server eula.txt")
+		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_B, "loadRuntime", "please accept minecraft server eula.txt: "+eulaFilePath))
+		return nil
 	}
 
 	return nil

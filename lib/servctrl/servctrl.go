@@ -15,6 +15,7 @@ func StartMS() *errco.Error {
 	// start server terminal
 	errMsh := termStart(config.ConfigRuntime.Server.Folder, config.ConfigRuntime.Commands.StartServer)
 	if errMsh != nil {
+		servstats.Stats.Error = errco.NewErr(errco.ERROR_MINECRAFT_SERVER, errco.LVL_D, "StartMS", "error starting minecraft server (check logs)")
 		return errMsh.AddTrace("StartMS")
 	}
 

@@ -21,6 +21,43 @@ func HandleClientSocket(clientSocket net.Conn) {
 	li := strings.LastIndex(clientSocket.RemoteAddr().String(), ":")
 	clientAddress := clientSocket.RemoteAddr().String()[:li]
 
+	if servstats.Stats.Error != nil {
+		// close the client connection at the end
+		defer func() {
+			errco.Logln(errco.LVL_D, "closing connection for: %s", clientAddress)
+			clientSocket.Close()
+		}()
+
+		reqType, playerName, errMsh := getReqType(clientSocket)
+		if errMsh != nil {
+			errco.LogMshErr(errMsh.AddTrace("HandleClientSocket"))
+			return
+		}
+
+		switch reqType {
+		case errco.CLIENT_REQ_INFO:
+			// log to msh console and answer to client with error
+			errco.Logln(errco.LVL_D, "%s requested server info from %s:%d to %s:%d but server has encountered major problems", playerName, clientAddress, config.ListenPort, config.TargetHost, config.TargetPort)
+			mes := buildMessage(errco.MESSAGE_FORMAT_INFO, servstats.Stats.Error.Ori+": "+servstats.Stats.Error.Str)
+			clientSocket.Write(mes)
+			errco.Logln(errco.LVL_E, "%smsh --> client%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
+
+			// answer to client ping
+			errMsh = getPing(clientSocket)
+			if errMsh != nil {
+				errco.LogMshErr(errMsh.AddTrace("HandleClientSocket"))
+			}
+		case errco.CLIENT_REQ_JOIN:
+			// log to msh console and answer to client with error
+			errco.Logln(errco.LVL_D, "%s requested server info from %s:%d to %s:%d but server has encountered major problems", playerName, clientAddress, config.ListenPort, config.TargetHost, config.TargetPort)
+			mes := buildMessage(errco.MESSAGE_FORMAT_TXT, servstats.Stats.Error.Ori+": "+servstats.Stats.Error.Str)
+			clientSocket.Write(mes)
+			errco.Logln(errco.LVL_E, "%smsh --> client%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
+		}
+
+		return
+	}
+
 	switch servstats.Stats.Status {
 	case errco.SERVER_STATUS_OFFLINE:
 		// close the client connection at the end
