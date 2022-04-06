@@ -12,8 +12,8 @@ import (
 	"msh/lib/model"
 )
 
-// buildMessage takes the message format (TXT/INFO) and a message to write to the client
-func buildMessage(messageFormat int, message string) []byte {
+// buildMessage takes the request type and message to write to the client
+func buildMessage(reqType int, message string) []byte {
 	// mountHeader mounts the full header to a specified message
 	var mountHeader = func(data []byte) []byte {
 		//                  ┌--------------------full header--------------------┐
@@ -46,10 +46,10 @@ func buildMessage(messageFormat int, message string) []byte {
 		return data
 	}
 
-	switch messageFormat {
-	case errco.MESSAGE_FORMAT_TXT:
-		// send text to be shown in the loadscreen
+	switch reqType {
 
+	// send text to be shown in the loadscreen
+	case errco.CLIENT_REQ_JOIN:
 		messageStruct := &model.DataTxt{}
 		messageStruct.Text = message
 
@@ -62,8 +62,8 @@ func buildMessage(messageFormat int, message string) []byte {
 
 		return mountHeader(dataTxtJSON)
 
-	case errco.MESSAGE_FORMAT_INFO:
-		// send server info
+	// send server info
+	case errco.CLIENT_REQ_INFO:
 
 		// "&" [\x26] is converted to "§" [\xc2\xa7]
 		// this step is not strictly necessary if in msh-config is used the character "§"
