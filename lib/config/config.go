@@ -141,7 +141,6 @@ func (c *Configuration) loadDefault() *errco.Error {
 
 	// check that msh id is healthy
 	// if not generate a new one and save to config
-
 	if id, err := machineid.ProtectedID("msh"); err != nil {
 		return errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_D, "loadDefault", err.Error())
 	} else if ex, err := os.Executable(); err != nil {
@@ -157,18 +156,16 @@ func (c *Configuration) loadDefault() *errco.Error {
 	}
 
 	// set server and protocol version from server JAR file if not specified in config/arguments.
-	// required for backward-compatibility and for minecraft versions without a version.info inside the JAR file.
+	// required for backward-compatibility and for minecraft versions without a version.json inside the JAR file.
 	// (see https://minecraft.fandom.com/wiki/Version.json)
-	if c.Server.Version == "" || c.Server.Protocol == 0 {
-		version, protocol, errMsh := c.getVersionInfo()
-		if errMsh != nil {
-			// just log error since ms server/protocol are not vital for the connection with clients
-			errco.LogMshErr(errMsh.AddTrace("LoadConfig"))
-		} else {
-			c.Server.Version = version
-			c.Server.Protocol = protocol
-			saveReq = true
-		}
+	version, protocol, errMsh := c.getVersionInfo()
+	if errMsh != nil {
+		// just log error since ms server/protocol are not vital for the connection with clients
+		errco.LogMshErr(errMsh.AddTrace("loadDefault"))
+	} else if c.Server.Version != version || c.Server.Protocol != protocol {
+		c.Server.Version = version
+		c.Server.Protocol = protocol
+		saveReq = true
 	}
 
 	// save to file if required
@@ -188,8 +185,10 @@ func (c *Configuration) loadRuntime(base *Configuration) *errco.Error {
 	*c = *base
 
 	// specify arguments
-	flag.StringVar(&ConfigRuntime.Server.FileName, "file", ConfigRuntime.Server.FileName, "Specify server file name.")
-	flag.StringVar(&ConfigRuntime.Server.Folder, "folder", ConfigRuntime.Server.Folder, "Specify server folder path.")
+	flag.StringVar(&c.Server.FileName, "file", c.Server.FileName, "Specify minecraft server file name.")
+	flag.StringVar(&c.Server.Folder, "folder", c.Server.Folder, "Specify minecraft server folder path.")
+	flag.StringVar(&c.Server.Version, "folder", c.Server.Version, "Specify minecraft server version.")
+	flag.IntVar(&c.Server.Protocol, "folder", c.Server.Protocol, "Specify minecraft server protocol.")
 
 	flag.StringVar(&ConfigRuntime.Commands.StartServerParam, "msparam", ConfigRuntime.Commands.StartServerParam, "Specify start server parameters.")
 	flag.IntVar(&ConfigRuntime.Commands.StopServerAllowKill, "allowKill", ConfigRuntime.Commands.StopServerAllowKill, "Specify after how many seconds the server should be killed (if stop command fails).")
