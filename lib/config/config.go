@@ -187,8 +187,8 @@ func (c *Configuration) loadRuntime(base *Configuration) *errco.Error {
 	// specify arguments
 	flag.StringVar(&c.Server.FileName, "file", c.Server.FileName, "Specify minecraft server file name.")
 	flag.StringVar(&c.Server.Folder, "folder", c.Server.Folder, "Specify minecraft server folder path.")
-	flag.StringVar(&c.Server.Version, "folder", c.Server.Version, "Specify minecraft server version.")
-	flag.IntVar(&c.Server.Protocol, "folder", c.Server.Protocol, "Specify minecraft server protocol.")
+	flag.StringVar(&c.Server.Version, "version", c.Server.Version, "Specify minecraft server version.")
+	flag.IntVar(&c.Server.Protocol, "protocol", c.Server.Protocol, "Specify minecraft server protocol.")
 
 	flag.StringVar(&ConfigRuntime.Commands.StartServerParam, "msparam", ConfigRuntime.Commands.StartServerParam, "Specify start server parameters.")
 	flag.IntVar(&ConfigRuntime.Commands.StopServerAllowKill, "allowKill", ConfigRuntime.Commands.StopServerAllowKill, "Specify after how many seconds the server should be killed (if stop command fails).")
