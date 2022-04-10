@@ -117,7 +117,7 @@ _Some of these parameters can be configured with command-line arguments (--help 
 
 Author: [gekigek99](https://github.com/gekigek99)  
 
-Contributors: [najtin](https://github.com/najtin/minecraft-server-hibernation), [f8ith](https://github.com/f8ith/minecraft-server-hibernation), [Br31zh](https://github.com/Br31zh/minecraft-server-hibernation), [someotherotherguy](https://github.com/someotherotherguy/minecraft-server-hibernation), [navidmafi](https://github.com/navidmafi), [cromefire](https://github.com/cromefire)  
+Contributors: [najtin](https://github.com/najtin/minecraft-server-hibernation), [f8ith](https://github.com/f8ith/minecraft-server-hibernation), [Br31zh](https://github.com/Br31zh/minecraft-server-hibernation), [someotherotherguy](https://github.com/someotherotherguy/minecraft-server-hibernation), [navidmafi](https://github.com/navidmafi), [cromefire](https://github.com/cromefire), [andreblanke](https://github.com/andreblanke)  
 Docker branch: [lubocode](https://github.com/lubocode/minecraft-server-hibernation)
 
 _If you wish to contribute, please create a pull request using the dev branch as the base for your changes_
