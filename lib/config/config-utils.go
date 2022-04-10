@@ -1,8 +1,10 @@
 package config
 
 import (
+	"archive/zip"
 	"bytes"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"image"
 	"image/png"
@@ -13,6 +15,7 @@ import (
 	"strings"
 
 	"msh/lib/errco"
+	"msh/lib/model"
 	"msh/lib/utility"
 )
 
@@ -108,4 +111,43 @@ func (c *Configuration) getIpPorts() (string, int, string, int, *errco.Error) {
 
 	// return ListenHost, TargetHost, TargetPort, nil
 	return ListenHost, c.Msh.ListenPort, TargetHost, TargetPort, nil
+}
+
+// getVersionInfo reads version.json from the server JAR file
+// and returns minecraft server version and protocol.
+// In case of error "", 0, *errco.Error are returned.
+func (c *Configuration) getVersionInfo() (string, int, *errco.Error) {
+	reader, err := zip.OpenReader(filepath.Join(c.Server.Folder, c.Server.FileName))
+	if err != nil {
+		return "", 0, errco.NewErr(errco.ERROR_VERSION_LOAD, errco.LVL_D, "getVersionInfo", err.Error())
+	}
+	defer reader.Close()
+
+	for _, file := range reader.File {
+		// search for version.json file
+		if file.Name != "version.json" {
+			continue
+		}
+
+		f, err := file.Open()
+		if err != nil {
+			return "", 0, errco.NewErr(errco.ERROR_VERSION_LOAD, errco.LVL_D, "getVersionInfo", err.Error())
+		}
+		defer f.Close()
+
+		versionsBytes, err := ioutil.ReadAll(f)
+		if err != nil {
+			return "", 0, errco.NewErr(errco.ERROR_VERSION_LOAD, errco.LVL_D, "getVersionInfo", err.Error())
+		}
+
+		var info model.VersionInfo
+		err = json.Unmarshal(versionsBytes, &info)
+		if err != nil {
+			return "", 0, errco.NewErr(errco.ERROR_VERSION_LOAD, errco.LVL_D, "getVersionInfo", err.Error())
+		}
+
+		return info.Version, info.Protocol, nil
+	}
+
+	return "", 0, errco.NewErr(errco.ERROR_VERSION_LOAD, errco.LVL_D, "getVersionInfo", "minecraft server version and protocol could not be extracted from version.json")
 }
