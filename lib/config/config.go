@@ -26,12 +26,11 @@ var (
 	ConfigDefault *Configuration = &Configuration{} // ConfigDefault contains parameters of config in file
 	ConfigRuntime *Configuration = &Configuration{} // ConfigRuntime contains parameters of config in runtime
 
-	// ConfigDefaultSave if set to true, the config will be saved at the end of loading
-	ConfigDefaultSave bool = false
+	ConfigDefaultSave bool = false // if true, the config will be saved after successful loading
 
 	Javav string // Javav is the java version on the system. format: "java 16.0.1 2021-04-20"
 
-	ServerIcon string // ServerIcon contains the minecraft server icon
+	ServerIcon string = defaultServerIcon // ServerIcon contains the minecraft server icon
 
 	ListenHost string = "0.0.0.0"   // ListenHost is the ip address for clients to connect to msh
 	ListenPort int                  // ListenPort is the port for clients to connect to msh
@@ -72,26 +71,8 @@ func LoadConfig() *errco.Error {
 		return errMsh.AddTrace("LoadConfig")
 	}
 
-	// --------------- config runtime -------------- //
-	//  from now only config runtime should be used  //
+	// ---------------- save config ---------------- //
 
-	// initialize ip and ports for connection
-	ListenHost, ListenPort, TargetHost, TargetPort, errMsh = ConfigRuntime.getIpPorts()
-	if errMsh != nil {
-		return errMsh.AddTrace("LoadConfig")
-	}
-
-	errco.Logln(errco.LVL_D, "msh proxy setup: %s:%d --> %s:%d", ListenHost, ListenPort, TargetHost, TargetPort)
-
-	// set server icon
-	ServerIcon, errMsh = ConfigRuntime.loadIcon()
-	if errMsh != nil {
-		// it's enough to log it without returning
-		// since the default icon is loaded by default
-		errco.LogMshErr(errMsh.AddTrace("LoadConfig"))
-	}
-
-	// save to file if required
 	if ConfigDefaultSave {
 		errMsh := ConfigDefault.Save()
 		if errMsh != nil {
@@ -102,7 +83,8 @@ func LoadConfig() *errco.Error {
 	return nil
 }
 
-// Save saves config to the config file
+// Save saves config to the config file.
+// Then does the default config setup
 func (c *Configuration) Save() *errco.Error {
 	// encode the struct config
 	configData, err := json.MarshalIndent(c, "", "  ")
@@ -126,7 +108,7 @@ func (c *Configuration) loadDefault() *errco.Error {
 	// get msh executable path
 	mshPath, err := os.Executable()
 	if err != nil {
-		return errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_B, "ConfigDefaultFileRead", err.Error())
+		return errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_B, "loadDefault", err.Error())
 	}
 
 	// read config file
@@ -141,7 +123,7 @@ func (c *Configuration) loadDefault() *errco.Error {
 		return errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_B, "loadDefault", err.Error())
 	}
 
-	// ------------------- checks ------------------ //
+	// ------------------- setup ------------------- //
 
 	// load mshid
 	/*
@@ -180,10 +162,11 @@ func (c *Configuration) loadDefault() *errco.Error {
 	return nil
 }
 
-// loadRuntime parses start arguments into config and replaces placeholders
-func (c *Configuration) loadRuntime(base *Configuration) *errco.Error {
+// loadRuntime initializes runtime config to default config.
+// Then parses start arguments into runtime config, replaces placeholders and does the runtime config setup
+func (c *Configuration) loadRuntime(confdef *Configuration) *errco.Error {
 	// initialize config to base
-	*c = *base
+	*c = *confdef
 
 	// specify arguments
 	flag.StringVar(&c.Server.FileName, "file", c.Server.FileName, "Specify minecraft server file name.")
@@ -219,7 +202,7 @@ func (c *Configuration) loadRuntime(base *Configuration) *errco.Error {
 	errco.Logln(errco.LVL_A, "setting log level to: %d", c.Msh.Debug)
 	errco.DebugLvl = c.Msh.Debug
 
-	// ------------------- checks ------------------ //
+	// ------------------- setup ------------------- //
 
 	// set default config mshid to the user specified mshid
 	/*
@@ -227,10 +210,10 @@ func (c *Configuration) loadRuntime(base *Configuration) *errco.Error {
 		if healthy: update default config mshid
 		if not healthy: use default config mshid
 	*/
-	if base.Msh.ID != c.Msh.ID {
+	if confdef.Msh.ID != c.Msh.ID {
 		if len(c.Msh.ID) == 40 {
 			errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_D, "loadRuntime", "setting user specified mshid in default config"))
-			base.Msh.ID = c.Msh.ID
+			confdef.Msh.ID = c.Msh.ID
 			ConfigDefaultSave = true
 		} else {
 			errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_D, "loadRuntime", "user specified mshid is not healthy"))
@@ -286,6 +269,20 @@ func (c *Configuration) loadRuntime(base *Configuration) *errco.Error {
 		servstats.Stats.Error = errco.NewErr(errco.ERROR_MINECRAFT_SERVER, errco.LVL_D, "loadRuntime", "please accept minecraft server eula.txt")
 		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_B, "loadRuntime", "please accept minecraft server eula.txt: "+eulaFilePath))
 		return nil
+	}
+
+	// initialize ip and ports for connection
+	errMsh := c.loadIpPorts()
+	if errMsh != nil {
+		return errMsh.AddTrace("loadRuntime")
+	}
+	errco.Logln(errco.LVL_D, "msh proxy setup: %s:%d --> %s:%d", ListenHost, ListenPort, TargetHost, TargetPort)
+
+	// load server icon
+	errMsh = c.loadIcon()
+	if errMsh != nil {
+		// it's enough to log it since the default icon is loaded by default
+		errco.LogMshErr(errMsh.AddTrace("loadRuntime"))
 	}
 
 	return nil

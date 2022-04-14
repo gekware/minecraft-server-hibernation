@@ -46,9 +46,12 @@ func (c *Configuration) InWhitelist(params ...string) *errco.Error {
 	return errco.NewErr(errco.ERROR_PLAYER_NOT_IN_WHITELIST, errco.LVL_B, "InWhitelist", "playerName or clientAddress is not whitelisted")
 }
 
-// loadIcon return server logo (base-64 encoded and compressed).
-// If image is missing or error, the default image is returned
-func (c *Configuration) loadIcon() (string, *errco.Error) {
+// loadIcon tries to load user specified server icon (base-64 encoded and compressed).
+// The default icon is loaded by default
+func (c *Configuration) loadIcon() *errco.Error {
+	// set default server icon
+	ServerIcon = defaultServerIcon
+
 	// get the path of the user specified server icon
 	userIconPath := filepath.Join(c.Server.Folder, "server-icon-frozen.png")
 
@@ -56,64 +59,71 @@ func (c *Configuration) loadIcon() (string, *errco.Error) {
 	_, err := os.Stat(userIconPath)
 	if os.IsNotExist(err) {
 		// user specified server icon not found
-		// return default server icon, but no error should be reported
-		return defaultServerIcon, nil
+		// no error should be returned as the missing icon might be intended
+		return nil
 	}
 
 	// open file
 	f, err := os.Open(userIconPath)
 	if err != nil {
-		return defaultServerIcon, errco.NewErr(errco.ERROR_ICON_LOAD, errco.LVL_D, "loadIcon", err.Error())
+		return errco.NewErr(errco.ERROR_ICON_LOAD, errco.LVL_D, "loadIcon", err.Error())
 	}
 	defer f.Close()
 
 	// decode png
 	pngIm, err := png.Decode(f)
 	if err != nil {
-		return defaultServerIcon, errco.NewErr(errco.ERROR_ICON_LOAD, errco.LVL_D, "loadIcon", err.Error())
+		return errco.NewErr(errco.ERROR_ICON_LOAD, errco.LVL_D, "loadIcon", err.Error())
 	}
 
 	// check that image is 64x64
 	if pngIm.Bounds().Max != image.Pt(64, 64) {
-		return defaultServerIcon, errco.NewErr(errco.ERROR_ICON_LOAD, errco.LVL_D, "loadIcon", fmt.Sprintf("incorrect server-icon-frozen.png size. Current size: %dx%d", pngIm.Bounds().Max.X, pngIm.Bounds().Max.Y))
+		return errco.NewErr(errco.ERROR_ICON_LOAD, errco.LVL_D, "loadIcon", fmt.Sprintf("incorrect server-icon-frozen.png size. Current size: %dx%d", pngIm.Bounds().Max.X, pngIm.Bounds().Max.Y))
 	}
 
 	// encode png
 	enc, buff := &png.Encoder{CompressionLevel: -3}, &bytes.Buffer{} // -3: best compression
 	err = enc.Encode(buff, pngIm)
 	if err != nil {
-		return defaultServerIcon, errco.NewErr(errco.ERROR_ICON_LOAD, errco.LVL_D, "loadIcon", err.Error())
+		return errco.NewErr(errco.ERROR_ICON_LOAD, errco.LVL_D, "loadIcon", err.Error())
 	}
 
-	// return user specified server icon as base64 encoded string
-	return base64.RawStdEncoding.EncodeToString(buff.Bytes()), nil
+	// load user specified server icon as base64 encoded string
+	ServerIcon = base64.RawStdEncoding.EncodeToString(buff.Bytes())
+
+	return nil
 }
 
-// getIpPorts reads server.properties server file and returns the correct ports
-func (c *Configuration) getIpPorts() (string, int, string, int, *errco.Error) {
+// loadIpPorts reads server.properties server file and loads correct ports to global variables
+func (c *Configuration) loadIpPorts() *errco.Error {
 	data, err := ioutil.ReadFile(filepath.Join(c.Server.Folder, "server.properties"))
 	if err != nil {
-		return "", -1, "", -1, errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_B, "getIpPorts", err.Error())
+		return errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_B, "loadIpPorts", err.Error())
 	}
 
 	dataStr := strings.ReplaceAll(string(data), "\r", "")
 
-	TargetPortStr, errMsh := utility.StrBetween(dataStr, "server-port=", "\n")
+	TargetPStr, errMsh := utility.StrBetween(dataStr, "server-port=", "\n")
 	if errMsh != nil {
-		return "", -1, "", -1, errMsh.AddTrace("getIpPorts")
+		return errMsh.AddTrace("loadIpPorts")
 	}
 
-	TargetPort, err = strconv.Atoi(TargetPortStr)
+	TargetP, err := strconv.Atoi(TargetPStr)
 	if err != nil {
-		return "", -1, "", -1, errco.NewErr(errco.ERROR_CONVERSION, errco.LVL_D, "getIpPorts", err.Error())
+		return errco.NewErr(errco.ERROR_CONVERSION, errco.LVL_D, "loadIpPorts", err.Error())
 	}
 
-	if TargetPort == c.Msh.ListenPort {
-		return "", -1, "", -1, errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_B, "getIpPorts", "TargetPort and ListenPort appear to be the same, please change one of them")
+	if TargetP == c.Msh.ListenPort {
+		return errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_B, "loadIpPorts", "TargetPort and ListenPort appear to be the same, please change one of them")
 	}
 
-	// return ListenHost, TargetHost, TargetPort, nil
-	return ListenHost, c.Msh.ListenPort, TargetHost, TargetPort, nil
+	// load ListenHost, ListenPort, TargetHost, TargetPort
+	// ListenHost remains the same
+	ListenPort = c.Msh.ListenPort
+	// TargetHost remains the same
+	TargetPort = TargetP
+
+	return nil
 }
 
 // getVersionInfo reads version.json from the server JAR file
