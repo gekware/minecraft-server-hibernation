@@ -24,7 +24,10 @@ var (
 	configFileName string = "msh-config.json" // configFileName is the config file name
 
 	ConfigDefault *Configuration = &Configuration{} // ConfigDefault contains parameters of config in file
-	ConfigRuntime *Configuration = &Configuration{} // ConfigRuntime contains parameters of config in runtime.
+	ConfigRuntime *Configuration = &Configuration{} // ConfigRuntime contains parameters of config in runtime
+
+	// ConfigDefaultSave if set to true, the config will be saved at the end of loading
+	ConfigDefaultSave bool = false
 
 	Javav string // Javav is the java version on the system. format: "java 16.0.1 2021-04-20"
 
@@ -72,11 +75,6 @@ func LoadConfig() *errco.Error {
 	// --------------- config runtime -------------- //
 	//  from now only config runtime should be used  //
 
-	// as soon as the config variables are set, set debug level
-	// (up until now the default errco.DebugLvl is LVL_E)
-	errco.Logln(errco.LVL_A, "setting log level to: %d", ConfigRuntime.Msh.Debug)
-	errco.DebugLvl = ConfigRuntime.Msh.Debug
-
 	// initialize ip and ports for connection
 	ListenHost, ListenPort, TargetHost, TargetPort, errMsh = ConfigRuntime.getIpPorts()
 	if errMsh != nil {
@@ -91,6 +89,14 @@ func LoadConfig() *errco.Error {
 		// it's enough to log it without returning
 		// since the default icon is loaded by default
 		errco.LogMshErr(errMsh.AddTrace("LoadConfig"))
+	}
+
+	// save to file if required
+	if ConfigDefaultSave {
+		errMsh := ConfigDefault.Save()
+		if errMsh != nil {
+			return errMsh.AddTrace("LoadConfig")
+		}
 	}
 
 	return nil
@@ -110,7 +116,7 @@ func (c *Configuration) Save() *errco.Error {
 		return errco.NewErr(errco.ERROR_CONFIG_SAVE, errco.LVL_D, "Save", "could not write to config file")
 	}
 
-	errco.Logln(errco.LVL_D, "Save: saved to config file")
+	errco.Logln(errco.LVL_D, "saved default config to config file")
 
 	return nil
 }
@@ -137,22 +143,25 @@ func (c *Configuration) loadDefault() *errco.Error {
 
 	// ------------------- checks ------------------ //
 
-	// saveReq if set to true, the config will be saved at the end of the function
-	var saveReq bool = false
-
-	// check that msh id is healthy
-	// if not generate a new one and save to config
+	// load mshid
+	/*
+		get machine id, if fail:
+		get default config mshid, if fail:
+		generate mshid (and save it to default config)
+	*/
 	if id, err := machineid.ProtectedID("msh"); err != nil {
-		return errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_D, "loadDefault", err.Error())
+		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_D, "loadDefault", "error while retrieving machine id, assigning mshid"))
+		c.assignMshID()
 	} else if ex, err := os.Executable(); err != nil {
-		return errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_D, "loadDefault", err.Error())
+		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_D, "loadDefault", "error while retrieving machine id, assigning mshid"))
+		c.assignMshID()
 	} else {
+		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_D, "loadDefault", "generating mshid from machine id"))
 		hasher := sha1.New()
 		hasher.Write([]byte(id + filepath.Dir(ex)))
-		clientID := hex.EncodeToString(hasher.Sum(nil))
-		if c.Msh.ID != clientID {
-			c.Msh.ID = clientID
-			saveReq = true
+		if id := hex.EncodeToString(hasher.Sum(nil)); c.Msh.ID != id {
+			c.Msh.ID = id
+			ConfigDefaultSave = true
 		}
 	}
 
@@ -165,15 +174,7 @@ func (c *Configuration) loadDefault() *errco.Error {
 	} else if c.Server.Version != version || c.Server.Protocol != protocol {
 		c.Server.Version = version
 		c.Server.Protocol = protocol
-		saveReq = true
-	}
-
-	// save to file if required
-	if saveReq {
-		errMsh := c.Save()
-		if errMsh != nil {
-			return errMsh.AddTrace("loadDefault")
-		}
+		ConfigDefaultSave = true
 	}
 
 	return nil
@@ -193,6 +194,7 @@ func (c *Configuration) loadRuntime(base *Configuration) *errco.Error {
 	flag.StringVar(&c.Commands.StartServerParam, "msparam", c.Commands.StartServerParam, "Specify start server parameters.")
 	flag.IntVar(&c.Commands.StopServerAllowKill, "allowKill", c.Commands.StopServerAllowKill, "Specify after how many seconds the server should be killed (if stop command fails).")
 
+	flag.StringVar(&c.Msh.ID, "id", c.Msh.ID, "Specify msh ID.")
 	flag.IntVar(&c.Msh.Debug, "d", c.Msh.Debug, "Specify debug level.")
 	flag.StringVar(&c.Msh.InfoHibernation, "infohibe", c.Msh.InfoHibernation, "Specify hibernation info.")
 	flag.StringVar(&c.Msh.InfoStarting, "infostar", c.Msh.InfoStarting, "Specify starting info.")
@@ -213,7 +215,27 @@ func (c *Configuration) loadRuntime(base *Configuration) *errco.Error {
 	c.Commands.StartServer = strings.ReplaceAll(c.Commands.StartServer, "<Server.FileName>", c.Server.FileName)
 	c.Commands.StartServer = strings.ReplaceAll(c.Commands.StartServer, "<Commands.StartServerParam>", c.Commands.StartServerParam)
 
+	// after config variables are set, set debug level
+	errco.Logln(errco.LVL_A, "setting log level to: %d", c.Msh.Debug)
+	errco.DebugLvl = c.Msh.Debug
+
 	// ------------------- checks ------------------ //
+
+	// set default config mshid to the user specified mshid
+	/*
+		load user specified mshid in runtime config, if different from default config:
+		if healthy: update default config mshid
+		if not healthy: use default config mshid
+	*/
+	if base.Msh.ID != c.Msh.ID {
+		if len(c.Msh.ID) == 40 {
+			errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_D, "loadRuntime", "setting user specified mshid in default config"))
+			base.Msh.ID = c.Msh.ID
+			ConfigDefaultSave = true
+		} else {
+			errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_D, "loadRuntime", "user specified mshid is not healthy"))
+		}
+	}
 
 	// check if serverFile/serverFolder exists
 	serverFileFolderPath := filepath.Join(c.Server.Folder, c.Server.FileName)
