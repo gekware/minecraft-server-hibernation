@@ -1,6 +1,6 @@
 .vscode
 .VSCodeCounter
 
-msh
-msh.exe
-TODO
+*.exe
+*.bin
+*.osx
