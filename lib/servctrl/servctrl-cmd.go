@@ -54,11 +54,12 @@ func Execute(command, origin string) (string, *errco.Error) {
 	return <-lastLine, nil
 }
 
-// cmdStart starts a new terminal (non-blocking) and returns a ServTerm object
-// if server terminal is already active it returns without doing anything
+// cmdStart starts a new terminal and returns a ServTerm object.
+// If server terminal is already active it returns without doing anything
+// [non-blocking]
 func cmdStart(dir, command string) *errco.Error {
 	if ServTerm.IsActive {
-		errco.LogMshErr(errco.NewErr(errco.ERROR_TERMINAL_START, errco.LVL_D, "cmdStart", "server terminal is already active"))
+		errco.LogMshErr(errco.NewErr(errco.ERROR_SERVER_IS_WARM, errco.LVL_D, "cmdStart", "minecraft server terminal already active"))
 		return nil
 	}
 
@@ -252,5 +253,7 @@ func waitForExit() {
 	errco.Logln(errco.LVL_D, "waitForExit: terminal exited")
 
 	servstats.Stats.Status = errco.SERVER_STATUS_OFFLINE
+	servstats.Stats.Suspended = false
+
 	errco.Logln(errco.LVL_B, "MINECRAFT SERVER IS OFFLINE!")
 }

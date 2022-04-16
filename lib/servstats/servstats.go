@@ -12,7 +12,8 @@ var Stats *serverStats
 
 type serverStats struct {
 	M                *sync.Mutex
-	Status           int     // represent the status of the minecraft server
+	Status           int     // status of the minecraft server
+	Suspended        bool    // status of minecraft server process (if ms is offline, should be set to false)
 	PlayerCount      int     // tracks players connected to the server
 	FreezeMSRequests int32   // tracks active FreezeMSRequest() instances. (int32 for atomic operations)
 	LoadProgress     string  // tracks loading percentage of starting server
@@ -24,6 +25,7 @@ func init() {
 	Stats = &serverStats{
 		M:                &sync.Mutex{},
 		Status:           errco.SERVER_STATUS_OFFLINE,
+		Suspended:        false,
 		PlayerCount:      0,
 		FreezeMSRequests: 0,
 		LoadProgress:     "0%",

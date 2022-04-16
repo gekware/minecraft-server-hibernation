@@ -51,7 +51,7 @@ func procTreeSuspend(ppid uint32) *errco.Error {
 	}
 
 	// get process tree
-	treePid, errMsh := getTreePids(uint32(ppid))
+	treePid, errMsh := getTreePids(ppid)
 	if errMsh != nil {
 		return errMsh.AddTrace("procTreeSuspend")
 	}
@@ -90,7 +90,7 @@ func procTreeResume(ppid uint32) *errco.Error {
 	}
 
 	// get process tree
-	treePid, errMsh := getTreePids(uint32(ppid))
+	treePid, errMsh := getTreePids(ppid)
 	if errMsh != nil {
 		return errMsh.AddTrace("procTreeResume")
 	}
@@ -144,10 +144,10 @@ func getTreePids(rootPid uint32) ([]uint32, *errco.Error) {
 				foundRootPid = true
 			}
 
-			if utility.SliceContain(parentLayer, procEntry.ParentProcessID) {
+			if utility.SliceContain(procEntry.ParentProcessID, parentLayer) {
 				// avoid adding a pid if it's already contained in treePids
 				// (pid 0's ppid is 0 and this leads to recursion)
-				if !utility.SliceContain(treePids, procEntry.ProcessID) {
+				if !utility.SliceContain(procEntry.ProcessID, treePids) {
 					childLayer = append(childLayer, procEntry.ProcessID)
 				}
 			}

@@ -92,34 +92,58 @@ func buildMessage(messageFormat int, message string) []byte {
 }
 
 // getReqType returns the request type (INFO or JOIN) and playerName of the client
-func getReqType(clientSocket net.Conn) (int, string, *errco.Error) {
-	reqPacket, errMsh := getClientPacket(clientSocket)
+func getReqType(clientSocket net.Conn) ([]byte, int, string, *errco.Error) {
+	dataReqFull := []byte{}
+	playerName := "player unknown"
+
+	data, errMsh := getClientPacket(clientSocket)
 	if errMsh != nil {
-		return errco.ERROR_CLIENT_REQ, "", errMsh.AddTrace("getReqType")
+		return nil, errco.ERROR_CLIENT_REQ, "", errMsh.AddTrace("getReqType")
 	}
+
+	dataReqFull = append(dataReqFull, data...)
 
 	// generate flags
 	listenPortByt := big.NewInt(int64(config.ListenPort)).Bytes() // calculates listen port in BigEndian bytes
 	reqFlagInfo := append(listenPortByt, byte(1))                 // flag contained in INFO request packet -> [99 211 1]
 	reqFlagJoin := append(listenPortByt, byte(2))                 // flag contained in JOIN request packet -> [99 211 2]
 
-	playerName := extractPlayerName(reqPacket, reqFlagJoin, clientSocket)
-
 	switch {
-	case bytes.Contains(reqPacket, reqFlagInfo):
-		// client is requesting server info and ping
-		// client first packet:	[ ... x x x (listenPortBytes) 1 1 0] or [ ... x x x (listenPortBytes) 1 ]
-		//                      [           ^---reqFlagInfo---^    ]    [           ^---reqFlagInfo---^ ]
-		return errco.CLIENT_REQ_INFO, playerName, nil
+	case bytes.Contains(data, reqFlagInfo):
+		// client is requesting server info
+		//  _____________ case 1 _____________      ___________ case 2 ____________
+		// [ ... x x x (listenPortBytes) 1 1 0] or [ ... x x x (listenPortBytes) 1 ]
+		// [           ^---reqFlagInfo---^    ]    [           ^---reqFlagInfo---^ ]
+		return data, errco.CLIENT_REQ_INFO, playerName, nil
 
-	case bytes.Contains(reqPacket, reqFlagJoin):
+	case bytes.Contains(data, reqFlagJoin):
 		// client is trying to join the server
-		// client first packet:	[ ... x x x (listenPortBytes) 2 ] or [ ... x x x (listenPortBytes) 2 x x x (player name) ]
-		//                      [           ^---reqFlagJoin---^ ]    [           ^---reqFlagJoin---^                     ]
-		return errco.CLIENT_REQ_JOIN, playerName, nil
+		//  _____________________ case 1 ______________________      _______________________ case 2 _______________________
+		// [ ... x x x (listenPortBytes) 2 x x x (player name) ] or [ ... x x x (listenPortBytes) 2 ][ x x x (player name) ]
+		// [           ^---reqFlagJoin---^                     ]    [           ^---reqFlagJoin---^ ][                     ]
+		// [                               ^--dataSplAft[1]--^ ]    [              dataSplitAft[1]-╝][                     ]
+
+		dataSplAft := bytes.SplitAfter(data, reqFlagJoin)
+		if len(dataSplAft[1]) > 0 {
+			// case 1: player name is already contained in packet
+			playerName = string(dataSplAft[1][3:])
+
+		} else {
+			// case 2: player name is contained in following packet
+			data, errMsh = getClientPacket(clientSocket)
+			if errMsh != nil {
+				// this error is non-blocking: log the error and return "player unknown"
+				errco.LogMshErr(errMsh.AddTrace("extractPlayerName"))
+				playerName = "player unknown"
+			}
+			dataReqFull = append(dataReqFull, data...)
+			playerName = string(data[3:])
+		}
+
+		return dataReqFull, errco.CLIENT_REQ_JOIN, playerName, nil
 
 	default:
-		return errco.CLIENT_REQ_UNKN, "", errco.NewErr(errco.CLIENT_REQ_UNKN, errco.LVL_D, "getReqType", "client request unknown")
+		return nil, errco.CLIENT_REQ_UNKN, "", errco.NewErr(errco.CLIENT_REQ_UNKN, errco.LVL_D, "getReqType", "client request unknown")
 	}
 }
 
@@ -171,7 +195,7 @@ func getClientPacket(clientSocket net.Conn) ([]byte, *errco.Error) {
 
 // extractPlayerName retrieves the name of the player that is trying to connect.
 // "player unknown" is returned in case of error or reqFlagJoin not found
-func extractPlayerName(data, reqFlagJoin []byte, clientSocket net.Conn) string {
+func extractPlayerNameOLD(data, reqFlagJoin []byte, clientSocket net.Conn) string {
 	// player name is found only in join request packet
 	if !bytes.Contains(data, reqFlagJoin) {
 		// reqFlagJoin not found

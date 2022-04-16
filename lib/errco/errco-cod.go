@@ -43,16 +43,20 @@ const (
 const (
 	// server control package
 
-	ERROR_TERMINAL_NOT_ACTIVE = 0x0000f000 // server terminal is not active
-	ERROR_TERMINAL_START      = 0x0000f001 // error while starting server terminal
-	ERROR_SERVER_NOT_ONLINE   = 0x0000f100 // server is not online
-	ERROR_SERVER_NOT_EMPTY    = 0x0000f101 // minecraft server is not empty
-	ERROR_SERVER_MUST_WAIT    = 0x0000f102 // msh issued ms stop ahead of specified wait time
-	ERROR_SERVER_UNEXP_OUTPUT = 0x0000f103 // server output does not adhere to expected log format
-	ERROR_SERVER_KILL         = 0x0000f104 // error while killing server process
-	ERROR_PIPE_INPUT_WRITE    = 0x0000f200 // error while writing to terminal input
-	ERROR_PIPE_LOAD           = 0x0000f201 // error while loading pipe
-	ERROR_CONVERSION          = 0x0000f300 // error while converting variable
+	ERROR_TERMINAL_NOT_ACTIVE      = 0x0000f000 // server terminal is not active
+	ERROR_TERMINAL_ALREADY_ACTIVE  = 0x0000f001 // server terminal is already active
+	ERROR_TERMINAL_START           = 0x0000f002 // error while starting server terminal
+	ERROR_SERVER_NOT_ONLINE        = 0x0000f100 // minecraft server is not online
+	ERROR_SERVER_NOT_EMPTY         = 0x0000f101 // minecraft server is not empty
+	ERROR_SERVER_MUST_WAIT         = 0x0000f102 // msh issued ms stop ahead of specified wait time
+	ERROR_SERVER_UNEXP_OUTPUT      = 0x0000f103 // minecraft server output does not adhere to expected log format
+	ERROR_SERVER_KILL              = 0x0000f104 // error while killing minecraft server process
+	ERROR_SERVER_IS_WARM           = 0x0000f106 // minecraft server is already warm
+	ERROR_SERVER_IS_FROZEN         = 0x0000f107 // minecraft server is already frozen
+	ERROR_SERVER_OFFLINE_SUSPENDED = 0x0000f108 // minecraft server is offline but not suspended
+	ERROR_PIPE_INPUT_WRITE         = 0x0000f200 // error while writing to terminal input
+	ERROR_PIPE_LOAD                = 0x0000f201 // error while loading pipe
+	ERROR_CONVERSION               = 0x0000f300 // error while converting variable
 
 	// program manager package
 

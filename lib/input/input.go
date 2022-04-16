@@ -61,16 +61,18 @@ func GetInput() {
 					errco.LogMshErr(errMsh.AddTrace("GetInput"))
 				}
 			case "freeze":
-				// stop minecraft server with no player check
-				errMsh := servctrl.FreezeMS(false)
+				// stop minecraft server forcefully
+				errMsh := servctrl.FreezeMS(true)
 				if errMsh != nil {
 					errco.LogMshErr(errMsh.AddTrace("GetInput"))
 				}
 			case "exit":
-				errMsh := servctrl.FreezeMS(false)
+				// stop minecraft server forcefully
+				errMsh := servctrl.FreezeMS(true)
 				if errMsh != nil {
 					errco.LogMshErr(errMsh.AddTrace("GetInput"))
 				}
+				// exit msh
 				errco.Logln(errco.LVL_A, "exiting msh")
 				os.Exit(0)
 			default:

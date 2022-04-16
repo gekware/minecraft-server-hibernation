@@ -2,8 +2,8 @@
   "Server": {
     "Folder": "{path/to/server/folder}",
     "FileName": "{server.jar}",
-    "Protocol": 756,
-    "Version": "1.17.1"
+    "Version": "1.17.1",
+    "Protocol": 756
   },
   "Commands": {
     "StartServer": "java <Commands.StartServerParam> -jar <Server.FileName> nogui",
@@ -13,11 +13,12 @@
   },
   "Msh": {
     "Debug": 1,
+    "AllowSuspend": false,
     "InfoHibernation": "                   §fserver status:\n                   §b§lHIBERNATING",
     "InfoStarting": "                   §fserver status:\n                    §6§lWARMING UP",
     "NotifyUpdate": true,
     "ListenPort": 25555,
     "TimeBeforeStoppingEmptyServer": 30,
-	"Whitelist": ["{127.0.0.1}", "{gekigek99}"]
+	"Whitelist": []
   }
 }

@@ -10,6 +10,7 @@ import (
 	"msh/lib/errco"
 	"msh/lib/input"
 	"msh/lib/progmgr"
+	"msh/lib/servctrl"
 	"msh/lib/utility"
 )
 
@@ -59,7 +60,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	errco.Logln(errco.LVL_D, "listening for new clients to connect on %s:%d...", config.ListenHost, config.ListenPort)
+	errco.Logln(errco.LVL_B, "listening for new clients to connect on %s:%d...", config.ListenHost, config.ListenPort)
+
+	// if ms suspension is allowed, pre-warm the server
+	if config.ConfigRuntime.Msh.AllowSuspend {
+		errco.Logln(errco.LVL_B, "minecraft server will now pre-warm (AllowSuspend is enabled)...")
+		servctrl.WarmMS()
+	}
 
 	// infinite cycle to accept clients. when a clients connects it is passed to handleClientSocket()
 	for {

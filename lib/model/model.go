@@ -16,6 +16,7 @@ type Configuration struct {
 	} `json:"Commands"`
 	Msh struct {
 		Debug                         int      `json:"Debug"`
+		AllowSuspend                  bool     `json:"AllowSuspend"` // specify if msh should suspend java server process
 		InfoHibernation               string   `json:"InfoHibernation"`
 		InfoStarting                  string   `json:"InfoStarting"`
 		NotifyUpdate                  bool     `json:"NotifyUpdate"`
