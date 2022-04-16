@@ -179,6 +179,7 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.Error {
 
 	flag.StringVar(&c.Msh.ID, "id", c.Msh.ID, "Specify msh ID.")
 	flag.IntVar(&c.Msh.Debug, "d", c.Msh.Debug, "Specify debug level.")
+	flag.BoolVar(&c.Msh.AllowSuspend, "allowsuspend", c.Msh.AllowSuspend, "Specify if minecraft server process can be suspended.")
 	flag.StringVar(&c.Msh.InfoHibernation, "infohibe", c.Msh.InfoHibernation, "Specify hibernation info.")
 	flag.StringVar(&c.Msh.InfoStarting, "infostar", c.Msh.InfoStarting, "Specify starting info.")
 	flag.IntVar(&c.Msh.ListenPort, "port", c.Msh.ListenPort, "Specify msh port.")
