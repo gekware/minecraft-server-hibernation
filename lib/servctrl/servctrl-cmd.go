@@ -36,12 +36,13 @@ var lastLine = make(chan string)
 // Be careful as some commands are not printed on terminal but only gamechat (this can lead to <-lastLine channel hanging).
 // [non-blocking]
 func Execute(command, origin string) (string, *errco.Error) {
-	if !ServTerm.IsActive {
+	switch {
+	case !ServTerm.IsActive:
 		return "", errco.NewErr(errco.ERROR_TERMINAL_NOT_ACTIVE, errco.LVL_C, "Execute", "terminal not active")
-	}
-
-	if servstats.Stats.Status != errco.SERVER_STATUS_ONLINE {
+	case servstats.Stats.Status != errco.SERVER_STATUS_ONLINE:
 		return "", errco.NewErr(errco.ERROR_SERVER_NOT_ONLINE, errco.LVL_C, "Execute", "server not online")
+	case servstats.Stats.Suspended:
+		return "", errco.NewErr(errco.ERROR_SERVER_SUSPENDED, errco.LVL_C, "Execute", "server is suspended")
 	}
 
 	errco.Logln(errco.LVL_C, "ms command: %s%s%s\t(origin: %s)", errco.COLOR_YELLOW, command, errco.COLOR_RESET, origin)
@@ -58,12 +59,13 @@ func Execute(command, origin string) (string, *errco.Error) {
 // TellRaw executes a tellraw on ms
 // [non-blocking]
 func TellRaw(reason, text, origin string) *errco.Error {
-	if !ServTerm.IsActive {
+	switch {
+	case !ServTerm.IsActive:
 		return errco.NewErr(errco.ERROR_TERMINAL_NOT_ACTIVE, errco.LVL_C, "TellRaw", "terminal not active")
-	}
-
-	if servstats.Stats.Status != errco.SERVER_STATUS_ONLINE {
+	case servstats.Stats.Status != errco.SERVER_STATUS_ONLINE:
 		return errco.NewErr(errco.ERROR_SERVER_NOT_ONLINE, errco.LVL_C, "TellRaw", "server not online")
+	case servstats.Stats.Suspended:
+		return errco.NewErr(errco.ERROR_SERVER_SUSPENDED, errco.LVL_C, "TellRaw", "server is suspended")
 	}
 
 	gameMessage, err := json.Marshal(&model.GameRawMessage{Text: "[MSH] " + reason + ": " + text, Color: "aqua", Bold: false})

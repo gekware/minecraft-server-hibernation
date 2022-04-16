@@ -58,6 +58,7 @@ const (
 	ERROR_SERVER_IS_WARM           = 0x0000f106 // minecraft server is already warm
 	ERROR_SERVER_IS_FROZEN         = 0x0000f107 // minecraft server is already frozen
 	ERROR_SERVER_OFFLINE_SUSPENDED = 0x0000f108 // minecraft server is offline but not suspended
+	ERROR_SERVER_SUSPENDED         = 0x0000f109 // minecraft server is suspended
 	ERROR_PIPE_INPUT_WRITE         = 0x0000f200 // error while writing to terminal input
 	ERROR_PIPE_LOAD                = 0x0000f201 // error while loading pipe
 	ERROR_CONVERSION               = 0x0000f300 // error while converting variable
