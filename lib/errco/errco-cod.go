@@ -11,6 +11,8 @@ package errco
 0x0005xxxx: utility package
 0x0006xxxx: main
 0x0007xxxx: input package
+0x0008xxxx: errco package
+0x0009xxxx: servstats package
 */
 
 // ------------------- codes ------------------- //
@@ -25,9 +27,11 @@ const (
 
 	// program manager package
 
-	VERSION_UPDATED           = 0x00010000 // check update result: msh updated
-	VERSION_UPDATEAVAILABLE   = 0x00010001 // check update result: update available
-	VERSION_UNOFFICIALVERSION = 0x00010002 // check update result: msh is running unofficial version
+	VERSION_DEP = 0x00010000 // check update result: msh is running deprecated version
+	VERSION_UPD = 0x00010001 // check update result: update available
+	VERSION_OK  = 0x00010002 // check update result: msh updated
+	VERSION_DEV = 0x00010003 // check update result: msh is running dev version
+	VERSION_UNO = 0x00010004 // check update result: msh is running unofficial version
 
 	// server connection package
 
@@ -60,8 +64,11 @@ const (
 
 	// program manager package
 
-	ERROR_VERSION            = 0x0001f000 // check update error
-	ERROR_VERSION_COMPARISON = 0x0001f001 // delta version calculation error
+	ERROR_VERSION         = 0x0001f000 // check update error
+	ERROR_VERSION_INVALID = 0x0001f001 // version format is invalid
+	ERROR_GET_CORES       = 0x0001f100 // error getting system cores count
+	ERROR_GET_CPU_INFO    = 0x0001f101 // error getting cpu info
+	ERROR_GET_MEMORY      = 0x0001f102 // error getting system memory info
 
 	// server connection package
 
@@ -79,7 +86,8 @@ const (
 	ERROR_CONFIG_SAVE             = 0x0003f001 // error while saving config to file
 	ERROR_CONFIG_CHECK            = 0x0003f002 // error while checking config
 	ERROR_ICON_LOAD               = 0x0003f100 // error while loading icon
-	ERROR_PLAYER_NOT_IN_WHITELIST = 0x0003f200 // error player is not in whitelist
+	ERROR_VERSION_LOAD            = 0x0003f101 // error while loading version.json from server JAR
+	ERROR_PLAYER_NOT_IN_WHITELIST = 0x0003f200 // player is not in whitelist
 
 	// operative system package
 
@@ -103,7 +111,13 @@ const (
 	// input package
 
 	ERROR_COMMAND_INPUT     = 0x0007f000 // general error while reading command input
-	ERROR_COMMAND_UNKNOWN   = 0x0007f001 // error unknown command
-	ERROR_INPUT_READ        = 0x0007f100 // error while reading input
-	ERROR_INPUT_UNAVAILABLE = 0x0007f101 // error stdin is not available
+	ERROR_COMMAND_UNKNOWN   = 0x0007f001 // command is unknown
+	ERROR_INPUT_READ        = 0x0007f100 // error while reading input)
+	ERROR_INPUT_UNAVAILABLE = 0x0007f101 // stdin is not available
+
+	// errco package
+	ERROR_COLOR_ENABLE = 0x0008f000 // error while trying to enable colors on terminal
+
+	// servstats package
+	ERROR_MINECRAFT_SERVER = 0x0009f000 // major error while starting minecraft server (will be communicated to clients trying to join)
 )

@@ -76,7 +76,7 @@ func getServInfo() (*model.DataInfo, *errco.Error) {
 	// open connection to minecraft server
 	serverSocket, err := net.Dial("tcp", fmt.Sprintf("%s:%d", config.TargetHost, config.TargetPort))
 	if err != nil {
-		return nil, errco.NewErr(errco.ERROR_SERVER_DIAL, errco.LVL_D, "getServInfo", err.Error())
+		return &model.DataInfo{}, errco.NewErr(errco.ERROR_SERVER_DIAL, errco.LVL_D, "getServInfo", err.Error())
 	}
 	defer serverSocket.Close()
 
@@ -130,15 +130,16 @@ func getServInfo() (*model.DataInfo, *errco.Error) {
 	if recInfo.Version.Name != config.ConfigRuntime.Server.Version || recInfo.Version.Protocol != config.ConfigRuntime.Server.Protocol {
 		errco.Logln(errco.LVL_D, "server version found! serverVersion: %s serverProtocol: %d", recInfo.Version.Name, recInfo.Version.Protocol)
 
-		// update the runtime config
-		config.ConfigRuntime.Server.Version = recInfo.Version.Name
-		config.ConfigRuntime.Server.Protocol = recInfo.Version.Protocol
+		// update runtime config if version is not specified
+		if config.ConfigRuntime.Server.Version == "" {
+			config.ConfigRuntime.Server.Version = recInfo.Version.Name
+			config.ConfigRuntime.Server.Protocol = recInfo.Version.Protocol
+		}
 
-		// update the file config
+		// update and save default config
 		config.ConfigDefault.Server.Version = recInfo.Version.Name
 		config.ConfigDefault.Server.Protocol = recInfo.Version.Protocol
-
-		errMsh := config.ConfigDefaultFileWrite()
+		errMsh := config.ConfigDefault.Save()
 		if errMsh != nil {
 			return nil, errMsh.AddTrace("getServInfo")
 		}

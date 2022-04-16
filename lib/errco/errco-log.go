@@ -18,17 +18,17 @@ const (
 	LVL_E = 4 // BYTE: connection bytes log
 )
 
-// constants to print color text on terminal
-const (
-	COLOR_RESET = "\033[0m"
+// ------------------- colors ------------------ //
 
-	COLOR_GRAY   = "\033[1;30m" // used for server logs
+var (
+	COLOR_RESET  = "\033[0m"
+	COLOR_GRAY   = "\033[1;30m" // used for server
 	COLOR_RED    = "\033[0;31m" // used for errors
 	COLOR_GREEN  = "\033[0;32m"
 	COLOR_YELLOW = "\033[0;33m" // used for commands
 	COLOR_BLUE   = "\033[0;34m"
 	COLOR_PURPLE = "\033[0;35m"
-	COLOR_CYAN   = "\033[0;36m"
+	COLOR_CYAN   = "\033[0;36m" // used for important logs
 )
 
 // Logln prints the args if debug option is set to true

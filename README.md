@@ -11,11 +11,11 @@ _(for vanilla/modded on linux/windows/macos)_
 
 <p align="center" >
     <a href="https://github.com/gekware/minecraft-server-hibernation" >
-        <img src="https://user-images.githubusercontent.com/53654579/90397372-09a9df80-e098-11ea-925c-29e9bdfc0b48.png" >
+        <img src="https://raw.githubusercontent.com/gekware/minecraft-server-hibernation/c6a80ea835bea9f9a795c0805ab0e99ba326273c/res/icon/msh.png" >
     </a>
 </p>
 
-version: v2.4.5  
+version: v2.4.6  
 Copyright (C) 2019-2022 [gekigek99](https://github.com/gekigek99)  
 
 Check the [releases](https://github.com/gekware/minecraft-server-hibernation/releases) to download the binaries (for linux, windows and macos)
@@ -62,18 +62,18 @@ _only text in braces needs to be modified (remember to remove all braces)_
 Location of server folder and executable. You can find protocol/version [here](https://wiki.vg/Protocol_version_numbers) (but msh should set them automatically):
 ```yaml
 "Server": {
-  "Folder": "{path/to/server/folder}",
-  "FileName": "{server.jar}",
-  "Protocol": 756,
+  "Folder": "{path/to/server/folder}"
+  "FileName": "{server.jar}"
+  "Protocol": 756
   "Version": "1.17.1"
 }
 ```
 Commands to start and stop minecraft server:
 ```yaml
 "Commands": {
-  "StartServer": "java <Commands.StartServerParam> -jar <Server.FileName> nogui",
-  "StartServerParam": "-Xmx1024M -Xms1024M",
-  "StopServer": "stop",
+  "StartServer": "java <Commands.StartServerParam> -jar <Server.FileName> nogui"
+  "StartServerParam": "-Xmx1024M -Xms1024M"
+  "StopServer": "stop"
   "StopServerAllowKill": 10
 }
 # if StopServerAllowKill is more than 0, then the specified number is the amount of seconds
@@ -96,16 +96,17 @@ Set the logging level for debug purposes
 ```
 Hibernation and Starting server description
 ```yaml
-"InfoHibernation": "                   §fserver status:\n                   §b§lHIBERNATING",
-"InfoStarting": "                   §fserver status:\n                    §6§lWARMING UP",
+"InfoHibernation": "                   §fserver status:\n                   §b§lHIBERNATING"
+"InfoStarting": "                   §fserver status:\n                    §6§lWARMING UP"
 ```
-Set to false if you don't want to notify updates in game chat (every 20 minutes)
+Set to false if you don't want notifications (every 20 minutes)
 ```yaml
 "NotifyUpdate": true
+"NotifyMessage": true
 ```
-*60 seconds* is the time (after the last player disconnected) that the script waits before hibernating the minecraft server
+*30 seconds* is the time (after the last player disconnected) that the script waits before hibernating the minecraft server
 ```yaml
-"TimeBeforeStoppingEmptyServer": 30     #any parameter more than 30s is recommended
+"TimeBeforeStoppingEmptyServer": 30	#any parameter more than 30s is recommended
 ```
 
 _Some of these parameters can be configured with command-line arguments (--help to know which)_
@@ -116,7 +117,7 @@ _Some of these parameters can be configured with command-line arguments (--help 
 
 Author: [gekigek99](https://github.com/gekigek99)  
 
-Contributors: [najtin](https://github.com/najtin/minecraft-server-hibernation), [f8ith](https://github.com/f8ith/minecraft-server-hibernation), [Br31zh](https://github.com/Br31zh/minecraft-server-hibernation), [someotherotherguy](https://github.com/someotherotherguy/minecraft-server-hibernation), [navidmafi](https://github.com/navidmafi), [cromefire](https://github.com/cromefire)  
+Contributors: [najtin](https://github.com/najtin/minecraft-server-hibernation), [f8ith](https://github.com/f8ith/minecraft-server-hibernation), [Br31zh](https://github.com/Br31zh/minecraft-server-hibernation), [someotherotherguy](https://github.com/someotherotherguy/minecraft-server-hibernation), [navidmafi](https://github.com/navidmafi), [cromefire](https://github.com/cromefire), [andreblanke](https://github.com/andreblanke)  
 Docker branch: [lubocode](https://github.com/lubocode/minecraft-server-hibernation)
 
 _If you wish to contribute, please create a pull request using the dev branch as the base for your changes_
@@ -125,7 +126,7 @@ _If you wish to contribute, please create a pull request using the dev branch as
 
 <p align="center" >
     <a href="https://www.buymeacoffee.com/gekigek99" >
-        <img src="https://user-images.githubusercontent.com/53654579/98535501-81963900-2286-11eb-94a4-359adb64afe2.png" >
+        <img src="https://raw.githubusercontent.com/gekware/minecraft-server-hibernation/c6a80ea835bea9f9a795c0805ab0e99ba326273c/res/icon/buymeacoffee.png" >
     </a>
 </p>
 

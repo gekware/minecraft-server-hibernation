@@ -27,6 +27,38 @@ func HandleClientSocket(clientSocket net.Conn) {
 		return
 	}
 
+	// if ms has a major error warn the client and return
+	if servstats.Stats.Error != nil {
+		// close the client connection at the end
+		defer func() {
+			errco.Logln(errco.LVL_D, "closing connection for: %s", clientAddress)
+			clientSocket.Close()
+		}()
+
+		switch reqType {
+		case errco.CLIENT_REQ_INFO:
+			// log to msh console and answer to client with error
+			errco.Logln(errco.LVL_D, "%s requested server info from %s:%d to %s:%d but server has encountered major problems", playerName, clientAddress, config.ListenPort, config.TargetHost, config.TargetPort)
+			mes := buildMessage(reqType, servstats.Stats.Error.Ori+": "+servstats.Stats.Error.Str)
+			clientSocket.Write(mes)
+			errco.Logln(errco.LVL_E, "%smsh --> client%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
+
+			// answer to client ping
+			errMsh = getPing(clientSocket)
+			if errMsh != nil {
+				errco.LogMshErr(errMsh.AddTrace("HandleClientSocket"))
+			}
+		case errco.CLIENT_REQ_JOIN:
+			// log to msh console and answer to client with error
+			errco.Logln(errco.LVL_D, "%s requested server info from %s:%d to %s:%d but server has encountered major problems", playerName, clientAddress, config.ListenPort, config.TargetHost, config.TargetPort)
+			mes := buildMessage(reqType, servstats.Stats.Error.Ori+": "+servstats.Stats.Error.Str)
+			clientSocket.Write(mes)
+			errco.Logln(errco.LVL_E, "%smsh --> client%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
+		}
+
+		return
+	}
+
 	switch reqType {
 	case errco.CLIENT_REQ_INFO:
 		errco.Logln(errco.LVL_D, "%s requested server info from %s:%d to %s:%d", playerName, clientAddress, config.ListenPort, config.TargetHost, config.TargetPort)
@@ -44,13 +76,13 @@ func HandleClientSocket(clientSocket net.Conn) {
 			var mes []byte
 			switch servstats.Stats.Status {
 			case errco.SERVER_STATUS_OFFLINE:
-				mes = buildMessage(errco.MESSAGE_FORMAT_INFO, config.ConfigRuntime.Msh.InfoHibernation)
+				mes = buildMessage(reqType, config.ConfigRuntime.Msh.InfoHibernation)
 			case errco.SERVER_STATUS_STARTING:
-				mes = buildMessage(errco.MESSAGE_FORMAT_INFO, config.ConfigRuntime.Msh.InfoStarting)
+				mes = buildMessage(reqType, config.ConfigRuntime.Msh.InfoStarting)
 			case errco.SERVER_STATUS_ONLINE: // ms suspended
-				mes = buildMessage(errco.MESSAGE_FORMAT_INFO, config.ConfigRuntime.Msh.InfoHibernation)
+				mes = buildMessage(reqType, config.ConfigRuntime.Msh.InfoHibernation)
 			case errco.SERVER_STATUS_STOPPING:
-				mes = buildMessage(errco.MESSAGE_FORMAT_INFO, "server is stopping...\nrefresh the page")
+				mes = buildMessage(reqType, "server is stopping...\nrefresh the page")
 			}
 			clientSocket.Write(mes)
 			errco.Logln(errco.LVL_E, "%smsh --> client%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
@@ -82,11 +114,11 @@ func HandleClientSocket(clientSocket net.Conn) {
 			}()
 
 			// check if the client address or player name are whitelisted
-			errMsh := config.IsWhitelisted(playerName, clientAddress)
+			errMsh := config.ConfigRuntime.InWhitelist(playerName, clientAddress)
 			if errMsh != nil {
 				// warn client with text in the loadscreen
 				errco.LogMshErr(errMsh.AddTrace("HandleClientSocket"))
-				mes := buildMessage(errco.MESSAGE_FORMAT_TXT, "You don't have permission to warm this server")
+				mes := buildMessage(reqType, "You don't have permission to warm this server")
 				clientSocket.Write(mes)
 				errco.Logln(errco.LVL_E, "%smsh --> client%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
 				return
@@ -97,14 +129,14 @@ func HandleClientSocket(clientSocket net.Conn) {
 			if errMsh != nil {
 				// warn client with text in the loadscreen
 				errco.LogMshErr(errMsh.AddTrace("HandleClientSocket"))
-				mes := buildMessage(errco.MESSAGE_FORMAT_TXT, "An error occurred while warming the server: check the msh log")
+				mes := buildMessage(reqType, "An error occurred while warming the server: check the msh log")
 				clientSocket.Write(mes)
 				errco.Logln(errco.LVL_E, "%smsh --> client%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
 				return
 			}
 
 			// answer client with text in the loadscreen
-			mes := buildMessage(errco.MESSAGE_FORMAT_TXT, "Server start command issued. Please wait... "+servstats.Stats.LoadProgress)
+			mes := buildMessage(reqType, "Server start command issued. Please wait... "+servstats.Stats.LoadProgress)
 			clientSocket.Write(mes)
 			errco.Logln(errco.LVL_E, "%smsh --> client%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
 
@@ -134,7 +166,7 @@ func openProxy(clientSocket net.Conn, serverInitPacket []byte) {
 	if err != nil {
 		errco.LogMshErr(errco.NewErr(errco.ERROR_SERVER_DIAL, errco.LVL_D, "HandleClientSocket", err.Error()))
 		// report dial error to client with text in the loadscreen
-		mes := buildMessage(errco.MESSAGE_FORMAT_TXT, "can't connect to server... check if minecraft server is running")
+		mes := buildMessage(errco.CLIENT_REQ_JOIN, "can't connect to server... check if minecraft server is running and set the correct targetPort")
 		clientSocket.Write(mes)
 		errco.Logln(errco.LVL_E, "%smsh --> client%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
 		return
