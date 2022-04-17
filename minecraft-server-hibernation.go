@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"net"
-	"os"
 
 	"msh/lib/config"
 	"msh/lib/conn"
@@ -34,7 +33,7 @@ func main() {
 	errMsh := config.LoadConfig()
 	if errMsh != nil {
 		errco.LogMshErr(errMsh.AddTrace("main"))
-		os.Exit(1) // calling direct exit since msh manager is not running yet
+		progmgr.AutoTerminate()
 	}
 
 	// launch msh manager

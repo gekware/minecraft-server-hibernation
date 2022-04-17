@@ -19,23 +19,27 @@ var (
 	msh *program = &program{
 		startTime: time.Now(),
 		sigExit:   make(chan os.Signal, 1),
+		mgrActive: false,
 	}
 )
 
 type program struct {
 	startTime time.Time      // msh program start time
 	sigExit   chan os.Signal // channel through which OS termination signals are notified
+	mgrActive bool           // indicates if msh manager is running
 }
 
 // MshMgr handles exit signal and updates for msh.
 // After this function is called, msh should exit by sending itself a termination signal.
 // [goroutine]
 func MshMgr() {
-	// set sigExit to relay termination signals
-	signal.Notify(msh.sigExit, syscall.SIGINT, syscall.SIGHUP, syscall.SIGTERM, syscall.SIGQUIT)
-
 	// start segment manager
 	go sgmMgr()
+
+	// set msh.sigExit to relay termination signals
+	signal.Notify(msh.sigExit, syscall.SIGINT, syscall.SIGHUP, syscall.SIGTERM, syscall.SIGQUIT)
+
+	msh.mgrActive = true
 
 	for {
 		// msh termination signal is received
@@ -75,5 +79,11 @@ func MshMgr() {
 
 // AutoTerminate induces correct msh termination via msh manager
 func AutoTerminate() {
-	msh.sigExit <- syscall.SIGINT
+	if msh.mgrActive {
+		// send signal to msh.sigExit so that msh manager handles msh termination
+		msh.sigExit <- syscall.SIGINT
+	} else {
+		// msh manager still not running, just exit with non 0 value
+		os.Exit(1)
+	}
 }
