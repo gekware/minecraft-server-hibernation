@@ -168,6 +168,7 @@ func (c *Configuration) getVersionInfo() (string, int, *errco.Error) {
 // assignMshID assigns a random mshid to config in case the present one is not correct
 func (c *Configuration) assignMshID() {
 	if len(c.Msh.ID) == 40 {
+		// use mshid already present in config
 		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_D, "assignMshID", "mshid in config is valid, keeping it"))
 	} else {
 		// generate random mshid
