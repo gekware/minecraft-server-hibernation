@@ -204,12 +204,10 @@ func FreezeMSRequest() {
 			// stop minecraft server softly
 			errMsh := FreezeMS(false)
 			if errMsh != nil {
-				// avoid logging "server is not online" error since it can be very frequent
-				if errMsh.Cod != errco.ERROR_SERVER_NOT_ONLINE {
-					errco.LogMshErr(errMsh.AddTrace("FreezeMSRequest"))
-				}
+				errco.LogMshErr(errMsh.AddTrace("FreezeMSRequest"))
 			}
-		})
+		},
+	)
 }
 
 // killMSifOnlineAfterTimeout waits for the specified time and then if the server is still online, kills the server process
