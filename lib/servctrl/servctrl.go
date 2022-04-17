@@ -14,6 +14,11 @@ import (
 // WarmMS warms the minecraft server
 // [non-blocking]
 func WarmMS() *errco.Error {
+	// don't try to warm ms if it has encountered major errors
+	if servstats.Stats.Error != nil {
+		return errco.NewErr(errco.ERROR_MINECRAFT_SERVER, errco.LVL_B, "StartMS", "minecraft server has encountered major problems")
+	}
+
 	errco.Logln(errco.LVL_D, "warming minecraft server...")
 
 	switch servstats.Stats.Status {

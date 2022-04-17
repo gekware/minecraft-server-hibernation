@@ -132,16 +132,16 @@ func (c *Configuration) loadDefault() *errco.Error {
 		generate mshid (and save it to default config)
 	*/
 	if id, err := machineid.ProtectedID("msh"); err != nil {
-		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_D, "loadDefault", "error while retrieving machine id, assigning mshid"))
+		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_D, "loadDefault", "error while generating machine id, assigning mshid"))
 		c.assignMshID()
 	} else if ex, err := os.Executable(); err != nil {
-		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_D, "loadDefault", "error while retrieving machine id, assigning mshid"))
+		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_D, "loadDefault", "error while generating machine id, assigning mshid"))
 		c.assignMshID()
 	} else {
-		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_D, "loadDefault", "generating mshid from machine id"))
 		hasher := sha1.New()
 		hasher.Write([]byte(id + filepath.Dir(ex)))
 		if id := hex.EncodeToString(hasher.Sum(nil)); c.Msh.ID != id {
+			errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_D, "loadDefault", "mshid was generated from machine id"))
 			c.Msh.ID = id
 			ConfigDefaultSave = true
 		}
@@ -219,25 +219,61 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.Error {
 			confdef.Msh.ID = c.Msh.ID
 			ConfigDefaultSave = true
 		} else {
-			errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_D, "loadRuntime", "user specified mshid is not healthy"))
+			errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_D, "loadRuntime", "user specified mshid is not healthy, using default mshid"))
 		}
 	}
 
-	// check if serverFile/serverFolder exists
+	// check if server folder/executeble exist
 	serverFileFolderPath := filepath.Join(c.Server.Folder, c.Server.FileName)
-	_, err := os.Stat(serverFileFolderPath)
-	if os.IsNotExist(err) {
+	if _, err := os.Stat(serverFileFolderPath); os.IsNotExist(err) {
+		// server folder/executeble does not exist
+
 		servstats.Stats.Error = errco.NewErr(errco.ERROR_MINECRAFT_SERVER, errco.LVL_D, "loadRuntime", "specified minecraft server folder/file does not exist")
 		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_B, "loadRuntime", "specified server file/folder does not exist: "+serverFileFolderPath))
-		return nil
+
+	} else {
+		// server folder/executeble exist
+
+		// check if eula.txt exists and is set to true
+		eulaFilePath := filepath.Join(c.Server.Folder, "eula.txt")
+		if eulaData, err := ioutil.ReadFile(eulaFilePath); err != nil {
+			// eula.txt does not exist
+
+			errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_B, "loadRuntime", "could not read eula.txt file: "+eulaFilePath))
+
+			// start server to generate eula.txt (and server.properties)
+			errco.Logln(errco.LVL_D, "starting minecraft server to generate eula.txt file...")
+			cSplit := strings.Split(c.Commands.StartServer, " ")
+			cmd := exec.Command(cSplit[0], cSplit[1:]...)
+			cmd.Dir = c.Server.Folder
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+			fmt.Print(errco.COLOR_CYAN) // set color to server log color
+			err = cmd.Run()
+			fmt.Print(errco.COLOR_RESET) // reset color
+			if err != nil {
+				servstats.Stats.Error = errco.NewErr(errco.ERROR_MINECRAFT_SERVER, errco.LVL_D, "loadRuntime", "couldn't start minecraft server to generate eula.txt\n(are you using the correct java version?)")
+				errco.LogMshErr(errco.NewErr(errco.ERROR_TERMINAL_START, errco.LVL_B, "loadRuntime", "couldn't start minecraft server to generate eula.txt: ["+err.Error()+"]"))
+			}
+
+		} else if !strings.Contains(strings.ReplaceAll(strings.ToLower(string(eulaData)), " ", ""), "eula=true") {
+			// eula.txt exists but is not set to true
+
+			servstats.Stats.Error = errco.NewErr(errco.ERROR_MINECRAFT_SERVER, errco.LVL_D, "loadRuntime", "please accept minecraft server eula.txt")
+			errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_B, "loadRuntime", "please accept minecraft server eula.txt: "+eulaFilePath))
+
+		} else {
+			// eula.txt exists and is set to true
+
+			errco.Logln(errco.LVL_B, "eula.txt exist and is set to true...")
+		}
 	}
 
 	// check if java is installed and get java version
-	_, err = exec.LookPath("java")
+	_, err := exec.LookPath("java")
 	if err != nil {
 		servstats.Stats.Error = errco.NewErr(errco.ERROR_MINECRAFT_SERVER, errco.LVL_D, "loadRuntime", "java not installed")
 		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_B, "loadRuntime", "java not installed"))
-		return nil
 	} else if out, err := exec.Command("java", "--version").Output(); err != nil {
 		// non blocking error
 		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_B, "loadRuntime", "could not execute 'java -version' command"))
@@ -246,38 +282,11 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.Error {
 		Javav = strings.ReplaceAll(strings.Split(string(out), "\n")[0], "\r", "")
 	}
 
-	// check if eula.txt exists and is set to true
-	eulaFilePath := filepath.Join(c.Server.Folder, "eula.txt")
-	eulaData, err := ioutil.ReadFile(eulaFilePath)
-	if err != nil {
-		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_B, "loadRuntime", "could not read eula.txt file: "+eulaFilePath))
-
-		// start server to generate eula.txt (and server.properties)
-		errco.Logln(errco.LVL_D, "starting minecraft server to generate eula.txt file...")
-		cSplit := strings.Split(c.Commands.StartServer, " ")
-		cmd := exec.Command(cSplit[0], cSplit[1:]...)
-		cmd.Dir = c.Server.Folder
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		fmt.Print(errco.COLOR_CYAN) // set color to server log color
-		err = cmd.Run()
-		fmt.Print(errco.COLOR_RESET) // reset color
-		if err != nil {
-			servstats.Stats.Error = errco.NewErr(errco.ERROR_MINECRAFT_SERVER, errco.LVL_D, "loadRuntime", "couldn't start minecraft server to generate eula.txt\n(are you using the correct java version?)")
-			errco.LogMshErr(errco.NewErr(errco.ERROR_TERMINAL_START, errco.LVL_B, "loadRuntime", "couldn't start minecraft server to generate eula.txt: ["+err.Error()+"]"))
-			return nil
-		}
-	}
-	if !strings.Contains(strings.ReplaceAll(strings.ToLower(string(eulaData)), " ", ""), "eula=true") {
-		servstats.Stats.Error = errco.NewErr(errco.ERROR_MINECRAFT_SERVER, errco.LVL_D, "loadRuntime", "please accept minecraft server eula.txt")
-		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_B, "loadRuntime", "please accept minecraft server eula.txt: "+eulaFilePath))
-		return nil
-	}
-
 	// initialize ip and ports for connection
 	errMsh := c.loadIpPorts()
 	if errMsh != nil {
-		return errMsh.AddTrace("loadRuntime")
+		servstats.Stats.Error = errco.NewErr(errco.ERROR_MINECRAFT_SERVER, errco.LVL_D, "loadRuntime", "proxy setup failed, check msh logs")
+		errco.LogMshErr(errMsh.AddTrace("loadRuntime"))
 	}
 	errco.Logln(errco.LVL_D, "msh proxy setup: %s:%d --> %s:%d", ListenHost, ListenPort, TargetHost, TargetPort)
 

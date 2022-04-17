@@ -57,7 +57,10 @@ func main() {
 	// if ms suspension is allowed, pre-warm the server
 	if config.ConfigRuntime.Msh.AllowSuspend {
 		errco.Logln(errco.LVL_B, "minecraft server will now pre-warm (AllowSuspend is enabled)...")
-		servctrl.WarmMS()
+		errMsh = servctrl.WarmMS()
+		if errMsh != nil {
+			errco.LogMshErr(errMsh.AddTrace("main"))
+		}
 	}
 
 	// infinite cycle to accept clients. when a clients connects it is passed to handleClientSocket()

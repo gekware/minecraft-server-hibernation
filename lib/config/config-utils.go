@@ -96,32 +96,29 @@ func (c *Configuration) loadIcon() *errco.Error {
 
 // loadIpPorts reads server.properties server file and loads correct ports to global variables
 func (c *Configuration) loadIpPorts() *errco.Error {
+	// ListenHost remains the same
+	ListenPort = c.Msh.ListenPort
+	// TargetHost remains the same
+	// TargetPort is extracted from server.properties
+
 	data, err := ioutil.ReadFile(filepath.Join(c.Server.Folder, "server.properties"))
 	if err != nil {
 		return errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_B, "loadIpPorts", err.Error())
 	}
 
-	dataStr := strings.ReplaceAll(string(data), "\r", "")
-
-	TargetPStr, errMsh := utility.StrBetween(dataStr, "server-port=", "\n")
+	TargetPortStr, errMsh := utility.StrBetween(strings.ReplaceAll(string(data), "\r", ""), "server-port=", "\n")
 	if errMsh != nil {
 		return errMsh.AddTrace("loadIpPorts")
 	}
 
-	TargetP, err := strconv.Atoi(TargetPStr)
+	TargetPort, err = strconv.Atoi(TargetPortStr)
 	if err != nil {
 		return errco.NewErr(errco.ERROR_CONVERSION, errco.LVL_D, "loadIpPorts", err.Error())
 	}
 
-	if TargetP == c.Msh.ListenPort {
+	if TargetPort == c.Msh.ListenPort {
 		return errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_B, "loadIpPorts", "TargetPort and ListenPort appear to be the same, please change one of them")
 	}
-
-	// load ListenHost, ListenPort, TargetHost, TargetPort
-	// ListenHost remains the same
-	ListenPort = c.Msh.ListenPort
-	// TargetHost remains the same
-	TargetPort = TargetP
 
 	return nil
 }
@@ -165,7 +162,8 @@ func (c *Configuration) getVersionInfo() (string, int, *errco.Error) {
 	return "", 0, errco.NewErr(errco.ERROR_VERSION_LOAD, errco.LVL_D, "getVersionInfo", "minecraft server version and protocol could not be extracted from version.json")
 }
 
-// assignMshID assigns a random mshid to config in case the present one is not correct
+// assignMshID assigns a mshid to config.
+// Config mshid is kept if valid, otherwise a new random one is generated
 func (c *Configuration) assignMshID() {
 	if len(c.Msh.ID) == 40 {
 		// use mshid already present in config
