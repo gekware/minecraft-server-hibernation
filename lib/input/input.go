@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"msh/lib/errco"
+	"msh/lib/progmgr"
 	"msh/lib/servctrl"
 	"msh/lib/servstats"
 )
@@ -73,8 +74,8 @@ func GetInput() {
 					errco.LogMshErr(errMsh.AddTrace("GetInput"))
 				}
 				// exit msh
-				errco.Logln(errco.LVL_A, "exiting msh")
-				os.Exit(0)
+				errco.Logln(errco.LVL_A, "issuing msh termination")
+				progmgr.AutoTerminate()
 			default:
 				errco.LogMshErr(errco.NewErr(errco.ERROR_COMMAND_UNKNOWN, errco.LVL_A, "GetInput", "unknown command (start - freeze - exit)"))
 			}

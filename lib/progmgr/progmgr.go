@@ -27,7 +27,8 @@ type program struct {
 	sigExit   chan os.Signal // channel through which OS termination signals are notified
 }
 
-// MshMgr handles exit signal and updates for msh
+// MshMgr handles exit signal and updates for msh.
+// After this function is called, msh should exit by sending itself a termination signal.
 // [goroutine]
 func MshMgr() {
 	// set sigExit to relay termination signals
@@ -70,4 +71,9 @@ func MshMgr() {
 		errco.Logln(errco.LVL_A, "exiting msh")
 		os.Exit(0)
 	}
+}
+
+// AutoTerminate induces correct msh termination via msh manager
+func AutoTerminate() {
+	msh.sigExit <- syscall.SIGINT
 }

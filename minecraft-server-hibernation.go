@@ -34,7 +34,7 @@ func main() {
 	errMsh := config.LoadConfig()
 	if errMsh != nil {
 		errco.LogMshErr(errMsh.AddTrace("main"))
-		os.Exit(1)
+		os.Exit(1) // calling direct exit since msh manager is not running yet
 	}
 
 	// launch msh manager
@@ -49,7 +49,7 @@ func main() {
 	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", config.ListenHost, config.ListenPort))
 	if err != nil {
 		errco.LogMshErr(errco.NewErr(errco.ERROR_CLIENT_LISTEN, errco.LVL_D, "main", err.Error()))
-		os.Exit(1)
+		progmgr.AutoTerminate()
 	}
 
 	errco.Logln(errco.LVL_B, "listening for new clients to connect on %s:%d ...", config.ListenHost, config.ListenPort)

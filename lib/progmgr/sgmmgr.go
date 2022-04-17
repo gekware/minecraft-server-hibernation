@@ -3,7 +3,6 @@ package progmgr
 import (
 	"fmt"
 	"net/http"
-	"os"
 	"strconv"
 	"sync"
 	"time"
@@ -121,7 +120,8 @@ func sgmMgr() {
 				sgm.reset(res)
 			case 403:
 				errco.LogMshErr(errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "MshMgr", "client is unauthorized"))
-				os.Exit(1)
+				errco.Logln(errco.LVL_A, "issuing msh termination")
+				AutoTerminate()
 			default:
 				errco.LogMshErr(errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "MshMgr", "response status code is "+res.Status))
 				errco.Logln(errco.LVL_D, "prolonging segment...")
