@@ -88,12 +88,12 @@ Set the logging level for debug purposes
 # 3 - DEVE: developement log
 # 4 - BYTE: connection bytes log
 ```
-Allow the server to suspend server process when there are no players online
-- pro:  player wait time to join frozen server is ~0
-- cons: ram usage as minecraft server without msh (cpu remains ~0)
-_To mitigate ram usage you can set a high swappiness (on linux)_
+Allow the server to suspend server process when there are no players online  
+- pro:  player wait time to join frozen server is ~0  
+- cons: ram usage as minecraft server without msh (cpu remains ~0)  
+_To mitigate ram usage you can set a high swappiness (on linux)_  
 ```yaml
-"AllowSuspend": true
+"AllowSuspend": false
 ```
 Hibernation and Starting server description
 ```yaml
@@ -113,11 +113,10 @@ Port to which players can connect
 ```yaml
 "TimeBeforeStoppingEmptyServer": 30	#any parameter more than 30s is recommended
 ```
-Whitelist addresses or IPs that are allowed to start the server:
+Whitelist addresses or IPs that are allowed to start the server (leave empty to allow everyone)
+_unknown clients are not allowed to start the server, but can join_
 ```yaml
-# leave empty to allow everyone
-# unknown clients are not allowed to start the server, they can still join
-"Whitelist": ["{127.0.0.1}", "{gekigek99}"]
+"Whitelist": ["127.0.0.1", "gekigek99"]
 ```
 
 _Some of these parameters can be configured with command-line arguments (--help to know which)_
