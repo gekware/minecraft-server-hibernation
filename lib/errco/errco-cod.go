@@ -94,6 +94,7 @@ const (
 
 	ERROR_OS_NOT_SUPPORTED        = 0x0004f000 // error OS not supported
 	ERROR_PROCESS_OPEN            = 0x0004f100 // error while opening process
+	ERROR_PROCESS_SIGNAL          = 0x0004f101 // error while sending signal to process
 	ERROR_PROCESS_SUSPEND_CALL    = 0x0004f200 // error while executing suspend call to process handle
 	ERROR_PROCESS_RESUME_CALL     = 0x0004f201 // error while executing resume call to process handle
 	ERROR_PROCESS_SYSTEM_SNAPSHOT = 0x0004f300 // error while building system processes snapshot
