@@ -44,15 +44,6 @@ func main() {
 	// launch GetInput()
 	go input.GetInput()
 
-	// open a listener
-	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", config.ListenHost, config.ListenPort))
-	if err != nil {
-		errco.LogMshErr(errco.NewErr(errco.ERROR_CLIENT_LISTEN, errco.LVL_D, "main", err.Error()))
-		progmgr.AutoTerminate()
-	}
-
-	errco.Logln(errco.LVL_B, "listening for new clients to connect on %s:%d ...", config.ListenHost, config.ListenPort)
-
 	// if ms suspension is allowed, pre-warm the server
 	if config.ConfigRuntime.Msh.AllowSuspend {
 		errco.Logln(errco.LVL_B, "minecraft server will now pre-warm (AllowSuspend is enabled)...")
@@ -61,6 +52,15 @@ func main() {
 			errco.LogMshErr(errMsh.AddTrace("main"))
 		}
 	}
+
+	// open a listener
+	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", config.ListenHost, config.ListenPort))
+	if err != nil {
+		errco.LogMshErr(errco.NewErr(errco.ERROR_CLIENT_LISTEN, errco.LVL_D, "main", err.Error()))
+		progmgr.AutoTerminate()
+	}
+
+	errco.Logln(errco.LVL_B, "listening for new clients to connect on %s:%d ...", config.ListenHost, config.ListenPort)
 
 	// infinite cycle to accept clients. when a clients connects it is passed to handleClientSocket()
 	for {
