@@ -70,6 +70,8 @@ func FreezeMS(force bool) *errco.Error {
 			servstats.Stats.Suspended = false // if ms is offline it's process can't be suspended
 		}
 
+		errco.LogMshErr(errco.NewErr(errco.ERROR_SERVER_IS_FROZEN, errco.LVL_D, "FreezeMS", "minecraft server already frozen"))
+
 	case errco.SERVER_STATUS_STARTING:
 		// ms is starting, resume the ms process, wait for status online and then freeze ms
 
