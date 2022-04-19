@@ -57,7 +57,8 @@ _remember to automatically run msh at reboot_
 
 -----
 ### DEFINITIONS:
-_only text in braces needs to be modified (remember to remove all braces)_
+- _only text in braces needs to be modified (remember to remove all braces)_  
+- _Some of these parameters can be configured with command-line arguments (--help to know which)_  
 
 Location of server folder and executable. You can find protocol/version [here](https://wiki.vg/Protocol_version_numbers) (but msh should set them automatically):
 ```yaml
@@ -68,16 +69,15 @@ Location of server folder and executable. You can find protocol/version [here](h
   "Version": "1.17.1"
 }
 ```
-Commands to start and stop minecraft server:
+Commands to start and stop minecraft server  
+_StopServerAllowKill allows to kill the server after a certain amount of time (in seconds) when it's not responding_
 ```yaml
 "Commands": {
   "StartServer": "java <Commands.StartServerParam> -jar <Server.FileName> nogui"
   "StartServerParam": "-Xmx1024M -Xms1024M"
   "StopServer": "stop"
-  "StopServerAllowKill": 10
+  "StopServerAllowKill": 10	# set to 0 to disable
 }
-# if StopServerAllowKill is more than 0, then the specified number is the amount of seconds
-# given to the minecraft server to go offline, after which it is killed
 ```
 Set the logging level for debug purposes
 ```yaml
@@ -109,17 +109,15 @@ Port to which players can connect
 ```yaml
 "ListenPort": 25555
 ```
-*30 seconds* is the time (after the last player disconnected) that the script waits before hibernating the minecraft server
+*30 seconds* is the time (after the last player disconnected) that msh waits before hibernating the minecraft server
 ```yaml
 "TimeBeforeStoppingEmptyServer": 30	#any parameter more than 30s is recommended
 ```
-Whitelist addresses or IPs that are allowed to start the server (leave empty to allow everyone)
+Whitelist addresses or IPs that are allowed to start the server (leave empty to allow everyone)  
 _unknown clients are not allowed to start the server, but can join_
 ```yaml
 "Whitelist": ["127.0.0.1", "gekigek99"]
 ```
-
-_Some of these parameters can be configured with command-line arguments (--help to know which)_
 
 -----
 
