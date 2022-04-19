@@ -79,12 +79,6 @@ Commands to start and stop minecraft server:
 # if StopServerAllowKill is more than 0, then the specified number is the amount of seconds
 # given to the minecraft server to go offline, after which it is killed
 ```
-Whitelist addresses or IPs that are allowed to start the server:
-```yaml
-# leave empty to allow everyone
-# unknown clients are not allowed to start the server, they can still join
-"Whitelist": ["{127.0.0.1}", "{gekigek99}"]
-```
 Set the logging level for debug purposes
 ```yaml
 "Debug": 1
@@ -93,6 +87,13 @@ Set the logging level for debug purposes
 # 2 - SERV: mincraft server log
 # 3 - DEVE: developement log
 # 4 - BYTE: connection bytes log
+```
+Allow the server to suspend server process when there are no players online
+- pro:  player wait time to join frozen server is ~0
+- cons: ram usage as minecraft server without msh (cpu remains ~0)
+_To mitigate ram usage you can set a high swappiness (on linux)_
+```yaml
+"AllowSuspend": true
 ```
 Hibernation and Starting server description
 ```yaml
@@ -104,9 +105,19 @@ Set to false if you don't want notifications (every 20 minutes)
 "NotifyUpdate": true
 "NotifyMessage": true
 ```
+Port to which players can connect
+```yaml
+"ListenPort": 25555
+```
 *30 seconds* is the time (after the last player disconnected) that the script waits before hibernating the minecraft server
 ```yaml
 "TimeBeforeStoppingEmptyServer": 30	#any parameter more than 30s is recommended
+```
+Whitelist addresses or IPs that are allowed to start the server:
+```yaml
+# leave empty to allow everyone
+# unknown clients are not allowed to start the server, they can still join
+"Whitelist": ["{127.0.0.1}", "{gekigek99}"]
 ```
 
 _Some of these parameters can be configured with command-line arguments (--help to know which)_
