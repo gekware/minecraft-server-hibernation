@@ -236,7 +236,9 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.Error {
 
 		// check if eula.txt exists and is set to true
 		eulaFilePath := filepath.Join(c.Server.Folder, "eula.txt")
-		if eulaData, err := ioutil.ReadFile(eulaFilePath); err != nil {
+		eulaData, err := ioutil.ReadFile(eulaFilePath)
+		switch {
+		case err != nil:
 			// eula.txt does not exist
 
 			errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_B, "loadRuntime", "could not read eula.txt file: "+eulaFilePath))
@@ -255,14 +257,15 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.Error {
 				servstats.Stats.Error = errco.NewErr(errco.ERROR_MINECRAFT_SERVER, errco.LVL_D, "loadRuntime", "couldn't start minecraft server to generate eula.txt\n(are you using the correct java version?)")
 				errco.LogMshErr(errco.NewErr(errco.ERROR_TERMINAL_START, errco.LVL_B, "loadRuntime", "couldn't start minecraft server to generate eula.txt: ["+err.Error()+"]"))
 			}
+			fallthrough
 
-		} else if !strings.Contains(strings.ReplaceAll(strings.ToLower(string(eulaData)), " ", ""), "eula=true") {
+		case !strings.Contains(strings.ReplaceAll(strings.ToLower(string(eulaData)), " ", ""), "eula=true"):
 			// eula.txt exists but is not set to true
 
 			servstats.Stats.Error = errco.NewErr(errco.ERROR_MINECRAFT_SERVER, errco.LVL_D, "loadRuntime", "please accept minecraft server eula.txt")
 			errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_B, "loadRuntime", "please accept minecraft server eula.txt: "+eulaFilePath))
 
-		} else {
+		default:
 			// eula.txt exists and is set to true
 
 			errco.Logln(errco.LVL_B, "eula.txt exist and is set to true...")
