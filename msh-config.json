@@ -12,7 +12,7 @@
     "StopServerAllowKill": 10
   },
   "Msh": {
-    "ID": "52fdfc0721feefe75af65af163f82654f163f",
+    "ID": "",
     "Debug": 1,
     "AllowSuspend": false,
     "InfoHibernation": "                   §fserver status:\n                   §b§lHIBERNATING",
