@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"msh/lib/errco"
@@ -97,4 +98,14 @@ func SliceContain(ele, sli interface{}) bool {
 	}
 
 	return false
+}
+
+// UnicodeEscape returns the data escaped from unicode characters
+func UnicodeEscape(data []byte) ([]byte, *errco.Error) {
+	dataEscapedStr, err := strconv.Unquote(strings.ReplaceAll(strconv.Quote(string(data)), `\\u`, `\u`))
+	if err != nil {
+		return nil, errco.NewErr(errco.ERROR_CONFIG_SAVE, errco.LVL_D, "UnicodeEscape", "could not escape unicode characters")
+	}
+
+	return []byte(dataEscapedStr), nil
 }

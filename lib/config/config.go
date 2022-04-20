@@ -16,6 +16,7 @@ import (
 	"msh/lib/model"
 	"msh/lib/opsys"
 	"msh/lib/servstats"
+	"msh/lib/utility"
 
 	"github.com/denisbrodbeck/machineid"
 )
@@ -90,6 +91,12 @@ func (c *Configuration) Save() *errco.Error {
 	configData, err := json.MarshalIndent(c, "", "  ")
 	if err != nil {
 		return errco.NewErr(errco.ERROR_CONFIG_SAVE, errco.LVL_D, "Save", "could not marshal from config file")
+	}
+
+	// escape unicode characters ("\u003c" to "<" and "\u003e" to ">")
+	configData, errMsh := utility.UnicodeEscape(configData)
+	if errMsh != nil {
+		errco.LogMshErr(errMsh.AddTrace("Save"))
 	}
 
 	// write to config file
