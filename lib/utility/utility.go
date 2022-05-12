@@ -3,9 +3,11 @@ package utility
 import (
 	"bytes"
 	"fmt"
+	"math"
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
 	"msh/lib/errco"
 )
@@ -108,4 +110,9 @@ func UnicodeEscape(data []byte) ([]byte, *errco.Error) {
 	}
 
 	return []byte(dataEscapedStr), nil
+}
+
+// RoundSec rounds a time duration to the nearest second
+func RoundSec(t time.Duration) int {
+	return int(math.Round(float64(t.Milliseconds() / 1000)))
 }

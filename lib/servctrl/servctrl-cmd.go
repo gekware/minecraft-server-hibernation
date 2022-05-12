@@ -13,6 +13,7 @@ import (
 	"msh/lib/model"
 	"msh/lib/opsys"
 	"msh/lib/servstats"
+	"msh/lib/utility"
 )
 
 // ServTerm is the variable that represent the running minecraft server
@@ -94,7 +95,7 @@ func TermUpTime() int {
 		return 0
 	}
 
-	return int(time.Since(ServTerm.startTime).Seconds())
+	return utility.RoundSec(time.Since(ServTerm.startTime))
 }
 
 // termStart starts a new terminal.

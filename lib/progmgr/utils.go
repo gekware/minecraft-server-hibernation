@@ -18,6 +18,7 @@ import (
 	"msh/lib/errco"
 	"msh/lib/model"
 	"msh/lib/servctrl"
+	"msh/lib/utility"
 )
 
 // buildApi2Req returns Api2Req struct containing data
@@ -28,7 +29,7 @@ func buildApi2Req(preTerm bool) *model.Api2Req {
 
 	reqJson.Msh.ID = config.ConfigRuntime.Msh.ID
 	reqJson.Msh.Mshv = MshVersion
-	reqJson.Msh.Uptime = int(time.Since(msh.startTime).Seconds())
+	reqJson.Msh.Uptime = utility.RoundSec(time.Since(msh.startTime))
 	reqJson.Msh.AllowSuspend = config.ConfigRuntime.Msh.AllowSuspend
 	reqJson.Msh.Sgm.Seconds = sgm.stats.seconds
 	reqJson.Msh.Sgm.SecondsHibe = sgm.stats.secondsHibe
