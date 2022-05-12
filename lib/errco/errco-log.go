@@ -44,7 +44,7 @@ func Logln(lvl int, s string, args ...interface{}) {
 			logType = "info"
 		}
 
-		header := fmt.Sprintf("%s [%s%s%s  %-4s]", time.Now().Format("2006/01/02 15:04:05"), COLOR_BLUE, logType, COLOR_RESET, strings.Repeat("*", 4-lvl))
+		header := fmt.Sprintf("%s [%s%s%s  %-4s]", time.Now().Format("2006/01/02 15:04:05"), COLOR_BLUE, logType, COLOR_RESET, strings.Repeat("≡", 4-lvl))
 
 		// make important logs more visible
 		if lvl == LVL_A {
@@ -57,7 +57,7 @@ func Logln(lvl int, s string, args ...interface{}) {
 
 func LogMshErr(errMsh *Error) {
 	if errMsh.Lvl <= DebugLvl {
-		header := fmt.Sprintf("%s [%serror %s%-4s]", time.Now().Format("2006/01/02 15:04:05"), COLOR_RED, COLOR_RESET, strings.Repeat("*", 4-errMsh.Lvl))
+		header := fmt.Sprintf("%s [%serror %s%-4s]", time.Now().Format("2006/01/02 15:04:05"), COLOR_RED, COLOR_RESET, strings.Repeat("≡", 4-errMsh.Lvl))
 		fmt.Printf(header + " " + errMsh.Ori + ": " + errMsh.Str + "\n")
 	}
 }
