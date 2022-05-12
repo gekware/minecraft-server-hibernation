@@ -27,23 +27,23 @@ func (c *Configuration) InWhitelist(params ...string) *errco.Error {
 	// check if whitelist is enabled
 	// if empty then it is not enabled and no checks are needed
 	if len(c.Msh.Whitelist) == 0 {
-		errco.Logln(errco.LVL_D, "whitelist not enabled")
+		errco.Logln(errco.LVL_3, "whitelist not enabled")
 		return nil
 	}
 
-	errco.Logln(errco.LVL_D, "checking whitelist for: %s", strings.Join(params, ", "))
+	errco.Logln(errco.LVL_3, "checking whitelist for: %s", strings.Join(params, ", "))
 
 	// check if playerName or clientAddress are in whitelist
 	for _, p := range params {
 		if utility.SliceContain(p, c.Msh.Whitelist) {
-			errco.Logln(errco.LVL_D, "playerName or clientAddress is whitelisted!")
+			errco.Logln(errco.LVL_3, "playerName or clientAddress is whitelisted!")
 			return nil
 		}
 	}
 
 	// playerName or clientAddress not found in whitelist
-	errco.Logln(errco.LVL_D, "playerName or clientAddress is not whitelisted!")
-	return errco.NewErr(errco.ERROR_PLAYER_NOT_IN_WHITELIST, errco.LVL_B, "InWhitelist", "playerName or clientAddress is not whitelisted")
+	errco.Logln(errco.LVL_3, "playerName or clientAddress is not whitelisted!")
+	return errco.NewErr(errco.ERROR_PLAYER_NOT_IN_WHITELIST, errco.LVL_1, "InWhitelist", "playerName or clientAddress is not whitelisted")
 }
 
 // loadIcon tries to load user specified server icon (base-64 encoded and compressed).
@@ -66,26 +66,26 @@ func (c *Configuration) loadIcon() *errco.Error {
 	// open file
 	f, err := os.Open(userIconPath)
 	if err != nil {
-		return errco.NewErr(errco.ERROR_ICON_LOAD, errco.LVL_D, "loadIcon", err.Error())
+		return errco.NewErr(errco.ERROR_ICON_LOAD, errco.LVL_3, "loadIcon", err.Error())
 	}
 	defer f.Close()
 
 	// decode png
 	pngIm, err := png.Decode(f)
 	if err != nil {
-		return errco.NewErr(errco.ERROR_ICON_LOAD, errco.LVL_D, "loadIcon", err.Error())
+		return errco.NewErr(errco.ERROR_ICON_LOAD, errco.LVL_3, "loadIcon", err.Error())
 	}
 
 	// check that image is 64x64
 	if pngIm.Bounds().Max != image.Pt(64, 64) {
-		return errco.NewErr(errco.ERROR_ICON_LOAD, errco.LVL_D, "loadIcon", fmt.Sprintf("incorrect server-icon-frozen.png size. Current size: %dx%d", pngIm.Bounds().Max.X, pngIm.Bounds().Max.Y))
+		return errco.NewErr(errco.ERROR_ICON_LOAD, errco.LVL_3, "loadIcon", fmt.Sprintf("incorrect server-icon-frozen.png size. Current size: %dx%d", pngIm.Bounds().Max.X, pngIm.Bounds().Max.Y))
 	}
 
 	// encode png
 	enc, buff := &png.Encoder{CompressionLevel: -3}, &bytes.Buffer{} // -3: best compression
 	err = enc.Encode(buff, pngIm)
 	if err != nil {
-		return errco.NewErr(errco.ERROR_ICON_LOAD, errco.LVL_D, "loadIcon", err.Error())
+		return errco.NewErr(errco.ERROR_ICON_LOAD, errco.LVL_3, "loadIcon", err.Error())
 	}
 
 	// load user specified server icon as base64 encoded string
@@ -103,7 +103,7 @@ func (c *Configuration) loadIpPorts() *errco.Error {
 
 	data, err := ioutil.ReadFile(filepath.Join(c.Server.Folder, "server.properties"))
 	if err != nil {
-		return errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_B, "loadIpPorts", err.Error())
+		return errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_1, "loadIpPorts", err.Error())
 	}
 
 	TargetPortStr, errMsh := utility.StrBetween(strings.ReplaceAll(string(data), "\r", ""), "server-port=", "\n")
@@ -113,11 +113,11 @@ func (c *Configuration) loadIpPorts() *errco.Error {
 
 	TargetPort, err = strconv.Atoi(TargetPortStr)
 	if err != nil {
-		return errco.NewErr(errco.ERROR_CONVERSION, errco.LVL_D, "loadIpPorts", err.Error())
+		return errco.NewErr(errco.ERROR_CONVERSION, errco.LVL_3, "loadIpPorts", err.Error())
 	}
 
 	if TargetPort == c.Msh.ListenPort {
-		return errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_B, "loadIpPorts", "TargetPort and ListenPort appear to be the same, please change one of them")
+		return errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_1, "loadIpPorts", "TargetPort and ListenPort appear to be the same, please change one of them")
 	}
 
 	return nil
@@ -129,7 +129,7 @@ func (c *Configuration) loadIpPorts() *errco.Error {
 func (c *Configuration) getVersionInfo() (string, int, *errco.Error) {
 	reader, err := zip.OpenReader(filepath.Join(c.Server.Folder, c.Server.FileName))
 	if err != nil {
-		return "", 0, errco.NewErr(errco.ERROR_VERSION_LOAD, errco.LVL_D, "getVersionInfo", err.Error())
+		return "", 0, errco.NewErr(errco.ERROR_VERSION_LOAD, errco.LVL_3, "getVersionInfo", err.Error())
 	}
 	defer reader.Close()
 
@@ -141,25 +141,25 @@ func (c *Configuration) getVersionInfo() (string, int, *errco.Error) {
 
 		f, err := file.Open()
 		if err != nil {
-			return "", 0, errco.NewErr(errco.ERROR_VERSION_LOAD, errco.LVL_D, "getVersionInfo", err.Error())
+			return "", 0, errco.NewErr(errco.ERROR_VERSION_LOAD, errco.LVL_3, "getVersionInfo", err.Error())
 		}
 		defer f.Close()
 
 		versionsBytes, err := ioutil.ReadAll(f)
 		if err != nil {
-			return "", 0, errco.NewErr(errco.ERROR_VERSION_LOAD, errco.LVL_D, "getVersionInfo", err.Error())
+			return "", 0, errco.NewErr(errco.ERROR_VERSION_LOAD, errco.LVL_3, "getVersionInfo", err.Error())
 		}
 
 		var info model.VersionInfo
 		err = json.Unmarshal(versionsBytes, &info)
 		if err != nil {
-			return "", 0, errco.NewErr(errco.ERROR_VERSION_LOAD, errco.LVL_D, "getVersionInfo", err.Error())
+			return "", 0, errco.NewErr(errco.ERROR_VERSION_LOAD, errco.LVL_3, "getVersionInfo", err.Error())
 		}
 
 		return info.Version, info.Protocol, nil
 	}
 
-	return "", 0, errco.NewErr(errco.ERROR_VERSION_LOAD, errco.LVL_D, "getVersionInfo", "minecraft server version and protocol could not be extracted from version.json")
+	return "", 0, errco.NewErr(errco.ERROR_VERSION_LOAD, errco.LVL_3, "getVersionInfo", "minecraft server version and protocol could not be extracted from version.json")
 }
 
 // assignMshID assigns a mshid to config.
@@ -167,7 +167,7 @@ func (c *Configuration) getVersionInfo() (string, int, *errco.Error) {
 func (c *Configuration) assignMshID() {
 	if len(c.Msh.ID) == 40 {
 		// use mshid already present in config
-		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_D, "assignMshID", "mshid in config is valid, keeping it"))
+		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_3, "assignMshID", "mshid in config is valid, keeping it"))
 	} else {
 		// generate random mshid
 		key := make([]byte, 64)
@@ -176,6 +176,6 @@ func (c *Configuration) assignMshID() {
 		hasher.Write(key)
 		c.Msh.ID = hex.EncodeToString(hasher.Sum(nil))
 		ConfigDefaultSave = true
-		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_D, "assignMshID", "mshid in config is not valid, new one is: "+c.Msh.ID))
+		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_3, "assignMshID", "mshid in config is not valid, new one is: "+c.Msh.ID))
 	}
 }

@@ -118,15 +118,15 @@ func sgmMgr() {
 			// check response status code
 			switch res.StatusCode {
 			case 200:
-				errco.Logln(errco.LVL_D, "resetting segment...")
+				errco.Logln(errco.LVL_3, "resetting segment...")
 				sgm.reset(res)
 			case 403:
-				errco.LogMshErr(errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "MshMgr", "client is unauthorized"))
-				errco.Logln(errco.LVL_A, "issuing msh termination")
+				errco.LogMshErr(errco.NewErr(errco.ERROR_VERSION, errco.LVL_3, "MshMgr", "client is unauthorized"))
+				errco.Logln(errco.LVL_0, "issuing msh termination")
 				AutoTerminate()
 			default:
-				errco.LogMshErr(errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "MshMgr", "response status code is "+res.Status))
-				errco.Logln(errco.LVL_D, "prolonging segment...")
+				errco.LogMshErr(errco.NewErr(errco.ERROR_VERSION, errco.LVL_3, "MshMgr", "response status code is "+res.Status))
+				errco.Logln(errco.LVL_3, "prolonging segment...")
 				sgm.prolong(res)
 				break mainselect
 			}
@@ -143,7 +143,7 @@ func sgmMgr() {
 			case "dep": // local version deprecated
 				// don't check NotifyUpdate
 				verCheck := fmt.Sprintf("msh (%s) is deprecated: visit github to update to %s!", MshVersion, resJson.Official.Version)
-				errco.Logln(errco.LVL_A, verCheck)
+				errco.Logln(errco.LVL_0, verCheck)
 				sgm.push.verCheck = verCheck
 
 				// override ConfigRuntime variables to display deprecated error message in motd
@@ -153,41 +153,41 @@ func sgmMgr() {
 			case "upd": // local version to update
 				if config.ConfigRuntime.Msh.NotifyUpdate {
 					verCheck := fmt.Sprintf("msh (%s) can be updated: visit github to update to %s!", MshVersion, resJson.Official.Version)
-					errco.Logln(errco.LVL_A, verCheck)
+					errco.Logln(errco.LVL_0, verCheck)
 					sgm.push.verCheck = verCheck
 				}
 
 			case "off": // local version is official
 				if config.ConfigRuntime.Msh.NotifyUpdate {
 					verCheck := fmt.Sprintf("msh (%s) is updated", MshVersion)
-					errco.Logln(errco.LVL_A, verCheck)
+					errco.Logln(errco.LVL_0, verCheck)
 					sgm.push.verCheck = verCheck
 				}
 
 			case "dev": // local version is a developement version
 				if config.ConfigRuntime.Msh.NotifyUpdate {
 					verCheck := fmt.Sprintf("msh (%s) is running a dev release", MshVersion)
-					errco.Logln(errco.LVL_A, verCheck)
+					errco.Logln(errco.LVL_0, verCheck)
 					sgm.push.verCheck = verCheck
 				}
 
 			case "uno": // local version is unofficial
 				if config.ConfigRuntime.Msh.NotifyUpdate {
 					verCheck := fmt.Sprintf("msh (%s) is running an unofficial release", MshVersion)
-					errco.Logln(errco.LVL_A, verCheck)
+					errco.Logln(errco.LVL_0, verCheck)
 					sgm.push.verCheck = verCheck
 				}
 
 			default: // an error occurred
 				if config.ConfigRuntime.Msh.NotifyUpdate {
-					errco.LogMshErr(errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "MshMgr", "invalid version result from server"))
+					errco.LogMshErr(errco.NewErr(errco.ERROR_VERSION, errco.LVL_3, "MshMgr", "invalid version result from server"))
 				}
 			}
 
 			// log response messages
 			if config.ConfigRuntime.Msh.NotifyMessage {
 				for _, m := range resJson.Messages {
-					errco.Logln(errco.LVL_A, "message from the moon: %s", m)
+					errco.Logln(errco.LVL_0, "message from the moon: %s", m)
 				}
 				sgm.push.messages = append(sgm.push.messages, resJson.Messages...)
 			}

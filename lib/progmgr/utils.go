@@ -44,7 +44,7 @@ func buildApi2Req(preTerm bool) *model.Api2Req {
 
 	// get cpu model and vendor
 	if cpuInfo, err := cpu.Info(); err != nil {
-		errco.LogMshErr(errco.NewErr(errco.ERROR_GET_CPU_INFO, errco.LVL_D, "buildReq", err.Error())) // non blocking error
+		errco.LogMshErr(errco.NewErr(errco.ERROR_GET_CPU_INFO, errco.LVL_3, "buildReq", err.Error())) // non blocking error
 		reqJson.Machine.CpuModel = ""
 		reqJson.Machine.CpuVendor = ""
 	} else {
@@ -59,7 +59,7 @@ func buildApi2Req(preTerm bool) *model.Api2Req {
 
 	// get cores dedicated to system
 	if cores, err := cpu.Counts(true); err != nil {
-		errco.LogMshErr(errco.NewErr(errco.ERROR_GET_CORES, errco.LVL_D, "buildReq", err.Error())) // non blocking error
+		errco.LogMshErr(errco.NewErr(errco.ERROR_GET_CORES, errco.LVL_3, "buildReq", err.Error())) // non blocking error
 		reqJson.Machine.CoresSys = -1
 	} else {
 		reqJson.Machine.CoresSys = cores
@@ -67,7 +67,7 @@ func buildApi2Req(preTerm bool) *model.Api2Req {
 
 	// get memory dedicated to system
 	if memInfo, err := mem.VirtualMemory(); err != nil {
-		errco.LogMshErr(errco.NewErr(errco.ERROR_GET_MEMORY, errco.LVL_D, "buildReq", err.Error())) // non blocking error
+		errco.LogMshErr(errco.NewErr(errco.ERROR_GET_MEMORY, errco.LVL_3, "buildReq", err.Error())) // non blocking error
 		reqJson.Machine.Mem = -1
 	} else {
 		reqJson.Machine.Mem = int(memInfo.Total)
@@ -90,18 +90,18 @@ func sendApi2Req(url string, api2req *model.Api2Req) (*http.Response, *errco.Err
 		}
 	}()
 
-	errco.Logln(errco.LVL_D, "sendApi2Req: sending request...")
+	errco.Logln(errco.LVL_3, "sendApi2Req: sending request...")
 
 	// marshal request struct
 	reqByte, err := json.Marshal(api2req)
 	if err != nil {
-		return nil, errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "sendApi2Req", err.Error())
+		return nil, errco.NewErr(errco.ERROR_VERSION, errco.LVL_3, "sendApi2Req", err.Error())
 	}
 
 	// create http request
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(reqByte))
 	if err != nil {
-		return nil, errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "sendApi2Req", err.Error())
+		return nil, errco.NewErr(errco.ERROR_VERSION, errco.LVL_3, "sendApi2Req", err.Error())
 	}
 
 	// add header User-Agent, Content-Type
@@ -109,11 +109,11 @@ func sendApi2Req(url string, api2req *model.Api2Req) (*http.Response, *errco.Err
 	req.Header.Set("Content-Type", "application/json")                                                    // necessary for post request
 
 	// execute http request
-	errco.Logln(errco.LVL_E, "%smsh --> mshc%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, string(reqByte))
+	errco.Logln(errco.LVL_4, "%smsh --> mshc%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, string(reqByte))
 	client := &http.Client{Timeout: 4 * time.Second}
 	res, err := client.Do(req)
 	if err != nil {
-		return nil, errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "sendApi2Req", err.Error())
+		return nil, errco.NewErr(errco.ERROR_VERSION, errco.LVL_3, "sendApi2Req", err.Error())
 	}
 
 	return res, nil
@@ -123,20 +123,20 @@ func sendApi2Req(url string, api2req *model.Api2Req) (*http.Response, *errco.Err
 func readApi2Res(res *http.Response) (*model.Api2Res, *errco.Error) {
 	defer res.Body.Close()
 
-	errco.Logln(errco.LVL_D, "readApi2Res: reading response...")
+	errco.Logln(errco.LVL_3, "readApi2Res: reading response...")
 
 	// read http response
 	resByte, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return nil, errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "readApi2Res", err.Error())
+		return nil, errco.NewErr(errco.ERROR_VERSION, errco.LVL_3, "readApi2Res", err.Error())
 	}
-	errco.Logln(errco.LVL_E, "%smshc --> msh%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, resByte)
+	errco.Logln(errco.LVL_4, "%smshc --> msh%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, resByte)
 
 	// load res data into resJson
 	var resJson *model.Api2Res
 	err = json.Unmarshal(resByte, &resJson)
 	if err != nil {
-		return nil, errco.NewErr(errco.ERROR_VERSION, errco.LVL_D, "readApi2Res", err.Error())
+		return nil, errco.NewErr(errco.ERROR_VERSION, errco.LVL_3, "readApi2Res", err.Error())
 	}
 
 	return resJson, nil

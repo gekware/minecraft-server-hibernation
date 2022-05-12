@@ -13,7 +13,7 @@ func OsSupported() *errco.Error {
 	ros := runtime.GOOS
 
 	if ros != "linux" && ros != "windows" && ros != "darwin" {
-		return errco.NewErr(errco.ERROR_OS_NOT_SUPPORTED, errco.LVL_B, "OsSupported", "OS is not supported")
+		return errco.NewErr(errco.ERROR_OS_NOT_SUPPORTED, errco.LVL_1, "OsSupported", "OS is not supported")
 	}
 
 	return nil
@@ -32,7 +32,7 @@ func ProcTreeSuspend(ppid uint32) (bool, *errco.Error) {
 		return false, errMsh.AddTrace("ProcTreeSuspend")
 	}
 
-	errco.Logln(errco.LVL_B, "PROCESS TREE SUSPENDED!")
+	errco.Logln(errco.LVL_1, "PROCESS TREE SUSPENDED!")
 
 	return true, nil
 }
@@ -45,7 +45,7 @@ func ProcTreeResume(ppid uint32) (bool, *errco.Error) {
 		return true, errMsh.AddTrace("ProcTreeResume")
 	}
 
-	errco.Logln(errco.LVL_B, "PROCESS TREE UNSUSPEDED!")
+	errco.Logln(errco.LVL_1, "PROCESS TREE UNSUSPEDED!")
 
 	return false, nil
 }

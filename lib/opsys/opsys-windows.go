@@ -28,9 +28,9 @@ func init() {
 	stdout := windows.Handle(os.Stdout.Fd())
 	var originalMode uint32
 	if err := windows.GetConsoleMode(stdout, &originalMode); err != nil {
-		errco.LogMshErr(errco.NewErr(errco.ERROR_COLOR_ENABLE, errco.LVL_D, "errco init", "error while enabling colors on terminal"))
+		errco.LogMshErr(errco.NewErr(errco.ERROR_COLOR_ENABLE, errco.LVL_3, "errco init", "error while enabling colors on terminal"))
 	} else if windows.SetConsoleMode(stdout, originalMode|windows.ENABLE_VIRTUAL_TERMINAL_PROCESSING); err != nil {
-		errco.LogMshErr(errco.NewErr(errco.ERROR_COLOR_ENABLE, errco.LVL_D, "errco init", "error while enabling colors on terminal"))
+		errco.LogMshErr(errco.NewErr(errco.ERROR_COLOR_ENABLE, errco.LVL_3, "errco init", "error while enabling colors on terminal"))
 	}
 }
 
@@ -49,14 +49,14 @@ func procTreeSuspend(ppid uint32) *errco.Error {
 
 		h, err := windows.OpenProcess(windows.PROCESS_SUSPEND_RESUME, false, pid)
 		if err != nil {
-			return errco.NewErr(errco.ERROR_PROCESS_OPEN, errco.LVL_D, "suspendProc", err.Error())
+			return errco.NewErr(errco.ERROR_PROCESS_OPEN, errco.LVL_3, "suspendProc", err.Error())
 		}
 		defer windows.CloseHandle(h)
 
 		r1, _, _ := procNtSuspendProcess.Call(uintptr(h))
 		if r1 != 0 {
 			// See https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-erref/596a1078-e883-4972-9bbc-49e60bebca55
-			return errco.NewErr(errco.ERROR_PROCESS_SUSPEND_CALL, errco.LVL_D, "suspendProc", fmt.Sprintf("NtStatus='0x%.8X'", r1))
+			return errco.NewErr(errco.ERROR_PROCESS_SUSPEND_CALL, errco.LVL_3, "suspendProc", fmt.Sprintf("NtStatus='0x%.8X'", r1))
 		}
 
 		return nil
@@ -68,7 +68,7 @@ func procTreeSuspend(ppid uint32) *errco.Error {
 		return errMsh.AddTrace("procTreeSuspend")
 	}
 
-	errco.Logln(errco.LVL_D, "procTreeSuspend: tree pid is %v", treePid)
+	errco.Logln(errco.LVL_3, "procTreeSuspend: tree pid is %v", treePid)
 
 	// suspend all processes in tree
 	for _, pid := range treePid {
@@ -88,14 +88,14 @@ func procTreeResume(ppid uint32) *errco.Error {
 
 		h, err := windows.OpenProcess(windows.PROCESS_SUSPEND_RESUME, false, pid)
 		if err != nil {
-			return errco.NewErr(errco.ERROR_PROCESS_OPEN, errco.LVL_D, "resumeProc", err.Error())
+			return errco.NewErr(errco.ERROR_PROCESS_OPEN, errco.LVL_3, "resumeProc", err.Error())
 		}
 		defer windows.CloseHandle(h)
 
 		r1, _, _ := procNtResumeProcess.Call(uintptr(h))
 		if r1 != 0 {
 			// See https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-erref/596a1078-e883-4972-9bbc-49e60bebca55
-			return errco.NewErr(errco.ERROR_PROCESS_SUSPEND_CALL, errco.LVL_D, "resumeProc", fmt.Sprintf("NtStatus='0x%.8X'", r1))
+			return errco.NewErr(errco.ERROR_PROCESS_SUSPEND_CALL, errco.LVL_3, "resumeProc", fmt.Sprintf("NtStatus='0x%.8X'", r1))
 		}
 
 		return nil
@@ -107,7 +107,7 @@ func procTreeResume(ppid uint32) *errco.Error {
 		return errMsh.AddTrace("procTreeResume")
 	}
 
-	errco.Logln(errco.LVL_D, "procTreeResume: tree pid is %v", treePid)
+	errco.Logln(errco.LVL_3, "procTreeResume: tree pid is %v", treePid)
 
 	// resume all processes in tree
 	for _, pid := range treePid {
@@ -135,7 +135,7 @@ func getTreePids(rootPid uint32) ([]uint32, *errco.Error) {
 	// create snapshot of processes running on system
 	snapshot, err := syscall.CreateToolhelp32Snapshot(uint32(syscall.TH32CS_SNAPPROCESS), 0)
 	if err != nil {
-		return nil, errco.NewErr(errco.ERROR_PROCESS_SYSTEM_SNAPSHOT, errco.LVL_D, "getTreePids", err.Error())
+		return nil, errco.NewErr(errco.ERROR_PROCESS_SYSTEM_SNAPSHOT, errco.LVL_3, "getTreePids", err.Error())
 	}
 	defer syscall.CloseHandle(snapshot)
 
@@ -145,7 +145,7 @@ func getTreePids(rootPid uint32) ([]uint32, *errco.Error) {
 		// set procEntry to the first process in the snapshot
 		err = syscall.Process32First(snapshot, &procEntry)
 		if err != nil {
-			return nil, errco.NewErr(errco.ERROR_PROCESS_ENTRY, errco.LVL_D, "getTreePids", err.Error())
+			return nil, errco.NewErr(errco.ERROR_PROCESS_ENTRY, errco.LVL_3, "getTreePids", err.Error())
 		}
 
 		// loop through the processes in the snapshot, if the parent pid of the analyzed process
@@ -174,7 +174,7 @@ func getTreePids(rootPid uint32) ([]uint32, *errco.Error) {
 
 		// if the specified rootPid is not found, return error
 		if !foundRootPid {
-			return nil, errco.NewErr(errco.ERROR_PROCESS_NOT_FOUND, errco.LVL_D, "getTreePids", "specified rootPid not found")
+			return nil, errco.NewErr(errco.ERROR_PROCESS_NOT_FOUND, errco.LVL_3, "getTreePids", "specified rootPid not found")
 		}
 
 		// there are no more child processes, return the process tree

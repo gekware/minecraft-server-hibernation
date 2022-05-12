@@ -48,7 +48,7 @@ type Configuration struct {
 func LoadConfig() *errco.Error {
 	// ---------------- OS support ----------------- //
 
-	errco.Logln(errco.LVL_D, "checking OS support...")
+	errco.Logln(errco.LVL_3, "checking OS support...")
 
 	// check if OS is supported.
 	errMsh := opsys.OsSupported()
@@ -58,7 +58,7 @@ func LoadConfig() *errco.Error {
 
 	// ---------------- load config ---------------- //
 
-	errco.Logln(errco.LVL_D, "loading config...")
+	errco.Logln(errco.LVL_3, "loading config...")
 
 	// load config default
 	errMsh = ConfigDefault.loadDefault()
@@ -90,7 +90,7 @@ func (c *Configuration) Save() *errco.Error {
 	// encode the struct config
 	configData, err := json.MarshalIndent(c, "", "  ")
 	if err != nil {
-		return errco.NewErr(errco.ERROR_CONFIG_SAVE, errco.LVL_D, "Save", "could not marshal from config file")
+		return errco.NewErr(errco.ERROR_CONFIG_SAVE, errco.LVL_3, "Save", "could not marshal from config file")
 	}
 
 	// escape unicode characters ("\u003c" to "<" and "\u003e" to ">")
@@ -102,10 +102,10 @@ func (c *Configuration) Save() *errco.Error {
 	// write to config file
 	err = ioutil.WriteFile(configFileName, configData, 0644)
 	if err != nil {
-		return errco.NewErr(errco.ERROR_CONFIG_SAVE, errco.LVL_D, "Save", "could not write to config file")
+		return errco.NewErr(errco.ERROR_CONFIG_SAVE, errco.LVL_3, "Save", "could not write to config file")
 	}
 
-	errco.Logln(errco.LVL_D, "saved default config to config file")
+	errco.Logln(errco.LVL_3, "saved default config to config file")
 
 	return nil
 }
@@ -115,19 +115,19 @@ func (c *Configuration) loadDefault() *errco.Error {
 	// get msh executable path
 	mshPath, err := os.Executable()
 	if err != nil {
-		return errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_B, "loadDefault", err.Error())
+		return errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_1, "loadDefault", err.Error())
 	}
 
 	// read config file
 	configData, err := ioutil.ReadFile(filepath.Join(filepath.Dir(mshPath), configFileName))
 	if err != nil {
-		return errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_B, "loadDefault", err.Error())
+		return errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_1, "loadDefault", err.Error())
 	}
 
 	// write data to config variable
 	err = json.Unmarshal(configData, &c)
 	if err != nil {
-		return errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_B, "loadDefault", err.Error())
+		return errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_1, "loadDefault", err.Error())
 	}
 
 	// ------------------- setup ------------------- //
@@ -139,16 +139,16 @@ func (c *Configuration) loadDefault() *errco.Error {
 		generate mshid (and save it to default config)
 	*/
 	if id, err := machineid.ProtectedID("msh"); err != nil {
-		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_D, "loadDefault", "error while generating machine id, assigning mshid"))
+		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_3, "loadDefault", "error while generating machine id, assigning mshid"))
 		c.assignMshID()
 	} else if ex, err := os.Executable(); err != nil {
-		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_D, "loadDefault", "error while generating machine id, assigning mshid"))
+		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_3, "loadDefault", "error while generating machine id, assigning mshid"))
 		c.assignMshID()
 	} else {
 		hasher := sha1.New()
 		hasher.Write([]byte(id + filepath.Dir(ex)))
 		if id := hex.EncodeToString(hasher.Sum(nil)); c.Msh.ID != id {
-			errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_D, "loadDefault", "mshid was generated from machine id"))
+			errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_3, "loadDefault", "mshid was generated from machine id"))
 			c.Msh.ID = id
 			ConfigDefaultSave = true
 		}
@@ -209,7 +209,7 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.Error {
 	c.Commands.StartServer = strings.ReplaceAll(c.Commands.StartServer, "<Commands.StartServerParam>", c.Commands.StartServerParam)
 
 	// after config variables are set, set debug level
-	errco.Logln(errco.LVL_A, "setting log level to: %d", c.Msh.Debug)
+	errco.Logln(errco.LVL_0, "setting log level to: %d", c.Msh.Debug)
 	errco.DebugLvl = c.Msh.Debug
 
 	// ------------------- setup ------------------- //
@@ -222,11 +222,11 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.Error {
 	*/
 	if confdef.Msh.ID != c.Msh.ID {
 		if len(c.Msh.ID) == 40 {
-			errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_D, "loadRuntime", "setting user specified mshid in default config"))
+			errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_3, "loadRuntime", "setting user specified mshid in default config"))
 			confdef.Msh.ID = c.Msh.ID
 			ConfigDefaultSave = true
 		} else {
-			errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_D, "loadRuntime", "user specified mshid is not healthy, using default mshid"))
+			errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_3, "loadRuntime", "user specified mshid is not healthy, using default mshid"))
 		}
 	}
 
@@ -235,8 +235,8 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.Error {
 	if _, err := os.Stat(serverFileFolderPath); os.IsNotExist(err) {
 		// server folder/executeble does not exist
 
-		servstats.Stats.Error = errco.NewErr(errco.ERROR_MINECRAFT_SERVER, errco.LVL_D, "loadRuntime", "specified minecraft server folder/file does not exist")
-		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_B, "loadRuntime", "specified server file/folder does not exist: "+serverFileFolderPath))
+		servstats.Stats.Error = errco.NewErr(errco.ERROR_MINECRAFT_SERVER, errco.LVL_3, "loadRuntime", "specified minecraft server folder/file does not exist")
+		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_1, "loadRuntime", "specified server file/folder does not exist: "+serverFileFolderPath))
 
 	} else {
 		// server folder/executeble exist
@@ -248,10 +248,10 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.Error {
 		case err != nil:
 			// eula.txt does not exist
 
-			errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_B, "loadRuntime", "could not read eula.txt file: "+eulaFilePath))
+			errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_1, "loadRuntime", "could not read eula.txt file: "+eulaFilePath))
 
 			// start server to generate eula.txt (and server.properties)
-			errco.Logln(errco.LVL_D, "starting minecraft server to generate eula.txt file...")
+			errco.Logln(errco.LVL_3, "starting minecraft server to generate eula.txt file...")
 			cSplit := strings.Split(c.Commands.StartServer, " ")
 			cmd := exec.Command(cSplit[0], cSplit[1:]...)
 			cmd.Dir = c.Server.Folder
@@ -261,32 +261,32 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.Error {
 			err = cmd.Run()
 			fmt.Print(errco.COLOR_RESET) // reset color
 			if err != nil {
-				servstats.Stats.Error = errco.NewErr(errco.ERROR_MINECRAFT_SERVER, errco.LVL_D, "loadRuntime", "couldn't start minecraft server to generate eula.txt\n(are you using the correct java version?)")
-				errco.LogMshErr(errco.NewErr(errco.ERROR_TERMINAL_START, errco.LVL_B, "loadRuntime", "couldn't start minecraft server to generate eula.txt: ["+err.Error()+"]"))
+				servstats.Stats.Error = errco.NewErr(errco.ERROR_MINECRAFT_SERVER, errco.LVL_3, "loadRuntime", "couldn't start minecraft server to generate eula.txt\n(are you using the correct java version?)")
+				errco.LogMshErr(errco.NewErr(errco.ERROR_TERMINAL_START, errco.LVL_1, "loadRuntime", "couldn't start minecraft server to generate eula.txt: ["+err.Error()+"]"))
 			}
 			fallthrough
 
 		case !strings.Contains(strings.ReplaceAll(strings.ToLower(string(eulaData)), " ", ""), "eula=true"):
 			// eula.txt exists but is not set to true
 
-			servstats.Stats.Error = errco.NewErr(errco.ERROR_MINECRAFT_SERVER, errco.LVL_D, "loadRuntime", "please accept minecraft server eula.txt")
-			errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_B, "loadRuntime", "please accept minecraft server eula.txt: "+eulaFilePath))
+			servstats.Stats.Error = errco.NewErr(errco.ERROR_MINECRAFT_SERVER, errco.LVL_3, "loadRuntime", "please accept minecraft server eula.txt")
+			errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_1, "loadRuntime", "please accept minecraft server eula.txt: "+eulaFilePath))
 
 		default:
 			// eula.txt exists and is set to true
 
-			errco.Logln(errco.LVL_B, "eula.txt exist and is set to true...")
+			errco.Logln(errco.LVL_1, "eula.txt exist and is set to true...")
 		}
 	}
 
 	// check if java is installed and get java version
 	_, err := exec.LookPath("java")
 	if err != nil {
-		servstats.Stats.Error = errco.NewErr(errco.ERROR_MINECRAFT_SERVER, errco.LVL_D, "loadRuntime", "java not installed")
-		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_B, "loadRuntime", "java not installed"))
+		servstats.Stats.Error = errco.NewErr(errco.ERROR_MINECRAFT_SERVER, errco.LVL_3, "loadRuntime", "java not installed")
+		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_1, "loadRuntime", "java not installed"))
 	} else if out, err := exec.Command("java", "--version").Output(); err != nil {
 		// non blocking error
-		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_B, "loadRuntime", "could not execute 'java -version' command"))
+		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_1, "loadRuntime", "could not execute 'java -version' command"))
 		Javav = "unknown"
 	} else {
 		Javav = strings.ReplaceAll(strings.Split(string(out), "\n")[0], "\r", "")
@@ -295,10 +295,10 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.Error {
 	// initialize ip and ports for connection
 	errMsh := c.loadIpPorts()
 	if errMsh != nil {
-		servstats.Stats.Error = errco.NewErr(errco.ERROR_MINECRAFT_SERVER, errco.LVL_D, "loadRuntime", "proxy setup failed, check msh logs")
+		servstats.Stats.Error = errco.NewErr(errco.ERROR_MINECRAFT_SERVER, errco.LVL_3, "loadRuntime", "proxy setup failed, check msh logs")
 		errco.LogMshErr(errMsh.AddTrace("loadRuntime"))
 	}
-	errco.Logln(errco.LVL_D, "msh proxy setup: %s:%d --> %s:%d", ListenHost, ListenPort, TargetHost, TargetPort)
+	errco.Logln(errco.LVL_3, "msh proxy setup: %s:%d --> %s:%d", ListenHost, ListenPort, TargetHost, TargetPort)
 
 	// load server icon
 	errMsh = c.loadIcon()

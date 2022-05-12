@@ -56,7 +56,7 @@ func buildMessage(reqType int, message string) []byte {
 		dataTxtJSON, err := json.Marshal(messageStruct)
 		if err != nil {
 			// don't return error, just log it
-			errco.LogMshErr(errco.NewErr(errco.ERROR_JSON_MARSHAL, errco.LVL_D, "buildMessage", err.Error()))
+			errco.LogMshErr(errco.NewErr(errco.ERROR_JSON_MARSHAL, errco.LVL_3, "buildMessage", err.Error()))
 			return nil
 		}
 
@@ -83,7 +83,7 @@ func buildMessage(reqType int, message string) []byte {
 		dataInfJSON, err := json.Marshal(messageStruct)
 		if err != nil {
 			// don't return error, just log it
-			errco.LogMshErr(errco.NewErr(errco.ERROR_JSON_MARSHAL, errco.LVL_D, "buildMessage", err.Error()))
+			errco.LogMshErr(errco.NewErr(errco.ERROR_JSON_MARSHAL, errco.LVL_3, "buildMessage", err.Error()))
 			return nil
 		}
 
@@ -157,7 +157,7 @@ func getReqType(clientSocket net.Conn) ([]byte, int, string, *errco.Error) {
 		return dataReqFull, errco.CLIENT_REQ_JOIN, playerName, nil
 
 	default:
-		return nil, errco.CLIENT_REQ_UNKN, "", errco.NewErr(errco.CLIENT_REQ_UNKN, errco.LVL_D, "getReqType", "client request unknown")
+		return nil, errco.CLIENT_REQ_UNKN, "", errco.NewErr(errco.CLIENT_REQ_UNKN, errco.LVL_3, "getReqType", "client request unknown")
 	}
 }
 
@@ -187,7 +187,7 @@ func getPing(clientSocket net.Conn) *errco.Error {
 	// answer ping
 	clientSocket.Write(pingData)
 
-	errco.Logln(errco.LVL_E, "%smsh --> client%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, pingData)
+	errco.Logln(errco.LVL_4, "%smsh --> client%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, pingData)
 
 	return nil
 }
@@ -199,10 +199,10 @@ func getClientPacket(clientSocket net.Conn) ([]byte, *errco.Error) {
 	// read first packet
 	dataLen, err := clientSocket.Read(buf)
 	if err != nil {
-		return nil, errco.NewErr(errco.ERROR_CLIENT_SOCKET_READ, errco.LVL_D, "getClientPacket", "error during clientSocket.Read()")
+		return nil, errco.NewErr(errco.ERROR_CLIENT_SOCKET_READ, errco.LVL_3, "getClientPacket", "error during clientSocket.Read()")
 	}
 
-	errco.Logln(errco.LVL_E, "%sclient --> msh%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, buf[:dataLen])
+	errco.Logln(errco.LVL_4, "%sclient --> msh%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, buf[:dataLen])
 
 	return buf[:dataLen], nil
 }
