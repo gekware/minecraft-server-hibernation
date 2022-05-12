@@ -216,8 +216,7 @@ func (sgm *segment) reset(i interface{}) *segment {
 
 	sgm.stats.seconds = 0
 	sgm.stats.secondsHibe = 0
-	sgm.stats.cpuUsage = 0
-	sgm.stats.memUsage = 0
+	sgm.stats.cpuUsage, sgm.stats.memUsage = getMshTreeStats()
 	sgm.stats.playerSec = 0
 	sgm.stats.preTerm = false
 
