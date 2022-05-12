@@ -22,7 +22,9 @@ var (
 
 	// segment used for stats
 	sgm *segment = &segment{
-		m: &sync.Mutex{},
+		m:           &sync.Mutex{},
+		tk:          time.NewTicker(time.Second),
+		defDuration: 4 * time.Hour,
 	}
 )
 
@@ -74,13 +76,13 @@ func sgmMgr() {
 				sgm.stats.secondsHibe += 1
 			}
 
+			// increment play seconds sum
+			sgm.stats.playerSec += servstats.Stats.PlayerCount
+
 			// update segment average cpu/memory usage
 			mshTreeCpu, mshTreeMem := getMshTreeStats()
 			sgm.stats.cpuUsage = (sgm.stats.cpuUsage*float64(sgm.stats.seconds-1) + float64(mshTreeCpu)) / float64(sgm.stats.seconds) // sgm.stats.seconds-1 because the average is relative to 1 sec ago
 			sgm.stats.memUsage = (sgm.stats.memUsage*float64(sgm.stats.seconds-1) + float64(mshTreeMem)) / float64(sgm.stats.seconds)
-
-			// update play seconds sum
-			sgm.stats.playerSec = servstats.Stats.PlayerCount
 
 			sgm.m.Unlock() // not using defer since it's an infinite loop
 
@@ -196,8 +198,6 @@ func sgmMgr() {
 // reset segment variables
 // accepted parameters types: int, time.Duration, *http.Response
 func (sgm *segment) reset(i interface{}) *segment {
-	sgm.tk = time.NewTicker(time.Second)
-	sgm.defDuration = 4 * time.Hour
 	sgm.startTime = time.Now()
 	switch v := i.(type) {
 	case int:
