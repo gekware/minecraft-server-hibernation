@@ -275,7 +275,7 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.Error {
 		default:
 			// eula.txt exists and is set to true
 
-			errco.Logln(errco.LVL_1, "eula.txt exist and is set to true...")
+			errco.Logln(errco.LVL_1, "eula.txt exist and is set to true")
 		}
 	}
 

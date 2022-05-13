@@ -118,7 +118,7 @@ func sgmMgr() {
 			// check response status code
 			switch res.StatusCode {
 			case 200:
-				errco.Logln(errco.LVL_3, "resetting segment...")
+				errco.Logln(errco.LVL_3, "segment reset")
 				sgm.reset(res)
 			case 403:
 				errco.LogMshErr(errco.NewErr(errco.ERROR_VERSION, errco.LVL_3, "MshMgr", "client is unauthorized"))

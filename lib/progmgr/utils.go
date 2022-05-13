@@ -90,7 +90,7 @@ func sendApi2Req(url string, api2req *model.Api2Req) (*http.Response, *errco.Err
 		}
 	}()
 
-	errco.Logln(errco.LVL_3, "sendApi2Req: sending request...")
+	errco.Logln(errco.LVL_3, "sendApi2Req: sending request")
 
 	// marshal request struct
 	reqByte, err := json.Marshal(api2req)
@@ -123,7 +123,7 @@ func sendApi2Req(url string, api2req *model.Api2Req) (*http.Response, *errco.Err
 func readApi2Res(res *http.Response) (*model.Api2Res, *errco.Error) {
 	defer res.Body.Close()
 
-	errco.Logln(errco.LVL_3, "readApi2Res: reading response...")
+	errco.Logln(errco.LVL_3, "readApi2Res: reading response")
 
 	// read http response
 	resByte, err := ioutil.ReadAll(res.Body)
