@@ -8,5 +8,6 @@ require (
 	github.com/stretchr/testify v1.7.1 // indirect
 	github.com/tklauser/go-sysconf v0.3.10 // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
+	golang.org/x/image v0.0.0-20220413100746-70e8d0d3baa9
 	golang.org/x/sys v0.0.0-20220412211240-33da011f77ad
 )

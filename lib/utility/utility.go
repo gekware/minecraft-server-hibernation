@@ -3,6 +3,7 @@ package utility
 import (
 	"bytes"
 	"fmt"
+	"image"
 	"math"
 	"reflect"
 	"strconv"
@@ -10,6 +11,8 @@ import (
 	"time"
 
 	"msh/lib/errco"
+
+	"golang.org/x/image/draw"
 )
 
 // Boxify creates an ascii box around a list of text lines
@@ -115,4 +118,12 @@ func UnicodeEscape(data []byte) ([]byte, *errco.Error) {
 // RoundSec rounds a time duration to the nearest second
 func RoundSec(t time.Duration) int {
 	return int(math.Round(float64(t.Milliseconds() / 1000)))
+}
+
+// ScaleImg scales the image to rectangle size
+func ScaleImg(srcImg image.Image, rect image.Rectangle) (image.Image, time.Duration) {
+	i := time.Now()
+	dstImg := image.NewRGBA(rect)
+	draw.CatmullRom.Scale(dstImg, dstImg.Bounds(), srcImg, srcImg.Bounds(), draw.Over, nil)
+	return dstImg, time.Since(i)
 }

@@ -45,7 +45,7 @@ go build .
     - \* HibernationInfo and StartingInfo
     - \* TimeBeforeStoppingEmptyServer
     - \* NotifyUpdate
-3. \* put the frozen icon you want in `path/to/server.jar/folder` (must be 64x64 and called `server-icon-frozen.png`)
+3. \* put the frozen icon you want in `path/to/server.jar/folder` (must be called `server-icon-frozen`, supported formats: `.png`, `.jpg`)
 4. on the router (to which the server is connected): forward port 25555 to server ([tutorial](https://www.wikihow.com/Open-Ports#Opening-Router-Firewall-Ports))
 5. on the server: open port 25555 (example: [ufw firewall](https://www.configserverfirewall.com/ufw-ubuntu-firewall/ubuntu-firewall-open-port/))
 6. run the msh executable

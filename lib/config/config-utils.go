@@ -8,8 +8,8 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"image"
+	"image/jpeg"
 	"image/png"
 	"io/ioutil"
 	"os"
@@ -53,43 +53,62 @@ func (c *Configuration) loadIcon() *errco.Error {
 	ServerIcon = defaultServerIcon
 
 	// get the path of the user specified server icon
-	userIconPath := filepath.Join(c.Server.Folder, "server-icon-frozen.png")
+	userIconPaths := []string{}
+	userIconPaths = append(userIconPaths, filepath.Join(c.Server.Folder, "server-icon-frozen.png"))
+	userIconPaths = append(userIconPaths, filepath.Join(c.Server.Folder, "server-icon-frozen.jpg"))
 
-	// check if user specified icon exists
-	_, err := os.Stat(userIconPath)
-	if os.IsNotExist(err) {
-		// user specified server icon not found
-		// no error should be returned as the missing icon might be intended
-		return nil
+	for _, uip := range userIconPaths {
+		// check if user specified icon exists
+		_, err := os.Stat(uip)
+		if os.IsNotExist(err) {
+			// user specified server icon not found
+			continue
+		}
+
+		// open file
+		f, err := os.Open(uip)
+		if err != nil {
+			errco.LogMshErr(errco.NewErr(errco.ERROR_ICON_LOAD, errco.LVL_3, "loadIcon", err.Error()))
+			continue
+		}
+		defer f.Close()
+
+		// read file data
+		// it's important to read all file data and store it in a variable that can be read multiple times with a io.Reader.
+		// using f *os.File directly in Decode(r io.Reader) results in f *os.File readable only once.
+		fdata, err := ioutil.ReadAll(f)
+		if err != nil {
+			errco.LogMshErr(errco.NewErr(errco.ERROR_ICON_LOAD, errco.LVL_3, "loadIcon", err.Error()))
+			continue
+		}
+
+		// decode image (try different formats)
+		var img image.Image
+		if img, err = png.Decode(bytes.NewReader(fdata)); err == nil {
+		} else if img, err = jpeg.Decode(bytes.NewReader(fdata)); err == nil {
+		} else {
+			errco.LogMshErr(errco.NewErr(errco.ERROR_ICON_LOAD, errco.LVL_3, "loadIcon", "data format invalid: "+uip+" ("+err.Error()+")"))
+			continue
+		}
+
+		// scale image to 64x64
+		scaImg, d := utility.ScaleImg(img, image.Rect(0, 0, 64, 64))
+		errco.Logln(errco.LVL_3, "scaled %s to 64x64. (%v ms)", uip, d.Milliseconds())
+
+		// encode image to png
+		enc, buff := &png.Encoder{CompressionLevel: -3}, &bytes.Buffer{} // -3: best compression
+		err = enc.Encode(buff, scaImg)
+		if err != nil {
+			errco.LogMshErr(errco.NewErr(errco.ERROR_ICON_LOAD, errco.LVL_3, "loadIcon", err.Error()))
+			continue
+		}
+
+		// load user specified server icon as base64 encoded string
+		ServerIcon = base64.RawStdEncoding.EncodeToString(buff.Bytes())
+
+		// as soon as a good image is loaded, break and return
+		break
 	}
-
-	// open file
-	f, err := os.Open(userIconPath)
-	if err != nil {
-		return errco.NewErr(errco.ERROR_ICON_LOAD, errco.LVL_3, "loadIcon", err.Error())
-	}
-	defer f.Close()
-
-	// decode png
-	pngIm, err := png.Decode(f)
-	if err != nil {
-		return errco.NewErr(errco.ERROR_ICON_LOAD, errco.LVL_3, "loadIcon", err.Error())
-	}
-
-	// check that image is 64x64
-	if pngIm.Bounds().Max != image.Pt(64, 64) {
-		return errco.NewErr(errco.ERROR_ICON_LOAD, errco.LVL_3, "loadIcon", fmt.Sprintf("incorrect server-icon-frozen.png size. Current size: %dx%d", pngIm.Bounds().Max.X, pngIm.Bounds().Max.Y))
-	}
-
-	// encode png
-	enc, buff := &png.Encoder{CompressionLevel: -3}, &bytes.Buffer{} // -3: best compression
-	err = enc.Encode(buff, pngIm)
-	if err != nil {
-		return errco.NewErr(errco.ERROR_ICON_LOAD, errco.LVL_3, "loadIcon", err.Error())
-	}
-
-	// load user specified server icon as base64 encoded string
-	ServerIcon = base64.RawStdEncoding.EncodeToString(buff.Bytes())
 
 	return nil
 }
