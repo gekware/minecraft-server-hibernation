@@ -22,8 +22,8 @@ var ServTerm *servTerminal = &servTerminal{IsActive: false}
 // servTerminal is the minecraft server terminal
 type servTerminal struct {
 	IsActive  bool
-	Wg        sync.WaitGroup
-	startTime time.Time // uptime of minecraft server
+	Wg        sync.WaitGroup // used to wait terminal StdoutPipe/StderrPipe
+	startTime time.Time      // uptime of minecraft server
 	cmd       *exec.Cmd
 	outPipe   io.ReadCloser
 	errPipe   io.ReadCloser
@@ -291,8 +291,9 @@ func waitForExit() {
 	// set terminal start time
 	ServTerm.startTime = time.Now()
 
-	// wait for printer out/err to exit
-	ServTerm.Wg.Wait()
+	// wait for server process to finish
+	ServTerm.Wg.Wait()  // wait terminal StdoutPipe/StderrPipe to exit
+	ServTerm.cmd.Wait() // wait process (to avoid defunct java server process)
 
 	ServTerm.outPipe.Close()
 	ServTerm.errPipe.Close()
