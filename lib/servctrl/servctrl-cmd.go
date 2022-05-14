@@ -253,7 +253,7 @@ func printerOutErr() {
 						FreezeMSRequest()
 
 					// the server is stopping
-					case strings.Contains(lineContent, "Stopping"):
+					case strings.Contains(lineContent, "Stopping") && strings.Contains(lineContent, "server"):
 						servstats.Stats.Status = errco.SERVER_STATUS_STOPPING
 						errco.Logln(errco.LVL_1, "MINECRAFT SERVER IS STOPPING!")
 					}
