@@ -194,7 +194,7 @@ func (c *Configuration) assignMshID() {
 		hasher := sha1.New()
 		hasher.Write(key)
 		c.Msh.ID = hex.EncodeToString(hasher.Sum(nil))
-		ConfigDefaultSave = true
+		configDefaultSave = true
 		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_3, "assignMshID", "mshid in config is not valid, new one is: "+c.Msh.ID))
 	}
 }

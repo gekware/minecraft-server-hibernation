@@ -27,7 +27,7 @@ var (
 	ConfigDefault *Configuration = &Configuration{} // ConfigDefault contains parameters of config in file
 	ConfigRuntime *Configuration = &Configuration{} // ConfigRuntime contains parameters of config in runtime
 
-	ConfigDefaultSave bool = false // if true, the config will be saved after successful loading
+	configDefaultSave bool = false // if true, the config will be saved after successful loading
 
 	Javav string // Javav is the java version on the system. format: "java 16.0.1 2021-04-20"
 
@@ -74,7 +74,7 @@ func LoadConfig() *errco.Error {
 
 	// ---------------- save config ---------------- //
 
-	if ConfigDefaultSave {
+	if configDefaultSave {
 		errMsh := ConfigDefault.Save()
 		if errMsh != nil {
 			return errMsh.AddTrace("LoadConfig")
@@ -150,7 +150,7 @@ func (c *Configuration) loadDefault() *errco.Error {
 		if id := hex.EncodeToString(hasher.Sum(nil)); c.Msh.ID != id {
 			errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_3, "loadDefault", "mshid was generated from machine id"))
 			c.Msh.ID = id
-			ConfigDefaultSave = true
+			configDefaultSave = true
 		}
 	}
 
@@ -163,7 +163,7 @@ func (c *Configuration) loadDefault() *errco.Error {
 	} else if c.Server.Version != version || c.Server.Protocol != protocol {
 		c.Server.Version = version
 		c.Server.Protocol = protocol
-		ConfigDefaultSave = true
+		configDefaultSave = true
 	}
 
 	return nil
@@ -224,7 +224,7 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.Error {
 		if len(c.Msh.ID) == 40 {
 			errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_3, "loadRuntime", "setting user specified mshid in default config"))
 			confdef.Msh.ID = c.Msh.ID
-			ConfigDefaultSave = true
+			configDefaultSave = true
 		} else {
 			errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_3, "loadRuntime", "user specified mshid is not healthy, using default mshid"))
 		}
