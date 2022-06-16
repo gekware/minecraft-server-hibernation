@@ -119,7 +119,9 @@ func (c *Configuration) loadDefault() *errco.Error {
 	}
 
 	// read config file
-	configData, err := ioutil.ReadFile(filepath.Join(cwdPath, configFileName))
+	configFilePath := filepath.Join(cwdPath, configFileName)
+	errco.Logln(errco.LVL_1, "reading config file at: " + configFilePath)
+	configData, err := ioutil.ReadFile(configFilePath)
 	if err != nil {
 		return errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_1, "loadDefault", err.Error())
 	}
