@@ -112,14 +112,16 @@ func (c *Configuration) Save() *errco.Error {
 
 // loadDefault loads config file to config variable
 func (c *Configuration) loadDefault() *errco.Error {
-	// get msh executable path
-	mshPath, err := os.Executable()
+	// get working directory
+	cwdPath, err := os.Getwd()
 	if err != nil {
 		return errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_1, "loadDefault", err.Error())
 	}
 
 	// read config file
-	configData, err := ioutil.ReadFile(filepath.Join(filepath.Dir(mshPath), configFileName))
+	configFilePath := filepath.Join(cwdPath, configFileName)
+	errco.Logln(errco.LVL_1, "reading config file at: " + configFilePath)
+	configData, err := ioutil.ReadFile(configFilePath)
 	if err != nil {
 		return errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_1, "loadDefault", err.Error())
 	}
