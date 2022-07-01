@@ -136,22 +136,26 @@ func (c *Configuration) loadDefault() *errco.Error {
 
 	// load mshid
 	/*
-		get machine id, if fail:
-		get default config mshid, if fail:
-		generate mshid (and save it to default config)
+		get data for mshid generation, if fail:
+		assignMshID:
+			get default config mshid, if fail:
+			generate mshid (and save it to default config)
 	*/
 	if id, err := machineid.ProtectedID("msh"); err != nil {
-		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_3, "loadDefault", "error while generating machine id, assigning mshid"))
+		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_3, "loadDefault", "error while generating mshid (id), assigning mshid"))
 		c.assignMshID()
 	} else if ex, err := os.Executable(); err != nil {
-		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_3, "loadDefault", "error while generating machine id, assigning mshid"))
+		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_3, "loadDefault", "error while generating mshid (ex), assigning mshid"))
+		c.assignMshID()
+	} else if hn, err := os.Hostname(); err != nil {
+		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_3, "loadDefault", "error while generating mshid (hn), assigning mshid"))
 		c.assignMshID()
 	} else {
 		hasher := sha1.New()
-		hasher.Write([]byte(id + filepath.Dir(ex)))
-		if id := hex.EncodeToString(hasher.Sum(nil)); c.Msh.ID != id {
-			errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_3, "loadDefault", "mshid was generated from machine id"))
-			c.Msh.ID = id
+		hasher.Write([]byte(hn + id + filepath.Dir(ex)))
+		if mshid := hex.EncodeToString(hasher.Sum(nil)); c.Msh.ID != mshid {
+			errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_3, "loadDefault", "mshid was generated"))
+			c.Msh.ID = mshid
 			configDefaultSave = true
 		}
 	}
@@ -186,7 +190,6 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.Error {
 	flag.StringVar(&c.Commands.StartServerParam, "msparam", c.Commands.StartServerParam, "Specify start server parameters.")
 	flag.IntVar(&c.Commands.StopServerAllowKill, "allowkill", c.Commands.StopServerAllowKill, "Specify after how many seconds the server should be killed (if stop command fails).")
 
-	flag.StringVar(&c.Msh.ID, "id", c.Msh.ID, "Specify msh ID.")
 	flag.IntVar(&c.Msh.Debug, "d", c.Msh.Debug, "Specify debug level.")
 	flag.BoolVar(&c.Msh.AllowSuspend, "allowsuspend", c.Msh.AllowSuspend, "Specify if minecraft server process can be suspended.")
 	flag.StringVar(&c.Msh.InfoHibernation, "infohibe", c.Msh.InfoHibernation, "Specify hibernation info.")
@@ -215,22 +218,6 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.Error {
 	errco.DebugLvl = c.Msh.Debug
 
 	// ------------------- setup ------------------- //
-
-	// set default config mshid to the user specified mshid
-	/*
-		load user specified mshid in runtime config, if different from default config:
-		if healthy: update default config mshid
-		if not healthy: use default config mshid
-	*/
-	if confdef.Msh.ID != c.Msh.ID {
-		if len(c.Msh.ID) == 40 {
-			errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_3, "loadRuntime", "setting user specified mshid in default config"))
-			confdef.Msh.ID = c.Msh.ID
-			configDefaultSave = true
-		} else {
-			errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_3, "loadRuntime", "user specified mshid is not healthy, using default mshid"))
-		}
-	}
 
 	// check if server folder/executeble exist
 	serverFileFolderPath := filepath.Join(c.Server.Folder, c.Server.FileName)
