@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	MshVersion string = "v2.4.6"  // msh version
+	MshVersion string = "v2.4.7"  // msh version
 	MshCommit  string = "-------" // msh commit
 
 	// msh program
