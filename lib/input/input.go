@@ -102,7 +102,7 @@ func GetInput() {
 
 		// wrong target
 		default:
-			errco.LogMshErr(errco.NewErr(errco.ERROR_COMMAND_INPUT, errco.LVL_0, "GetInput", "specify the target (msh - mine)"))
+			errco.LogMshErr(errco.NewErr(errco.ERROR_COMMAND_INPUT, errco.LVL_0, "GetInput", "specify the target application by adding \"msh\" or \"mine\" before the command.\nExample to get op: mine op <yourname>\nExample to freeze minecraft: msh freeze"))
 		}
 	}
 }
