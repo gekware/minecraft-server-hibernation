@@ -49,3 +49,8 @@ func ProcTreeResume(ppid uint32) (bool, *errco.Error) {
 
 	return false, nil
 }
+
+// FileId returns file id
+func FileId(filePath string) (uint64, error) {
+	return fileId(filePath)
+}

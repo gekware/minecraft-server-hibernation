@@ -114,3 +114,19 @@ type VersionInfo struct {
 	Version  string `json:"release_target"`
 	Protocol int    `json:"protocol_version"`
 }
+
+// struct for msh instance file version
+type MshInstanceV struct {
+	V int `json:"V"`
+}
+
+// struct for msh instance file (V0)
+type MshInstanceV0 struct {
+	V        int    `json:"V"`
+	CFlag    string `json:"CFlag"`
+	MId      string `json:"MId"`
+	HostName string `json:"HostName"`
+	FId      uint64 `json:"FId"`
+	MshId    string `json:"MshId"`
+	CheckSum string `json:"CheckSum"`
+}

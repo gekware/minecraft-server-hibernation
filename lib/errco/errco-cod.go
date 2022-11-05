@@ -86,6 +86,7 @@ const (
 	ERROR_CONFIG_LOAD             = 0x0003f000 // error while loading config
 	ERROR_CONFIG_SAVE             = 0x0003f001 // error while saving config to file
 	ERROR_CONFIG_CHECK            = 0x0003f002 // error while checking config
+	ERROR_CONFIG_MSHID            = 0x0003f003 // error while managing msh id
 	ERROR_ICON_LOAD               = 0x0003f100 // error while loading icon
 	ERROR_VERSION_LOAD            = 0x0003f101 // error while loading version.json from server JAR
 	ERROR_PLAYER_NOT_IN_WHITELIST = 0x0003f200 // player is not in whitelist

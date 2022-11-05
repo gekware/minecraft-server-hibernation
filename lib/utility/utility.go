@@ -127,3 +127,24 @@ func ScaleImg(srcImg image.Image, rect image.Rectangle) (image.Image, time.Durat
 	draw.CatmullRom.Scale(dstImg, dstImg.Bounds(), srcImg, srcImg.Bounds(), draw.Over, nil)
 	return dstImg, time.Since(i)
 }
+
+// Entropy measures the Shannon entropy of a string.
+func Entropy(value string) int {
+	// Check http://bearcave.com/misl/misl_tech/wavelets/compression/shannon.html for the algorithmic explanation.
+
+	frq := make(map[rune]float64)
+
+	//get frequency of characters
+	for _, i := range value {
+		frq[i]++
+	}
+
+	var sum float64
+
+	for _, v := range frq {
+		f := v / float64(len(value))
+		sum += f * math.Log2(f)
+	}
+
+	return int(math.Ceil(sum*-1)) * len(value)
+}

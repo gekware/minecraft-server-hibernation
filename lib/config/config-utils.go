@@ -3,10 +3,7 @@ package config
 import (
 	"archive/zip"
 	"bytes"
-	"crypto/rand"
-	"crypto/sha1"
 	"encoding/base64"
-	"encoding/hex"
 	"encoding/json"
 	"image"
 	"image/jpeg"
@@ -179,22 +176,4 @@ func (c *Configuration) getVersionInfo() (string, int, *errco.Error) {
 	}
 
 	return "", 0, errco.NewErr(errco.ERROR_VERSION_LOAD, errco.LVL_3, "getVersionInfo", "minecraft server version and protocol could not be extracted from version.json")
-}
-
-// assignMshID assigns a mshid to config.
-// Config mshid is kept if valid, otherwise a new random one is generated
-func (c *Configuration) assignMshID() {
-	if len(c.Msh.ID) == 40 {
-		// use mshid already present in config
-		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_3, "assignMshID", "mshid in config is valid, keeping it"))
-	} else {
-		// generate random mshid
-		key := make([]byte, 64)
-		_, _ = rand.Read(key)
-		hasher := sha1.New()
-		hasher.Write(key)
-		c.Msh.ID = hex.EncodeToString(hasher.Sum(nil))
-		configDefaultSave = true
-		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_3, "assignMshID", "mshid in config is not valid, new one is: "+c.Msh.ID))
-	}
 }

@@ -47,3 +47,16 @@ func procTreeResume(ppid uint32) *errco.Error {
 
 	return nil
 }
+
+func fileId(filePath string) (uint64, error) {
+	// https://github.com/hymkor/go-windows-fileid/blob/master/main_unix.go
+	fileInf, err := os.Stat(filePath)
+	if err != nil {
+		return 0, err
+	}
+	stat, ok := fileInf.Sys().(*syscall.Stat_t)
+	if !ok {
+		return 0, fmt.Errorf("os.Fileinfo.Sys() is not syscall.Stat_t")
+	}
+	return stat.Ino, nil
+}

@@ -189,3 +189,35 @@ func getTreePids(rootPid uint32) ([]uint32, *errco.Error) {
 		parentLayer = childLayer
 	}
 }
+
+func fileId(filePath string) (uint64, error) {
+	// https://github.com/hymkor/go-windows-fileid/blob/master/main_windows.go
+	f, err := windows.UTF16PtrFromString(filePath)
+	if err != nil {
+		return 0, err
+	}
+
+	handle, err := windows.CreateFile(
+		f,
+		windows.GENERIC_READ,
+		0,
+		nil,
+		windows.OPEN_EXISTING,
+		0,
+		0,
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	defer windows.CloseHandle(handle)
+
+	var data windows.ByHandleFileInformation
+
+	err = windows.GetFileInformationByHandle(handle, &data)
+	if err != nil {
+		return 0, err
+	}
+
+	return (uint64(data.FileIndexHigh) << 32) | uint64(data.FileIndexLow), nil
+}

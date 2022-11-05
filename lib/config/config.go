@@ -1,8 +1,6 @@
 package config
 
 import (
-	"crypto/sha1"
-	"encoding/hex"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -17,8 +15,6 @@ import (
 	"msh/lib/opsys"
 	"msh/lib/servstats"
 	"msh/lib/utility"
-
-	"github.com/denisbrodbeck/machineid"
 )
 
 var (
@@ -135,29 +131,11 @@ func (c *Configuration) loadDefault() *errco.Error {
 	// ------------------- setup ------------------- //
 
 	// load mshid
-	/*
-		get data for mshid generation, if fail:
-		assignMshID:
-			get default config mshid, if fail:
-			generate mshid (and save it to default config)
-	*/
-	if id, err := machineid.ProtectedID("msh"); err != nil {
-		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_3, "loadDefault", "error while generating mshid (id), assigning mshid"))
-		c.assignMshID()
-	} else if ex, err := os.Executable(); err != nil {
-		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_3, "loadDefault", "error while generating mshid (ex), assigning mshid"))
-		c.assignMshID()
-	} else if hn, err := os.Hostname(); err != nil {
-		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_3, "loadDefault", "error while generating mshid (hn), assigning mshid"))
-		c.assignMshID()
-	} else {
-		hasher := sha1.New()
-		hasher.Write([]byte(hn + id + filepath.Dir(ex)))
-		if mshid := hex.EncodeToString(hasher.Sum(nil)); c.Msh.ID != mshid {
-			errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_3, "loadDefault", "mshid was generated"))
-			c.Msh.ID = mshid
-			configDefaultSave = true
-		}
+	mi := MshID()
+	if c.Configuration.Msh.ID != mi {
+		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_3, "loadDefault", "config msh id different from instance msh id, applying correction..."))
+		c.Configuration.Msh.ID = mi
+		configDefaultSave = true
 	}
 
 	// load ms version/protocol
