@@ -1,3 +1,4 @@
+//go:build windows
 // +build windows
 
 package opsys
@@ -28,9 +29,9 @@ func init() {
 	stdout := windows.Handle(os.Stdout.Fd())
 	var originalMode uint32
 	if err := windows.GetConsoleMode(stdout, &originalMode); err != nil {
-		errco.LogMshErr(errco.NewErr(errco.ERROR_COLOR_ENABLE, errco.LVL_3, "errco init", "error while enabling colors on terminal"))
+		errco.LogWarn(errco.NewErr(errco.ERROR_COLOR_ENABLE, errco.LVL_3, "errco init", "error while enabling colors on terminal"))
 	} else if windows.SetConsoleMode(stdout, originalMode|windows.ENABLE_VIRTUAL_TERMINAL_PROCESSING); err != nil {
-		errco.LogMshErr(errco.NewErr(errco.ERROR_COLOR_ENABLE, errco.LVL_3, "errco init", "error while enabling colors on terminal"))
+		errco.LogWarn(errco.NewErr(errco.ERROR_COLOR_ENABLE, errco.LVL_3, "errco init", "error while enabling colors on terminal"))
 	}
 }
 

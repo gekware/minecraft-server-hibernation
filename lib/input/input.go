@@ -23,12 +23,12 @@ func GetInput() {
 	for {
 		line, err = reader.ReadString('\n')
 		if err != nil {
-			// if stdin is unavailable (msh running as service)
+			// if stdin is unavailable (msh running without terminal console)
 			// exit from input goroutine to avoid an infinite loop
 			if err == io.EOF {
 				// in case input goroutine returns abnormally while msh is running in terminal,
 				// the user must be notified with errco.LVL_1
-				errco.LogMshErr(errco.NewErr(errco.ERROR_INPUT_UNAVAILABLE, errco.LVL_1, "GetInput", "stdin unavailable, exiting input goroutine"))
+				errco.LogWarn(errco.NewErr(errco.ERROR_INPUT_UNAVAILABLE, errco.LVL_1, "GetInput", "stdin unavailable, exiting input goroutine"))
 				return
 			}
 			errco.LogMshErr(errco.NewErr(errco.ERROR_INPUT_READ, errco.LVL_3, "GetInput", err.Error()))
@@ -51,7 +51,7 @@ func GetInput() {
 		case "msh":
 			// check that there is a command for the target
 			if len(lineSplit) < 2 {
-				errco.LogMshErr(errco.NewErr(errco.ERROR_COMMAND_INPUT, errco.LVL_0, "GetInput", "specify msh command (start - freeze - exit)"))
+				errco.LogWarn(errco.NewErr(errco.ERROR_COMMAND_INPUT, errco.LVL_0, "GetInput", "specify msh command (start - freeze - exit)"))
 				continue
 			}
 

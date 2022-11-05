@@ -92,7 +92,7 @@ func (c *Configuration) Save() *errco.Error {
 	// escape unicode characters ("\u003c" to "<" and "\u003e" to ">")
 	configData, errMsh := utility.UnicodeEscape(configData)
 	if errMsh != nil {
-		errco.LogMshErr(errMsh.AddTrace("Save"))
+		errco.LogWarn(errMsh.AddTrace("Save"))
 	}
 
 	// write to config file
@@ -133,7 +133,7 @@ func (c *Configuration) loadDefault() *errco.Error {
 	// load mshid
 	mi := MshID()
 	if c.Configuration.Msh.ID != mi {
-		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_3, "loadDefault", "config msh id different from instance msh id, applying correction..."))
+		errco.LogWarn(errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_3, "loadDefault", "config msh id different from instance msh id, applying correction..."))
 		c.Configuration.Msh.ID = mi
 		configDefaultSave = true
 	}
@@ -142,8 +142,8 @@ func (c *Configuration) loadDefault() *errco.Error {
 	// (checkout version.json info: https://minecraft.fandom.com/wiki/Version.json)
 	version, protocol, errMsh := c.getVersionInfo()
 	if errMsh != nil {
-		// just log error since ms version/protocol are not vital for the connection with clients
-		errco.LogMshErr(errMsh.AddTrace("loadDefault"))
+		// just log warning since ms version/protocol are not vital for the connection with clients
+		errco.LogWarn(errMsh.AddTrace("loadDefault"))
 	} else if c.Server.Version != version || c.Server.Protocol != protocol {
 		c.Server.Version = version
 		c.Server.Protocol = protocol
@@ -215,7 +215,7 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.Error {
 		case err != nil:
 			// eula.txt does not exist
 
-			errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_1, "loadRuntime", "could not read eula.txt file: "+eulaFilePath))
+			errco.LogWarn(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_1, "loadRuntime", "could not read eula.txt file: "+eulaFilePath))
 
 			// start server to generate eula.txt (and server.properties)
 			errco.Logln(errco.LVL_3, "starting minecraft server to generate eula.txt file...")
@@ -253,7 +253,7 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.Error {
 		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_1, "loadRuntime", "java not installed"))
 	} else if out, err := exec.Command("java", "--version").Output(); err != nil {
 		// non blocking error
-		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_1, "loadRuntime", "could not execute 'java -version' command"))
+		errco.LogWarn(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_1, "loadRuntime", "could not execute 'java -version' command"))
 		Javav = "unknown"
 	} else {
 		Javav = strings.ReplaceAll(strings.Split(string(out), "\n")[0], "\r", "")
@@ -270,8 +270,8 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.Error {
 	// load server icon
 	errMsh = c.loadIcon()
 	if errMsh != nil {
-		// it's enough to log it since the default icon is loaded by default
-		errco.LogMshErr(errMsh.AddTrace("loadRuntime"))
+		// it's enough to log a warning since the default icon is loaded by default
+		errco.LogWarn(errMsh.AddTrace("loadRuntime"))
 	}
 
 	return nil

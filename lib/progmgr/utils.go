@@ -44,7 +44,7 @@ func buildApi2Req(preTerm bool) *model.Api2Req {
 
 	// get cpu model and vendor
 	if cpuInfo, err := cpu.Info(); err != nil {
-		errco.LogMshErr(errco.NewErr(errco.ERROR_GET_CPU_INFO, errco.LVL_3, "buildReq", err.Error())) // non blocking error
+		errco.LogWarn(errco.NewErr(errco.ERROR_GET_CPU_INFO, errco.LVL_3, "buildReq", err.Error())) // log warning
 		reqJson.Machine.CpuModel = ""
 		reqJson.Machine.CpuVendor = ""
 	} else {
@@ -59,7 +59,7 @@ func buildApi2Req(preTerm bool) *model.Api2Req {
 
 	// get cores dedicated to system
 	if cores, err := cpu.Counts(true); err != nil {
-		errco.LogMshErr(errco.NewErr(errco.ERROR_GET_CORES, errco.LVL_3, "buildReq", err.Error())) // non blocking error
+		errco.LogWarn(errco.NewErr(errco.ERROR_GET_CORES, errco.LVL_3, "buildReq", err.Error())) // log warning
 		reqJson.Machine.CoresSys = -1
 	} else {
 		reqJson.Machine.CoresSys = cores
@@ -67,7 +67,7 @@ func buildApi2Req(preTerm bool) *model.Api2Req {
 
 	// get memory dedicated to system
 	if memInfo, err := mem.VirtualMemory(); err != nil {
-		errco.LogMshErr(errco.NewErr(errco.ERROR_GET_MEMORY, errco.LVL_3, "buildReq", err.Error())) // non blocking error
+		errco.LogWarn(errco.NewErr(errco.ERROR_GET_MEMORY, errco.LVL_3, "buildReq", err.Error())) // log warning
 		reqJson.Machine.Mem = -1
 	} else {
 		reqJson.Machine.Mem = int(memInfo.Total)

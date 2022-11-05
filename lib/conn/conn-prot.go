@@ -56,7 +56,7 @@ func buildMessage(reqType int, message string) []byte {
 		dataTxtJSON, err := json.Marshal(messageStruct)
 		if err != nil {
 			// don't return error, just log it
-			errco.LogMshErr(errco.NewErr(errco.ERROR_JSON_MARSHAL, errco.LVL_3, "buildMessage", err.Error()))
+			errco.LogWarn(errco.NewErr(errco.ERROR_JSON_MARSHAL, errco.LVL_3, "buildMessage", err.Error()))
 			return nil
 		}
 
@@ -83,7 +83,7 @@ func buildMessage(reqType int, message string) []byte {
 		dataInfJSON, err := json.Marshal(messageStruct)
 		if err != nil {
 			// don't return error, just log it
-			errco.LogMshErr(errco.NewErr(errco.ERROR_JSON_MARSHAL, errco.LVL_3, "buildMessage", err.Error()))
+			errco.LogWarn(errco.NewErr(errco.ERROR_JSON_MARSHAL, errco.LVL_3, "buildMessage", err.Error()))
 			return nil
 		}
 
@@ -146,8 +146,8 @@ func getReqType(clientSocket net.Conn) ([]byte, int, string, *errco.Error) {
 			// case 2: player name is contained in following packet
 			data, errMsh = getClientPacket(clientSocket)
 			if errMsh != nil {
-				// this error is non-blocking: log the error and return "player unknown"
-				errco.LogMshErr(errMsh.AddTrace("extractPlayerName"))
+				// this error is non-blocking: log warning and return "player unknown"
+				errco.LogWarn(errMsh.AddTrace("extractPlayerName"))
 				playerName = "player unknown"
 			}
 			dataReqFull = append(dataReqFull, data...)

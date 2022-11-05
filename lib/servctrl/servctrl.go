@@ -45,7 +45,7 @@ func WarmMS() *errco.Error {
 				return errMsh.AddTrace("WarmMS")
 			}
 		} else {
-			errco.LogMshErr(errco.NewErr(errco.ERROR_SERVER_IS_WARM, errco.LVL_3, "WarmMS", "minecraft server already warm"))
+			errco.LogWarn(errco.NewErr(errco.ERROR_SERVER_IS_WARM, errco.LVL_3, "WarmMS", "minecraft server already warm"))
 		}
 	}
 
@@ -70,7 +70,7 @@ func FreezeMS(force bool) *errco.Error {
 			servstats.Stats.Suspended = false // if ms is offline it's process can't be suspended
 		}
 
-		errco.LogMshErr(errco.NewErr(errco.ERROR_SERVER_IS_FROZEN, errco.LVL_3, "FreezeMS", "minecraft server already frozen"))
+		errco.LogWarn(errco.NewErr(errco.ERROR_SERVER_IS_FROZEN, errco.LVL_3, "FreezeMS", "minecraft server already frozen"))
 
 	case errco.SERVER_STATUS_STARTING:
 		// ms is starting, resume the ms process, wait for status online and then freeze ms
@@ -211,7 +211,7 @@ func FreezeMSRequest() {
 			// stop minecraft server softly
 			errMsh := FreezeMS(false)
 			if errMsh != nil {
-				errco.LogMshErr(errMsh.AddTrace("FreezeMSRequest"))
+				errco.LogWarn(errMsh.AddTrace("FreezeMSRequest"))
 			}
 		},
 	)

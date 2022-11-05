@@ -103,7 +103,7 @@ func TermUpTime() int {
 // [non-blocking]
 func termStart(dir, command string) *errco.Error {
 	if ServTerm.IsActive {
-		errco.LogMshErr(errco.NewErr(errco.ERROR_SERVER_IS_WARM, errco.LVL_3, "cmdStart", "minecraft server terminal already active"))
+		errco.LogWarn(errco.NewErr(errco.ERROR_SERVER_IS_WARM, errco.LVL_3, "cmdStart", "minecraft server terminal already active"))
 		return nil
 	}
 
@@ -224,7 +224,7 @@ func printerOutErr() {
 				// Continue if line does not contain ": "
 				// (it does not adhere to expected log format or it is a multiline java exception)
 				if !strings.Contains(line, ": ") {
-					errco.LogMshErr(errco.NewErr(errco.ERROR_SERVER_UNEXP_OUTPUT, errco.LVL_2, "printerOutErr", "line does not adhere to expected log format"))
+					errco.LogWarn(errco.NewErr(errco.ERROR_SERVER_UNEXP_OUTPUT, errco.LVL_2, "printerOutErr", "line does not adhere to expected log format"))
 					continue
 				}
 

@@ -8,7 +8,7 @@ import (
 	"image"
 	"image/jpeg"
 	"image/png"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -73,7 +73,7 @@ func (c *Configuration) loadIcon() *errco.Error {
 		// read file data
 		// it's important to read all file data and store it in a variable that can be read multiple times with a io.Reader.
 		// using f *os.File directly in Decode(r io.Reader) results in f *os.File readable only once.
-		fdata, err := ioutil.ReadAll(f)
+		fdata, err := io.ReadAll(f)
 		if err != nil {
 			errco.LogMshErr(errco.NewErr(errco.ERROR_ICON_LOAD, errco.LVL_3, "loadIcon", err.Error()))
 			continue
@@ -117,7 +117,7 @@ func (c *Configuration) loadIpPorts() *errco.Error {
 	// TargetHost remains the same
 	// TargetPort is extracted from server.properties
 
-	data, err := ioutil.ReadFile(filepath.Join(c.Server.Folder, "server.properties"))
+	data, err := os.ReadFile(filepath.Join(c.Server.Folder, "server.properties"))
 	if err != nil {
 		return errco.NewErr(errco.ERROR_CONFIG_LOAD, errco.LVL_1, "loadIpPorts", err.Error())
 	}
@@ -161,7 +161,7 @@ func (c *Configuration) getVersionInfo() (string, int, *errco.Error) {
 		}
 		defer f.Close()
 
-		versionsBytes, err := ioutil.ReadAll(f)
+		versionsBytes, err := io.ReadAll(f)
 		if err != nil {
 			return "", 0, errco.NewErr(errco.ERROR_VERSION_LOAD, errco.LVL_3, "getVersionInfo", err.Error())
 		}

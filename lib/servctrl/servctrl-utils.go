@@ -28,13 +28,13 @@ func countPlayerSafe() (int, string) {
 	if errMsh == nil {
 		return playerCount, "server info"
 	}
-	errco.LogMshErr(errMsh.AddTrace("countPlayerSafe"))
+	errco.LogWarn(errMsh.AddTrace("countPlayerSafe"))
 
 	playerCount, errMsh = getPlayersByListCom()
 	if errMsh == nil {
 		return playerCount, "list command"
 	}
-	errco.LogMshErr(errMsh.AddTrace("countPlayerSafe"))
+	errco.LogWarn(errMsh.AddTrace("countPlayerSafe"))
 
 	return servstats.Stats.PlayerCount, "internal"
 }
