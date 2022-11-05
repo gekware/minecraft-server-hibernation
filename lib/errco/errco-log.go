@@ -58,13 +58,13 @@ func Logln(lvl int, s string, args ...interface{}) {
 func LogMshErr(errMsh *Error) {
 	if errMsh.Lvl <= DebugLvl {
 		header := fmt.Sprintf("%s [%serror %s%-4s]", time.Now().Format("2006/01/02 15:04:05"), COLOR_RED, COLOR_RESET, strings.Repeat("≡", 4-errMsh.Lvl))
-		fmt.Printf(header + " " + errMsh.Ori + ": " + errMsh.Str + "\n")
+		fmt.Printf(header + " [" + fmt.Sprintf("%08x", errMsh.Cod) + "] " + errMsh.Ori + ": " + errMsh.Str + "\n")
 	}
 }
 
 func LogWarn(errMsh *Error) {
 	if errMsh.Lvl <= DebugLvl {
 		header := fmt.Sprintf("%s [%swarn  %s%-4s]", time.Now().Format("2006/01/02 15:04:05"), COLOR_YELLOW, COLOR_RESET, strings.Repeat("≡", 4-errMsh.Lvl))
-		fmt.Printf(header + " " + errMsh.Ori + ": " + errMsh.Str + "\n")
+		fmt.Printf(header + " [" + fmt.Sprintf("%08x", errMsh.Cod) + "] " + errMsh.Ori + ": " + errMsh.Str + "\n")
 	}
 }
