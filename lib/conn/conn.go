@@ -28,7 +28,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 	}
 
 	// if ms has a major error warn the client and return
-	if servstats.Stats.Error != nil {
+	if servstats.Stats.MajorError != nil {
 		// close the client connection at the end
 		defer func() {
 			errco.Logln(errco.LVL_3, "closing connection for: %s", clientAddress)
@@ -39,7 +39,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 		case errco.CLIENT_REQ_INFO:
 			// log to msh console and answer to client with error
 			errco.Logln(errco.LVL_3, "%s requested server info from %s:%d to %s:%d but server has encountered major problems", playerName, clientAddress, config.ListenPort, config.TargetHost, config.TargetPort)
-			mes := buildMessage(reqType, servstats.Stats.Error.Ori+": "+servstats.Stats.Error.Str)
+			mes := buildMessage(reqType, servstats.Stats.MajorError.Ori+": "+servstats.Stats.MajorError.Str)
 			clientSocket.Write(mes)
 			errco.Logln(errco.LVL_4, "%smsh --> client%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
 
@@ -51,7 +51,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 		case errco.CLIENT_REQ_JOIN:
 			// log to msh console and answer to client with error
 			errco.Logln(errco.LVL_3, "%s requested server info from %s:%d to %s:%d but server has encountered major problems", playerName, clientAddress, config.ListenPort, config.TargetHost, config.TargetPort)
-			mes := buildMessage(reqType, servstats.Stats.Error.Ori+": "+servstats.Stats.Error.Str)
+			mes := buildMessage(reqType, servstats.Stats.MajorError.Ori+": "+servstats.Stats.MajorError.Str)
 			clientSocket.Write(mes)
 			errco.Logln(errco.LVL_4, "%smsh --> client%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
 		}

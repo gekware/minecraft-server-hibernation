@@ -12,7 +12,7 @@ var Stats *serverStats = &serverStats{
 	M:                &sync.Mutex{},
 	Status:           errco.SERVER_STATUS_OFFLINE,
 	Suspended:        false,
-	Error:            nil,
+	MajorError:       nil,
 	PlayerCount:      0,
 	FreezeMSRequests: 0,
 	LoadProgress:     "0%",
@@ -24,7 +24,7 @@ type serverStats struct {
 	M                *sync.Mutex
 	Status           int          // represent the status of the minecraft server
 	Suspended        bool         // status of minecraft server process (if ms is offline, should be set to false)
-	Error            *errco.Error // if !nil the server is having some major problems
+	MajorError       *errco.Error // if !nil the server is having some major problems
 	PlayerCount      int          // tracks players connected to the server
 	FreezeMSRequests int32        // tracks active FreezeMSRequest() instances. (int32 for atomic operations)
 	LoadProgress     string       // tracks loading percentage of starting server
@@ -50,4 +50,11 @@ func printDataUsage() {
 	}
 
 	time.Sleep(time.Second)
+}
+
+// SetMajorError sets *serverStats.MajorError only if nil
+func (s *serverStats) SetMajorError(e *errco.Error) {
+	if s.MajorError == nil {
+		s.MajorError = e
+	}
 }

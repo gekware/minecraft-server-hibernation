@@ -202,7 +202,7 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.Error {
 	if _, err := os.Stat(serverFileFolderPath); os.IsNotExist(err) {
 		// server folder/executeble does not exist
 
-		servstats.Stats.Error = errco.NewErr(errco.ERROR_MINECRAFT_SERVER, errco.LVL_3, "loadRuntime", "specified minecraft server folder/file does not exist")
+		servstats.Stats.SetMajorError(errco.NewErr(errco.ERROR_MINECRAFT_SERVER, errco.LVL_3, "loadRuntime", "specified minecraft server folder/file does not exist"))
 		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_1, "loadRuntime", "specified server file/folder does not exist: "+serverFileFolderPath))
 
 	} else {
@@ -228,7 +228,7 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.Error {
 			err = cmd.Run()
 			fmt.Print(errco.COLOR_RESET) // reset color
 			if err != nil {
-				servstats.Stats.Error = errco.NewErr(errco.ERROR_MINECRAFT_SERVER, errco.LVL_3, "loadRuntime", "couldn't start minecraft server to generate eula.txt\n(are you using the correct java version?)")
+				servstats.Stats.SetMajorError(errco.NewErr(errco.ERROR_MINECRAFT_SERVER, errco.LVL_3, "loadRuntime", "couldn't start minecraft server to generate eula.txt\n(are you using the correct java version?)"))
 				errco.LogMshErr(errco.NewErr(errco.ERROR_TERMINAL_START, errco.LVL_1, "loadRuntime", "couldn't start minecraft server to generate eula.txt: ["+err.Error()+"]"))
 			}
 			fallthrough
@@ -236,7 +236,7 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.Error {
 		case !strings.Contains(strings.ReplaceAll(strings.ToLower(string(eulaData)), " ", ""), "eula=true"):
 			// eula.txt exists but is not set to true
 
-			servstats.Stats.Error = errco.NewErr(errco.ERROR_MINECRAFT_SERVER, errco.LVL_3, "loadRuntime", "please accept minecraft server eula.txt")
+			servstats.Stats.SetMajorError(errco.NewErr(errco.ERROR_MINECRAFT_SERVER, errco.LVL_3, "loadRuntime", "please accept minecraft server eula.txt"))
 			errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_1, "loadRuntime", "please accept minecraft server eula.txt: "+eulaFilePath))
 
 		default:
@@ -249,7 +249,7 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.Error {
 	// check if java is installed and get java version
 	_, err := exec.LookPath("java")
 	if err != nil {
-		servstats.Stats.Error = errco.NewErr(errco.ERROR_MINECRAFT_SERVER, errco.LVL_3, "loadRuntime", "java not installed")
+		servstats.Stats.SetMajorError(errco.NewErr(errco.ERROR_MINECRAFT_SERVER, errco.LVL_3, "loadRuntime", "java not installed"))
 		errco.LogMshErr(errco.NewErr(errco.ERROR_CONFIG_CHECK, errco.LVL_1, "loadRuntime", "java not installed"))
 	} else if out, err := exec.Command("java", "--version").Output(); err != nil {
 		// non blocking error
@@ -262,7 +262,7 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.Error {
 	// initialize ip and ports for connection
 	errMsh := c.loadIpPorts()
 	if errMsh != nil {
-		servstats.Stats.Error = errco.NewErr(errco.ERROR_MINECRAFT_SERVER, errco.LVL_3, "loadRuntime", "proxy setup failed, check msh logs")
+		servstats.Stats.SetMajorError(errco.NewErr(errco.ERROR_MINECRAFT_SERVER, errco.LVL_3, "loadRuntime", "proxy setup failed, check msh logs"))
 		errco.LogMshErr(errMsh.AddTrace("loadRuntime"))
 	}
 	errco.Logln(errco.LVL_3, "msh proxy setup: %s:%d --> %s:%d", ListenHost, ListenPort, TargetHost, TargetPort)
