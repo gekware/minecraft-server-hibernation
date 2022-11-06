@@ -1,8 +1,10 @@
-// +build linux darwin
+//go:build linux || darwin
 
 package opsys
 
 import (
+	"fmt"
+	"os"
 	"syscall"
 
 	"msh/lib/errco"
