@@ -24,7 +24,7 @@ _You can compile msh from the dev branch to access a more updated version but be
 
 -----
 ### PROGRAM COMPILATION:
-This version was successfully compiled in go version 1.15  
+This version was successfully compiled in go version 1.19  
 Compilation procedure:
 ```
 git clone https://github.com/gekware/minecraft-server-hibernation.git  
