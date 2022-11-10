@@ -56,7 +56,7 @@ func buildMessage(reqType int, message string) []byte {
 		dataTxtJSON, err := json.Marshal(messageStruct)
 		if err != nil {
 			// don't return error, just log a warning
-			errco.Logln(errco.Orig(), errco.TYPE_WAR, errco.LVL_3, errco.ERROR_JSON_MARSHAL, err.Error())
+			errco.Logln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_JSON_MARSHAL, err.Error())
 			return nil
 		}
 
@@ -83,7 +83,7 @@ func buildMessage(reqType int, message string) []byte {
 		dataInfJSON, err := json.Marshal(messageStruct)
 		if err != nil {
 			// don't return error, just log a warning
-			errco.Logln(errco.Orig(), errco.TYPE_WAR, errco.LVL_3, errco.ERROR_JSON_MARSHAL, err.Error())
+			errco.Logln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_JSON_MARSHAL, err.Error())
 			return nil
 		}
 
@@ -101,7 +101,7 @@ func getReqType(clientSocket net.Conn) ([]byte, int, string, *errco.MshLog) {
 
 	data, logMsh := getClientPacket(clientSocket)
 	if logMsh != nil {
-		return nil, errco.CLIENT_REQ_UNKN, "", logMsh.AddTrace("getReqType")
+		return nil, errco.CLIENT_REQ_UNKN, "", logMsh.AddTrace()
 	}
 
 	dataReqFull = append(dataReqFull, data...)
@@ -147,7 +147,7 @@ func getReqType(clientSocket net.Conn) ([]byte, int, string, *errco.MshLog) {
 			data, logMsh = getClientPacket(clientSocket)
 			if logMsh != nil {
 				// this error is non-blocking: log warning and return "player unknown"
-				errco.Log(logMsh.AddTrace("extractPlayerName"))
+				errco.Log(logMsh.AddTrace())
 				playerName = "player unknown"
 			}
 			dataReqFull = append(dataReqFull, data...)
@@ -157,7 +157,7 @@ func getReqType(clientSocket net.Conn) ([]byte, int, string, *errco.MshLog) {
 		return dataReqFull, errco.CLIENT_REQ_JOIN, playerName, nil
 
 	default:
-		return nil, errco.CLIENT_REQ_UNKN, "", errco.NewLog(errco.Orig(), errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CLIENT_REQ, "client request unknown")
+		return nil, errco.CLIENT_REQ_UNKN, "", errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CLIENT_REQ, "client request unknown")
 	}
 }
 
@@ -166,7 +166,7 @@ func getPing(clientSocket net.Conn) *errco.MshLog {
 	// read the first packet
 	pingData, logMsh := getClientPacket(clientSocket)
 	if logMsh != nil {
-		return logMsh.AddTrace("getPing [1]")
+		return logMsh.AddTrace()
 	}
 
 	switch {
@@ -175,7 +175,7 @@ func getPing(clientSocket net.Conn) *errco.MshLog {
 		// read the second packet
 		pingData, logMsh = getClientPacket(clientSocket)
 		if logMsh != nil {
-			return logMsh.AddTrace(errco.Orig())
+			return logMsh.AddTrace()
 		}
 
 	case bytes.Equal(pingData[:2], []byte{1, 0}):
@@ -187,7 +187,7 @@ func getPing(clientSocket net.Conn) *errco.MshLog {
 	// answer ping
 	clientSocket.Write(pingData)
 
-	errco.Logln(errco.Orig(), errco.TYPE_INF, errco.LVL_4, errco.ERROR_NIL, "%smsh --> client%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, pingData)
+	errco.Logln(errco.TYPE_INF, errco.LVL_4, errco.ERROR_NIL, "%smsh --> client%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, pingData)
 
 	return nil
 }
@@ -199,10 +199,10 @@ func getClientPacket(clientSocket net.Conn) ([]byte, *errco.MshLog) {
 	// read first packet
 	dataLen, err := clientSocket.Read(buf)
 	if err != nil {
-		return nil, errco.NewLog(errco.Orig(), errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CLIENT_SOCKET_READ, "error during client socket read (%s)", err.Error())
+		return nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CLIENT_SOCKET_READ, "error during client socket read (%s)", err.Error())
 	}
 
-	errco.Logln(errco.Orig(), errco.TYPE_INF, errco.LVL_4, errco.ERROR_NIL, "%sclient --> msh%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, buf[:dataLen])
+	errco.Logln(errco.TYPE_INF, errco.LVL_4, errco.ERROR_NIL, "%sclient --> msh%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, buf[:dataLen])
 
 	return buf[:dataLen], nil
 }

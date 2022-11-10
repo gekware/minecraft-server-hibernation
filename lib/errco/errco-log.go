@@ -21,8 +21,8 @@ const (
 	COLOR_CYAN   = "\033[0;36m"
 )
 
-func Logln(o LogOri, t LogTyp, l LogLvl, c LogCod, m string, a ...interface{}) {
-	Log(&MshLog{o, t, l, c, m, a})
+func Logln(t LogTyp, l LogLvl, c LogCod, m string, a ...interface{}) {
+	Log(&MshLog{trace(), t, l, c, m, a})
 }
 
 func Log(log *MshLog) {

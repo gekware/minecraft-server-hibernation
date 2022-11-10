@@ -13,7 +13,7 @@ func OsSupported() *errco.MshLog {
 	ros := runtime.GOOS
 
 	if ros != "linux" && ros != "windows" && ros != "darwin" {
-		return errco.NewLog("OsSupported", errco.TYPE_ERR, errco.LVL_1, errco.ERROR_OS_NOT_SUPPORTED, "OS is not supported")
+		return errco.NewLog(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_OS_NOT_SUPPORTED, "OS is not supported")
 	}
 
 	return nil
@@ -29,10 +29,10 @@ func NewProcGroupAttr() *syscall.SysProcAttr {
 func ProcTreeSuspend(ppid uint32) (bool, *errco.MshLog) {
 	logMsh := procTreeSuspend(ppid)
 	if logMsh != nil {
-		return false, logMsh.AddTrace("ProcTreeSuspend")
+		return false, logMsh.AddTrace()
 	}
 
-	errco.Logln("ProcTreeSuspend", errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "PROCESS TREE SUSPENDED!")
+	errco.Logln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "PROCESS TREE SUSPENDED!")
 
 	return true, nil
 }
@@ -42,10 +42,10 @@ func ProcTreeSuspend(ppid uint32) (bool, *errco.MshLog) {
 func ProcTreeResume(ppid uint32) (bool, *errco.MshLog) {
 	logMsh := procTreeResume(ppid)
 	if logMsh != nil {
-		return true, logMsh.AddTrace("ProcTreeResume")
+		return true, logMsh.AddTrace()
 	}
 
-	errco.Logln("ProcTreeResume", errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "PROCESS TREE UNSUSPEDED!")
+	errco.Logln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "PROCESS TREE UNSUSPEDED!")
 
 	return false, nil
 }

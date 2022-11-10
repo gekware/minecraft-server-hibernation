@@ -23,29 +23,27 @@ type LogCod int
 //
 // When a function fails and returns using NewLog, msh log type must be TYPE_ERR or TYPE_WAR.
 // Find bad usage with reg exp: `return (.*)NewLog(.*)TYPE_(?!ERR|WAR)`
-func NewLog(o LogOri, t LogTyp, l LogLvl, c LogCod, m string, a ...interface{}) *MshLog {
-	return &MshLog{o, t, l, c, m, a}
+func NewLog(t LogTyp, l LogLvl, c LogCod, m string, a ...interface{}) *MshLog {
+	return &MshLog{trace(), t, l, c, m, a}
 }
 
-// AddTrace adds the parent function to the error
-func (log *MshLog) AddTrace(o LogOri) *MshLog {
-	log.Ori = o + LogOri(": ") + log.Ori
+// AddTrace adds the caller function to the msh log trace
+func (log *MshLog) AddTrace() *MshLog {
+	log.Ori = trace() + LogOri(": ") + log.Ori
 	return log
 }
 
-// Orig returns the function name it is called from
-func Orig() LogOri {
-	pc, _, _, ok := runtime.Caller(1)
-	if !ok {
-		return "?"
+// trace returns the function name the parent was called from
+//
+// aaa() -> NewLog() -> trace() = aaa
+func trace() LogOri {
+	o := "?"
+	if pc, _, _, ok := runtime.Caller(2); !ok { // 2: returns caller of caller
+	} else if f := runtime.FuncForPC(pc); f == nil {
+	} else {
+		fn := f.Name()
+		o = fn[strings.LastIndex(fn, ".")+1:]
 	}
 
-	f := runtime.FuncForPC(pc)
-	if f == nil {
-		return "?"
-	}
-
-	fn := f.Name()
-
-	return LogOri(fn[strings.LastIndex(fn, ".")+1:])
+	return LogOri(o)
 }

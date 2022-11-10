@@ -44,12 +44,12 @@ func StrBetween(str, a, b string) (string, *errco.MshLog) {
 
 	aIndex := strings.Index(str, a)
 	if aIndex == -1 {
-		return "", errco.NewLog("StrBetween", errco.TYPE_ERR, errco.LVL_3, errco.ERROR_ANALYSIS, fmt.Sprintf("first substring not found (%s)", b))
+		return "", errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_ANALYSIS, fmt.Sprintf("first substring not found (%s)", b))
 	}
 
 	bIndex := strings.Index(str[aIndex+len(a):], b)
 	if bIndex == -1 {
-		return "", errco.NewLog("StrBetween", errco.TYPE_ERR, errco.LVL_3, errco.ERROR_ANALYSIS, fmt.Sprintf("second substring not found (%s)", b))
+		return "", errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_ANALYSIS, fmt.Sprintf("second substring not found (%s)", b))
 	}
 
 	return str[aIndex+len(a):][:bIndex], nil
@@ -62,12 +62,12 @@ func BytBetween(data, a, b []byte) ([]byte, *errco.MshLog) {
 
 	aIndex := bytes.Index(data, a)
 	if aIndex == -1 {
-		return nil, errco.NewLog("BytBetween", errco.TYPE_ERR, errco.LVL_3, errco.ERROR_ANALYSIS, fmt.Sprintf("first subbytearray not found (%v)", b))
+		return nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_ANALYSIS, fmt.Sprintf("first subbytearray not found (%v)", b))
 	}
 
 	bIndex := bytes.Index(data[aIndex+len(a):], b)
 	if bIndex == -1 {
-		return nil, errco.NewLog("BytBetween", errco.TYPE_ERR, errco.LVL_3, errco.ERROR_ANALYSIS, fmt.Sprintf("second subbytearray not found (%v)", b))
+		return nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_ANALYSIS, fmt.Sprintf("second subbytearray not found (%v)", b))
 	}
 
 	return data[aIndex+len(a):][:bIndex], nil
@@ -109,7 +109,7 @@ func SliceContain(ele, sli interface{}) bool {
 func UnicodeEscape(data []byte) ([]byte, *errco.MshLog) {
 	dataEscapedStr, err := strconv.Unquote(strings.ReplaceAll(strconv.Quote(string(data)), `\\u`, `\u`))
 	if err != nil {
-		return nil, errco.NewLog("UnicodeEscape", errco.TYPE_ERR, errco.LVL_3, errco.ERROR_ANALYSIS, "could not escape unicode characters")
+		return nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_ANALYSIS, "could not escape unicode characters")
 	}
 
 	return []byte(dataEscapedStr), nil

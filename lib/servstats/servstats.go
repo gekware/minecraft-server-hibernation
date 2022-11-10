@@ -41,7 +41,7 @@ func init() {
 // [goroutine]
 func printDataUsage() {
 	if Stats.BytesToClients != 0 || Stats.BytesToServer != 0 {
-		errco.Logln("printDataUsage", errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "data/s: %8.3f KB/s to clients | %8.3f KB/s to server", Stats.BytesToClients/1024, Stats.BytesToServer/1024)
+		errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "data/s: %8.3f KB/s to clients | %8.3f KB/s to server", Stats.BytesToClients/1024, Stats.BytesToServer/1024)
 
 		Stats.M.Lock()
 		Stats.BytesToClients = 0
