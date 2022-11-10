@@ -18,33 +18,33 @@ func newProcGroupAttr() *syscall.SysProcAttr {
 	return newProcGroupAttr
 }
 
-func procTreeSuspend(ppid uint32) *errco.Error {
+func procTreeSuspend(ppid uint32) *errco.MshLog {
 	/*
 		check also https://github.com/shirou/gopsutil/blob/2f8da0a39487ceddf44cebe53a1b563b0b7173cc/process/process_posix.go#L141-L153
 		proc, _ := os.FindProcess(-int(ppid))
 		_ = process.Signal(syscall.SIGSTOP)
 	*/
 
-	errco.Logln(errco.LVL_3, "procTreeSuspend: suspending %d", ppid)
+	errco.Logln("procTreeSuspend", errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "suspending %d", ppid)
 	err := syscall.Kill(-int(ppid), syscall.SIGSTOP) // negative ppid to suspend whole group
 	if err != nil {
-		return errco.NewErr(errco.ERROR_PROCESS_SIGNAL, errco.LVL_3, "procTreeSuspend", err.Error())
+		return errco.NewLog("procTreeSuspend", errco.TYPE_ERR, errco.TYPE_ERR, errco.LVL_3, errco.ERROR_PROCESS_SIGNAL, err.Error())
 	}
 
 	return nil
 }
 
-func procTreeResume(ppid uint32) *errco.Error {
+func procTreeResume(ppid uint32) *errco.MshLog {
 	/*
 		check also https://github.com/shirou/gopsutil/blob/2f8da0a39487ceddf44cebe53a1b563b0b7173cc/process/process_posix.go#L141-L153
 		proc, _ := os.FindProcess(-int(ppid))
 		_ = process.Signal(syscall.SIGCONT)
 	*/
 
-	errco.Logln(errco.LVL_3, "procTreeResume: resuming %d", ppid)
+	errco.Logln("procTreeResume", errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "resuming %d", ppid)
 	err := syscall.Kill(-int(ppid), syscall.SIGCONT) // negative ppid to resume whole group
 	if err != nil {
-		return errco.NewErr(errco.ERROR_PROCESS_SIGNAL, errco.LVL_3, "procTreeResume", err.Error())
+		return errco.NewLog("procTreeResume", errco.TYPE_ERR, errco.TYPE_ERR, errco.LVL_3, errco.ERROR_PROCESS_SIGNAL, err.Error())
 	}
 
 	return nil

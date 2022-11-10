@@ -38,36 +38,36 @@ func Boxify(strList []string) string {
 
 // StrBetween returns the string between 2 substrings.
 // In case of error the returned parameters are "" and error
-func StrBetween(str, a, b string) (string, *errco.Error) {
+func StrBetween(str, a, b string) (string, *errco.MshLog) {
 	// ┌--------str---------┐
 	// [ ... a target b ... ]
 
 	aIndex := strings.Index(str, a)
 	if aIndex == -1 {
-		return "", errco.NewErr(errco.ERROR_ANALYSIS, errco.LVL_3, "StrBetween", fmt.Sprintf("first substring not found (%s)", b))
+		return "", errco.NewLog("StrBetween", errco.TYPE_ERR, errco.LVL_3, errco.ERROR_ANALYSIS, fmt.Sprintf("first substring not found (%s)", b))
 	}
 
 	bIndex := strings.Index(str[aIndex+len(a):], b)
 	if bIndex == -1 {
-		return "", errco.NewErr(errco.ERROR_ANALYSIS, errco.LVL_3, "StrBetween", fmt.Sprintf("second substring not found (%s)", b))
+		return "", errco.NewLog("StrBetween", errco.TYPE_ERR, errco.LVL_3, errco.ERROR_ANALYSIS, fmt.Sprintf("second substring not found (%s)", b))
 	}
 
 	return str[aIndex+len(a):][:bIndex], nil
 }
 
 // BytBetween returns the bytearray between 2 subbytearrays
-func BytBetween(data, a, b []byte) ([]byte, *errco.Error) {
+func BytBetween(data, a, b []byte) ([]byte, *errco.MshLog) {
 	// ┌--------data--------┐
 	// [ ... a target b ... ]
 
 	aIndex := bytes.Index(data, a)
 	if aIndex == -1 {
-		return nil, errco.NewErr(errco.ERROR_ANALYSIS, errco.LVL_3, "BytBetween", fmt.Sprintf("first subbytearray not found (%v)", b))
+		return nil, errco.NewLog("BytBetween", errco.TYPE_ERR, errco.LVL_3, errco.ERROR_ANALYSIS, fmt.Sprintf("first subbytearray not found (%v)", b))
 	}
 
 	bIndex := bytes.Index(data[aIndex+len(a):], b)
 	if bIndex == -1 {
-		return nil, errco.NewErr(errco.ERROR_ANALYSIS, errco.LVL_3, "BytBetween", fmt.Sprintf("second subbytearray not found (%v)", b))
+		return nil, errco.NewLog("BytBetween", errco.TYPE_ERR, errco.LVL_3, errco.ERROR_ANALYSIS, fmt.Sprintf("second subbytearray not found (%v)", b))
 	}
 
 	return data[aIndex+len(a):][:bIndex], nil
@@ -106,10 +106,10 @@ func SliceContain(ele, sli interface{}) bool {
 }
 
 // UnicodeEscape returns the data escaped from unicode characters
-func UnicodeEscape(data []byte) ([]byte, *errco.Error) {
+func UnicodeEscape(data []byte) ([]byte, *errco.MshLog) {
 	dataEscapedStr, err := strconv.Unquote(strings.ReplaceAll(strconv.Quote(string(data)), `\\u`, `\u`))
 	if err != nil {
-		return nil, errco.NewErr(errco.ERROR_CONFIG_SAVE, errco.LVL_3, "UnicodeEscape", "could not escape unicode characters")
+		return nil, errco.NewLog("UnicodeEscape", errco.TYPE_ERR, errco.LVL_3, errco.ERROR_ANALYSIS, "could not escape unicode characters")
 	}
 
 	return []byte(dataEscapedStr), nil

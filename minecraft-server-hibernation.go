@@ -30,9 +30,9 @@ func main() {
 	fmt.Println(utility.Boxify(intro))
 
 	// load configuration from msh config file
-	errMsh := config.LoadConfig()
-	if errMsh != nil {
-		errco.LogMshErr(errMsh.AddTrace("main"))
+	logMsh := config.LoadConfig()
+	if logMsh != nil {
+		errco.Log(logMsh.AddTrace("main"))
 		progmgr.AutoTerminate()
 	}
 
@@ -46,27 +46,27 @@ func main() {
 
 	// if ms suspension is allowed, pre-warm the server
 	if config.ConfigRuntime.Msh.AllowSuspend {
-		errco.Logln(errco.LVL_1, "minecraft server will now pre-warm (AllowSuspend is enabled)...")
-		errMsh = servctrl.WarmMS()
-		if errMsh != nil {
-			errco.LogMshErr(errMsh.AddTrace("main"))
+		errco.Logln("main", errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "minecraft server will now pre-warm (AllowSuspend is enabled)...")
+		logMsh = servctrl.WarmMS()
+		if logMsh != nil {
+			errco.Log(logMsh.AddTrace("main"))
 		}
 	}
 
 	// open a listener
 	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", config.ListenHost, config.ListenPort))
 	if err != nil {
-		errco.LogMshErr(errco.NewErr(errco.ERROR_CLIENT_LISTEN, errco.LVL_3, "main", err.Error()))
+		errco.Logln("main", errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CLIENT_LISTEN, err.Error())
 		progmgr.AutoTerminate()
 	}
 
-	errco.Logln(errco.LVL_1, "listening for new clients to connect on %s:%d ...", config.ListenHost, config.ListenPort)
+	errco.Logln("main", errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "listening for new clients to connect on %s:%d ...", config.ListenHost, config.ListenPort)
 
 	// infinite cycle to accept clients. when a clients connects it is passed to handleClientSocket()
 	for {
 		clientSocket, err := listener.Accept()
 		if err != nil {
-			errco.LogMshErr(errco.NewErr(errco.ERROR_CLIENT_ACCEPT, errco.LVL_3, "main", err.Error()))
+			errco.Logln("main", errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CLIENT_ACCEPT, err.Error())
 			continue
 		}
 

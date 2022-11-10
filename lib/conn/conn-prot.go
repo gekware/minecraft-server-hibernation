@@ -55,8 +55,8 @@ func buildMessage(reqType int, message string) []byte {
 
 		dataTxtJSON, err := json.Marshal(messageStruct)
 		if err != nil {
-			// don't return error, just log it
-			errco.LogWarn(errco.NewErr(errco.ERROR_JSON_MARSHAL, errco.LVL_3, "buildMessage", err.Error()))
+			// don't return error, just log a warning
+			errco.Logln(errco.Orig(), errco.TYPE_WAR, errco.LVL_3, errco.ERROR_JSON_MARSHAL, err.Error())
 			return nil
 		}
 
@@ -82,8 +82,8 @@ func buildMessage(reqType int, message string) []byte {
 
 		dataInfJSON, err := json.Marshal(messageStruct)
 		if err != nil {
-			// don't return error, just log it
-			errco.LogWarn(errco.NewErr(errco.ERROR_JSON_MARSHAL, errco.LVL_3, "buildMessage", err.Error()))
+			// don't return error, just log a warning
+			errco.Logln(errco.Orig(), errco.TYPE_WAR, errco.LVL_3, errco.ERROR_JSON_MARSHAL, err.Error())
 			return nil
 		}
 
@@ -95,13 +95,13 @@ func buildMessage(reqType int, message string) []byte {
 }
 
 // getReqType returns the request type (INFO or JOIN) and playerName of the client
-func getReqType(clientSocket net.Conn) ([]byte, int, string, *errco.Error) {
+func getReqType(clientSocket net.Conn) ([]byte, int, string, *errco.MshLog) {
 	dataReqFull := []byte{}
 	playerName := "player unknown"
 
-	data, errMsh := getClientPacket(clientSocket)
-	if errMsh != nil {
-		return nil, errco.ERROR_CLIENT_REQ, "", errMsh.AddTrace("getReqType")
+	data, logMsh := getClientPacket(clientSocket)
+	if logMsh != nil {
+		return nil, errco.CLIENT_REQ_UNKN, "", logMsh.AddTrace("getReqType")
 	}
 
 	dataReqFull = append(dataReqFull, data...)
@@ -144,10 +144,10 @@ func getReqType(clientSocket net.Conn) ([]byte, int, string, *errco.Error) {
 
 		} else {
 			// case 2: player name is contained in following packet
-			data, errMsh = getClientPacket(clientSocket)
-			if errMsh != nil {
+			data, logMsh = getClientPacket(clientSocket)
+			if logMsh != nil {
 				// this error is non-blocking: log warning and return "player unknown"
-				errco.LogWarn(errMsh.AddTrace("extractPlayerName"))
+				errco.Log(logMsh.AddTrace("extractPlayerName"))
 				playerName = "player unknown"
 			}
 			dataReqFull = append(dataReqFull, data...)
@@ -157,25 +157,25 @@ func getReqType(clientSocket net.Conn) ([]byte, int, string, *errco.Error) {
 		return dataReqFull, errco.CLIENT_REQ_JOIN, playerName, nil
 
 	default:
-		return nil, errco.CLIENT_REQ_UNKN, "", errco.NewErr(errco.CLIENT_REQ_UNKN, errco.LVL_3, "getReqType", "client request unknown")
+		return nil, errco.CLIENT_REQ_UNKN, "", errco.NewLog(errco.Orig(), errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CLIENT_REQ, "client request unknown")
 	}
 }
 
 // getPing responds to the ping request
-func getPing(clientSocket net.Conn) *errco.Error {
+func getPing(clientSocket net.Conn) *errco.MshLog {
 	// read the first packet
-	pingData, errMsh := getClientPacket(clientSocket)
-	if errMsh != nil {
-		return errMsh.AddTrace("getPing [1]")
+	pingData, logMsh := getClientPacket(clientSocket)
+	if logMsh != nil {
+		return logMsh.AddTrace("getPing [1]")
 	}
 
 	switch {
 	case bytes.Equal(pingData, []byte{1, 0}):
 		// packet is [1 0]
 		// read the second packet
-		pingData, errMsh = getClientPacket(clientSocket)
-		if errMsh != nil {
-			return errMsh.AddTrace("getPing [2]")
+		pingData, logMsh = getClientPacket(clientSocket)
+		if logMsh != nil {
+			return logMsh.AddTrace(errco.Orig())
 		}
 
 	case bytes.Equal(pingData[:2], []byte{1, 0}):
@@ -187,22 +187,22 @@ func getPing(clientSocket net.Conn) *errco.Error {
 	// answer ping
 	clientSocket.Write(pingData)
 
-	errco.Logln(errco.LVL_4, "%smsh --> client%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, pingData)
+	errco.Logln(errco.Orig(), errco.TYPE_INF, errco.LVL_4, errco.ERROR_NIL, "%smsh --> client%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, pingData)
 
 	return nil
 }
 
 // getClientPacket reads the client socket and returns only the bytes containing data
-func getClientPacket(clientSocket net.Conn) ([]byte, *errco.Error) {
+func getClientPacket(clientSocket net.Conn) ([]byte, *errco.MshLog) {
 	buf := make([]byte, 1024)
 
 	// read first packet
 	dataLen, err := clientSocket.Read(buf)
 	if err != nil {
-		return nil, errco.NewErr(errco.ERROR_CLIENT_SOCKET_READ, errco.LVL_3, "getClientPacket", "error during clientSocket.Read()")
+		return nil, errco.NewLog(errco.Orig(), errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CLIENT_SOCKET_READ, "error during client socket read (%s)", err.Error())
 	}
 
-	errco.Logln(errco.LVL_4, "%sclient --> msh%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, buf[:dataLen])
+	errco.Logln(errco.Orig(), errco.TYPE_INF, errco.LVL_4, errco.ERROR_NIL, "%sclient --> msh%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, buf[:dataLen])
 
 	return buf[:dataLen], nil
 }

@@ -28,10 +28,10 @@ func GetInput() {
 			if err == io.EOF {
 				// in case input goroutine returns abnormally while msh is running in terminal,
 				// the user must be notified with errco.LVL_1
-				errco.LogWarn(errco.NewErr(errco.ERROR_INPUT_UNAVAILABLE, errco.LVL_1, "GetInput", "stdin unavailable, exiting input goroutine"))
+				errco.Logln("GetInput", errco.TYPE_WAR, errco.LVL_1, errco.ERROR_INPUT_UNAVAILABLE, "stdin unavailable, exiting input goroutine")
 				return
 			}
-			errco.LogMshErr(errco.NewErr(errco.ERROR_INPUT_READ, errco.LVL_3, "GetInput", err.Error()))
+			errco.Logln("GetInput", errco.TYPE_ERR, errco.LVL_3, errco.ERROR_INPUT_READ, err.Error())
 			continue
 		}
 
@@ -44,65 +44,65 @@ func GetInput() {
 		}
 		lineSplit := strings.Split(line, " ")
 
-		errco.Logln(errco.LVL_3, "GetInput: user input: %s", lineSplit[:])
+		errco.Logln("GetInput", errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "user input: %s", lineSplit[:])
 
 		switch lineSplit[0] {
 		// target msh
 		case "msh":
 			// check that there is a command for the target
 			if len(lineSplit) < 2 {
-				errco.LogWarn(errco.NewErr(errco.ERROR_COMMAND_INPUT, errco.LVL_0, "GetInput", "specify msh command (start - freeze - exit)"))
+				errco.Logln("GetInput", errco.TYPE_WAR, errco.LVL_0, errco.ERROR_COMMAND_INPUT, "specify msh command (start - freeze - exit)")
 				continue
 			}
 
 			switch lineSplit[1] {
 			case "start":
-				errMsh := servctrl.WarmMS()
-				if errMsh != nil {
-					errco.LogMshErr(errMsh.AddTrace("GetInput"))
+				logMsh := servctrl.WarmMS()
+				if logMsh != nil {
+					errco.Log(logMsh.AddTrace("GetInput"))
 				}
 			case "freeze":
 				// stop minecraft server forcefully
-				errMsh := servctrl.FreezeMS(true)
-				if errMsh != nil {
-					errco.LogMshErr(errMsh.AddTrace("GetInput"))
+				logMsh := servctrl.FreezeMS(true)
+				if logMsh != nil {
+					errco.Log(logMsh.AddTrace("GetInput"))
 				}
 			case "exit":
 				// stop minecraft server forcefully
-				errMsh := servctrl.FreezeMS(true)
-				if errMsh != nil {
-					errco.LogMshErr(errMsh.AddTrace("GetInput"))
+				logMsh := servctrl.FreezeMS(true)
+				if logMsh != nil {
+					errco.Log(logMsh.AddTrace("GetInput"))
 				}
 				// exit msh
-				errco.Logln(errco.LVL_0, "issuing msh termination")
+				errco.Logln("GetInput", errco.TYPE_INF, errco.LVL_0, errco.ERROR_NIL, "issuing msh termination")
 				progmgr.AutoTerminate()
 			default:
-				errco.LogMshErr(errco.NewErr(errco.ERROR_COMMAND_UNKNOWN, errco.LVL_0, "GetInput", "unknown command (start - freeze - exit)"))
+				errco.Logln("GetInput", errco.TYPE_WAR, errco.LVL_0, errco.ERROR_COMMAND_UNKNOWN, "unknown command (start - freeze - exit)")
 			}
 
 		// taget minecraft server
 		case "mine":
 			// check that there is a command for the target
 			if len(lineSplit) < 2 {
-				errco.LogMshErr(errco.NewErr(errco.ERROR_COMMAND_INPUT, errco.LVL_0, "GetInput", "specify mine command"))
+				errco.Logln("GetInput", errco.TYPE_WAR, errco.LVL_0, errco.ERROR_COMMAND_INPUT, "specify mine command")
 				continue
 			}
 
 			// check if server is online
 			if servstats.Stats.Status != errco.SERVER_STATUS_ONLINE {
-				errco.LogMshErr(errco.NewErr(errco.ERROR_SERVER_NOT_ONLINE, errco.LVL_0, "GetInput", "minecraft server is not online (try \"msh start\")"))
+				errco.Logln("GetInput", errco.TYPE_ERR, errco.LVL_0, errco.ERROR_SERVER_NOT_ONLINE, "minecraft server is not online (try \"msh start\")")
 				continue
 			}
 
 			// pass the command to the minecraft server terminal
-			_, errMsh := servctrl.Execute(strings.Join(lineSplit[1:], " "), "user input")
-			if errMsh != nil {
-				errco.LogMshErr(errMsh.AddTrace("GetInput"))
+			_, logMsh := servctrl.Execute(strings.Join(lineSplit[1:], " "), "user input")
+			if logMsh != nil {
+				errco.Log(logMsh.AddTrace("GetInput"))
 			}
 
 		// wrong target
 		default:
-			errco.LogMshErr(errco.NewErr(errco.ERROR_COMMAND_INPUT, errco.LVL_0, "GetInput", "specify the target application by adding \"msh\" or \"mine\" before the command.\nExample to get op: mine op <yourname>\nExample to freeze minecraft: msh freeze"))
+			errco.Logln("GetInput", errco.TYPE_WAR, errco.LVL_0, errco.ERROR_COMMAND_INPUT, "specify the target application by adding \"msh\" or \"mine\" before the command.\nExample to get op: mine op <yourname>\nExample to freeze minecraft: msh freeze")
 		}
 	}
 }

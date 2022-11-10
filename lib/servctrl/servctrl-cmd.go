@@ -36,22 +36,22 @@ var lastLine = make(chan string)
 // Execute executes a command on ms.
 // Be careful as some commands are not printed on terminal but only gamechat (this can lead to <-lastLine channel hanging).
 // [non-blocking]
-func Execute(command, origin string) (string, *errco.Error) {
+func Execute(command, origin string) (string, *errco.MshLog) {
 	switch {
 	case !ServTerm.IsActive:
-		return "", errco.NewErr(errco.ERROR_TERMINAL_NOT_ACTIVE, errco.LVL_2, "Execute", "terminal not active")
+		return "", errco.NewLog("Execute", errco.TYPE_ERR, errco.LVL_2, errco.ERROR_TERMINAL_NOT_ACTIVE, "terminal not active")
 	case servstats.Stats.Status != errco.SERVER_STATUS_ONLINE:
-		return "", errco.NewErr(errco.ERROR_SERVER_NOT_ONLINE, errco.LVL_2, "Execute", "server not online")
+		return "", errco.NewLog("Execute", errco.TYPE_ERR, errco.LVL_2, errco.ERROR_SERVER_NOT_ONLINE, "server not online")
 	case servstats.Stats.Suspended:
-		return "", errco.NewErr(errco.ERROR_SERVER_SUSPENDED, errco.LVL_2, "Execute", "server is suspended")
+		return "", errco.NewLog("Execute", errco.TYPE_ERR, errco.LVL_2, errco.ERROR_SERVER_SUSPENDED, "server is suspended")
 	}
 
-	errco.Logln(errco.LVL_2, "ms command: %s%s%s\t(origin: %s)", errco.COLOR_YELLOW, command, errco.COLOR_RESET, origin)
+	errco.Logln("Execute", errco.TYPE_INF, errco.LVL_2, errco.ERROR_NIL, "ms command: %s%s%s\t(origin: %s)", errco.COLOR_YELLOW, command, errco.COLOR_RESET, origin)
 
 	// write to server terminal (\n indicates the enter key)
 	_, err := ServTerm.inPipe.Write([]byte(command + "\n"))
 	if err != nil {
-		return "", errco.NewErr(errco.ERROR_PIPE_INPUT_WRITE, errco.LVL_2, "Execute", err.Error())
+		return "", errco.NewLog("Execute", errco.TYPE_ERR, errco.LVL_2, errco.ERROR_PIPE_INPUT_WRITE, err.Error())
 	}
 
 	return <-lastLine, nil
@@ -59,30 +59,30 @@ func Execute(command, origin string) (string, *errco.Error) {
 
 // TellRaw executes a tellraw on ms
 // [non-blocking]
-func TellRaw(reason, text, origin string) *errco.Error {
+func TellRaw(reason, text, origin string) *errco.MshLog {
 	switch {
 	case !ServTerm.IsActive:
-		return errco.NewErr(errco.ERROR_TERMINAL_NOT_ACTIVE, errco.LVL_2, "TellRaw", "terminal not active")
+		return errco.NewLog("TellRaw", errco.TYPE_ERR, errco.LVL_2, errco.ERROR_TERMINAL_NOT_ACTIVE, "terminal not active")
 	case servstats.Stats.Status != errco.SERVER_STATUS_ONLINE:
-		return errco.NewErr(errco.ERROR_SERVER_NOT_ONLINE, errco.LVL_2, "TellRaw", "server not online")
+		return errco.NewLog("TellRaw", errco.TYPE_ERR, errco.LVL_2, errco.ERROR_SERVER_NOT_ONLINE, "server not online")
 	case servstats.Stats.Suspended:
-		return errco.NewErr(errco.ERROR_SERVER_SUSPENDED, errco.LVL_2, "TellRaw", "server is suspended")
+		return errco.NewLog("TellRaw", errco.TYPE_ERR, errco.LVL_2, errco.ERROR_SERVER_SUSPENDED, "server is suspended")
 	}
 
 	gameMessage, err := json.Marshal(&model.GameRawMessage{Text: "[MSH] " + reason + ": " + text, Color: "aqua", Bold: false})
 	if err != nil {
-		return errco.NewErr(errco.ERROR_JSON_MARSHAL, errco.LVL_2, "TellRaw", err.Error())
+		return errco.NewLog("TellRaw", errco.TYPE_ERR, errco.LVL_2, errco.ERROR_JSON_MARSHAL, err.Error())
 	}
 
 	gameMessage = append([]byte("tellraw @a "), gameMessage...)
 	gameMessage = append(gameMessage, []byte("\n")...)
 
-	errco.Logln(errco.LVL_2, "ms tellraw: %s%s%s\t(origin: %s)", errco.COLOR_YELLOW, string(gameMessage), errco.COLOR_RESET, origin)
+	errco.Logln("TellRaw", errco.TYPE_INF, errco.LVL_2, errco.ERROR_NIL, "ms tellraw: %s%s%s\t(origin: %s)", errco.COLOR_YELLOW, string(gameMessage), errco.COLOR_RESET, origin)
 
 	// write to server terminal (\n indicates the enter key)
 	_, err = ServTerm.inPipe.Write(gameMessage)
 	if err != nil {
-		return errco.NewErr(errco.ERROR_PIPE_INPUT_WRITE, errco.LVL_2, "TellRaw", err.Error())
+		return errco.NewLog("TellRaw", errco.TYPE_ERR, errco.LVL_2, errco.ERROR_PIPE_INPUT_WRITE, err.Error())
 	}
 
 	return nil
@@ -101,22 +101,22 @@ func TermUpTime() int {
 // termStart starts a new terminal.
 // If server terminal is already active it returns without doing anything
 // [non-blocking]
-func termStart(dir, command string) *errco.Error {
+func termStart(dir, command string) *errco.MshLog {
 	if ServTerm.IsActive {
-		errco.LogWarn(errco.NewErr(errco.ERROR_SERVER_IS_WARM, errco.LVL_3, "cmdStart", "minecraft server terminal already active"))
+		errco.Logln("termStart", errco.TYPE_WAR, errco.LVL_3, errco.ERROR_SERVER_IS_WARM, "minecraft server terminal already active")
 		return nil
 	}
 
-	errMsh := termLoad(dir, command)
-	if errMsh != nil {
-		return errMsh.AddTrace("cmdStart")
+	logMsh := termLoad(dir, command)
+	if logMsh != nil {
+		return logMsh.AddTrace("termStart")
 	}
 
 	go printerOutErr()
 
 	err := ServTerm.cmd.Start()
 	if err != nil {
-		return errco.NewErr(errco.ERROR_TERMINAL_START, errco.LVL_3, "cmdStart", err.Error())
+		return errco.NewLog("termStart", errco.TYPE_ERR, errco.LVL_3, errco.ERROR_TERMINAL_START, err.Error())
 	}
 
 	go waitForExit()
@@ -129,7 +129,7 @@ func termStart(dir, command string) *errco.Error {
 }
 
 // termLoad loads cmd/pipes into ServTerm
-func termLoad(dir, command string) *errco.Error {
+func termLoad(dir, command string) *errco.MshLog {
 	cSplit := strings.Split(command, " ")
 
 	// set terminal cmd
@@ -144,15 +144,15 @@ func termLoad(dir, command string) *errco.Error {
 	var err error
 	ServTerm.outPipe, err = ServTerm.cmd.StdoutPipe()
 	if err != nil {
-		return errco.NewErr(errco.ERROR_PIPE_LOAD, errco.LVL_3, "loadTerm", "StdoutPipe load: "+err.Error())
+		return errco.NewLog("termLoad", errco.TYPE_ERR, errco.LVL_3, errco.ERROR_PIPE_LOAD, "StdoutPipe load: "+err.Error())
 	}
 	ServTerm.errPipe, err = ServTerm.cmd.StderrPipe()
 	if err != nil {
-		return errco.NewErr(errco.ERROR_PIPE_LOAD, errco.LVL_3, "loadTerm", "StderrPipe load: "+err.Error())
+		return errco.NewLog("termLoad", errco.TYPE_ERR, errco.LVL_3, errco.ERROR_PIPE_LOAD, "StderrPipe load: "+err.Error())
 	}
 	ServTerm.inPipe, err = ServTerm.cmd.StdinPipe()
 	if err != nil {
-		return errco.NewErr(errco.ERROR_PIPE_LOAD, errco.LVL_3, "loadTerm", "StdinPipe load: "+err.Error())
+		return errco.NewLog("termLoad", errco.TYPE_ERR, errco.LVL_3, errco.ERROR_PIPE_LOAD, "StdinPipe load: "+err.Error())
 	}
 
 	return nil
@@ -178,7 +178,7 @@ func printerOutErr() {
 		for scanner.Scan() {
 			line = scanner.Text()
 
-			errco.Logln(errco.LVL_2, "%s%s%s", errco.COLOR_GRAY, line, errco.COLOR_RESET)
+			errco.Logln("printerOutErr", errco.TYPE_SER, errco.LVL_2, errco.ERROR_NIL, line)
 
 			// communicate to lastLine so that func Execute() can return the first line after the command
 			select {
@@ -201,7 +201,7 @@ func printerOutErr() {
 				// using ": Done (" instead of "Done" to avoid false positives (issue #112)
 				if strings.Contains(line, "INFO") && strings.Contains(line, ": Done (") {
 					servstats.Stats.Status = errco.SERVER_STATUS_ONLINE
-					errco.Logln(errco.LVL_1, "MINECRAFT SERVER IS ONLINE!")
+					errco.Logln("printerOutErr", errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "MINECRAFT SERVER IS ONLINE!")
 
 					// launch a FreezeMSRequests so that if no players connect the server will shutdown
 					FreezeMSRequest()
@@ -224,7 +224,7 @@ func printerOutErr() {
 				// Continue if line does not contain ": "
 				// (it does not adhere to expected log format or it is a multiline java exception)
 				if !strings.Contains(line, ": ") {
-					errco.LogWarn(errco.NewErr(errco.ERROR_SERVER_UNEXP_OUTPUT, errco.LVL_2, "printerOutErr", "line does not adhere to expected log format"))
+					errco.Logln("printerOutErr", errco.TYPE_WAR, errco.LVL_2, errco.ERROR_SERVER_UNEXP_OUTPUT, "line does not adhere to expected log format")
 					continue
 				}
 
@@ -237,25 +237,25 @@ func printerOutErr() {
 					// player sends a chat message
 					case strings.HasPrefix(lineContent, "<") || strings.HasPrefix(lineContent, "["):
 						// just log that the line is a chat message
-						errco.Logln(errco.LVL_2, "a chat message was sent")
+						errco.Logln("printerOutErr", errco.TYPE_INF, errco.LVL_2, errco.ERROR_NIL, "a chat message was sent")
 
 					// player joins the server
 					// using "UUID of player" since minecraft server v1.12.2 does not use "joined the game"
 					case strings.Contains(lineContent, "UUID of player"):
 						servstats.Stats.PlayerCount++
-						errco.Logln(errco.LVL_2, "A PLAYER JOINED THE SERVER! - %d players online", servstats.Stats.PlayerCount)
+						errco.Logln("printerOutErr", errco.TYPE_INF, errco.LVL_2, errco.ERROR_NIL, "A PLAYER JOINED THE SERVER! - %d players online", servstats.Stats.PlayerCount)
 
 					// player leaves the server
 					// using "lost connection" (instead of "left the game") because it's more general (issue #116)
 					case strings.Contains(lineContent, "lost connection"):
 						servstats.Stats.PlayerCount--
-						errco.Logln(errco.LVL_2, "A PLAYER LEFT THE SERVER! - %d players online", servstats.Stats.PlayerCount)
+						errco.Logln("printerOutErr", errco.TYPE_INF, errco.LVL_2, errco.ERROR_NIL, "A PLAYER LEFT THE SERVER! - %d players online", servstats.Stats.PlayerCount)
 						FreezeMSRequest()
 
 					// the server is stopping
 					case strings.Contains(lineContent, "Stopping") && strings.Contains(lineContent, "server"):
 						servstats.Stats.Status = errco.SERVER_STATUS_STOPPING
-						errco.Logln(errco.LVL_1, "MINECRAFT SERVER IS STOPPING!")
+						errco.Logln("printerOutErr", errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "MINECRAFT SERVER IS STOPPING!")
 					}
 				}
 			}
@@ -274,7 +274,7 @@ func printerOutErr() {
 		for scanner.Scan() {
 			line = scanner.Text()
 
-			errco.Logln(errco.LVL_2, "%s%s%s", errco.COLOR_GRAY, line, errco.COLOR_RESET)
+			errco.Logln("printerOutErr", errco.TYPE_SER, errco.LVL_2, errco.ERROR_NIL, line)
 		}
 	}()
 }
@@ -283,10 +283,10 @@ func printerOutErr() {
 // [goroutine]
 func waitForExit() {
 	servstats.Stats.Status = errco.SERVER_STATUS_STARTING
-	errco.Logln(errco.LVL_1, "MINECRAFT SERVER IS STARTING!")
+	errco.Logln("waitForExit", errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "MINECRAFT SERVER IS STARTING!")
 
 	ServTerm.IsActive = true
-	errco.Logln(errco.LVL_3, "waitForExit: terminal started")
+	errco.Logln("waitForExit", errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "waitForExit: terminal started")
 
 	// set terminal start time
 	ServTerm.startTime = time.Now()
@@ -300,10 +300,10 @@ func waitForExit() {
 	ServTerm.inPipe.Close()
 
 	ServTerm.IsActive = false
-	errco.Logln(errco.LVL_3, "waitForExit: terminal exited")
+	errco.Logln("waitForExit", errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "waitForExit: terminal exited")
 
 	servstats.Stats.Status = errco.SERVER_STATUS_OFFLINE
 	servstats.Stats.Suspended = false
 
-	errco.Logln(errco.LVL_1, "MINECRAFT SERVER IS OFFLINE!")
+	errco.Logln("waitForExit", errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "MINECRAFT SERVER IS OFFLINE!")
 }

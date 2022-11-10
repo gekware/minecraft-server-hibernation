@@ -46,9 +46,9 @@ func MshMgr() {
 		<-msh.sigExit
 
 		// stop the minecraft server forcefully
-		errMsh := servctrl.FreezeMS(true)
-		if errMsh != nil {
-			errco.LogMshErr(errMsh.AddTrace("MshMgr"))
+		logMsh := servctrl.FreezeMS(true)
+		if logMsh != nil {
+			errco.Log(logMsh.AddTrace("MshMgr"))
 		}
 
 		// send last statistics before exiting
@@ -60,19 +60,19 @@ func MshMgr() {
 		switch servstats.Stats.Status {
 		case errco.SERVER_STATUS_STOPPING:
 			// if server is correctly stopping, wait for minecraft server to exit
-			errco.Logln(errco.LVL_3, "MshMgr: waiting for minecraft server terminal to exit (server is stopping)")
+			errco.Logln("MshMgr", errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "waiting for minecraft server terminal to exit (server is stopping)")
 			servctrl.ServTerm.Wg.Wait()
 
 		case errco.SERVER_STATUS_OFFLINE:
 			// if server is offline, then it's safe to continue
-			errco.Logln(errco.LVL_3, "MshMgr: minecraft server terminal already exited (server is offline)")
+			errco.Logln("MshMgr", errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "minecraft server terminal already exited (server is offline)")
 
 		default:
-			errco.Logln(errco.LVL_3, "MshMgr: stop command does not seem to be stopping server during forceful shutdown")
+			errco.Logln("MshMgr", errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "stop command does not seem to be stopping server during forceful shutdown")
 		}
 
 		// exit
-		errco.Logln(errco.LVL_0, "exiting msh")
+		errco.Logln("MshMgr", errco.TYPE_INF, errco.LVL_0, errco.ERROR_NIL, "exiting msh")
 		os.Exit(0)
 	}
 }
