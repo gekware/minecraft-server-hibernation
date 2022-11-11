@@ -20,9 +20,8 @@ import (
 )
 
 // IsWhitelist checks if the parameters are in config whitelist.
-// (Currently this function should have as arguments the client request packet ([]byte)
-// and the client address)
-func (c *Configuration) IsWhitelist(params ...interface{}) *errco.MshLog {
+// (Currently this function accepts as arguments the client request packet and the client address)
+func (c *Configuration) IsWhitelist(reqPacket []byte, clientAddress string) *errco.MshLog {
 	// check if whitelist is enabled
 	// if empty then it is not enabled and no checks are needed
 	if len(c.Msh.Whitelist) == 0 {
@@ -30,27 +29,19 @@ func (c *Configuration) IsWhitelist(params ...interface{}) *errco.MshLog {
 		return nil
 	}
 
-	// check whitelist
-	for _, param := range params {
-		switch p := param.(type) {
-		case string:
-			errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "searching whitelist for: %s", p)
-			// check param string against whitelist
-			if utility.SliceContain(p, c.Msh.Whitelist) {
-				errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "whitelist ok!")
-				return nil
-			}
-		case []byte:
-			// check elements of whitelist against param byte array
-			for _, w := range c.Msh.Whitelist {
-				errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "searching byte array for: %s", w)
-				if bytes.Contains(p, []byte(w)) {
-					errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "whitelist ok!")
-					return nil
-				}
-			}
-		default:
-			errco.Logln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_TYPE_UNSUPPORTED, "whitelist check type [%T] not supported", param)
+	// check client address against whitelist
+	errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "searching whitelist for: %s", clientAddress)
+	if utility.SliceContain(clientAddress, c.Msh.Whitelist) {
+		errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "whitelist ok!")
+		return nil
+	}
+
+	// check elements of whitelist against request packet
+	for _, w := range c.Msh.Whitelist {
+		errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "searching byte array for: %s", w)
+		if bytes.Contains(reqPacket, []byte(w)) {
+			errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "whitelist ok!")
+			return nil
 		}
 	}
 
