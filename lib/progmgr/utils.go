@@ -109,7 +109,7 @@ func sendApi2Req(url string, api2req *model.Api2Req) (*http.Response, *errco.Msh
 	req.Header.Set("Content-Type", "application/json")                                                    // necessary for post request
 
 	// execute http request
-	errco.Logln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%smsh --> mshc%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, string(reqByte))
+	errco.Logln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%smsh --> mshc%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, string(reqByte))
 	client := &http.Client{Timeout: 4 * time.Second}
 	res, err := client.Do(req)
 	if err != nil {
@@ -130,7 +130,7 @@ func readApi2Res(res *http.Response) (*model.Api2Res, *errco.MshLog) {
 	if err != nil {
 		return nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_VERSION, err.Error())
 	}
-	errco.Logln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%smshc --> msh%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, resByte)
+	errco.Logln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%smshc --> msh%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, resByte)
 
 	// load res data into resJson
 	var resJson *model.Api2Res

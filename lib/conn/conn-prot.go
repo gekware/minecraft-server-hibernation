@@ -181,7 +181,7 @@ func getPing(clientSocket net.Conn) *errco.MshLog {
 	// answer ping
 	clientSocket.Write(pingData)
 
-	errco.Logln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%smsh --> client%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, pingData)
+	errco.Logln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%smsh --> client%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, pingData)
 
 	return nil
 }

@@ -92,7 +92,7 @@ func getServInfo() (*model.DataInfo, *errco.MshLog) {
 
 	mes := reqInfoMessage.Bytes()
 	serverSocket.Write(mes)
-	errco.Logln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%smsh --> server%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
+	errco.Logln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%smsh --> server%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
 
 	// read response from server
 	recInfoData := []byte{}
@@ -108,7 +108,7 @@ func getServInfo() (*model.DataInfo, *errco.MshLog) {
 			return &model.DataInfo{}, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_SERVER_REQUEST_INFO, err.Error())
 		}
 
-		errco.Logln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%sserver --> msh%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, buf[:dataLen])
+		errco.Logln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%sserver --> msh%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, buf[:dataLen])
 
 		recInfoData = append(recInfoData, buf[:dataLen]...)
 	}
