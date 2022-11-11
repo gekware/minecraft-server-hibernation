@@ -30,14 +30,20 @@ func Log(log *MshLog) {
 		return
 	}
 
+	// set log colors depending on log level
+	switch log.Lvl {
+	case LVL_0:
+		// make important logs more visible
+		log.Mex = COLOR_CYAN + log.Mex + COLOR_RESET
+	}
+
 	// set log colors depending on log type
-	t := ""
+	var t string
 	switch log.Typ {
 	case TYPE_INF:
 		t = COLOR_BLUE + string(log.Typ) + COLOR_RESET
 	case TYPE_SER:
 		t = COLOR_GRAY + string(log.Typ) + COLOR_RESET
-		log.Mex = COLOR_GRAY + log.Mex + COLOR_RESET
 	case TYPE_BYT:
 		t = COLOR_PURPLE + string(log.Typ) + COLOR_RESET
 	case TYPE_WAR:
@@ -46,26 +52,20 @@ func Log(log *MshLog) {
 		t = COLOR_RED + string(log.Typ) + COLOR_RESET
 	}
 
-	// set log colors depending on log level
-	switch log.Lvl {
-	case LVL_0:
-		// make important logs more visible
-		log.Mex = COLOR_CYAN + log.Mex + COLOR_RESET
-	}
-
-	header := fmt.Sprintf("%s [%-16s  %-4s]", time.Now().Format("2006/01/02 15:04:05"), t, strings.Repeat("≡", 4-int(log.Lvl)))
-
-	// print line layout depending on log type
 	switch log.Typ {
-	case TYPE_INF:
-		fmt.Printf(header+" "+log.Mex+"\n", log.Arg...)
-	case TYPE_SER:
-		fmt.Printf(header+" "+log.Mex+"\n", log.Arg...)
-	case TYPE_BYT:
-		fmt.Printf(header+" "+log.Mex+"\n", log.Arg...)
-	case TYPE_WAR:
-		fmt.Printf(header+" "+string(log.Ori)+": "+log.Mex+" ["+fmt.Sprintf("%08x", log.Cod)+"]\n", log.Arg...)
-	case TYPE_ERR:
-		fmt.Printf(header+" "+string(log.Ori)+": "+log.Mex+" ["+fmt.Sprintf("%08x", log.Cod)+"]\n", log.Arg...)
+	case TYPE_INF, TYPE_SER, TYPE_BYT:
+		fmt.Printf("%s [%-16s %-4s] %s\n",
+			time.Now().Format("2006/01/02 15:04:05"),
+			t,
+			strings.Repeat("≡", 4-int(log.Lvl)),
+			fmt.Sprintf(log.Mex, log.Arg...))
+	case TYPE_WAR, TYPE_ERR:
+		fmt.Printf("%s [%-16s %-4s] %s %s %s\n",
+			time.Now().Format("2006/01/02 15:04:05"),
+			t,
+			strings.Repeat("≡", 4-int(log.Lvl)),
+			LogOri(COLOR_YELLOW)+log.Ori+":"+LogOri(COLOR_RESET),
+			fmt.Sprintf(log.Mex, log.Arg...),
+			fmt.Sprintf("[%08x]", log.Cod))
 	}
 }
