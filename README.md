@@ -113,10 +113,14 @@ Port to which players can connect
 ```yaml
 "TimeBeforeStoppingEmptyServer": 30	#any parameter more than 30s is recommended
 ```
-Whitelist addresses or IPs that are allowed to start the server (leave empty to allow everyone)  
+Whitelist contains IPs and player names that are allowed to start the server (leave empty to allow everyone)  
 _unknown clients are not allowed to start the server, but can join_
 ```yaml
 "Whitelist": ["127.0.0.1", "gekigek99"]
+```
+WhitelistImport adds `whitelist.json` to player names that are allowed to start the server
+```yaml
+"WhitelistImport": false
 ```
 
 -----

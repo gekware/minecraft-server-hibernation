@@ -2,8 +2,8 @@
   "Server": {
     "Folder": "{path/to/server/folder}",
     "FileName": "{server.jar}",
-    "Version": "1.17.1",
-    "Protocol": 756
+    "Version": "1.19.2",
+    "Protocol": 760
   },
   "Commands": {
     "StartServer": "java <Commands.StartServerParam> -jar <Server.FileName> nogui",
@@ -21,6 +21,7 @@
     "NotifyMessage": true,
     "ListenPort": 25555,
     "TimeBeforeStoppingEmptyServer": 30,
-    "Whitelist": []
+    "Whitelist": [],
+	"WhitelistImport": false
   }
 }

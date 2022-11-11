@@ -25,6 +25,7 @@ type Configuration struct {
 		ListenPort                    int      `json:"ListenPort"`
 		TimeBeforeStoppingEmptyServer int64    `json:"TimeBeforeStoppingEmptyServer"`
 		Whitelist                     []string `json:"Whitelist"`
+		WhitelistImport               bool     `json:"WhitelistImport"`
 	} `json:"Msh"`
 }
 
@@ -129,4 +130,10 @@ type MshInstanceV0 struct {
 	FId      uint64 `json:"FId"`
 	MshId    string `json:"MshId"`
 	CheckSum string `json:"CheckSum"`
+}
+
+// struct for minecraft server whitelist file
+type MSWhitelist struct {
+	UUID string `json:"uuid"`
+	Name string `json:"name"`
 }

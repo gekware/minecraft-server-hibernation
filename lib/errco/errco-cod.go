@@ -105,14 +105,14 @@ const (
 
 	// config package
 
-	ERROR_CONFIG_LOAD          LogCod = 0x0003f000 // error while loading config
-	ERROR_CONFIG_SAVE          LogCod = 0x0003f001 // error while saving config to file
-	ERROR_CONFIG_CHECK         LogCod = 0x0003f002 // error while checking config
-	ERROR_CONFIG_MSHID         LogCod = 0x0003f003 // error while managing msh id
-	ERROR_ICON_LOAD            LogCod = 0x0003f100 // error while loading icon
-	ERROR_VERSION_LOAD         LogCod = 0x0003f101 // error while loading version.json from server JAR
-	ERROR_CLIENT_NOT_WHITELIST LogCod = 0x0003f200 // error client is not in whitelist
-	ERROR_TYPE_UNSUPPORTED     LogCod = 0x0003f300 // error interface{}.(type) not supported
+	ERROR_CONFIG_LOAD      LogCod = 0x0003f000 // error while loading config
+	ERROR_CONFIG_SAVE      LogCod = 0x0003f001 // error while saving config to file
+	ERROR_CONFIG_CHECK     LogCod = 0x0003f002 // error while checking config
+	ERROR_CONFIG_MSHID     LogCod = 0x0003f003 // error while managing msh id
+	ERROR_ICON_LOAD        LogCod = 0x0003f100 // error while loading icon
+	ERROR_VERSION_LOAD     LogCod = 0x0003f101 // error while loading version.json from server JAR
+	ERROR_WHITELIST_CHECK  LogCod = 0x0003f200 // error while checking whitelist
+	ERROR_TYPE_UNSUPPORTED LogCod = 0x0003f300 // error interface{}.(type) not supported
 
 	// operative system package
 

@@ -22,30 +22,57 @@ import (
 // IsWhitelist checks if the parameters are in config whitelist.
 // (Currently this function accepts as arguments the client request packet and the client address)
 func (c *Configuration) IsWhitelist(reqPacket []byte, clientAddress string) *errco.MshLog {
-	// check if whitelist is enabled
-	// if empty then it is not enabled and no checks are needed
-	if len(c.Msh.Whitelist) == 0 {
-		errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "whitelist not enabled")
-		return nil
+	// check whitelist from minecraft server config
+	if c.Msh.WhitelistImport {
+		var wl []model.MSWhitelist
+
+		// read from file whitelist.json file
+		// load minecraft server whitelist
+		// check elements of minecraft server whitelist against request packet
+		if data, err := os.ReadFile(filepath.Join(c.Server.Folder, "whitelist.json")); err != nil {
+			errco.Logln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_WHITELIST_CHECK, "whitelist.json file file can't be read")
+		} else if err = json.Unmarshal(data, &wl); err != nil {
+			errco.Logln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_WHITELIST_CHECK, "whitelist.json file format error")
+		} else {
+			for _, e := range wl {
+				errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "searching byte array for: %s (whitelist import enabled)", e.Name)
+				if bytes.Contains(reqPacket, []byte(e.Name)) {
+					errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "whitelist ok!")
+					return nil
+				}
+			}
+		}
+	} else {
+		// minecraft server whitelist import not enabled
+		errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "minecraft server whitelist import not enabled")
 	}
 
-	// check client address against whitelist
-	errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "searching whitelist for: %s", clientAddress)
-	if utility.SliceContain(clientAddress, c.Msh.Whitelist) {
-		errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "whitelist ok!")
-		return nil
-	}
-
-	// check elements of whitelist against request packet
-	for _, w := range c.Msh.Whitelist {
-		errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "searching byte array for: %s", w)
-		if bytes.Contains(reqPacket, []byte(w)) {
+	// check whitelist from msh config
+	if len(c.Msh.Whitelist) > 0 {
+		// check client address against msh config whitelist
+		errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "searching whitelist for: %s", clientAddress)
+		if utility.SliceContain(clientAddress, c.Msh.Whitelist) {
 			errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "whitelist ok!")
 			return nil
 		}
-	}
 
-	return errco.NewLog(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_CLIENT_NOT_WHITELIST, "whitelist check failed")
+		// check elements of msh config whitelist against request packet
+		for _, w := range c.Msh.Whitelist {
+			errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "searching byte array for: %s", w)
+			if bytes.Contains(reqPacket, []byte(w)) {
+				errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "whitelist ok!")
+				return nil
+			}
+		}
+
+		// no match found, error
+		return errco.NewLog(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_WHITELIST_CHECK, "msh config whitelist check failed")
+
+	} else {
+		// msh config whitelist not enabled
+		errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "msh config whitelist not enabled")
+		return nil
+	}
 }
 
 // loadIcon tries to load user specified server icon (base-64 encoded and compressed).
