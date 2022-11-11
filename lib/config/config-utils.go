@@ -19,8 +19,10 @@ import (
 	"msh/lib/utility"
 )
 
-// InWhitelist checks if the playerName or clientAddress is in config whitelist
-func (c *Configuration) InWhitelist(params ...string) *errco.MshLog {
+// IsWhitelist checks if the parameters are in config whitelist.
+// (Currently this function should have as arguments the client request packet ([]byte)
+// and the client address)
+func (c *Configuration) IsWhitelist(params ...interface{}) *errco.MshLog {
 	// check if whitelist is enabled
 	// if empty then it is not enabled and no checks are needed
 	if len(c.Msh.Whitelist) == 0 {
@@ -28,18 +30,31 @@ func (c *Configuration) InWhitelist(params ...string) *errco.MshLog {
 		return nil
 	}
 
-	errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "checking whitelist for: %s", strings.Join(params, ", "))
-
-	// check if playerName or clientAddress are in whitelist
-	for _, p := range params {
-		if utility.SliceContain(p, c.Msh.Whitelist) {
-			errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "playerName or clientAddress is whitelisted!")
-			return nil
+	// check whitelist
+	for _, param := range params {
+		switch p := param.(type) {
+		case string:
+			errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "searching whitelist for: %s", p)
+			// check param string against whitelist
+			if utility.SliceContain(p, c.Msh.Whitelist) {
+				errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "whitelist ok!")
+				return nil
+			}
+		case []byte:
+			// check elements of whitelist against param byte array
+			for _, w := range c.Msh.Whitelist {
+				errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "searching byte array for: %s", w)
+				if bytes.Contains(p, []byte(w)) {
+					errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "whitelist ok!")
+					return nil
+				}
+			}
+		default:
+			errco.Logln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_TYPE_UNSUPPORTED, "whitelist check type [%T] not supported", param)
 		}
 	}
 
-	// playerName or clientAddress not found in whitelist
-	return errco.NewLog(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_PLAYER_NOT_IN_WHITELIST, "playerName or clientAddress is not whitelisted")
+	return errco.NewLog(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_CLIENT_NOT_WHITELIST, "whitelist check failed")
 }
 
 // loadIcon tries to load user specified server icon (base-64 encoded and compressed).

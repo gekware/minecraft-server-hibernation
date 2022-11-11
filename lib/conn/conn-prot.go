@@ -94,17 +94,17 @@ func buildMessage(reqType int, message string) []byte {
 	}
 }
 
-// getReqType returns the request type (INFO or JOIN) and playerName of the client
-func getReqType(clientSocket net.Conn) ([]byte, int, string, *errco.MshLog) {
-	dataReqFull := []byte{}
-	playerName := "player unknown"
+// getReqType returns the request packet, type (INFO or JOIN).
+// Not player name as it's too difficult to extract
+func getReqType(clientSocket net.Conn) ([]byte, int, *errco.MshLog) {
+	var dataReqFull []byte
 
 	data, logMsh := getClientPacket(clientSocket)
 	if logMsh != nil {
-		return nil, errco.CLIENT_REQ_UNKN, "", logMsh.AddTrace()
+		return nil, errco.CLIENT_REQ_UNKN, logMsh.AddTrace()
 	}
 
-	dataReqFull = append(dataReqFull, data...)
+	dataReqFull = data
 
 	// generate flags
 	listenPortByt := big.NewInt(int64(config.ListenPort)).Bytes() // calculates listen port in BigEndian bytes
@@ -113,12 +113,12 @@ func getReqType(clientSocket net.Conn) ([]byte, int, string, *errco.MshLog) {
 
 	// extract request type key byte
 	reqTypeKeyByte := byte(0)
-	if len(data) > int(data[0]) {
-		reqTypeKeyByte = data[int(data[0])]
+	if len(dataReqFull) > int(dataReqFull[0]) {
+		reqTypeKeyByte = dataReqFull[int(dataReqFull[0])]
 	}
 
 	switch {
-	case reqTypeKeyByte == byte(1) || bytes.Contains(data, reqFlagInfo):
+	case reqTypeKeyByte == byte(1) || bytes.Contains(dataReqFull, reqFlagInfo):
 		// client is requesting server info
 		// example: [ 16 0 244 5 9 49 50 55 46 48 46 48 46 49 99 211 1 1 0 ]
 		//  ______________ case 1 _______________      _____________ case 2 _____________
@@ -126,38 +126,32 @@ func getReqType(clientSocket net.Conn) ([]byte, int, string, *errco.MshLog) {
 		// [              ^---reqFlagInfo---^    ]    [           ^---reqFlagInfo---^    ]
 		// [    ^-------------16 bytes------^    ]    [    ^-------------16 bytes------^ ]
 
-		return data, errco.CLIENT_REQ_INFO, playerName, nil
+		return dataReqFull, errco.CLIENT_REQ_INFO, nil
 
-	case reqTypeKeyByte == byte(2) || bytes.Contains(data, reqFlagJoin):
+	case reqTypeKeyByte == byte(2) || bytes.Contains(dataReqFull, reqFlagJoin):
 		// client is trying to join the server
 		// example: [ 16 0 244 5 9 49 50 55 46 48 46 48 46 49 99 211 2 ]
-		//  _______________________ case 1 _______________________      ________________________ case 2 _________________________
-		// [ 16 ... x x x (listenPortBytes) 2 x x x (player name) ] or [ 16 ... x x x (listenPortBytes) 2 ][ x x x (player name) ]
-		// [              ^---reqFlagJoin---^                     ]    [              ^---reqFlagJoin---^ ][                     ]
-		// [                                  ^--dataSplAft[1]--^ ]    [                 dataSplitAft[1]-╝][                     ]
-		// [    ^-------------16 bytes------^                     ]    [    ^-------------16 bytes------^ ][                     ]
+		//  _______________________ case 1 _________________________      ________________________ case 2 ___________________________
+		// [ 16 ... x x x (listenPortBytes) 2 x ... x (player name) ] or [ 16 ... x x x (listenPortBytes) 2 ][ x ... x (player name) ]
+		// [              ^---reqFlagJoin---^                       ]    [              ^---reqFlagJoin---^ ][                       ]
+		// [                                  ^---dataSplAft[1]---^ ]    [                 dataSplitAft[1]-╝][                       ]
+		// [    ^-------------16 bytes------^                       ]    [    ^-------------16 bytes------^ ][                       ]
 
-		dataSplAft := bytes.SplitAfter(data, reqFlagJoin)
-		if len(dataSplAft[1]) > 0 {
-			// case 1: player name is already contained in packet
-			playerName = string(dataSplAft[1][3:])
-
-		} else {
+		dataSplAft := bytes.SplitAfter(dataReqFull, reqFlagJoin)
+		if len(dataSplAft[1]) == 0 {
 			// case 2: player name is contained in following packet
 			data, logMsh = getClientPacket(clientSocket)
 			if logMsh != nil {
-				// this error is non-blocking: log warning and return "player unknown"
+				// this error is non-blocking, just log it
 				errco.Log(logMsh.AddTrace())
-				playerName = "player unknown"
 			}
 			dataReqFull = append(dataReqFull, data...)
-			playerName = string(data[3:])
 		}
 
-		return dataReqFull, errco.CLIENT_REQ_JOIN, playerName, nil
+		return dataReqFull, errco.CLIENT_REQ_JOIN, nil
 
 	default:
-		return nil, errco.CLIENT_REQ_UNKN, "", errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CLIENT_REQ, "client request unknown")
+		return nil, errco.CLIENT_REQ_UNKN, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CLIENT_REQ, "client request unknown")
 	}
 }
 
@@ -187,7 +181,7 @@ func getPing(clientSocket net.Conn) *errco.MshLog {
 	// answer ping
 	clientSocket.Write(pingData)
 
-	errco.Logln(errco.TYPE_INF, errco.LVL_4, errco.ERROR_NIL, "%smsh --> client%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, pingData)
+	errco.Logln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%smsh --> client%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, pingData)
 
 	return nil
 }
@@ -202,7 +196,7 @@ func getClientPacket(clientSocket net.Conn) ([]byte, *errco.MshLog) {
 		return nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CLIENT_SOCKET_READ, "error during client socket read (%s)", err.Error())
 	}
 
-	errco.Logln(errco.TYPE_INF, errco.LVL_4, errco.ERROR_NIL, "%sclient --> msh%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, buf[:dataLen])
+	errco.Logln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%sclient --> msh%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, buf[:dataLen])
 
 	return buf[:dataLen], nil
 }

@@ -21,7 +21,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 	li := strings.LastIndex(clientSocket.RemoteAddr().String(), ":")
 	clientAddress := clientSocket.RemoteAddr().String()[:li]
 
-	reqPacket, reqType, playerName, logMsh := getReqType(clientSocket)
+	reqPacket, reqType, logMsh := getReqType(clientSocket)
 	if logMsh != nil {
 		errco.Log(logMsh.AddTrace())
 		return
@@ -38,7 +38,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 		switch reqType {
 		case errco.CLIENT_REQ_INFO:
 			// log to msh console and answer to client with error
-			errco.Logln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_MINECRAFT_SERVER, "%s requested server info from %s:%d to %s:%d but server has encountered major problems", playerName, clientAddress, config.ListenPort, config.TargetHost, config.TargetPort)
+			errco.Logln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_MINECRAFT_SERVER, "a client requested server info from %s:%d to %s:%d but server has encountered major problems", clientAddress, config.ListenPort, config.TargetHost, config.TargetPort)
 			mes := buildMessage(reqType, string(servstats.Stats.MajorError.Ori)+": "+servstats.Stats.MajorError.Mex)
 			clientSocket.Write(mes)
 			errco.Logln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%smsh --> client%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
@@ -50,7 +50,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 			}
 		case errco.CLIENT_REQ_JOIN:
 			// log to msh console and answer to client with error
-			errco.Logln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_MINECRAFT_SERVER, "%s requested server info from %s:%d to %s:%d but server has encountered major problems", playerName, clientAddress, config.ListenPort, config.TargetHost, config.TargetPort)
+			errco.Logln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_MINECRAFT_SERVER, "a client requested server info from %s:%d to %s:%d but server has encountered major problems", clientAddress, config.ListenPort, config.TargetHost, config.TargetPort)
 			mes := buildMessage(reqType, string(servstats.Stats.MajorError.Ori)+": "+servstats.Stats.MajorError.Mex)
 			clientSocket.Write(mes)
 			errco.Logln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%smsh --> client%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
@@ -61,7 +61,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 
 	switch reqType {
 	case errco.CLIENT_REQ_INFO:
-		errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "%s requested server info from %s:%d to %s:%d", playerName, clientAddress, config.ListenPort, config.TargetHost, config.TargetPort)
+		errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "a client requested server info from %s:%d to %s:%d", clientAddress, config.ListenPort, config.TargetHost, config.TargetPort)
 
 		if servstats.Stats.Status != errco.SERVER_STATUS_ONLINE || servstats.Stats.Suspended {
 			// ms not online or suspended
@@ -102,7 +102,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 		}
 
 	case errco.CLIENT_REQ_JOIN:
-		errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "%s tried to join from %s:%d to %s:%d", playerName, clientAddress, config.ListenPort, config.TargetHost, config.TargetPort)
+		errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "a client tried to join from %s:%d to %s:%d", clientAddress, config.ListenPort, config.TargetHost, config.TargetPort)
 
 		if servstats.Stats.Status != errco.SERVER_STATUS_ONLINE {
 			// ms not online (un/suspended)
@@ -113,8 +113,8 @@ func HandleClientSocket(clientSocket net.Conn) {
 				clientSocket.Close()
 			}()
 
-			// check if the client address or player name are whitelisted
-			logMsh := config.ConfigRuntime.InWhitelist(playerName, clientAddress)
+			// check if the request packet contains element of whitelist or the address is in whitelist
+			logMsh := config.ConfigRuntime.IsWhitelist(reqPacket, clientAddress)
 			if logMsh != nil {
 				// warn client with text in the loadscreen
 				errco.Log(logMsh.AddTrace())
