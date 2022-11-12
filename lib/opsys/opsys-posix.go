@@ -25,10 +25,10 @@ func procTreeSuspend(ppid uint32) *errco.MshLog {
 		_ = process.Signal(syscall.SIGSTOP)
 	*/
 
-	errco.Logln("procTreeSuspend", errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "suspending %d", ppid)
+	errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "suspending %d", ppid)
 	err := syscall.Kill(-int(ppid), syscall.SIGSTOP) // negative ppid to suspend whole group
 	if err != nil {
-		return errco.NewLog("procTreeSuspend", errco.TYPE_ERR, errco.TYPE_ERR, errco.LVL_3, errco.ERROR_PROCESS_SIGNAL, err.Error())
+		return errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_PROCESS_SIGNAL, err.Error())
 	}
 
 	return nil
@@ -41,10 +41,10 @@ func procTreeResume(ppid uint32) *errco.MshLog {
 		_ = process.Signal(syscall.SIGCONT)
 	*/
 
-	errco.Logln("procTreeResume", errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "resuming %d", ppid)
+	errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "resuming %d", ppid)
 	err := syscall.Kill(-int(ppid), syscall.SIGCONT) // negative ppid to resume whole group
 	if err != nil {
-		return errco.NewLog("procTreeResume", errco.TYPE_ERR, errco.TYPE_ERR, errco.LVL_3, errco.ERROR_PROCESS_SIGNAL, err.Error())
+		return errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_PROCESS_SIGNAL, err.Error())
 	}
 
 	return nil
