@@ -27,7 +27,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 		return
 	}
 
-	// if ms has a major error warn the client and return
+	// ms has a major error: warn the client and return
 	if servstats.Stats.MajorError != nil {
 		// close the client connection at the end
 		defer func() {
@@ -59,6 +59,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 		return
 	}
 
+	// ms has not a major error: handle the request
 	switch reqType {
 	case errco.CLIENT_REQ_INFO:
 		errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "a client requested server info from %s:%d to %s:%d", clientAddress, config.ListenPort, config.TargetHost, config.TargetPort)
