@@ -3,6 +3,7 @@ package conn
 import (
 	"bytes"
 	"encoding/json"
+	"io"
 	"math/big"
 	"net"
 	"strings"
@@ -95,7 +96,7 @@ func buildMessage(reqType int, message string) []byte {
 }
 
 // getReqType returns the request packet, type (INFO or JOIN).
-// Not player name as it's too difficult to extract
+// Not player name as it's too difficult to extract.
 func getReqType(clientSocket net.Conn) ([]byte, int, *errco.MshLog) {
 	var dataReqFull []byte
 
@@ -187,13 +188,18 @@ func getPing(clientSocket net.Conn) *errco.MshLog {
 }
 
 // getClientPacket reads the client socket and returns only the bytes containing data
+// clientSocket connection should not be closed here (need to be closed in caller function).
 func getClientPacket(clientSocket net.Conn) ([]byte, *errco.MshLog) {
 	buf := make([]byte, 1024)
 
 	// read first packet
 	dataLen, err := clientSocket.Read(buf)
 	if err != nil {
-		return nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CLIENT_SOCKET_READ, "error during client socket read (%s)", err.Error())
+		if err == io.EOF {
+			return nil, errco.NewLog(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_CLIENT_SOCKET_READ, "received EOF from %15s", strings.Split(clientSocket.RemoteAddr().String(), ":")[0])
+		} else {
+			return nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CLIENT_SOCKET_READ, err.Error())
+		}
 	}
 
 	errco.Logln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%sclient --> msh%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, buf[:dataLen])
