@@ -1,7 +1,6 @@
 package servctrl
 
 import (
-	"fmt"
 	"sync/atomic"
 	"time"
 
@@ -187,12 +186,12 @@ func readyToFreezeMS() *errco.MshLog {
 	playerCount, method := countPlayerSafe()
 	errco.Logln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "%d online players - method for player count: %s", playerCount, method)
 	if playerCount > 0 {
-		return errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_SERVER_NOT_EMPTY, "server is not empty")
+		return errco.NewLog(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_SERVER_NOT_EMPTY, "server is not empty")
 	}
 
 	// check if enough time has passed since last player disconnected
 	if atomic.LoadInt32(&servstats.Stats.FreezeMSRequests) > 0 {
-		return errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_SERVER_MUST_WAIT, fmt.Sprintf("not enough time has passed since last player disconnected (FreezeMSRequests: %d)", servstats.Stats.FreezeMSRequests))
+		return errco.NewLog(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_SERVER_MUST_WAIT, "not enough time has passed since last player disconnected (FreezeMSRequests: %d)", servstats.Stats.FreezeMSRequests)
 	}
 
 	return nil
