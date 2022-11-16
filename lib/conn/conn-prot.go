@@ -124,7 +124,7 @@ func getReqType(clientSocket net.Conn) ([]byte, int, *errco.MshLog) {
 		// example: [ 16 0 244 5 9 49 50 55 46 48 46 48 46 49 99 211 1 1 0 ]
 		//  ______________ case 1 _______________      _____________ case 2 _____________
 		// [ 16 ... x x x (listenPortBytes) 1 1 0] or [ 16 ... x x x (listenPortBytes) 1 ]
-		// [              ^---reqFlagInfo---^    ]    [           ^---reqFlagInfo---^    ]
+		// [              ^---reqFlagInfo---^    ]    [              ^---reqFlagInfo---^ ]
 		// [    ^-------------16 bytes------^    ]    [    ^-------------16 bytes------^ ]
 
 		return dataReqFull, errco.CLIENT_REQ_INFO, nil
@@ -135,19 +135,15 @@ func getReqType(clientSocket net.Conn) ([]byte, int, *errco.MshLog) {
 		//  _______________________ case 1 _________________________      ________________________ case 2 ___________________________
 		// [ 16 ... x x x (listenPortBytes) 2 x ... x (player name) ] or [ 16 ... x x x (listenPortBytes) 2 ][ x ... x (player name) ]
 		// [              ^---reqFlagJoin---^                       ]    [              ^---reqFlagJoin---^ ][                       ]
-		// [                                  ^---dataSplAft[1]---^ ]    [                 dataSplitAft[1]-╝][                       ]
 		// [    ^-------------16 bytes------^                       ]    [    ^-------------16 bytes------^ ][                       ]
 
-		dataSplAft := bytes.SplitAfter(dataReqFull, reqFlagJoin)
-		if len(dataSplAft[1]) == 0 {
-			// case 2: player name is contained in following packet
-			data, logMsh = getClientPacket(clientSocket)
-			if logMsh != nil {
-				// this error is non-blocking, just log it
-				errco.Log(logMsh.AddTrace())
-			}
-			dataReqFull = append(dataReqFull, data...)
+		// msh doesn't know if it's a case 1 or 2: try get an other packet
+		// if EOF keep going
+		data, logMsh = getClientPacket(clientSocket)
+		if logMsh != nil && logMsh.Cod != errco.ERROR_CONN_EOF {
+			return nil, errco.CLIENT_REQ_UNKN, logMsh.AddTrace()
 		}
+		dataReqFull = append(dataReqFull, data...)
 
 		return dataReqFull, errco.CLIENT_REQ_JOIN, nil
 
@@ -196,7 +192,8 @@ func getClientPacket(clientSocket net.Conn) ([]byte, *errco.MshLog) {
 	dataLen, err := clientSocket.Read(buf)
 	if err != nil {
 		if err == io.EOF {
-			return nil, errco.NewLog(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_CLIENT_SOCKET_READ, "received EOF from %15s", strings.Split(clientSocket.RemoteAddr().String(), ":")[0])
+			// return empty byte structure and EOF error
+			return []byte{}, errco.NewLog(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_CONN_EOF, "received EOF from %15s", strings.Split(clientSocket.RemoteAddr().String(), ":")[0])
 		} else {
 			return nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CLIENT_SOCKET_READ, err.Error())
 		}

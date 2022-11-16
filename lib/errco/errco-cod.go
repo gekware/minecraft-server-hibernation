@@ -98,6 +98,7 @@ const (
 	ERROR_REQ_FLAG_BUILD      LogCod = 0x0002f000 // error while building request flag
 	ERROR_CLIENT_REQ          LogCod = 0x0002f100 // client request error
 	ERROR_CLIENT_SOCKET_READ  LogCod = 0x0002f101 // error while reading client socket
+	ERROR_CONN_EOF            LogCod = 0x0002f102 // read EOF from client connection
 	ERROR_SERVER_DIAL         LogCod = 0x0002f200 // error while dialing ms server
 	ERROR_SERVER_REQUEST_INFO LogCod = 0x0002f201 // error while msh server info request
 	ERROR_JSON_MARSHAL        LogCod = 0x0002f300 // error while exporting struct to json bytes
@@ -136,10 +137,10 @@ const (
 
 	// input package
 
-	ERROR_COMMAND_INPUT     LogCod = 0x0007f000 // general error while reading command input
-	ERROR_COMMAND_UNKNOWN   LogCod = 0x0007f001 // command is unknown
-	ERROR_INPUT_READ        LogCod = 0x0007f100 // error while reading input)
-	ERROR_INPUT_UNAVAILABLE LogCod = 0x0007f101 // stdin is not available
+	ERROR_COMMAND_INPUT   LogCod = 0x0007f000 // general error while reading command input
+	ERROR_COMMAND_UNKNOWN LogCod = 0x0007f001 // command is unknown
+	ERROR_INPUT_READ      LogCod = 0x0007f100 // error while reading input)
+	ERROR_INPUT_EOF       LogCod = 0x0007f101 // read EOF from stdin
 
 	// errco package
 	ERROR_COLOR_ENABLE LogCod = 0x0008f000 // error while trying to enable colors on terminal

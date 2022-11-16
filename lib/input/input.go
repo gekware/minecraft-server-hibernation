@@ -28,7 +28,7 @@ func GetInput() {
 			if err == io.EOF {
 				// in case input goroutine returns abnormally while msh is running in terminal,
 				// the user must be notified with errco.LVL_1
-				errco.Logln(errco.TYPE_WAR, errco.LVL_1, errco.ERROR_INPUT_UNAVAILABLE, "stdin unavailable, exiting input goroutine")
+				errco.Logln(errco.TYPE_WAR, errco.LVL_1, errco.ERROR_INPUT_EOF, "stdin unavailable, exiting input goroutine")
 				return
 			}
 			errco.Logln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_INPUT_READ, err.Error())
