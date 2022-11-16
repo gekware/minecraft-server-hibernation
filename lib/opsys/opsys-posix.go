@@ -12,7 +12,8 @@ import (
 
 func newProcGroupAttr() *syscall.SysProcAttr {
 	newProcGroupAttr := &syscall.SysProcAttr{
-		Setpgid: true,
+		Setpgid:   true,
+		Pdeathsig: syscall.SIGKILL, // terminate process when its parent dies
 	}
 
 	return newProcGroupAttr

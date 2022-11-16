@@ -37,6 +37,7 @@ func init() {
 func newProcGroupAttr() *syscall.SysProcAttr {
 	newProcGroupAttr := &syscall.SysProcAttr{
 		CreationFlags: syscall.CREATE_NEW_PROCESS_GROUP,
+		// on windows it's not possible to specify a kill signal to terminate process when its parent dies
 	}
 
 	return newProcGroupAttr
