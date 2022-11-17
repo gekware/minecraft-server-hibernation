@@ -148,7 +148,7 @@ func getReqType(clientSocket net.Conn) ([]byte, int, *errco.MshLog) {
 		return dataReqFull, errco.CLIENT_REQ_JOIN, nil
 
 	default:
-		return nil, errco.CLIENT_REQ_UNKN, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CLIENT_REQ, "client request unknown")
+		return nil, errco.CLIENT_REQ_UNKN, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CLIENT_REQ, "client request unknown (received: %v)", dataReqFull)
 	}
 }
 

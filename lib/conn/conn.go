@@ -228,10 +228,10 @@ func forward(source, destination net.Conn, isServerToClient bool, stopC chan boo
 		if errco.DebugLvl >= errco.LVL_3 {
 			servstats.Stats.M.Lock()
 			if isServerToClient {
-				servstats.Stats.BytesToClients = servstats.Stats.BytesToClients + float64(dataLen)
+				servstats.Stats.BytesToClients += float64(dataLen)
 				errco.Logln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%sserver --> client%s: %v", errco.COLOR_BLUE, errco.COLOR_RESET, data[:dataLen])
 			} else {
-				servstats.Stats.BytesToServer = servstats.Stats.BytesToServer + float64(dataLen)
+				servstats.Stats.BytesToServer += float64(dataLen)
 				errco.Logln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%sclient --> server%s: %v", errco.COLOR_GREEN, errco.COLOR_RESET, data[:dataLen])
 			}
 			servstats.Stats.M.Unlock()
