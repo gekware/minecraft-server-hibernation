@@ -37,19 +37,23 @@ func init() {
 }
 
 // printDataUsage prints each second bytes/s to clients and to server.
-// (must be launched after ServTerm.IsActive has been set to true)
+// prints data exchanged by clients and server only when servctrl.ServTerm.IsActive
+// Stats.BytesToClients and Stats.BytesToServer are only set when there are clients connected to the server
 // [goroutine]
 func printDataUsage() {
-	if Stats.BytesToClients != 0 || Stats.BytesToServer != 0 {
-		errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "data/s: %8.3f KB/s to clients | %8.3f KB/s to server", Stats.BytesToClients/1024, Stats.BytesToServer/1024)
+	ticker := time.NewTicker(time.Second)
 
-		Stats.M.Lock()
-		Stats.BytesToClients = 0
-		Stats.BytesToServer = 0
-		Stats.M.Unlock()
+	for {
+		<-ticker.C
+
+		if Stats.BytesToClients != 0 || Stats.BytesToServer != 0 {
+			errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "data/s: %8.3f KB/s to clients | %8.3f KB/s to server", Stats.BytesToClients/1024, Stats.BytesToServer/1024)
+			Stats.M.Lock()
+			Stats.BytesToClients = 0
+			Stats.BytesToServer = 0
+			Stats.M.Unlock()
+		}
 	}
-
-	time.Sleep(time.Second)
 }
 
 // SetMajorError sets *serverStats.MajorError only if nil
