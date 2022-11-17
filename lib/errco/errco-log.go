@@ -44,7 +44,7 @@ func Log(log *MshLog) {
 		t = COLOR_BLUE + string(log.Typ) + COLOR_RESET
 	case TYPE_SER:
 		t = COLOR_GRAY + string(log.Typ) + COLOR_RESET
-		log.Mex = COLOR_GRAY + log.Mex + COLOR_RESET
+		log.Mex = COLOR_GRAY + log.Mex + "\x00" + COLOR_RESET
 	case TYPE_BYT:
 		t = COLOR_PURPLE + string(log.Typ) + COLOR_RESET
 	case TYPE_WAR:
