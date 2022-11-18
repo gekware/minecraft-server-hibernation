@@ -30,11 +30,12 @@ type servTerminal struct {
 	inPipe    io.WriteCloser
 }
 
-// lastLine is a channel used to communicate the last line got from the printer function
-var lastLine = make(chan string)
+// lastOut is a channel used to communicate the last line got from the printer function
+var lastOut = make(chan string)
 
 // Execute executes a command on ms.
-// Be careful as some commands are not printed on terminal but only gamechat (this can lead to <-lastLine channel hanging).
+// Commands with no terminal output don't cause hanging:
+// a timeout is set to receive a new terminal output line after which Execute returns.
 // [non-blocking]
 func Execute(command, origin string) (string, *errco.MshLog) {
 	switch {
@@ -54,7 +55,21 @@ func Execute(command, origin string) (string, *errco.MshLog) {
 		return "", errco.NewLog(errco.TYPE_ERR, errco.LVL_2, errco.ERROR_PIPE_INPUT_WRITE, err.Error())
 	}
 
-	return <-lastLine, nil
+	// read all lines from lastOut
+	// (watchdog used in case there are no more lines to read or output takes too long)
+	var out string = ""
+a:
+	for {
+		select {
+		case lo := <-lastOut:
+			out += lo + "\n"
+		case <-time.NewTimer(200 * time.Millisecond).C:
+			break a
+		}
+	}
+
+	// return the (possibly) full terminal output of Execute()
+	return out, nil
 }
 
 // TellRaw executes a tellraw on ms
@@ -180,9 +195,10 @@ func printerOutErr() {
 
 			errco.Logln(errco.TYPE_SER, errco.LVL_2, errco.ERROR_NIL, line)
 
-			// communicate to lastLine so that func Execute() can return the first line after the command
+			// communicate to lastOut so that func Execute() can return the output of the command.
+			// must be a non-blocking select or it might cause hanging
 			select {
-			case lastLine <- line:
+			case lastOut <- line:
 			default:
 			}
 
