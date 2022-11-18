@@ -98,7 +98,8 @@ const (
 	ERROR_REQ_FLAG_BUILD      LogCod = 0x0002f000 // error while building request flag
 	ERROR_CLIENT_REQ          LogCod = 0x0002f100 // client request error
 	ERROR_CLIENT_SOCKET_READ  LogCod = 0x0002f101 // error while reading client socket
-	ERROR_CONN_EOF            LogCod = 0x0002f102 // read EOF from client connection
+	ERROR_CONN_READ           LogCod = 0x0002f102 // error while reading from client connection
+	ERROR_CONN_EOF            LogCod = 0x0002f103 // read EOF from client connection
 	ERROR_SERVER_DIAL         LogCod = 0x0002f200 // error while dialing ms server
 	ERROR_SERVER_REQUEST_INFO LogCod = 0x0002f201 // error while msh server info request
 	ERROR_JSON_MARSHAL        LogCod = 0x0002f300 // error while exporting struct to json bytes
