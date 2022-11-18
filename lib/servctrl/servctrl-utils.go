@@ -116,7 +116,7 @@ func getServInfo() (*model.DataInfo, *errco.MshLog) {
 	// remove first 5 bytes that are used as header to get only the json data
 	// [178 88 0 175 88]{"description":{ ...
 	if len(recInfoData) < 5 {
-		return &model.DataInfo{}, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_SERVER_REQUEST_INFO, "received data unexpected format")
+		return &model.DataInfo{}, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_SERVER_REQUEST_INFO, "received data unexpected format (%v)", recInfoData)
 	}
 	recInfoData = recInfoData[5:]
 
