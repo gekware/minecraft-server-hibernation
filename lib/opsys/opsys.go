@@ -45,7 +45,7 @@ func ProcTreeResume(ppid uint32) (bool, *errco.MshLog) {
 		return true, logMsh.AddTrace()
 	}
 
-	errco.Logln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "PROCESS TREE UNSUSPEDED!")
+	errco.Logln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "PROCESS TREE RESUMED!")
 
 	return false, nil
 }

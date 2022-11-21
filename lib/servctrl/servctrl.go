@@ -37,14 +37,10 @@ func WarmMS() *errco.MshLog {
 		}
 
 	default:
-		if servstats.Stats.Suspended {
-			var logMsh *errco.MshLog
-			servstats.Stats.Suspended, logMsh = opsys.ProcTreeResume(uint32(ServTerm.cmd.Process.Pid))
-			if logMsh != nil {
-				return logMsh.AddTrace()
-			}
-		} else {
-			errco.Logln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_SERVER_IS_WARM, "minecraft server already warm")
+		var logMsh *errco.MshLog
+		servstats.Stats.Suspended, logMsh = opsys.ProcTreeResume(uint32(ServTerm.cmd.Process.Pid))
+		if logMsh != nil {
+			return logMsh.AddTrace()
 		}
 	}
 
@@ -71,17 +67,17 @@ func FreezeMS(force bool) *errco.MshLog {
 
 		errco.Logln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_SERVER_IS_FROZEN, "minecraft server already frozen")
 
+		return nil
+
 	case errco.SERVER_STATUS_STARTING:
 		// ms is starting, resume the ms process, wait for status online and then freeze ms
 
 		var logMsh *errco.MshLog
 
-		// resume ms process if suspended
-		if servstats.Stats.Suspended {
-			servstats.Stats.Suspended, logMsh = opsys.ProcTreeResume(uint32(ServTerm.cmd.Process.Pid))
-			if logMsh != nil {
-				return logMsh.AddTrace()
-			}
+		// resume ms process (either suspended or not)
+		servstats.Stats.Suspended, logMsh = opsys.ProcTreeResume(uint32(ServTerm.cmd.Process.Pid))
+		if logMsh != nil {
+			return logMsh.AddTrace()
 		}
 
 		// wait for ms to go online
@@ -102,51 +98,57 @@ func FreezeMS(force bool) *errco.MshLog {
 
 		var logMsh *errco.MshLog
 
-		// execute ms freeze
+		// if forceful, execute ms stop then return
 		if force {
 			// if forceful freeze, execute ms stop
 			logMsh = executeMSStop()
 			if logMsh != nil {
 				return logMsh.AddTrace()
 			}
-		} else if logMsh = readyToFreezeMS(); logMsh == nil {
-			// if soft freeze and ms can be stopped, suspend/stop
-			if config.ConfigRuntime.Msh.AllowSuspend {
-				if !servstats.Stats.Suspended {
-					servstats.Stats.Suspended, logMsh = opsys.ProcTreeSuspend(uint32(ServTerm.cmd.Process.Pid))
-					if logMsh != nil {
-						return logMsh.AddTrace()
-					}
-				}
-			} else {
-				logMsh = executeMSStop()
-				if logMsh != nil {
-					return logMsh.AddTrace()
-				}
+			return nil
+		}
+
+		// check if ms can be frozen
+		logMsh = readyToFreezeMS()
+		if logMsh != nil {
+			return logMsh.AddTrace()
+		}
+
+		// suspend/stop ms
+		if config.ConfigRuntime.Msh.AllowSuspend {
+			servstats.Stats.Suspended, logMsh = opsys.ProcTreeSuspend(uint32(ServTerm.cmd.Process.Pid))
+			if logMsh != nil {
+				return logMsh.AddTrace()
 			}
 		} else {
-			errco.Log(logMsh.AddTrace())
+			logMsh = executeMSStop()
+			if logMsh != nil {
+				return logMsh.AddTrace()
+			}
 		}
+
+		return nil
 
 	case errco.SERVER_STATUS_STOPPING:
 		// is ms is stopping, resume the process and let it stop
 
-		// resume ms process if suspended
-		if servstats.Stats.Suspended {
-			var logMsh *errco.MshLog
-			servstats.Stats.Suspended, logMsh = opsys.ProcTreeResume(uint32(ServTerm.cmd.Process.Pid))
-			if logMsh != nil {
-				return logMsh.AddTrace()
-			}
+		// resume ms process (either suspended or not)
+		var logMsh *errco.MshLog
+		servstats.Stats.Suspended, logMsh = opsys.ProcTreeResume(uint32(ServTerm.cmd.Process.Pid))
+		if logMsh != nil {
+			return logMsh.AddTrace()
 		}
 
 		// wait for ms to go offline
 		for servstats.Stats.Status == errco.SERVER_STATUS_STOPPING {
 			time.Sleep(1 * time.Second)
 		}
-	}
 
-	return nil
+		return nil
+
+	default:
+		return errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_SERVER_STATUS_UNKNOWN, "server status unknown")
+	}
 }
 
 // executeMSStop resumes ms process and executes a stop command in ms terminal.
@@ -154,12 +156,10 @@ func FreezeMS(force bool) *errco.MshLog {
 func executeMSStop() *errco.MshLog {
 	var logMsh *errco.MshLog
 
-	// resume ms process if suspended
-	if servstats.Stats.Suspended {
-		servstats.Stats.Suspended, logMsh = opsys.ProcTreeResume(uint32(ServTerm.cmd.Process.Pid))
-		if logMsh != nil {
-			return logMsh.AddTrace()
-		}
+	// resume ms process (either suspended or not)
+	servstats.Stats.Suspended, logMsh = opsys.ProcTreeResume(uint32(ServTerm.cmd.Process.Pid))
+	if logMsh != nil {
+		return logMsh.AddTrace()
 	}
 
 	// execute stop command
@@ -168,10 +168,8 @@ func executeMSStop() *errco.MshLog {
 		return logMsh.AddTrace()
 	}
 
-	// if sigint is allowed, launch a function to check the shutdown of minecraft server
-	if config.ConfigRuntime.Commands.StopServerAllowKill > 0 {
-		go killMSifOnlineAfterTimeout()
-	}
+	// launch a function to check the shutdown of minecraft server
+	go killMSifOnlineAfterTimeout()
 
 	return nil
 }
@@ -216,18 +214,25 @@ func FreezeMSRequest() {
 	)
 }
 
-// killMSifOnlineAfterTimeout waits for the specified time and then if the server is still online, kills the server process
+// killMSifOnlineAfterTimeout waits for the specified time and then
+// if the server is still online, kills the server process.
+//
+// if StopServerAllowKill is disabled this function does nothing.
 func killMSifOnlineAfterTimeout() {
 	var logMsh *errco.MshLog
 
+	// if StopServerAllowKill is disabled in config, do nothing
+	if config.ConfigRuntime.Commands.StopServerAllowKill <= 0 {
+		return
+	}
+
 	countdown := config.ConfigRuntime.Commands.StopServerAllowKill
 
-	// resume ms process if suspended
-	if servstats.Stats.Suspended {
-		servstats.Stats.Suspended, logMsh = opsys.ProcTreeResume(uint32(ServTerm.cmd.Process.Pid))
-		if logMsh != nil {
-			errco.Log(logMsh.AddTrace())
-		}
+	// resume ms process (either suspended or not)
+	// to be sure that ms is running to stop itself
+	servstats.Stats.Suspended, logMsh = opsys.ProcTreeResume(uint32(ServTerm.cmd.Process.Pid))
+	if logMsh != nil {
+		errco.Log(logMsh.AddTrace())
 	}
 
 	for countdown > 0 {

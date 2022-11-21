@@ -72,11 +72,12 @@ const (
 	ERROR_TERMINAL_NOT_ACTIVE      LogCod = 0x0000f000 // server terminal is not active
 	ERROR_TERMINAL_ALREADY_ACTIVE  LogCod = 0x0000f001 // server terminal is already active
 	ERROR_TERMINAL_START           LogCod = 0x0000f002 // error while starting server terminal
-	ERROR_SERVER_NOT_ONLINE        LogCod = 0x0000f100 // minecraft server is not online
-	ERROR_SERVER_NOT_EMPTY         LogCod = 0x0000f101 // minecraft server is not empty
-	ERROR_SERVER_MUST_WAIT         LogCod = 0x0000f102 // msh issued ms stop ahead of specified wait time
-	ERROR_SERVER_UNEXP_OUTPUT      LogCod = 0x0000f103 // minecraft server output does not adhere to expected log format
-	ERROR_SERVER_KILL              LogCod = 0x0000f104 // error while killing minecraft server process
+	ERROR_SERVER_STATUS_UNKNOWN    LogCod = 0x0000f100 // minecraft server status unknown
+	ERROR_SERVER_NOT_ONLINE        LogCod = 0x0000f101 // minecraft server is not online
+	ERROR_SERVER_NOT_EMPTY         LogCod = 0x0000f102 // minecraft server is not empty
+	ERROR_SERVER_MUST_WAIT         LogCod = 0x0000f103 // msh issued ms stop ahead of specified wait time
+	ERROR_SERVER_UNEXP_OUTPUT      LogCod = 0x0000f104 // minecraft server output does not adhere to expected log format
+	ERROR_SERVER_KILL              LogCod = 0x0000f105 // error while killing minecraft server process
 	ERROR_SERVER_IS_WARM           LogCod = 0x0000f106 // minecraft server is already warm
 	ERROR_SERVER_IS_FROZEN         LogCod = 0x0000f107 // minecraft server is already frozen
 	ERROR_SERVER_OFFLINE_SUSPENDED LogCod = 0x0000f108 // minecraft server is offline but not suspended
