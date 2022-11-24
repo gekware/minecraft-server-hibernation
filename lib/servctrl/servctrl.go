@@ -157,7 +157,7 @@ func FreezeMS(force bool) *errco.MshLog {
 
 // FreezeMSSchedule stops freeze timer and schedules a soft freeze of ms
 func FreezeMSSchedule() {
-	errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "rescheduling ms soft freeze in %d seconds", config.ConfigRuntime.Msh.TimeBeforeStoppingEmptyServer)
+	errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "scheduling ms soft freeze in %d seconds", config.ConfigRuntime.Msh.TimeBeforeStoppingEmptyServer)
 
 	// stop freeze timer so that it can be reset
 	// don't use drain channel procedure described in Stop() as it might happen
