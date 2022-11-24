@@ -219,8 +219,9 @@ func printerOutErr() {
 					servstats.Stats.Status = errco.SERVER_STATUS_ONLINE
 					errco.Logln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "MINECRAFT SERVER IS ONLINE!")
 
-					// launch a FreezeMSRequests so that if no players connect the server will shutdown
-					FreezeMSRequest()
+					// schedule soft freeze of ms
+					// (if no players connect the server will shutdown)
+					FreezeMSSchedule()
 				}
 
 			case errco.SERVER_STATUS_ONLINE:
@@ -266,7 +267,8 @@ func printerOutErr() {
 					case strings.Contains(lineContent, "lost connection"):
 						servstats.Stats.PlayerCount--
 						errco.Logln(errco.TYPE_INF, errco.LVL_2, errco.ERROR_NIL, "A PLAYER LEFT THE SERVER! - %d players online", servstats.Stats.PlayerCount)
-						FreezeMSRequest()
+						// schedule soft freeze of ms
+						FreezeMSSchedule()
 
 					// the server is stopping
 					case strings.Contains(lineContent, "Stopping") && strings.Contains(lineContent, "server"):

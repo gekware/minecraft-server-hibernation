@@ -9,27 +9,27 @@ import (
 
 // Stats contains the info relative to server
 var Stats *serverStats = &serverStats{
-	M:                &sync.Mutex{},
-	Status:           errco.SERVER_STATUS_OFFLINE,
-	Suspended:        false,
-	MajorError:       nil,
-	PlayerCount:      0,
-	FreezeMSRequests: 0,
-	LoadProgress:     "0%",
-	BytesToClients:   0,
-	BytesToServer:    0,
+	M:              &sync.Mutex{},
+	Status:         errco.SERVER_STATUS_OFFLINE,
+	Suspended:      false,
+	MajorError:     nil,
+	PlayerCount:    0,
+	FreezeTimer:    time.NewTimer(5 * time.Minute),
+	LoadProgress:   "0%",
+	BytesToClients: 0,
+	BytesToServer:  0,
 }
 
 type serverStats struct {
-	M                *sync.Mutex
-	Status           int           // represent the status of the minecraft server
-	Suspended        bool          // status of minecraft server process (if ms is offline, should be set to false)
-	MajorError       *errco.MshLog // if !nil the server is having some major problems
-	PlayerCount      int           // tracks players connected to the server
-	FreezeMSRequests int32         // tracks active FreezeMSRequest() instances. (int32 for atomic operations)
-	LoadProgress     string        // tracks loading percentage of starting server
-	BytesToClients   float64       // tracks bytes/s server->clients
-	BytesToServer    float64       // tracks bytes/s clients->server
+	M              *sync.Mutex
+	Status         int           // represent the status of the minecraft server
+	Suspended      bool          // status of minecraft server process (if ms is offline, should be set to false)
+	MajorError     *errco.MshLog // if !nil the server is having some major problems
+	PlayerCount    int           // tracks players connected to the server
+	FreezeTimer    *time.Timer   // timer to freeze minecraft server
+	LoadProgress   string        // tracks loading percentage of starting server
+	BytesToClients float64       // tracks bytes/s server->clients
+	BytesToServer  float64       // tracks bytes/s clients->server
 }
 
 func init() {
