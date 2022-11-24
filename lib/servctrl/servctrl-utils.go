@@ -17,26 +17,30 @@ import (
 )
 
 // countPlayerSafe returns the number of players on the server.
-// The /list command is used for safety and if it fails, internal player count is returned.
-// No error is returned: the integer is always meaningful
+//
+// players are retrived by (in order): server info, list command, internal player count.
+//
+// no error is returned: the return integer is always meaningful
 // (might be more or less reliable depending from where it retrieved).
-// The method used to count players is returned as second parameter.
-func countPlayerSafe() (int, string) {
+func countPlayerSafe() int {
+	var logMsh *errco.MshLog
+	var playerCount int
+	var method string
+
 	errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "retrieving player count...")
 
-	playerCount, logMsh := getPlayersByServInfo()
-	if logMsh == nil {
-		return playerCount, "server info"
+	if playerCount, logMsh = getPlayersByServInfo(); errco.Log(logMsh) == nil {
+		method = "list command"
+	} else if playerCount, logMsh = getPlayersByListCom(); errco.Log(logMsh) == nil {
+		method = "server info"
+	} else {
+		playerCount = servstats.Stats.PlayerCount
+		method = "internal"
 	}
-	errco.Log(logMsh.AddTrace())
 
-	playerCount, logMsh = getPlayersByListCom()
-	if logMsh == nil {
-		return playerCount, "list command"
-	}
-	errco.Log(logMsh.AddTrace())
+	errco.Logln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "%d online players - method for player count: %s", playerCount, method)
 
-	return servstats.Stats.PlayerCount, "internal"
+	return playerCount
 }
 
 // getPlayersByListCom returns the number of players using "list" command

@@ -25,9 +25,15 @@ func Logln(t LogTyp, l LogLvl, c LogCod, m string, a ...interface{}) {
 	Log(&MshLog{trace(), t, l, c, m, a})
 }
 
-func Log(log *MshLog) {
+func Log(log *MshLog) *MshLog {
+	// return if log is nil
+	if log == nil {
+		return log
+	}
+
+	// return if log level is not high enough
 	if log.Lvl > DebugLvl {
-		return
+		return log
 	}
 
 	// set log colors depending on log level
@@ -69,4 +75,6 @@ func Log(log *MshLog) {
 			fmt.Sprintf(log.Mex, log.Arg...),
 			fmt.Sprintf("[%08x]", log.Cod))
 	}
+
+	return log
 }

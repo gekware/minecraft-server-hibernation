@@ -58,9 +58,9 @@ func FreezeMS(force bool) *errco.MshLog {
 	var logMsh *errco.MshLog
 
 	if force {
-		errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "executing ms FORCE freeze...")
+		errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "executing ms force freeze...")
 	} else {
-		errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "executing ms SOFT freeze...")
+		errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "executing ms soft freeze...")
 	}
 
 	switch servstats.Stats.Status {
@@ -68,27 +68,26 @@ func FreezeMS(force bool) *errco.MshLog {
 	case errco.SERVER_STATUS_STARTING:
 		// ms is starting, resume the ms process, wait for status online and then freeze ms
 
-		// resume ms process (un/suspended)
-		if config.ConfigRuntime.Msh.AllowSuspend {
-			servstats.Stats.Suspended, logMsh = opsys.ProcTreeResume(uint32(ServTerm.cmd.Process.Pid))
+		if force {
+			// if forceful freeze, resume and stop ms
+			logMsh = ResumeStopMS()
 			if logMsh != nil {
 				return logMsh.AddTrace()
 			}
+		} else {
+			// schedule soft freeze of ms
+			// to give ms more time to start up
+			FreezeMSSchedule()
 		}
-
-		// schedule soft freeze of ms
-		// to give ms more time to start up
-		FreezeMSSchedule()
 
 		return nil
 
 	case errco.SERVER_STATUS_ONLINE:
 		// is ms is online, resume the process and then stop it
 
-		// if forceful, execute ms stop then return
 		if force {
-			// if forceful freeze, execute ms stop
-			logMsh = executeMSStop()
+			// if forceful freeze, resume and stop ms
+			logMsh = ResumeStopMS()
 			if logMsh != nil {
 				return logMsh.AddTrace()
 			}
@@ -96,9 +95,7 @@ func FreezeMS(force bool) *errco.MshLog {
 		}
 
 		// check how many players are on the server
-		playerCount, method := countPlayerSafe()
-		errco.Logln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "%d online players - method for player count: %s", playerCount, method)
-		if playerCount > 0 {
+		if countPlayerSafe() > 0 {
 			return errco.NewLog(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_SERVER_NOT_EMPTY, "server is not empty")
 		}
 
@@ -109,7 +106,8 @@ func FreezeMS(force bool) *errco.MshLog {
 				return logMsh.AddTrace()
 			}
 		} else {
-			logMsh = executeMSStop()
+			// resume and stop ms
+			logMsh = ResumeStopMS()
 			if logMsh != nil {
 				return logMsh.AddTrace()
 			}
@@ -180,9 +178,10 @@ func FreezeMSSchedule() {
 	)
 }
 
-// executeMSStop resumes ms process and executes a stop command in ms terminal.
+// ResumeStopMS resumes ms process and executes a stop command in ms terminal.
+//
 // should be called only when ms status is online
-func executeMSStop() *errco.MshLog {
+func ResumeStopMS() *errco.MshLog {
 	var logMsh *errco.MshLog
 
 	// resume ms process (un/suspended)
