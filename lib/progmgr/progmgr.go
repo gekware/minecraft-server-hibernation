@@ -11,6 +11,11 @@ import (
 	"msh/lib/servstats"
 )
 
+/*
+COMMIT COLLECTION
+- this is commit 700!
+*/
+
 var (
 	MshVersion string = "v2.4.8"  // msh version
 	MshCommit  string = "-------" // msh commit
