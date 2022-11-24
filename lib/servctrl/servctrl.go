@@ -163,7 +163,6 @@ func FreezeMS(force bool) *errco.MshLog {
 }
 
 // FreezeMSSchedule stops freeze timer and schedules a soft freeze of ms
-// [goroutine]
 func FreezeMSSchedule() {
 	errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "rescheduling ms soft freeze in %d seconds", config.ConfigRuntime.Msh.TimeBeforeStoppingEmptyServer)
 
