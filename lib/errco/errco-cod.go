@@ -80,8 +80,10 @@ const (
 	ERROR_SERVER_KILL              LogCod = 0x0000f105 // error while killing minecraft server process
 	ERROR_SERVER_IS_WARM           LogCod = 0x0000f106 // minecraft server is already warm
 	ERROR_SERVER_IS_FROZEN         LogCod = 0x0000f107 // minecraft server is already frozen
-	ERROR_SERVER_OFFLINE_SUSPENDED LogCod = 0x0000f108 // minecraft server is offline but not suspended
-	ERROR_SERVER_SUSPENDED         LogCod = 0x0000f109 // minecraft server is suspended
+	ERROR_SERVER_SUSPENDED         LogCod = 0x0000f108 // minecraft server is suspended
+	ERROR_SERVER_OFFLINE           LogCod = 0x0000f109 // minecraft server is offline
+	ERROR_SERVER_OFFLINE_SUSPENDED LogCod = 0x0000f110 // minecraft server is offline but not suspended
+	ERROR_SERVER_STOPPING          LogCod = 0x0000f111 // minecraft server is stopping
 	ERROR_PIPE_INPUT_WRITE         LogCod = 0x0000f200 // error while writing to terminal input
 	ERROR_PIPE_LOAD                LogCod = 0x0000f201 // error while loading pipe
 	ERROR_CONVERSION               LogCod = 0x0000f300 // error while converting variable
