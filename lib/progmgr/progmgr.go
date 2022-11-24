@@ -53,7 +53,7 @@ func MshMgr() {
 		// stop the minecraft server forcefully
 		logMsh := servctrl.FreezeMS(true)
 		if logMsh != nil {
-			errco.Log(logMsh.AddTrace())
+			logMsh.AddTrace().Log()
 		}
 
 		// send last statistics before exiting

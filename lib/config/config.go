@@ -91,7 +91,7 @@ func (c *Configuration) Save() *errco.MshLog {
 	// escape unicode characters ("\u003c" to "<" and "\u003e" to ">")
 	configData, logMsh := utility.UnicodeEscape(configData)
 	if logMsh != nil {
-		errco.Log(logMsh.AddTrace())
+		logMsh.AddTrace().Log()
 	}
 
 	// write to config file
@@ -142,7 +142,7 @@ func (c *Configuration) loadDefault() *errco.MshLog {
 	version, protocol, logMsh := c.getVersionInfo()
 	if logMsh != nil {
 		// just log it since ms version/protocol are not vital for the connection with clients
-		errco.Log(logMsh.AddTrace())
+		logMsh.AddTrace().Log()
 	} else if c.Server.Version != version || c.Server.Protocol != protocol {
 		c.Server.Version = version
 		c.Server.Protocol = protocol
@@ -203,7 +203,7 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 
 		logMsh := errco.NewLog(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_MINECRAFT_SERVER, "specified minecraft server folder/file does not exist: %s", serverFileFolderPath)
 		servstats.Stats.SetMajorError(logMsh)
-		errco.Log(logMsh)
+		logMsh.Log()
 
 	} else {
 		// server folder/executeble exist
@@ -230,7 +230,7 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 			if err != nil {
 				logMsh := errco.NewLog(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_MINECRAFT_SERVER, "couldn't start minecraft server to generate eula.txt (%s)", err.Error())
 				servstats.Stats.SetMajorError(logMsh)
-				errco.Log(logMsh)
+				logMsh.Log()
 			}
 			fallthrough
 
@@ -239,7 +239,7 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 
 			logMsh := errco.NewLog(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_MINECRAFT_SERVER, "please accept minecraft server eula.txt: %s", eulaFilePath)
 			servstats.Stats.SetMajorError(logMsh)
-			errco.Log(logMsh)
+			logMsh.Log()
 
 		default:
 			// eula.txt exists and is set to true
@@ -253,7 +253,7 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 	if err != nil {
 		logMsh := errco.NewLog(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_MINECRAFT_SERVER, "java not installed")
 		servstats.Stats.SetMajorError(logMsh)
-		errco.Log(logMsh)
+		logMsh.Log()
 	} else if out, err := exec.Command("java", "--version").Output(); err != nil {
 		// non blocking error
 		errco.Logln(errco.TYPE_WAR, errco.LVL_1, errco.ERROR_CONFIG_CHECK, "could not execute 'java -version' command")
@@ -267,7 +267,7 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 	if logMsh != nil {
 		logMsh.AddTrace()
 		servstats.Stats.SetMajorError(logMsh)
-		errco.Log(logMsh)
+		logMsh.Log()
 	} else {
 		errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "msh proxy setup: %s:%d --> %s:%d", ListenHost, ListenPort, TargetHost, TargetPort)
 	}
@@ -276,7 +276,7 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 	logMsh = c.loadIcon()
 	if logMsh != nil {
 		// log and continue (default icon is loaded by default)
-		errco.Log(logMsh.AddTrace())
+		logMsh.AddTrace().Log()
 	}
 
 	return nil

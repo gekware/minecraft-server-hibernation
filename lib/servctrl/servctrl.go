@@ -172,7 +172,7 @@ func FreezeMSSchedule() {
 			errco.Logln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "performing scheduled ms soft freeze")
 			logMsh := FreezeMS(false)
 			if logMsh != nil {
-				errco.Log(logMsh.AddTrace())
+				logMsh.AddTrace().Log()
 			}
 		},
 	)
@@ -223,7 +223,7 @@ func killMSifOnlineAfterTimeout() {
 	if config.ConfigRuntime.Msh.AllowSuspend {
 		servstats.Stats.Suspended, logMsh = opsys.ProcTreeResume(uint32(ServTerm.cmd.Process.Pid))
 		if logMsh != nil {
-			errco.Log(logMsh.AddTrace())
+			logMsh.AddTrace().Log()
 		}
 	}
 

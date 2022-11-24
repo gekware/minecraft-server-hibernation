@@ -22,59 +22,69 @@ const (
 )
 
 func Logln(t LogTyp, l LogLvl, c LogCod, m string, a ...interface{}) {
-	Log(&MshLog{trace(), t, l, c, m, a})
+	(&MshLog{trace(), t, l, c, m, a}).Log()
 }
 
-func Log(log *MshLog) *MshLog {
-	// return if log is nil
-	if log == nil {
-		return log
+// Log prints to terminal *MshLog.
+// returns the original log for convenience.
+func (logO *MshLog) Log() *MshLog {
+	// ------- operations on original log -------
+
+	// return original log if log is nil
+	if logO == nil {
+		return logO
 	}
 
-	// return if log level is not high enough
-	if log.Lvl > DebugLvl {
-		return log
+	// return original log if log level is not high enough
+	if logO.Lvl > DebugLvl {
+		return logO
 	}
 
-	// set log colors depending on log level
-	switch log.Lvl {
+	// make a copy of original log
+	logC := *logO
+
+	// -------- operations on copied log --------
+
+	// set logC colors depending on logC level
+	switch logC.Lvl {
 	case LVL_0:
 		// make important logs more visible
-		log.Mex = COLOR_CYAN + log.Mex + COLOR_RESET
+		logC.Mex = COLOR_CYAN + logC.Mex + COLOR_RESET
 	}
 
 	// set log colors depending on log type
 	var t string
-	switch log.Typ {
+	switch logC.Typ {
 	case TYPE_INF:
-		t = COLOR_BLUE + string(log.Typ) + COLOR_RESET
+		t = COLOR_BLUE + string(logC.Typ) + COLOR_RESET
 	case TYPE_SER:
-		t = COLOR_GRAY + string(log.Typ) + COLOR_RESET
-		log.Mex = COLOR_GRAY + log.Mex + "\x00" + COLOR_RESET
+		t = COLOR_GRAY + string(logC.Typ) + COLOR_RESET
+		logC.Mex = COLOR_GRAY + logC.Mex + "\x00" + COLOR_RESET
 	case TYPE_BYT:
-		t = COLOR_PURPLE + string(log.Typ) + COLOR_RESET
+		t = COLOR_PURPLE + string(logC.Typ) + COLOR_RESET
 	case TYPE_WAR:
-		t = COLOR_YELLOW + string(log.Typ) + COLOR_RESET
+		t = COLOR_YELLOW + string(logC.Typ) + COLOR_RESET
 	case TYPE_ERR:
-		t = COLOR_RED + string(log.Typ) + COLOR_RESET
+		t = COLOR_RED + string(logC.Typ) + COLOR_RESET
 	}
 
-	switch log.Typ {
+	switch logC.Typ {
 	case TYPE_INF, TYPE_SER, TYPE_BYT:
 		fmt.Printf("%s [%-16s %-4s] %s\n",
 			time.Now().Format("2006/01/02 15:04:05"),
 			t,
-			strings.Repeat("≡", 4-int(log.Lvl)),
-			fmt.Sprintf(log.Mex, log.Arg...))
+			strings.Repeat("≡", 4-int(logC.Lvl)),
+			fmt.Sprintf(logC.Mex, logC.Arg...))
 	case TYPE_WAR, TYPE_ERR:
 		fmt.Printf("%s [%-16s %-4s] %s %s %s\n",
 			time.Now().Format("2006/01/02 15:04:05"),
 			t,
-			strings.Repeat("≡", 4-int(log.Lvl)),
-			LogOri(COLOR_YELLOW)+log.Ori+":"+LogOri(COLOR_RESET),
-			fmt.Sprintf(log.Mex, log.Arg...),
-			fmt.Sprintf("[%08x]", log.Cod))
+			strings.Repeat("≡", 4-int(logC.Lvl)),
+			LogOri(COLOR_YELLOW)+logC.Ori+":"+LogOri(COLOR_RESET),
+			fmt.Sprintf(logC.Mex, logC.Arg...),
+			fmt.Sprintf("[%08x]", logC.Cod))
 	}
 
-	return log
+	// return original log
+	return logO
 }

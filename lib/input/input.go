@@ -59,19 +59,19 @@ func GetInput() {
 			case "start":
 				logMsh := servctrl.WarmMS()
 				if logMsh != nil {
-					errco.Log(logMsh.AddTrace())
+					logMsh.AddTrace().Log()
 				}
 			case "freeze":
 				// stop minecraft server forcefully
 				logMsh := servctrl.FreezeMS(true)
 				if logMsh != nil {
-					errco.Log(logMsh.AddTrace())
+					logMsh.AddTrace().Log()
 				}
 			case "exit":
 				// stop minecraft server forcefully
 				logMsh := servctrl.FreezeMS(true)
 				if logMsh != nil {
-					errco.Log(logMsh.AddTrace())
+					logMsh.AddTrace().Log()
 				}
 				// exit msh
 				errco.Logln(errco.TYPE_INF, errco.LVL_0, errco.ERROR_NIL, "issuing msh termination")
@@ -97,7 +97,7 @@ func GetInput() {
 			// pass the command to the minecraft server terminal
 			_, logMsh := servctrl.Execute(strings.Join(lineSplit[1:], " "), "user input")
 			if logMsh != nil {
-				errco.Log(logMsh.AddTrace())
+				logMsh.AddTrace().Log()
 			}
 
 		// wrong target
