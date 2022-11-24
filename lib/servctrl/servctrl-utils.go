@@ -22,7 +22,7 @@ import (
 // (might be more or less reliable depending from where it retrieved).
 // The method used to count players is returned as second parameter.
 func countPlayerSafe() (int, string) {
-	errco.Logln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "retrieving  player count...")
+	errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "retrieving player count...")
 
 	playerCount, logMsh := getPlayersByServInfo()
 	if logMsh == nil {

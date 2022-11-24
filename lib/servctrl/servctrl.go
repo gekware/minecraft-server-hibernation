@@ -171,7 +171,7 @@ func FreezeMSSchedule() {
 		time.Duration(config.ConfigRuntime.Msh.TimeBeforeStoppingEmptyServer)*time.Second,
 		func() {
 			// perform soft freeze of ms
-			errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "performing scheduled ms soft freeze")
+			errco.Logln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "performing scheduled ms soft freeze")
 			logMsh := FreezeMS(false)
 			if logMsh != nil {
 				errco.Log(logMsh.AddTrace())
