@@ -38,13 +38,10 @@ var lastOut = make(chan string)
 // a timeout is set to receive a new terminal output line after which Execute returns.
 // [non-blocking]
 func Execute(command, origin string) (string, *errco.MshLog) {
-	switch {
-	case !ServTerm.IsActive:
-		return "", errco.NewLog(errco.TYPE_ERR, errco.LVL_2, errco.ERROR_TERMINAL_NOT_ACTIVE, "terminal not active")
-	case servstats.Stats.Status != errco.SERVER_STATUS_ONLINE:
-		return "", errco.NewLog(errco.TYPE_ERR, errco.LVL_2, errco.ERROR_SERVER_NOT_ONLINE, "server not online")
-	case servstats.Stats.Suspended:
-		return "", errco.NewLog(errco.TYPE_ERR, errco.LVL_2, errco.ERROR_SERVER_SUSPENDED, "server is suspended")
+	// check if ms is running
+	logMsh := checkMSRunning()
+	if logMsh != nil {
+		return "", logMsh.AddTrace()
 	}
 
 	errco.Logln(errco.TYPE_INF, errco.LVL_2, errco.ERROR_NIL, "ms command: %s%s%s\t(origin: %s)", errco.COLOR_YELLOW, command, errco.COLOR_RESET, origin)
@@ -75,13 +72,10 @@ a:
 // TellRaw executes a tellraw on ms
 // [non-blocking]
 func TellRaw(reason, text, origin string) *errco.MshLog {
-	switch {
-	case !ServTerm.IsActive:
-		return errco.NewLog(errco.TYPE_ERR, errco.LVL_2, errco.ERROR_TERMINAL_NOT_ACTIVE, "terminal not active")
-	case servstats.Stats.Status != errco.SERVER_STATUS_ONLINE:
-		return errco.NewLog(errco.TYPE_ERR, errco.LVL_2, errco.ERROR_SERVER_NOT_ONLINE, "server not online")
-	case servstats.Stats.Suspended:
-		return errco.NewLog(errco.TYPE_ERR, errco.LVL_2, errco.ERROR_SERVER_SUSPENDED, "server is suspended")
+	// check if ms is running
+	logMsh := checkMSRunning()
+	if logMsh != nil {
+		return logMsh.AddTrace()
 	}
 
 	gameMessage, err := json.Marshal(&model.GameRawMessage{Text: "[MSH] " + reason + ": " + text, Color: "aqua", Bold: false})
@@ -111,6 +105,22 @@ func TermUpTime() int {
 	}
 
 	return utility.RoundSec(time.Since(ServTerm.startTime))
+}
+
+// checkMSRunning checks if minecraft server is running and it's possible to interact with it.
+//
+// checks if terminal is active, ms status is online and ms process not suspended.
+func checkMSRunning() *errco.MshLog {
+	switch {
+	case !ServTerm.IsActive:
+		return errco.NewLog(errco.TYPE_ERR, errco.LVL_2, errco.ERROR_TERMINAL_NOT_ACTIVE, "terminal not active")
+	case servstats.Stats.Status != errco.SERVER_STATUS_ONLINE:
+		return errco.NewLog(errco.TYPE_ERR, errco.LVL_2, errco.ERROR_SERVER_NOT_ONLINE, "server not online")
+	case servstats.Stats.Suspended:
+		return errco.NewLog(errco.TYPE_ERR, errco.LVL_2, errco.ERROR_SERVER_SUSPENDED, "server is suspended")
+	}
+
+	return nil
 }
 
 // termStart starts a new terminal.

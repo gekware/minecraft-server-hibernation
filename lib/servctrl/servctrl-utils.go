@@ -69,8 +69,10 @@ func getPlayersByServInfo() (int, *errco.MshLog) {
 
 // getServInfo returns server info after emulating a server info request to the minecraft server
 func getServInfo() (*model.DataInfo, *errco.MshLog) {
-	if servstats.Stats.Status != errco.SERVER_STATUS_ONLINE {
-		return &model.DataInfo{}, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_SERVER_NOT_ONLINE, "server not online")
+	// check if ms is running
+	logMsh := checkMSRunning()
+	if logMsh != nil {
+		return &model.DataInfo{}, logMsh.AddTrace()
 	}
 
 	// open connection to minecraft server
