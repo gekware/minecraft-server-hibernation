@@ -44,12 +44,12 @@ func StrBetween(str, a, b string) (string, *errco.MshLog) {
 
 	aIndex := strings.Index(str, a)
 	if aIndex == -1 {
-		return "", errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_ANALYSIS, fmt.Sprintf("first substring not found (%s)", b))
+		return "", errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_ANALYSIS, fmt.Sprintf("first substring not found (\"%s\")", b))
 	}
 
 	bIndex := strings.Index(str[aIndex+len(a):], b)
 	if bIndex == -1 {
-		return "", errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_ANALYSIS, fmt.Sprintf("second substring not found (%s)", b))
+		return "", errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_ANALYSIS, fmt.Sprintf("second substring not found (\"%s\")", b))
 	}
 
 	return str[aIndex+len(a):][:bIndex], nil
