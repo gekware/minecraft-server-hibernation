@@ -58,9 +58,9 @@ func FreezeMS(force bool) *errco.MshLog {
 	var logMsh *errco.MshLog
 
 	if force {
-		errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "executing minecraft server FORCE freeze...")
+		errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "executing ms FORCE freeze...")
 	} else {
-		errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "executing minecraft server SOFT freeze...")
+		errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "executing ms SOFT freeze...")
 	}
 
 	switch servstats.Stats.Status {
