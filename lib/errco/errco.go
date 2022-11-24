@@ -41,7 +41,7 @@ const (
 // When a function fails and returns msh log using NewLog, msh log type must be TYPE_ERR or TYPE_WAR.
 // Find bad usage with reg exp: `return (.*)NewLog\((.*)TYPE_(?!ERR|WAR)`
 func NewLog(t LogTyp, l LogLvl, c LogCod, m string, a ...interface{}) *MshLog {
-	logMsh := &MshLog{trace(), t, l, c, m, a}
+	logMsh := &MshLog{trace(2), t, l, c, m, a}
 	return logMsh
 }
 
@@ -52,7 +52,7 @@ func NewLog(t LogTyp, l LogLvl, c LogCod, m string, a ...interface{}) *MshLog {
 // the parent function should handle the logging of msh log struct
 // Find bad usage with reg exp: `return (.*)NewLogln\(`
 func NewLogln(t LogTyp, l LogLvl, c LogCod, m string, a ...interface{}) *MshLog {
-	logMsh := &MshLog{trace(), t, l, c, m, a}
+	logMsh := &MshLog{trace(2), t, l, c, m, a}
 	logMsh.Log()
 	return logMsh
 }
@@ -64,7 +64,7 @@ func NewLogln(t LogTyp, l LogLvl, c LogCod, m string, a ...interface{}) *MshLog 
 func (logO *MshLog) Log() *MshLog {
 	// ------- operations on original log -------
 
-	// return original log if log is nil
+	// return original log if it's nil
 	if logO == nil {
 		return logO
 	}
@@ -125,16 +125,23 @@ func (logO *MshLog) Log() *MshLog {
 
 // AddTrace adds the caller function to the msh log trace
 func (log *MshLog) AddTrace() *MshLog {
-	log.Ori = trace() + LogOri(": ") + log.Ori
+	// return original log if it's nil
+	if log == nil {
+		return log
+	}
+
+	log.Ori = trace(2) + LogOri(": ") + log.Ori
 	return log
 }
 
 // trace returns the function name the parent was called from
 //
-// aaa() -> NewLog() -> trace() = aaa
-func trace() LogOri {
-	o := "?"
-	if pc, _, _, ok := runtime.Caller(2); !ok { // 2: returns caller of caller
+// skip == 2: example() -> NewLog() -> trace()
+// result:	  example
+func trace(skip int) LogOri {
+	var o string = "?"
+
+	if pc, _, _, ok := runtime.Caller(skip); !ok {
 	} else if f := runtime.FuncForPC(pc); f == nil {
 	} else {
 		fn := f.Name()
