@@ -76,18 +76,11 @@ func FreezeMS(force bool) *errco.MshLog {
 			}
 		}
 
-		// wait for ms to go online
-		for servstats.Stats.Status == errco.SERVER_STATUS_STARTING {
-			time.Sleep(1 * time.Second)
-		}
+		// schedule soft freeze of ms
+		// to give ms more time to start up
+		FreezeMSSchedule()
 
-		// if ms is not online return
-		if servstats.Stats.Status != errco.SERVER_STATUS_ONLINE {
-			return errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_SERVER_NOT_ONLINE, "server is not online")
-		}
-
-		// now it's the case of the ms status online
-		fallthrough
+		return nil
 
 	case errco.SERVER_STATUS_ONLINE:
 		// is ms is online, resume the process and then stop it
@@ -167,9 +160,10 @@ func FreezeMSSchedule() {
 	errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "rescheduling ms soft freeze in %d seconds", config.ConfigRuntime.Msh.TimeBeforeStoppingEmptyServer)
 
 	// stop freeze timer so that it can be reset
-	if !servstats.Stats.FreezeTimer.Stop() {
-		<-servstats.Stats.FreezeTimer.C
-	}
+	// don't use drain channel procedure described in Stop() as it might happen
+	// that at this point a signal has already been received from t.C
+	// (calling a <-channel might be blocking)
+	_ = servstats.Stats.FreezeTimer.Stop()
 
 	// schedule soft freeze of ms in TimeBeforeStoppingEmptyServer seconds
 	// [goroutine]
