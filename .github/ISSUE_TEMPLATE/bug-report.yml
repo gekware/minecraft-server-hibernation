@@ -1,0 +1,82 @@
+name: "\U0001F41B Bug report"
+description: Something isn't working quite right in the software.
+labels: [bug-not-confirmed]
+body:
+- type: markdown
+  attributes:
+    value: |
+      Bug reports should only be used for reporting issues with how the software works. For assistance installing this software, as well as debugging issues with dependencies, please use our [Discord server](https://discord.gg/mBSnEypcYC).
+
+- type: textarea      
+  attributes:
+    label: Current Behavior (🐛 Bug)
+    description: Please provide a clear & concise description of the issue.
+  validations:
+    required: true
+
+- type: textarea      
+  attributes:
+    label: Expected Behavior
+    description: Please describe what you expected to happen.
+  validations:
+    required: true
+
+- type: textarea      
+  attributes:
+    label: Steps to Reproduce
+    description: Please be as detailed as possible when providing steps to reproduce, failure to provide steps will result in this issue being closed.
+  validations:
+    required: true
+    
+- type: textarea      
+  attributes:
+    label: MSH Logs
+    description: You can paste your console output or just upload a screenshot, please make sure the screenshot is not cutting off some lines.
+  validations:
+    required: false
+
+- type: input
+  id: MSH-Version
+  attributes:
+    label: MSH-Version
+    description: Version number of your MSH installation.
+    placeholder: 2.4.0
+  validations:
+    required: true
+
+- type: input
+  id: OS
+  attributes:
+    label: Operating system
+    description: Your OS (Operating system) where you installed MSH.
+    placeholder: Windows 10, Ubuntu 20.04
+  validations:
+    required: true
+
+- type: input
+  id: Minecraft-Version
+  attributes:
+    label: Minecraft Version
+    description: The version of Minecraft you are using.
+    placeholder: 1.16.2, 1.18.2
+  validations:
+    required: true
+
+- type: input
+  id: Minecraft-Server-Software
+  attributes:
+    label: Minecraft Server Software
+    description: The software you are using to run your Minecraft server.
+    placeholder: Vanilla, Spigot, Paper, etc.
+  validations:
+    required: true
+
+- type: checkboxes
+  attributes:
+    label: Is there an existing issue for this?
+    description: Please [search here](https://github.com/gekware/minecraft-server-hibernation/issues) to see if an issue already exists for your problem.
+    options:
+    - label: I have searched the existing issues before opening this issue.
+      required: true
+    - label: I have provided all relevant details.
+      required: true
