@@ -28,9 +28,9 @@ func init() {
 	stdout := windows.Handle(os.Stdout.Fd())
 	var originalMode uint32
 	if err := windows.GetConsoleMode(stdout, &originalMode); err != nil {
-		errco.Logln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_COLOR_ENABLE, "error while enabling colors on terminal")
+		errco.NewLogln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_COLOR_ENABLE, "error while enabling colors on terminal")
 	} else if windows.SetConsoleMode(stdout, originalMode|windows.ENABLE_VIRTUAL_TERMINAL_PROCESSING); err != nil {
-		errco.Logln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_COLOR_ENABLE, "error while enabling colors on terminal")
+		errco.NewLogln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_COLOR_ENABLE, "error while enabling colors on terminal")
 	}
 }
 
@@ -69,7 +69,7 @@ func procTreeSuspend(ppid uint32) *errco.MshLog {
 		return logMsh.AddTrace()
 	}
 
-	errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "tree pid is %v", treePid)
+	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "tree pid is %v", treePid)
 
 	// suspend all processes in tree
 	for _, pid := range treePid {
@@ -108,7 +108,7 @@ func procTreeResume(ppid uint32) *errco.MshLog {
 		return logMsh.AddTrace()
 	}
 
-	errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "tree pid is %v", treePid)
+	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "tree pid is %v", treePid)
 
 	// resume all processes in tree
 	for _, pid := range treePid {

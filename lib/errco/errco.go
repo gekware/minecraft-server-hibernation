@@ -21,10 +21,23 @@ type LogCod int
 
 // NewLog returns a new msh log object.
 //
-// When a function fails and returns using NewLog, msh log type must be TYPE_ERR or TYPE_WAR.
-// Find bad usage with reg exp: `return (.*)NewLog(.*)TYPE_(?!ERR|WAR)`
+// When a function fails and returns msh log using NewLog, msh log type must be TYPE_ERR or TYPE_WAR.
+// Find bad usage with reg exp: `return (.*)NewLog\((.*)TYPE_(?!ERR|WAR)`
 func NewLog(t LogTyp, l LogLvl, c LogCod, m string, a ...interface{}) *MshLog {
-	return &MshLog{trace(), t, l, c, m, a}
+	logMsh := &MshLog{trace(), t, l, c, m, a}
+	return logMsh
+}
+
+// NewLogln returns a new msh log object after printing it to terminal.
+//
+// When a function fails it should not return msh log using NewLogln.
+// There is the risk of printing 2 times the same error:
+// the parent function should handle the logging of *MshLog
+// Find bad usage with reg exp: `return (.*)NewLogln\(`
+func NewLogln(t LogTyp, l LogLvl, c LogCod, m string, a ...interface{}) *MshLog {
+	logMsh := &MshLog{trace(), t, l, c, m, a}
+	logMsh.Log()
+	return logMsh
 }
 
 // AddTrace adds the caller function to the msh log trace

@@ -21,12 +21,10 @@ const (
 	COLOR_CYAN   = "\033[0;36m"
 )
 
-func Logln(t LogTyp, l LogLvl, c LogCod, m string, a ...interface{}) {
-	(&MshLog{trace(), t, l, c, m, a}).Log()
-}
-
 // Log prints to terminal *MshLog.
+//
 // returns the original log for convenience.
+// returns nil if msh log struct is nil
 func (logO *MshLog) Log() *MshLog {
 	// ------- operations on original log -------
 

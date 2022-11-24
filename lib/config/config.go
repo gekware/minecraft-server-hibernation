@@ -43,7 +43,7 @@ type Configuration struct {
 func LoadConfig() *errco.MshLog {
 	// ---------------- OS support ----------------- //
 
-	errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "checking OS support...")
+	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "checking OS support...")
 
 	// check if OS is supported.
 	logMsh := opsys.OsSupported()
@@ -53,7 +53,7 @@ func LoadConfig() *errco.MshLog {
 
 	// ---------------- load config ---------------- //
 
-	errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "loading config...")
+	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "loading config...")
 
 	// load config default
 	logMsh = ConfigDefault.loadDefault()
@@ -100,7 +100,7 @@ func (c *Configuration) Save() *errco.MshLog {
 		return errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONFIG_SAVE, "could not write to config file")
 	}
 
-	errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "saved default config to config file")
+	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "saved default config to config file")
 
 	return nil
 }
@@ -115,7 +115,7 @@ func (c *Configuration) loadDefault() *errco.MshLog {
 
 	// read config file
 	configFilePath := filepath.Join(cwdPath, configFileName)
-	errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "reading config file: \"%s\"", configFilePath)
+	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "reading config file: \"%s\"", configFilePath)
 	configData, err := os.ReadFile(configFilePath)
 	if err != nil {
 		return errco.NewLog(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_CONFIG_LOAD, err.Error())
@@ -132,7 +132,7 @@ func (c *Configuration) loadDefault() *errco.MshLog {
 	// load mshid
 	mi := MshID()
 	if c.Configuration.Msh.ID != mi {
-		errco.Logln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_CONFIG_LOAD, "config msh id different from instance msh id, applying correction...")
+		errco.NewLogln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_CONFIG_LOAD, "config msh id different from instance msh id, applying correction...")
 		c.Configuration.Msh.ID = mi
 		configDefaultSave = true
 	}
@@ -178,7 +178,7 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 
 	// specify the usage when there is an error in the arguments
 	flag.Usage = func() {
-		// not using errco.Logln since log time is not needed
+		// not using errco.NewLogln since log time is not needed
 		fmt.Println("Usage of msh:")
 		flag.PrintDefaults()
 	}
@@ -191,7 +191,7 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 	c.Commands.StartServer = strings.ReplaceAll(c.Commands.StartServer, "<Commands.StartServerParam>", c.Commands.StartServerParam)
 
 	// after config variables are set, set debug level
-	errco.Logln(errco.TYPE_INF, errco.LVL_0, errco.ERROR_NIL, "setting log level to: %d", c.Msh.Debug)
+	errco.NewLogln(errco.TYPE_INF, errco.LVL_0, errco.ERROR_NIL, "setting log level to: %d", c.Msh.Debug)
 	errco.DebugLvl = errco.LogLvl(c.Msh.Debug)
 
 	// ------------------- setup ------------------- //
@@ -201,9 +201,8 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 	if _, err := os.Stat(serverFileFolderPath); os.IsNotExist(err) {
 		// server folder/executeble does not exist
 
-		logMsh := errco.NewLog(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_MINECRAFT_SERVER, "specified minecraft server folder/file does not exist: %s", serverFileFolderPath)
+		logMsh := errco.NewLogln(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_MINECRAFT_SERVER, "specified minecraft server folder/file does not exist: %s", serverFileFolderPath)
 		servstats.Stats.SetMajorError(logMsh)
-		logMsh.Log()
 
 	} else {
 		// server folder/executeble exist
@@ -215,10 +214,10 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 		case err != nil:
 			// eula.txt does not exist
 
-			errco.Logln(errco.TYPE_WAR, errco.LVL_1, errco.ERROR_CONFIG_CHECK, "could not read eula.txt file: %s", eulaFilePath)
+			errco.NewLogln(errco.TYPE_WAR, errco.LVL_1, errco.ERROR_CONFIG_CHECK, "could not read eula.txt file: %s", eulaFilePath)
 
 			// start server to generate eula.txt (and server.properties)
-			errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "starting minecraft server to generate eula.txt file...")
+			errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "starting minecraft server to generate eula.txt file...")
 			cSplit := strings.Split(c.Commands.StartServer, " ")
 			cmd := exec.Command(cSplit[0], cSplit[1:]...)
 			cmd.Dir = c.Server.Folder
@@ -228,35 +227,32 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 			err = cmd.Run()
 			fmt.Print(errco.COLOR_RESET) // reset color
 			if err != nil {
-				logMsh := errco.NewLog(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_MINECRAFT_SERVER, "couldn't start minecraft server to generate eula.txt (%s)", err.Error())
+				logMsh := errco.NewLogln(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_MINECRAFT_SERVER, "couldn't start minecraft server to generate eula.txt (%s)", err.Error())
 				servstats.Stats.SetMajorError(logMsh)
-				logMsh.Log()
 			}
 			fallthrough
 
 		case !strings.Contains(strings.ReplaceAll(strings.ToLower(string(eulaData)), " ", ""), "eula=true"):
 			// eula.txt exists but is not set to true
 
-			logMsh := errco.NewLog(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_MINECRAFT_SERVER, "please accept minecraft server eula.txt: %s", eulaFilePath)
+			logMsh := errco.NewLogln(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_MINECRAFT_SERVER, "please accept minecraft server eula.txt: %s", eulaFilePath)
 			servstats.Stats.SetMajorError(logMsh)
-			logMsh.Log()
 
 		default:
 			// eula.txt exists and is set to true
 
-			errco.Logln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "eula.txt exist and is set to true")
+			errco.NewLogln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "eula.txt exist and is set to true")
 		}
 	}
 
 	// check if java is installed and get java version
 	_, err := exec.LookPath("java")
 	if err != nil {
-		logMsh := errco.NewLog(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_MINECRAFT_SERVER, "java not installed")
+		logMsh := errco.NewLogln(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_MINECRAFT_SERVER, "java not installed")
 		servstats.Stats.SetMajorError(logMsh)
-		logMsh.Log()
 	} else if out, err := exec.Command("java", "--version").Output(); err != nil {
 		// non blocking error
-		errco.Logln(errco.TYPE_WAR, errco.LVL_1, errco.ERROR_CONFIG_CHECK, "could not execute 'java -version' command")
+		errco.NewLogln(errco.TYPE_WAR, errco.LVL_1, errco.ERROR_CONFIG_CHECK, "could not execute 'java -version' command")
 		Javav = "unknown"
 	} else {
 		Javav = strings.ReplaceAll(strings.Split(string(out), "\n")[0], "\r", "")
@@ -265,11 +261,10 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 	// initialize ip and ports for connection
 	logMsh := c.loadIpPorts()
 	if logMsh != nil {
-		logMsh.AddTrace()
+		logMsh.AddTrace().Log()
 		servstats.Stats.SetMajorError(logMsh)
-		logMsh.Log()
 	} else {
-		errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "msh proxy setup: %s:%d --> %s:%d", ListenHost, ListenPort, TargetHost, TargetPort)
+		errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "msh proxy setup: %s:%d --> %s:%d", ListenHost, ListenPort, TargetHost, TargetPort)
 	}
 
 	// load server icon

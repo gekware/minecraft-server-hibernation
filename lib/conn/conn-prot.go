@@ -57,7 +57,7 @@ func buildMessage(reqType int, message string) []byte {
 		dataTxtJSON, err := json.Marshal(messageStruct)
 		if err != nil {
 			// don't return error, just log a warning
-			errco.Logln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_JSON_MARSHAL, err.Error())
+			errco.NewLogln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_JSON_MARSHAL, err.Error())
 			return nil
 		}
 
@@ -84,7 +84,7 @@ func buildMessage(reqType int, message string) []byte {
 		dataInfJSON, err := json.Marshal(messageStruct)
 		if err != nil {
 			// don't return error, just log a warning
-			errco.Logln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_JSON_MARSHAL, err.Error())
+			errco.NewLogln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_JSON_MARSHAL, err.Error())
 			return nil
 		}
 
@@ -178,7 +178,7 @@ func getPing(clientSocket net.Conn) *errco.MshLog {
 	// answer ping
 	clientSocket.Write(pingData)
 
-	errco.Logln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%smsh --> client%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, pingData)
+	errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%smsh --> client%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, pingData)
 
 	return nil
 }
@@ -199,7 +199,7 @@ func getClientPacket(clientSocket net.Conn) ([]byte, *errco.MshLog) {
 		}
 	}
 
-	errco.Logln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%sclient --> msh%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, buf[:dataLen])
+	errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%sclient --> msh%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, buf[:dataLen])
 
 	return buf[:dataLen], nil
 }

@@ -32,7 +32,7 @@ func ProcTreeSuspend(ppid uint32) (bool, *errco.MshLog) {
 		return false, logMsh.AddTrace()
 	}
 
-	errco.Logln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "EXECUTED PROCESS TREE SUSPEND!")
+	errco.NewLogln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "EXECUTED PROCESS TREE SUSPEND!")
 
 	return true, nil
 }
@@ -45,7 +45,7 @@ func ProcTreeResume(ppid uint32) (bool, *errco.MshLog) {
 		return true, logMsh.AddTrace()
 	}
 
-	errco.Logln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "EXECUTED PROCESS TREE RESUME!")
+	errco.NewLogln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "EXECUTED PROCESS TREE RESUME!")
 
 	return false, nil
 }

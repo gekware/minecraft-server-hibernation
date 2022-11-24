@@ -26,7 +26,7 @@ func (c *Configuration) IsWhitelist(reqPacket []byte, clientAddress string) *err
 
 	// check if at least one whitelist type is enabled
 	if !c.Msh.WhitelistImport && len(c.Msh.Whitelist) == 0 {
-		errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "whitelist not enabled at all")
+		errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "whitelist not enabled at all")
 		return nil
 	}
 
@@ -38,16 +38,16 @@ func (c *Configuration) IsWhitelist(reqPacket []byte, clientAddress string) *err
 		// load minecraft server whitelist
 		// check elements of minecraft server whitelist against request packet
 		if data, err := os.ReadFile(filepath.Join(c.Server.Folder, "whitelist.json")); err != nil {
-			errco.Logln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_WHITELIST_CHECK, "whitelist.json file file can't be read")
+			errco.NewLogln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_WHITELIST_CHECK, "whitelist.json file file can't be read")
 		} else if err = json.Unmarshal(data, &wl); err != nil {
-			errco.Logln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_WHITELIST_CHECK, "whitelist.json file format error")
+			errco.NewLogln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_WHITELIST_CHECK, "whitelist.json file format error")
 		} else {
 			for _, e := range wl {
 				// nameLen contains [ lenght of name + name ] (to increase safety)
 				// omitted lenght of name:	"gekigek99 can be found both in "gekigek99" and "gekigek99-twin"
 				// with lenght of name:		"[9]gekigek99" can be found in "[9]gekigek99" and not in "[14]gekigek99-twin"
 				nameLen := append([]byte{byte(len(e.Name))}, []byte(e.Name)...)
-				errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "searching byte array for: %s (whitelist import enabled)", e.Name)
+				errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "searching byte array for: %s (whitelist import enabled)", e.Name)
 				if bytes.Contains(reqPacket, nameLen) {
 					foundMatch = true
 				}
@@ -56,13 +56,13 @@ func (c *Configuration) IsWhitelist(reqPacket []byte, clientAddress string) *err
 
 	} else {
 		// minecraft server whitelist import not enabled
-		errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "minecraft server whitelist import not enabled")
+		errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "minecraft server whitelist import not enabled")
 	}
 
 	// check whitelist from msh config
 	if len(c.Msh.Whitelist) > 0 {
 		// check client address against msh config whitelist
-		errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "searching whitelist for: %s", clientAddress)
+		errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "searching whitelist for: %s", clientAddress)
 		if utility.SliceContain(clientAddress, c.Msh.Whitelist) {
 			foundMatch = true
 		}
@@ -72,7 +72,7 @@ func (c *Configuration) IsWhitelist(reqPacket []byte, clientAddress string) *err
 			// wLen contains [ lenght of w + name ] (to increase safety)
 			// follows same explanation of nameLen
 			wLen := append([]byte{byte(len(w))}, []byte(w)...)
-			errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "searching byte array for: %s", w)
+			errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "searching byte array for: %s", w)
 			if bytes.Contains(reqPacket, wLen) {
 				foundMatch = true
 			}
@@ -80,11 +80,11 @@ func (c *Configuration) IsWhitelist(reqPacket []byte, clientAddress string) *err
 
 	} else {
 		// msh config whitelist not enabled
-		errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "msh config whitelist not enabled")
+		errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "msh config whitelist not enabled")
 	}
 
 	if foundMatch {
-		errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "whitelist ok!")
+		errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "whitelist ok!")
 		return nil
 	} else {
 		// no match found
@@ -114,7 +114,7 @@ func (c *Configuration) loadIcon() *errco.MshLog {
 		// open file
 		f, err := os.Open(uip)
 		if err != nil {
-			errco.Logln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_ICON_LOAD, err.Error())
+			errco.NewLogln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_ICON_LOAD, err.Error())
 			continue
 		}
 		defer f.Close()
@@ -124,7 +124,7 @@ func (c *Configuration) loadIcon() *errco.MshLog {
 		// using f *os.File directly in Decode(r io.Reader) results in f *os.File readable only once.
 		fdata, err := io.ReadAll(f)
 		if err != nil {
-			errco.Logln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_ICON_LOAD, err.Error())
+			errco.NewLogln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_ICON_LOAD, err.Error())
 			continue
 		}
 
@@ -133,19 +133,19 @@ func (c *Configuration) loadIcon() *errco.MshLog {
 		if img, err = png.Decode(bytes.NewReader(fdata)); err == nil {
 		} else if img, err = jpeg.Decode(bytes.NewReader(fdata)); err == nil {
 		} else {
-			errco.Logln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_ICON_LOAD, "data format invalid: %s (%s)", uip, err.Error())
+			errco.NewLogln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_ICON_LOAD, "data format invalid: %s (%s)", uip, err.Error())
 			continue
 		}
 
 		// scale image to 64x64
 		scaImg, d := utility.ScaleImg(img, image.Rect(0, 0, 64, 64))
-		errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "scaled %s to 64x64. (%v ms)", uip, d.Milliseconds())
+		errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "scaled %s to 64x64. (%v ms)", uip, d.Milliseconds())
 
 		// encode image to png
 		enc, buff := &png.Encoder{CompressionLevel: -3}, &bytes.Buffer{} // -3: best compression
 		err = enc.Encode(buff, scaImg)
 		if err != nil {
-			errco.Logln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_ICON_LOAD, err.Error())
+			errco.NewLogln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_ICON_LOAD, err.Error())
 			continue
 		}
 

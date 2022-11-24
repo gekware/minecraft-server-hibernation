@@ -28,10 +28,10 @@ func GetInput() {
 			if err == io.EOF {
 				// in case input goroutine returns abnormally while msh is running in terminal,
 				// the user must be notified with errco.LVL_1
-				errco.Logln(errco.TYPE_WAR, errco.LVL_1, errco.ERROR_INPUT_EOF, "stdin unavailable, exiting input goroutine")
+				errco.NewLogln(errco.TYPE_WAR, errco.LVL_1, errco.ERROR_INPUT_EOF, "stdin unavailable, exiting input goroutine")
 				return
 			}
-			errco.Logln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_INPUT_READ, err.Error())
+			errco.NewLogln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_INPUT_READ, err.Error())
 			continue
 		}
 
@@ -44,14 +44,14 @@ func GetInput() {
 		}
 		lineSplit := strings.Split(line, " ")
 
-		errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "user input: %s", lineSplit[:])
+		errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "user input: %s", lineSplit[:])
 
 		switch lineSplit[0] {
 		// target msh
 		case "msh":
 			// check that there is a command for the target
 			if len(lineSplit) < 2 {
-				errco.Logln(errco.TYPE_WAR, errco.LVL_0, errco.ERROR_COMMAND_INPUT, "specify msh command (start - freeze - exit)")
+				errco.NewLogln(errco.TYPE_WAR, errco.LVL_0, errco.ERROR_COMMAND_INPUT, "specify msh command (start - freeze - exit)")
 				continue
 			}
 
@@ -74,23 +74,23 @@ func GetInput() {
 					logMsh.AddTrace().Log()
 				}
 				// exit msh
-				errco.Logln(errco.TYPE_INF, errco.LVL_0, errco.ERROR_NIL, "issuing msh termination")
+				errco.NewLogln(errco.TYPE_INF, errco.LVL_0, errco.ERROR_NIL, "issuing msh termination")
 				progmgr.AutoTerminate()
 			default:
-				errco.Logln(errco.TYPE_WAR, errco.LVL_0, errco.ERROR_COMMAND_UNKNOWN, "unknown command (start - freeze - exit)")
+				errco.NewLogln(errco.TYPE_WAR, errco.LVL_0, errco.ERROR_COMMAND_UNKNOWN, "unknown command (start - freeze - exit)")
 			}
 
 		// taget minecraft server
 		case "mine":
 			// check that there is a command for the target
 			if len(lineSplit) < 2 {
-				errco.Logln(errco.TYPE_WAR, errco.LVL_0, errco.ERROR_COMMAND_INPUT, "specify mine command")
+				errco.NewLogln(errco.TYPE_WAR, errco.LVL_0, errco.ERROR_COMMAND_INPUT, "specify mine command")
 				continue
 			}
 
 			// check if server is online
 			if servstats.Stats.Status != errco.SERVER_STATUS_ONLINE {
-				errco.Logln(errco.TYPE_ERR, errco.LVL_0, errco.ERROR_SERVER_NOT_ONLINE, "minecraft server is not online (try \"msh start\")")
+				errco.NewLogln(errco.TYPE_ERR, errco.LVL_0, errco.ERROR_SERVER_NOT_ONLINE, "minecraft server is not online (try \"msh start\")")
 				continue
 			}
 
@@ -102,7 +102,7 @@ func GetInput() {
 
 		// wrong target
 		default:
-			errco.Logln(errco.TYPE_WAR, errco.LVL_0, errco.ERROR_COMMAND_INPUT, "specify the target application by adding \"msh\" or \"mine\" before the command.\nExample to get op: mine op <yourname>\nExample to freeze minecraft: msh freeze")
+			errco.NewLogln(errco.TYPE_WAR, errco.LVL_0, errco.ERROR_COMMAND_INPUT, "specify the target application by adding \"msh\" or \"mine\" before the command.\nExample to get op: mine op <yourname>\nExample to freeze minecraft: msh freeze")
 		}
 	}
 }

@@ -33,16 +33,16 @@ func MshID() string {
 	// if msh instance does not exist, generate a new one
 	_, err := os.Stat(instanceFile)
 	if errors.Is(err, os.ErrNotExist) {
-		errco.Logln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_CONFIG_MSHID, "msh instance file does not exist")
+		errco.NewLogln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_CONFIG_MSHID, "msh instance file does not exist")
 		return newMshInstance("")
 	}
 
-	errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "msh instance file exists")
+	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "msh instance file exists")
 
 	// read from file
 	instanceData, err := os.ReadFile(instanceFile)
 	if err != nil {
-		errco.Logln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_CONFIG_MSHID, "msh instance file can't be read")
+		errco.NewLogln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_CONFIG_MSHID, "msh instance file can't be read")
 		return newMshInstance("")
 	}
 
@@ -53,7 +53,7 @@ func MshID() string {
 	var iv *MshInstanceV = &MshInstanceV{}
 	err = json.Unmarshal(instanceData, iv)
 	if err != nil {
-		errco.Logln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_CONFIG_MSHID, "msh instance file does not contain version or not json formatted")
+		errco.NewLogln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_CONFIG_MSHID, "msh instance file does not contain version or not json formatted")
 		return newMshInstance("")
 	}
 
@@ -64,17 +64,17 @@ func MshID() string {
 		// unmarshal msh.instance file data into instance struct
 		err = json.Unmarshal(instanceData, i)
 		if err != nil {
-			errco.Logln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_CONFIG_MSHID, "msh instance file not json formatted")
+			errco.NewLogln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_CONFIG_MSHID, "msh instance file not json formatted")
 			return newMshInstance("")
 		}
 
 		// msh instance health check
 		if !i.okV0() {
-			errco.Logln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_CONFIG_MSHID, "msh instance loaded is corrupted")
+			errco.NewLogln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_CONFIG_MSHID, "msh instance loaded is corrupted")
 			return newMshInstance("")
 		}
 
-		errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "msh instance loaded is healthy")
+		errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "msh instance loaded is healthy")
 
 		return i.MshId
 		// when msh instance version is upgraded, above line will be replaced by:
@@ -82,7 +82,7 @@ func MshID() string {
 
 	default:
 		// msh instance version is unsupported, generate a new instance
-		errco.Logln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_CONFIG_MSHID, "msh instance loaded is unsupported")
+		errco.NewLogln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_CONFIG_MSHID, "msh instance loaded is unsupported")
 
 		return newMshInstance("")
 	}
@@ -92,7 +92,7 @@ func MshID() string {
 func newMshInstance(mshIDrecord string) string {
 	var i *MshInstanceV0 = &MshInstanceV0{}
 
-	errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "generating new msh instance")
+	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "generating new msh instance")
 
 	// touch instance file (to know in advance file id)
 	f, err := os.Create(instanceFile)
@@ -106,15 +106,15 @@ func newMshInstance(mshIDrecord string) string {
 	i.CFlag = CFLAG                           // set copy flag to CFLAG
 	i.MId, err = machineid.ProtectedID("msh") // get machine id
 	if err != nil {
-		errco.Logln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_CONFIG_MSHID, err.Error())
+		errco.NewLogln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_CONFIG_MSHID, err.Error())
 	}
 	i.HostName, err = os.Hostname() // get instance hostname
 	if err != nil {
-		errco.Logln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_CONFIG_MSHID, err.Error())
+		errco.NewLogln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_CONFIG_MSHID, err.Error())
 	}
 	i.FId, err = opsys.FileId(instanceFile) // get instance file id
 	if err != nil {
-		errco.Logln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_CONFIG_MSHID, err.Error())
+		errco.NewLogln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_CONFIG_MSHID, err.Error())
 	}
 	// try to use mshID old record
 	i.MshId = mshIDrecord
@@ -143,11 +143,11 @@ func newMshInstance(mshIDrecord string) string {
 
 	// instance health check at birth
 	if !i.okV0() {
-		errco.Logln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_CONFIG_MSHID, "generated msh instance is corrupted")
+		errco.NewLogln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_CONFIG_MSHID, "generated msh instance is corrupted")
 		return newMshInstance(mshIDrecord)
 	}
 
-	errco.Logln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "generated msh instance is healthy")
+	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "generated msh instance is healthy")
 
 	return i.MshId
 }
@@ -156,14 +156,14 @@ func newMshInstance(mshIDrecord string) string {
 func (i *MshInstanceV0) okV0() bool {
 	// check that instance exists
 	if i == nil {
-		errco.Logln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONFIG_MSHID, "msh instance struct not loaded")
+		errco.NewLogln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONFIG_MSHID, "msh instance struct not loaded")
 		return false
 	}
 
 	// check checksum
 	Checksum := i.calcCheckSumV0()
 	if i.CheckSum != Checksum {
-		errco.Logln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_CONFIG_MSHID,
+		errco.NewLogln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_CONFIG_MSHID,
 			"msh instance verification: wrong checksum"+"\n"+
 				"\tinst checksum "+i.CheckSum+"\n"+
 				"\tfile checksum "+Checksum)
@@ -173,10 +173,10 @@ func (i *MshInstanceV0) okV0() bool {
 	// check machine id
 	MId, err := machineid.ProtectedID("msh") // get machine id
 	if err != nil {
-		errco.Logln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONFIG_MSHID, err.Error())
+		errco.NewLogln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONFIG_MSHID, err.Error())
 	}
 	if i.MId != MId {
-		errco.Logln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_CONFIG_MSHID,
+		errco.NewLogln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_CONFIG_MSHID,
 			"msh instance verification: wrong machine id"+"\n"+
 				"\tinst checksum "+i.MId+"\n"+
 				"\tfile checksum "+MId)
@@ -186,10 +186,10 @@ func (i *MshInstanceV0) okV0() bool {
 	// check hostname
 	HostName, err := os.Hostname()
 	if err != nil {
-		errco.Logln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONFIG_MSHID, err.Error())
+		errco.NewLogln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONFIG_MSHID, err.Error())
 	}
 	if i.HostName != HostName {
-		errco.Logln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_CONFIG_MSHID,
+		errco.NewLogln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_CONFIG_MSHID,
 			"msh instance verification: wrong hostname"+"\n"+
 				"\tinst checksum "+i.HostName+"\n"+
 				"\tfile checksum "+HostName)
@@ -199,10 +199,10 @@ func (i *MshInstanceV0) okV0() bool {
 	// check file id
 	FId, err := opsys.FileId(instanceFile)
 	if err != nil {
-		errco.Logln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONFIG_MSHID, err.Error())
+		errco.NewLogln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONFIG_MSHID, err.Error())
 	}
 	if i.FId != FId {
-		errco.Logln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_CONFIG_MSHID,
+		errco.NewLogln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_CONFIG_MSHID,
 			"msh instance verification: wrong file id"+"\n"+
 				"\tinst checksum "+strconv.FormatUint(i.FId, 10)+"\n"+
 				"\tfile checksum "+strconv.FormatUint(FId, 10))
