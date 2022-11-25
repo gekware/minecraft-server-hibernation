@@ -32,7 +32,7 @@ func main() {
 	// load configuration from msh config file
 	logMsh := config.LoadConfig()
 	if logMsh != nil {
-		logMsh.AddTrace().Log()
+		logMsh.Log(true)
 		progmgr.AutoTerminate()
 	}
 
@@ -49,7 +49,7 @@ func main() {
 		errco.NewLogln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "minecraft server will now pre-warm (AllowSuspend is enabled)...")
 		logMsh = servctrl.WarmMS()
 		if logMsh != nil {
-			logMsh.AddTrace().Log()
+			logMsh.Log(true)
 		}
 	}
 

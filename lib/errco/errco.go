@@ -40,6 +40,10 @@ const (
 //
 // When a function fails and returns msh log using NewLog, msh log type must be TYPE_ERR or TYPE_WAR.
 // Find bad usage with reg exp: `return (.*)NewLog\((.*)TYPE_(?!ERR|WAR)`
+//
+// To create a msh log and print it immediately you must use NewLogln()
+// If you really want to use NewLog(), use NewLog().Log(false)
+// Find bad usage with reg exp: `NewLog\((.*)\).Log\(true`
 func NewLog(t LogTyp, l LogLvl, c LogCod, m string, a ...interface{}) *MshLog {
 	logMsh := &MshLog{trace(2), t, l, c, m, a}
 	return logMsh
@@ -47,21 +51,28 @@ func NewLog(t LogTyp, l LogLvl, c LogCod, m string, a ...interface{}) *MshLog {
 
 // NewLogln prints to terminal msh log struct and returns a new msh log struct.
 //
-// When a function fails it should not return msh log using NewLogln.
-// There is the risk of printing 2 times the same error:
+// When a function fails it should not return a msh log struct using NewLogln
+// (there is the risk of printing 2 times the same msh log)
 // the parent function should handle the logging of msh log struct
 // Find bad usage with reg exp: `return (.*)NewLogln\(`
 func NewLogln(t LogTyp, l LogLvl, c LogCod, m string, a ...interface{}) *MshLog {
 	logMsh := &MshLog{trace(2), t, l, c, m, a}
-	logMsh.Log()
+	// trace was just set, no need to set it again
+	// it would also be wrong:
+	// 1) example()               -> Log() -> trace(2) : example
+	// 2) example() -> NewLogln() -> trace(2)          : example
+	//                            \> Log() -> trace(2) : NewLogln (!)
+	logMsh.Log(false)
 	return logMsh
 }
 
 // Log prints to terminal msh log struct.
 //
+// if tracing is set to true, Log() will add the caller function to the msh log trace
+//
 // returns the original log for convenience.
-// returns nil if msh log struct is nil
-func (log *MshLog) Log() *MshLog {
+// returns nil if msh log struct is nil.
+func (log *MshLog) Log(tracing bool) *MshLog {
 	// return original log if it's nil
 	if log == nil {
 		return log
@@ -69,16 +80,9 @@ func (log *MshLog) Log() *MshLog {
 
 	// ------- operations on original log -------
 
-	// add trace if Log() was not called by NewLogln()
-	// 1) example()               -> Log() -> trace(2) : example
-	// 2) example() -> NewLogln() -> trace(2)          : example
-	//                            \> Log() -> trace(2) : NewLogln (!)
-	// example 2:
-	// - trace(2) from Log() results in "NewLogln",
-	// - trace(3) from Log() results in "example" (but it's wrong as NewLogln() already set the correct trace)
-	pc := trace(2)
-	if pc != LogOri("NewLogln") {
-		log.Ori = pc + LogOri(": ") + log.Ori
+	// add trace if requested
+	if tracing {
+		log.Ori = trace(2) + LogOri(": ") + log.Ori
 	}
 
 	// return original log if log level is not high enough

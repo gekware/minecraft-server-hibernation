@@ -91,7 +91,7 @@ func (c *Configuration) Save() *errco.MshLog {
 	// escape unicode characters ("\u003c" to "<" and "\u003e" to ">")
 	configData, logMsh := utility.UnicodeEscape(configData)
 	if logMsh != nil {
-		logMsh.Log()
+		logMsh.Log(true)
 	}
 
 	// write to config file
@@ -142,7 +142,7 @@ func (c *Configuration) loadDefault() *errco.MshLog {
 	version, protocol, logMsh := c.getVersionInfo()
 	if logMsh != nil {
 		// just log it since ms version/protocol are not vital for the connection with clients
-		logMsh.Log()
+		logMsh.Log(true)
 	} else if c.Server.Version != version || c.Server.Protocol != protocol {
 		c.Server.Version = version
 		c.Server.Protocol = protocol
@@ -261,7 +261,7 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 	// initialize ip and ports for connection
 	logMsh := c.loadIpPorts()
 	if logMsh != nil {
-		logMsh.Log()
+		logMsh.Log(true)
 		servstats.Stats.SetMajorError(logMsh)
 	} else {
 		errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "msh proxy setup: %s:%d --> %s:%d", ListenHost, ListenPort, TargetHost, TargetPort)
@@ -271,7 +271,7 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 	logMsh = c.loadIcon()
 	if logMsh != nil {
 		// log and continue (default icon is loaded by default)
-		logMsh.Log()
+		logMsh.Log(true)
 	}
 
 	return nil

@@ -23,7 +23,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 
 	reqPacket, reqType, logMsh := getReqType(clientSocket)
 	if logMsh != nil {
-		logMsh.Log()
+		logMsh.Log(true)
 		return
 	}
 
@@ -46,7 +46,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 			// answer to client ping
 			logMsh = getPing(clientSocket)
 			if logMsh != nil {
-				logMsh.Log()
+				logMsh.Log(true)
 			}
 		case errco.CLIENT_REQ_JOIN:
 			// log to msh console and answer to client with error
@@ -91,7 +91,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 			// answer to client ping
 			logMsh := getPing(clientSocket)
 			if logMsh != nil {
-				logMsh.Log()
+				logMsh.Log(true)
 				return
 			}
 
@@ -118,7 +118,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 			logMsh := config.ConfigRuntime.IsWhitelist(reqPacket, clientAddress)
 			if logMsh != nil {
 				// warn client with text in the loadscreen
-				logMsh.Log()
+				logMsh.Log(true)
 				mes := buildMessage(reqType, "You don't have permission to warm this server")
 				clientSocket.Write(mes)
 				errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%smsh --> client%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
@@ -129,7 +129,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 			logMsh = servctrl.WarmMS()
 			if logMsh != nil {
 				// warn client with text in the loadscreen
-				logMsh.Log()
+				logMsh.Log(true)
 				mes := buildMessage(reqType, "An error occurred while warming the server: check the msh log")
 				clientSocket.Write(mes)
 				errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%smsh --> client%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
@@ -148,7 +148,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 			logMsh = servctrl.WarmMS()
 			if logMsh != nil {
 				// warn client with text in the loadscreen
-				logMsh.Log()
+				logMsh.Log(true)
 				mes := buildMessage(errco.MESSAGE_FORMAT_TXT, "An error occurred while warming the server: check the msh log")
 				clientSocket.Write(mes)
 				errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%smsh --> client%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)

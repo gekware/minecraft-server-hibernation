@@ -29,9 +29,9 @@ func countPlayerSafe() int {
 
 	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "retrieving player count...")
 
-	if playerCount, logMsh = getPlayersByServInfo(); logMsh.Log() == nil {
+	if playerCount, logMsh = getPlayersByServInfo(); logMsh.Log(true) == nil {
 		method = "list command"
-	} else if playerCount, logMsh = getPlayersByListCom(); logMsh.Log() == nil {
+	} else if playerCount, logMsh = getPlayersByListCom(); logMsh.Log(true) == nil {
 		method = "server info"
 	} else {
 		playerCount = servstats.Stats.PlayerCount

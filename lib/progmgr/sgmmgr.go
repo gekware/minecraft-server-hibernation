@@ -92,7 +92,7 @@ func sgmMgr() {
 			if sgm.push.verCheck != "" && servstats.Stats.PlayerCount > 0 {
 				logMsh := servctrl.TellRaw("manager", sgm.push.verCheck, "sgmMgr")
 				if logMsh != nil {
-					logMsh.Log()
+					logMsh.Log(true)
 				}
 			}
 
@@ -100,7 +100,7 @@ func sgmMgr() {
 				for _, m := range sgm.push.messages {
 					logMsh := servctrl.TellRaw("message", m, "sgmMgr")
 					if logMsh != nil {
-						logMsh.Log()
+						logMsh.Log(true)
 					}
 				}
 			}
@@ -110,7 +110,7 @@ func sgmMgr() {
 			// send request
 			res, logMsh := sendApi2Req(updAddr, buildApi2Req(false))
 			if logMsh != nil {
-				logMsh.Log()
+				logMsh.Log(true)
 				sgm.prolong(10 * time.Minute)
 				break mainselect
 			}
@@ -132,7 +132,7 @@ func sgmMgr() {
 			// get server response into struct
 			resJson, logMsh := readApi2Res(res)
 			if logMsh != nil {
-				logMsh.Log()
+				logMsh.Log(true)
 				break mainselect
 			}
 
