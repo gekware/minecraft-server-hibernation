@@ -61,66 +61,78 @@ func NewLogln(t LogTyp, l LogLvl, c LogCod, m string, a ...interface{}) *MshLog 
 //
 // returns the original log for convenience.
 // returns nil if msh log struct is nil
-func (logO *MshLog) Log() *MshLog {
+func (log *MshLog) Log() *MshLog {
+	// return original log if it's nil
+	if log == nil {
+		return log
+	}
+
 	// ------- operations on original log -------
 
-	// return original log if it's nil
-	if logO == nil {
-		return logO
+	// add trace if Log() was not called by NewLogln()
+	// 1) example()               -> Log() -> trace(2) : example
+	// 2) example() -> NewLogln() -> trace(2)          : example
+	//                            \> Log() -> trace(2) : NewLogln (!)
+	// example 2:
+	// - trace(2) from Log() results in "NewLogln",
+	// - trace(3) from Log() results in "example" (but it's wrong as NewLogln() already set the correct trace)
+	pc := trace(2)
+	if pc != LogOri("NewLogln") {
+		log.Ori = pc + LogOri(": ") + log.Ori
 	}
 
 	// return original log if log level is not high enough
-	if logO.Lvl > DebugLvl {
-		return logO
+	if log.Lvl > DebugLvl {
+		return log
 	}
 
 	// make a copy of original log
-	logC := *logO
+	logMod := *log
 
 	// -------- operations on copied log --------
 
 	// set logC colors depending on logC level
-	switch logC.Lvl {
+	switch logMod.Lvl {
 	case LVL_0:
 		// make important logs more visible
-		logC.Mex = COLOR_CYAN + logC.Mex + COLOR_RESET
+		logMod.Mex = COLOR_CYAN + logMod.Mex + COLOR_RESET
 	}
 
 	// set log colors depending on log type
 	var t string
-	switch logC.Typ {
+	switch logMod.Typ {
 	case TYPE_INF:
-		t = COLOR_BLUE + string(logC.Typ) + COLOR_RESET
+		t = COLOR_BLUE + string(logMod.Typ) + COLOR_RESET
 	case TYPE_SER:
-		t = COLOR_GRAY + string(logC.Typ) + COLOR_RESET
-		logC.Mex = COLOR_GRAY + logC.Mex + "\x00" + COLOR_RESET
+		t = COLOR_GRAY + string(logMod.Typ) + COLOR_RESET
+		logMod.Mex = COLOR_GRAY + logMod.Mex + "\x00" + COLOR_RESET
 	case TYPE_BYT:
-		t = COLOR_PURPLE + string(logC.Typ) + COLOR_RESET
+		t = COLOR_PURPLE + string(logMod.Typ) + COLOR_RESET
 	case TYPE_WAR:
-		t = COLOR_YELLOW + string(logC.Typ) + COLOR_RESET
+		t = COLOR_YELLOW + string(logMod.Typ) + COLOR_RESET
 	case TYPE_ERR:
-		t = COLOR_RED + string(logC.Typ) + COLOR_RESET
+		t = COLOR_RED + string(logMod.Typ) + COLOR_RESET
 	}
 
-	switch logC.Typ {
+	switch logMod.Typ {
 	case TYPE_INF, TYPE_SER, TYPE_BYT:
 		fmt.Printf("%s [%-16s %-4s] %s\n",
 			time.Now().Format("2006/01/02 15:04:05"),
 			t,
-			strings.Repeat("≡", 4-int(logC.Lvl)),
-			fmt.Sprintf(logC.Mex, logC.Arg...))
+			strings.Repeat("≡", 4-int(logMod.Lvl)),
+			fmt.Sprintf(logMod.Mex, logMod.Arg...))
 	case TYPE_WAR, TYPE_ERR:
 		fmt.Printf("%s [%-16s %-4s] %s %s %s\n",
 			time.Now().Format("2006/01/02 15:04:05"),
 			t,
-			strings.Repeat("≡", 4-int(logC.Lvl)),
-			LogOri(COLOR_YELLOW)+logC.Ori+":"+LogOri(COLOR_RESET),
-			fmt.Sprintf(logC.Mex, logC.Arg...),
-			fmt.Sprintf("[%08x]", logC.Cod))
+			strings.Repeat("≡", 4-int(logMod.Lvl)),
+			LogOri(COLOR_YELLOW)+logMod.Ori+":"+LogOri(COLOR_RESET),
+			fmt.Sprintf(logMod.Mex, logMod.Arg...),
+			fmt.Sprintf("[%08x]", logMod.Cod))
 	}
 
 	// return original log
-	return logO
+	return log
 }
 
 // AddTrace adds the caller function to the msh log trace
@@ -131,12 +143,14 @@ func (log *MshLog) AddTrace() *MshLog {
 	}
 
 	log.Ori = trace(2) + LogOri(": ") + log.Ori
+
 	return log
 }
 
 // trace returns the function name the parent was called from
 //
 // skip == 2: example() -> NewLog() -> trace()
+//
 // result:	  example
 func trace(skip int) LogOri {
 	var o string = "?"
