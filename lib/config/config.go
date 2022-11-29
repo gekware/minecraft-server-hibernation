@@ -164,9 +164,12 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 	flag.StringVar(&c.Server.Version, "version", c.Server.Version, "Specify minecraft server version.")
 	flag.IntVar(&c.Server.Protocol, "protocol", c.Server.Protocol, "Specify minecraft server protocol.")
 
+	// c.Commands.StartServer should not be set by a flag
 	flag.StringVar(&c.Commands.StartServerParam, "msparam", c.Commands.StartServerParam, "Specify start server parameters.")
+	// c.Commands.StopServer should not be set by a flag
 	flag.IntVar(&c.Commands.StopServerAllowKill, "allowkill", c.Commands.StopServerAllowKill, "Specify after how many seconds the server should be killed (if stop command fails).")
 
+	// c.Msh.ID should not be set by a flag
 	flag.IntVar(&c.Msh.Debug, "d", c.Msh.Debug, "Specify debug level.")
 	flag.BoolVar(&c.Msh.AllowSuspend, "allowsuspend", c.Msh.AllowSuspend, "Specify if minecraft server process can be suspended.")
 	flag.StringVar(&c.Msh.InfoHibernation, "infohibe", c.Msh.InfoHibernation, "Specify hibernation info.")
@@ -175,6 +178,8 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 	flag.BoolVar(&c.Msh.NotifyMessage, "notifymes", c.Msh.NotifyMessage, "Specify if message notifications are allowed.")
 	flag.IntVar(&c.Msh.ListenPort, "port", c.Msh.ListenPort, "Specify msh port.")
 	flag.Int64Var(&c.Msh.TimeBeforeStoppingEmptyServer, "timeout", c.Msh.TimeBeforeStoppingEmptyServer, "Specify time to wait before stopping minecraft server.")
+	// c.Msh.Whitelist (type []string, not worth to make it a flag)
+	flag.BoolVar(&c.Msh.WhitelistImport, "wlimport", c.Msh.WhitelistImport, "Specify is minecraft server whitelist should be imported")
 
 	// specify the usage when there is an error in the arguments
 	flag.Usage = func() {
