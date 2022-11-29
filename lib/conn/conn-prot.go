@@ -152,7 +152,8 @@ func getReqType(clientSocket net.Conn) ([]byte, int, *errco.MshLog) {
 	}
 }
 
-// getPing responds to the ping request
+// getPing performs msh PING response to the client PING request
+// (must be performed after msh INFO response)
 func getPing(clientSocket net.Conn) *errco.MshLog {
 	// read the first packet
 	pingData, logMsh := getClientPacket(clientSocket)
