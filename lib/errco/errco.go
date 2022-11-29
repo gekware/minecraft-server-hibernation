@@ -132,7 +132,7 @@ func (log *MshLog) Log(tracing bool) *MshLog {
 			strings.Repeat("≡", 4-int(logMod.Lvl)),
 			LogOri(COLOR_YELLOW)+logMod.Ori+":"+LogOri(COLOR_RESET),
 			fmt.Sprintf(logMod.Mex, logMod.Arg...),
-			fmt.Sprintf("[%08x]", logMod.Cod))
+			fmt.Sprintf("[%06x]", logMod.Cod))
 	}
 
 	// return original log
