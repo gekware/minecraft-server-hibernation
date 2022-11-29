@@ -85,6 +85,7 @@ const (
 	ERROR_SERVER_OFFLINE           LogCod = 0x00f208 // minecraft server is offline
 	ERROR_SERVER_OFFLINE_SUSPENDED LogCod = 0x00f209 // minecraft server is offline but not suspended
 	ERROR_SERVER_STOPPING          LogCod = 0x00f20a // minecraft server is stopping
+	ERROR_SERVER_UNRESPONDING      LogCod = 0x00f20b // minecraft server is not responding
 	ERROR_PIPE_INPUT_WRITE         LogCod = 0x00f300 // terminal input writing error
 	ERROR_PIPE_LOAD                LogCod = 0x00f301 // terminal pipe load error
 	ERROR_CONVERSION               LogCod = 0x00f400 // variable conversion error

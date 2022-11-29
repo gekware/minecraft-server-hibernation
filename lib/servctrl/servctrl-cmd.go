@@ -286,6 +286,19 @@ func printerOutErr() {
 						errco.NewLogln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "MINECRAFT SERVER IS STOPPING!")
 					}
 				}
+
+				if strings.Contains(lineHeader, "ERROR") {
+					switch {
+					case strings.Contains(lineContent, "stopped responding!") || strings.Contains(lineContent, "----------"):
+						// example:
+						// PROCESS TREE UNSUSPEDED!
+						// [18:49:08 WARN]: Can't keep up! Is the server overloaded? Running 121938ms or 2438 ticks behind
+						// [18:49:08 ERROR]: ------------------------------
+						// [18:49:08 ERROR]: The server has stopped responding! This is (probably) not a Paper bug.
+						LogMsh := errco.NewLogln(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_SERVER_UNRESPONDING, "MINECRAFT SERVER IS NOT RESPONDING!")
+						servstats.Stats.SetMajorError(LogMsh)
+					}
+				}
 			}
 		}
 	}()
