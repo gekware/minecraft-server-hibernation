@@ -131,6 +131,8 @@ const (
 	ERROR_PROCESS_SYSTEM_SNAPSHOT LogCod = 0x04f300 // error while building system processes snapshot
 	ERROR_PROCESS_ENTRY           LogCod = 0x04f301 // error while setting first process entry in snapshot
 	ERROR_PROCESS_NOT_FOUND       LogCod = 0x04f400 // error process pid was not found
+	ERROR_PROCESS_LIST            LogCod = 0x04f401 // error processes running not found
+	ERROR_PROCESS_KILL            LogCod = 0x04f402 // error process kill
 
 	// utility package
 

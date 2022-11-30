@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"unsafe"
 
+	"github.com/shirou/gopsutil/process"
 	"golang.org/x/sys/windows"
 
 	"msh/lib/errco"
@@ -69,7 +70,7 @@ func procTreeSuspend(ppid uint32) *errco.MshLog {
 		return logMsh.AddTrace()
 	}
 
-	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "tree pid is %v", treePid)
+	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "suspending proc tree [pid: %v]", treePid)
 
 	// suspend all processes in tree
 	for _, pid := range treePid {
@@ -108,13 +109,41 @@ func procTreeResume(ppid uint32) *errco.MshLog {
 		return logMsh.AddTrace()
 	}
 
-	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "tree pid is %v", treePid)
+	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "resuming proc tree [pid: %v]", treePid)
 
 	// resume all processes in tree
 	for _, pid := range treePid {
 		logMsh := resumeProc(pid)
 		if logMsh != nil {
 			return logMsh.AddTrace()
+		}
+	}
+
+	return nil
+}
+
+func procTreeKill(ppid uint32) *errco.MshLog {
+	// get process tree
+	treePid, logMsh := getTreePids(ppid)
+	if logMsh != nil {
+		return logMsh.AddTrace()
+	}
+
+	// get slice of running processes
+	processes, err := process.Processes()
+	if err != nil {
+		return errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_PROCESS_LIST, "could't get processes slice (%s)", err.Error())
+	}
+
+	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "killing proc tree [pid: %v]", treePid)
+
+	// kill processes that are in process tree
+	for _, p := range processes {
+		if utility.SliceContain(uint32(p.Pid), treePid) {
+			err = p.Kill()
+			if err != nil {
+				errco.NewLogln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_PROCESS_KILL, "could't kill process with pid %d (%s)", p.Pid, err.Error())
+			}
 		}
 	}
 
@@ -191,6 +220,7 @@ func getTreePids(rootPid uint32) ([]uint32, *errco.MshLog) {
 	}
 }
 
+// fileId returns
 func fileId(filePath string) (uint64, error) {
 	// https://github.com/hymkor/go-windows-fileid/blob/master/main_windows.go
 	f, err := windows.UTF16PtrFromString(filePath)

@@ -246,8 +246,8 @@ func killMSifOnlineAfterTimeout() {
 
 	// send kill signal to server
 	errco.NewLogln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_SERVER_KILL, "minecraft server process won't stop normally: sending kill signal")
-	err := ServTerm.cmd.Process.Kill()
-	if err != nil {
-		errco.NewLogln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_SERVER_KILL, err.Error())
+	LogMsh := opsys.ProcTreeKill(uint32(ServTerm.cmd.Process.Pid))
+	if LogMsh != nil {
+		LogMsh.Log(true)
 	}
 }

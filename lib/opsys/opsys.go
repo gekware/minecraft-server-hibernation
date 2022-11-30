@@ -25,7 +25,7 @@ func NewProcGroupAttr() *syscall.SysProcAttr {
 }
 
 // ProcTreeSuspend suspends a process tree by pid.
-// when succeeds returns true
+// when succeeds returns: true, nil
 func ProcTreeSuspend(ppid uint32) (bool, *errco.MshLog) {
 	logMsh := procTreeSuspend(ppid)
 	if logMsh != nil {
@@ -38,7 +38,7 @@ func ProcTreeSuspend(ppid uint32) (bool, *errco.MshLog) {
 }
 
 // ProcTreeResume resumes a process tree by pid.
-// when succeeds returns false
+// when succeeds returns: false, nil
 func ProcTreeResume(ppid uint32) (bool, *errco.MshLog) {
 	logMsh := procTreeResume(ppid)
 	if logMsh != nil {
@@ -48,6 +48,12 @@ func ProcTreeResume(ppid uint32) (bool, *errco.MshLog) {
 	errco.NewLogln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "EXECUTED PROCESS TREE RESUME!")
 
 	return false, nil
+}
+
+// ProcTreeKill kills a process tree by pid.
+// when succeeds returns nil
+func ProcTreeKill(ppid uint32) *errco.MshLog {
+	return procTreeKill(ppid)
 }
 
 // FileId returns file id
