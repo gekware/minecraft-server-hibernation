@@ -38,7 +38,7 @@ func WarmMS() *errco.MshLog {
 		}
 
 	default:
-		if config.ConfigRuntime.Msh.AllowSuspend {
+		if config.ConfigRuntime.Msh.SuspendAllow {
 			servstats.Stats.Suspended, logMsh = opsys.ProcTreeResume(uint32(ServTerm.cmd.Process.Pid))
 			if logMsh != nil {
 				return logMsh.AddTrace()
@@ -100,7 +100,7 @@ func FreezeMS(force bool) *errco.MshLog {
 		}
 
 		// suspend/stop ms
-		if config.ConfigRuntime.Msh.AllowSuspend {
+		if config.ConfigRuntime.Msh.SuspendAllow {
 			servstats.Stats.Suspended, logMsh = opsys.ProcTreeSuspend(uint32(ServTerm.cmd.Process.Pid))
 			if logMsh != nil {
 				return logMsh.AddTrace()
@@ -119,7 +119,7 @@ func FreezeMS(force bool) *errco.MshLog {
 		// is ms is stopping, resume the process and let it stop
 
 		// resume ms process (un/suspended)
-		if config.ConfigRuntime.Msh.AllowSuspend {
+		if config.ConfigRuntime.Msh.SuspendAllow {
 			servstats.Stats.Suspended, logMsh = opsys.ProcTreeResume(uint32(ServTerm.cmd.Process.Pid))
 			if logMsh != nil {
 				return logMsh.AddTrace()
@@ -185,7 +185,7 @@ func ResumeStopMS() *errco.MshLog {
 	var logMsh *errco.MshLog
 
 	// resume ms process (un/suspended)
-	if config.ConfigRuntime.Msh.AllowSuspend {
+	if config.ConfigRuntime.Msh.SuspendAllow {
 		servstats.Stats.Suspended, logMsh = opsys.ProcTreeResume(uint32(ServTerm.cmd.Process.Pid))
 		if logMsh != nil {
 			return logMsh.AddTrace()
@@ -220,7 +220,7 @@ func killMSifOnlineAfterTimeout() {
 
 	// resume ms process (un/suspended)
 	// to be sure that ms is running to stop itself
-	if config.ConfigRuntime.Msh.AllowSuspend {
+	if config.ConfigRuntime.Msh.SuspendAllow {
 		servstats.Stats.Suspended, logMsh = opsys.ProcTreeResume(uint32(ServTerm.cmd.Process.Pid))
 		if logMsh != nil {
 			logMsh.Log(true)

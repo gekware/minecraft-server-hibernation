@@ -45,8 +45,8 @@ func main() {
 	go input.GetInput()
 
 	// if ms suspension is allowed, pre-warm the server
-	if config.ConfigRuntime.Msh.AllowSuspend {
-		errco.NewLogln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "minecraft server will now pre-warm (AllowSuspend is enabled)...")
+	if config.ConfigRuntime.Msh.SuspendAllow {
+		errco.NewLogln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "minecraft server will now pre-warm (SuspendAllow is enabled)...")
 		logMsh = servctrl.WarmMS()
 		if logMsh != nil {
 			logMsh.Log(true)

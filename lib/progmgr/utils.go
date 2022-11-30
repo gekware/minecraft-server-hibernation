@@ -30,7 +30,7 @@ func buildApi2Req(preTerm bool) *model.Api2Req {
 	reqJson.Msh.ID = config.ConfigRuntime.Msh.ID
 	reqJson.Msh.Mshv = MshVersion
 	reqJson.Msh.Uptime = utility.RoundSec(time.Since(msh.startTime))
-	reqJson.Msh.AllowSuspend = config.ConfigRuntime.Msh.AllowSuspend
+	reqJson.Msh.SuspendAllow = config.ConfigRuntime.Msh.SuspendAllow
 	reqJson.Msh.Sgm.Seconds = sgm.stats.seconds
 	reqJson.Msh.Sgm.SecondsHibe = sgm.stats.secondsHibe
 	reqJson.Msh.Sgm.CpuUsage = sgm.stats.cpuUsage

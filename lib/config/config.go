@@ -171,7 +171,7 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 
 	// c.Msh.ID should not be set by a flag
 	flag.IntVar(&c.Msh.Debug, "d", c.Msh.Debug, "Specify debug level.")
-	flag.BoolVar(&c.Msh.AllowSuspend, "allowsuspend", c.Msh.AllowSuspend, "Specify if minecraft server process can be suspended.")
+	flag.BoolVar(&c.Msh.SuspendAllow, "SuspendAllow", c.Msh.SuspendAllow, "Specify if minecraft server process can be suspended.")
 	flag.StringVar(&c.Msh.InfoHibernation, "infohibe", c.Msh.InfoHibernation, "Specify hibernation info.")
 	flag.StringVar(&c.Msh.InfoStarting, "infostar", c.Msh.InfoStarting, "Specify starting info.")
 	flag.BoolVar(&c.Msh.NotifyUpdate, "notifyupd", c.Msh.NotifyUpdate, "Specify if update notifications are allowed.")
