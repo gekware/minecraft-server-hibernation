@@ -93,7 +93,7 @@ Allow the server to suspend server process when there are no players online
 - cons: ram usage as minecraft server without msh (cpu remains ~0)  
 _To mitigate ram usage you can set a high swappiness (on linux)_  
 ```yaml
-"AllowSuspend": false
+"SuspendAllow": false
 ```
 Hibernation and Starting server description
 ```yaml
