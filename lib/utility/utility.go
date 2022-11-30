@@ -74,7 +74,8 @@ func BytBetween(data, a, b []byte) ([]byte, *errco.MshLog) {
 }
 
 // SliceContain returns true if the slice contains the element.
-// in case of error, false is returned
+// Supported types: string, int, uint32.
+// In case of error, false is returned.
 func SliceContain(ele, sli interface{}) bool {
 	// check if e and sli types are the same
 	if reflect.TypeOf(sli).Elem().Kind() != reflect.TypeOf(ele).Kind() {
@@ -129,9 +130,8 @@ func ScaleImg(srcImg image.Image, rect image.Rectangle) (image.Image, time.Durat
 }
 
 // Entropy measures the Shannon entropy of a string.
+// Check http://bearcave.com/misl/misl_tech/wavelets/compression/shannon.html for the algorithmic explanation.
 func Entropy(value string) int {
-	// Check http://bearcave.com/misl/misl_tech/wavelets/compression/shannon.html for the algorithmic explanation.
-
 	frq := make(map[rune]float64)
 
 	//get frequency of characters
@@ -147,4 +147,13 @@ func Entropy(value string) int {
 	}
 
 	return int(math.Ceil(sum*-1)) * len(value)
+}
+
+// Reverse takes a slice and returns the reverse of it.
+// Makes use of "golang type parameters".
+func Reverse[slice ~[]ele, ele any](sli slice) slice {
+	for i, j := 0, len(sli)-1; i < j; i, j = i+1, j-1 {
+		sli[i], sli[j] = sli[j], sli[i]
+	}
+	return sli
 }
