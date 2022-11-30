@@ -15,15 +15,15 @@ type Configuration struct {
 		StopServerAllowKill int    `json:"StopServerAllowKill"`
 	} `json:"Commands"`
 	Msh struct {
-		ID                            string   `json:"ID"`
 		Debug                         int      `json:"Debug"`
+		ID                            string   `json:"ID"`
+		ListenPort                    int      `json:"ListenPort"`
+		TimeBeforeStoppingEmptyServer int64    `json:"TimeBeforeStoppingEmptyServer"`
 		SuspendAllow                  bool     `json:"SuspendAllow"` // specify if msh should suspend java server process
 		InfoHibernation               string   `json:"InfoHibernation"`
 		InfoStarting                  string   `json:"InfoStarting"`
 		NotifyUpdate                  bool     `json:"NotifyUpdate"`
 		NotifyMessage                 bool     `json:"NotifyMessage"`
-		ListenPort                    int      `json:"ListenPort"`
-		TimeBeforeStoppingEmptyServer int64    `json:"TimeBeforeStoppingEmptyServer"`
 		Whitelist                     []string `json:"Whitelist"`
 		WhitelistImport               bool     `json:"WhitelistImport"`
 	} `json:"Msh"`
