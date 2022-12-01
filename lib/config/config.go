@@ -169,15 +169,16 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 	// c.Commands.StopServer should not be set by a flag
 	flag.IntVar(&c.Commands.StopServerAllowKill, "allowkill", c.Commands.StopServerAllowKill, "Specify after how many seconds the server should be killed (if stop command fails).")
 
-	// c.Msh.ID should not be set by a flag
 	flag.IntVar(&c.Msh.Debug, "d", c.Msh.Debug, "Specify debug level.")
+	// c.Msh.ID should not be set by a flag
+	flag.IntVar(&c.Msh.ListenPort, "port", c.Msh.ListenPort, "Specify msh port.")
+	flag.Int64Var(&c.Msh.TimeBeforeStoppingEmptyServer, "timeout", c.Msh.TimeBeforeStoppingEmptyServer, "Specify time to wait before stopping minecraft server.")
 	flag.BoolVar(&c.Msh.SuspendAllow, "SuspendAllow", c.Msh.SuspendAllow, "Specify if minecraft server process can be suspended.")
+	flag.IntVar(&c.Msh.SuspendRefresh, "SuspendRefresh", c.Msh.SuspendRefresh, "Specify how often the suspended minecraft server process must be refreshed.")
 	flag.StringVar(&c.Msh.InfoHibernation, "infohibe", c.Msh.InfoHibernation, "Specify hibernation info.")
 	flag.StringVar(&c.Msh.InfoStarting, "infostar", c.Msh.InfoStarting, "Specify starting info.")
 	flag.BoolVar(&c.Msh.NotifyUpdate, "notifyupd", c.Msh.NotifyUpdate, "Specify if update notifications are allowed.")
 	flag.BoolVar(&c.Msh.NotifyMessage, "notifymes", c.Msh.NotifyMessage, "Specify if message notifications are allowed.")
-	flag.IntVar(&c.Msh.ListenPort, "port", c.Msh.ListenPort, "Specify msh port.")
-	flag.Int64Var(&c.Msh.TimeBeforeStoppingEmptyServer, "timeout", c.Msh.TimeBeforeStoppingEmptyServer, "Specify time to wait before stopping minecraft server.")
 	// c.Msh.Whitelist (type []string, not worth to make it a flag)
 	flag.BoolVar(&c.Msh.WhitelistImport, "wlimport", c.Msh.WhitelistImport, "Specify is minecraft server whitelist should be imported")
 

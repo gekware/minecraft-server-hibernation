@@ -71,7 +71,7 @@ const (
 	// server control package
 
 	ERROR_TERMINAL_NOT_ACTIVE      LogCod = 0x00f000 // server terminal is not active
-	ERROR_TERMINAL_ALREADY_ACTIVE  LogCod = 0x00f001 // server terminal is already active
+	ERROR_TERMINAL_ACTIVE          LogCod = 0x00f001 // server terminal is active
 	ERROR_TERMINAL_START           LogCod = 0x00f002 // server terminal error while starting
 	ERROR_MSH_MUST_WAIT            LogCod = 0x00f100 // timeout time not reached to issue ms stop
 	ERROR_SERVER_STATUS_UNKNOWN    LogCod = 0x00f200 // minecraft server status unknown
@@ -82,10 +82,11 @@ const (
 	ERROR_SERVER_IS_WARM           LogCod = 0x00f205 // minecraft server is already warm
 	ERROR_SERVER_IS_FROZEN         LogCod = 0x00f206 // minecraft server is already frozen
 	ERROR_SERVER_SUSPENDED         LogCod = 0x00f207 // minecraft server is suspended
-	ERROR_SERVER_OFFLINE           LogCod = 0x00f208 // minecraft server is offline
-	ERROR_SERVER_OFFLINE_SUSPENDED LogCod = 0x00f209 // minecraft server is offline but not suspended
-	ERROR_SERVER_STOPPING          LogCod = 0x00f20a // minecraft server is stopping
-	ERROR_SERVER_UNRESPONDING      LogCod = 0x00f20b // minecraft server is not responding
+	ERROR_SERVER_NOT_SUSPENDED     LogCod = 0x00f208 // minecraft server is not suspended
+	ERROR_SERVER_OFFLINE           LogCod = 0x00f209 // minecraft server is offline
+	ERROR_SERVER_OFFLINE_SUSPENDED LogCod = 0x00f20a // minecraft server is offline but not suspended
+	ERROR_SERVER_STOPPING          LogCod = 0x00f20b // minecraft server is stopping
+	ERROR_SERVER_UNRESPONDING      LogCod = 0x00f20c // minecraft server is not responding
 	ERROR_PIPE_INPUT_WRITE         LogCod = 0x00f300 // terminal input writing error
 	ERROR_PIPE_LOAD                LogCod = 0x00f301 // terminal pipe load error
 	ERROR_CONVERSION               LogCod = 0x00f400 // variable conversion error

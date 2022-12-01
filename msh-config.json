@@ -12,16 +12,17 @@
     "StopServerAllowKill": 10
   },
   "Msh": {
-	"Debug": 1,
+    "Debug": 1,
     "ID": "",
-	"ListenPort": 25555,
-	"TimeBeforeStoppingEmptyServer": 30,
+    "ListenPort": 25555,
+    "TimeBeforeStoppingEmptyServer": 30,
     "SuspendAllow": false,
+    "SuspendRefresh": -1,
     "InfoHibernation": "                   §fserver status:\n                   §b§lHIBERNATING",
     "InfoStarting": "                   §fserver status:\n                    §6§lWARMING UP",
     "NotifyUpdate": true,
     "NotifyMessage": true,
     "Whitelist": [],
-	"WhitelistImport": false	
+    "WhitelistImport": false
   }
 }

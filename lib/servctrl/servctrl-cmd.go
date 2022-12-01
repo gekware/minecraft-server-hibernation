@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"msh/lib/config"
 	"msh/lib/errco"
 	"msh/lib/model"
 	"msh/lib/opsys"
@@ -322,17 +323,25 @@ func printerOutErr() {
 	}()
 }
 
-// waitForExit manages ServTerm.isActive parameter and set ServStats.Status = OFFLINE when minecraft server process exits.
+// waitForExit manages:
+// ServStats.Status = STARTING / OFFLINE,
+// ServTerm.isActive = true / false,
+// ServTerm.startTime,
+// suspension refresher
 // [goroutine]
 func waitForExit() {
+	ServTerm.IsActive = true
+	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "terminal started")
+
 	servstats.Stats.Status = errco.SERVER_STATUS_STARTING
 	errco.NewLogln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "MINECRAFT SERVER IS STARTING!")
 
-	ServTerm.IsActive = true
-	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "waitForExit: terminal started")
-
 	// set terminal start time
 	ServTerm.startTime = time.Now()
+
+	// start suspension refresher
+	stopSuspendRefresherC := make(chan bool, 1)
+	go suspendRefresher(stopSuspendRefresherC)
 
 	// wait for server process to finish
 	ServTerm.Wg.Wait()  // wait terminal StdoutPipe/StderrPipe to exit
@@ -342,11 +351,66 @@ func waitForExit() {
 	ServTerm.errPipe.Close()
 	ServTerm.inPipe.Close()
 
-	ServTerm.IsActive = false
-	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "waitForExit: terminal exited")
+	// stop suspension refresher
+	stopSuspendRefresherC <- true
 
 	servstats.Stats.Status = errco.SERVER_STATUS_OFFLINE
 	servstats.Stats.Suspended = false
-
 	errco.NewLogln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "MINECRAFT SERVER IS OFFLINE!")
+
+	ServTerm.IsActive = false
+	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "terminal exited")
+}
+
+// suspendRefresher refreshes ms suspension by warming and freezing the server every set amount of time.
+// if suspension is not allowed this func just returns
+// if suspension refresh is not allowed this func just returns
+// [goroutine]
+func suspendRefresher(stop chan bool) {
+	if !config.ConfigRuntime.Msh.SuspendAllow {
+		return
+	}
+
+	if config.ConfigRuntime.Msh.SuspendRefresh <= 0 {
+		return
+	}
+
+	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "suspension refresher is starting")
+
+	servstats.Stats.SuspendRefreshTick.Reset(time.Duration(config.ConfigRuntime.Msh.SuspendRefresh) * time.Second)
+
+	for {
+		select {
+
+		case <-stop:
+			// received stop signal of suspension refresher
+			errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "suspension refresher is stopping")
+			return
+
+		case <-servstats.Stats.SuspendRefreshTick.C:
+			// check if ms is responding, not offline, suspended
+			switch {
+			case servstats.Stats.MajorError != nil:
+				errco.NewLogln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_SERVER_UNRESPONDING, "minecraft server is not responding")
+				continue
+			case servstats.Stats.Status == errco.SERVER_STATUS_OFFLINE:
+				errco.NewLogln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_SERVER_OFFLINE, "minecraft server is offline")
+				continue
+			case !servstats.Stats.Suspended:
+				errco.NewLogln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_SERVER_NOT_SUSPENDED, "minecraft server terminal is not suspended")
+				continue
+			}
+
+			// warm ms unsuspending process
+			errco.NewLogln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "suspension refresh will warm minecraft server...")
+			WarmMS()
+
+			// give time to ms to recover from suspension
+			time.Sleep(1 * time.Second)
+
+			// freeze ms suspending process (softly in case a player has joined in the meantime)
+			errco.NewLogln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "suspension refresh will freeze minecraft server...")
+			FreezeMS(false)
+		}
+	}
 }

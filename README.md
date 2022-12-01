@@ -65,10 +65,11 @@ Location of server folder and executable. You can find protocol/version [here](h
 "Server": {
   "Folder": "{path/to/server/folder}"
   "FileName": "{server.jar}"
-  "Protocol": 756
-  "Version": "1.17.1"
+  "Version": "1.19.2"
+  "Protocol": 760
 }
 ```
+
 Commands to start and stop minecraft server  
 _StopServerAllowKill allows to kill the server after a certain amount of time (in seconds) when it's not responding_
 ```yaml
@@ -76,9 +77,10 @@ _StopServerAllowKill allows to kill the server after a certain amount of time (i
   "StartServer": "java <Commands.StartServerParam> -jar <Server.FileName> nogui"
   "StartServerParam": "-Xmx1024M -Xms1024M"
   "StopServer": "stop"
-  "StopServerAllowKill": 10	# set to 0 to disable
+  "StopServerAllowKill": 10	# set to -1 to disable
 }
 ```
+
 Set the logging level for debug purposes
 ```yaml
 "Debug": 1
@@ -88,38 +90,46 @@ Set the logging level for debug purposes
 # 3 - DEVE: developement log
 # 4 - BYTE: connection bytes log
 ```
-Allow the server to suspend server process when there are no players online  
+
+SuspendAllow allow the server to suspend server process when there are no players online  
+_To mitigate ram usage you can set a high swappiness (on linux)_  
 - pro:  player wait time to join frozen server is ~0  
 - cons: ram usage as minecraft server without msh (cpu remains ~0)  
-_To mitigate ram usage you can set a high swappiness (on linux)_  
+SuspendRefresh enables refresh of minecraft server suspension every set seconds (to avoid unexplained crashes at unsuspension)
+- set -1 to disable
+- set it to a value that suits you
 ```yaml
 "SuspendAllow": false
+"SuspendRefresh": -1
 ```
+
 Hibernation and Starting server description
 ```yaml
 "InfoHibernation": "                   §fserver status:\n                   §b§lHIBERNATING"
 "InfoStarting": "                   §fserver status:\n                    §6§lWARMING UP"
 ```
+
 Set to false if you don't want notifications (every 20 minutes)
 ```yaml
 "NotifyUpdate": true
 "NotifyMessage": true
 ```
+
 Port to which players can connect
 ```yaml
 "ListenPort": 25555
 ```
+
 *30 seconds* is the time (after the last player disconnected) that msh waits before hibernating the minecraft server
 ```yaml
-"TimeBeforeStoppingEmptyServer": 30	#any parameter more than 30s is recommended
+"TimeBeforeStoppingEmptyServer": 30
 ```
+
 Whitelist contains IPs and player names that are allowed to start the server (leave empty to allow everyone)  
+WhitelistImport adds `whitelist.json` to player names that are allowed to start the server
 _unknown clients are not allowed to start the server, but can join_
 ```yaml
 "Whitelist": ["127.0.0.1", "gekigek99"]
-```
-WhitelistImport adds `whitelist.json` to player names that are allowed to start the server
-```yaml
 "WhitelistImport": false
 ```
 
