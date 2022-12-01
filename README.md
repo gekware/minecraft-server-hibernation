@@ -95,6 +95,7 @@ SuspendAllow allow the server to suspend server process when there are no player
 _To mitigate ram usage you can set a high swappiness (on linux)_  
 - pro:  player wait time to join frozen server is ~0  
 - cons: ram usage as minecraft server without msh (cpu remains ~0)  
+
 SuspendRefresh enables refresh of minecraft server suspension every set seconds (to avoid unexplained crashes at unsuspension)
 - set -1 to disable
 - set it to a value that suits you
@@ -126,8 +127,8 @@ Port to which players can connect
 ```
 
 Whitelist contains IPs and player names that are allowed to start the server (leave empty to allow everyone)  
-WhitelistImport adds `whitelist.json` to player names that are allowed to start the server
-_unknown clients are not allowed to start the server, but can join_
+WhitelistImport adds `whitelist.json` to player names that are allowed to start the server  
+_unknown clients are not allowed to start the server, but can join_  
 ```yaml
 "Whitelist": ["127.0.0.1", "gekigek99"]
 "WhitelistImport": false
