@@ -70,7 +70,7 @@ func procTreeSuspend(ppid uint32) *errco.MshLog {
 		return logMsh.AddTrace()
 	}
 
-	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "suspending proc tree [pid: %v]", treePid)
+	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "suspending proc tree (pid: %v)", treePid)
 
 	// suspend all processes in tree
 	for _, pid := range treePid {
@@ -109,7 +109,7 @@ func procTreeResume(ppid uint32) *errco.MshLog {
 		return logMsh.AddTrace()
 	}
 
-	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "resuming proc tree [pid: %v]", treePid)
+	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "resuming proc tree (pid: %v)", treePid)
 
 	// resume all processes in tree
 	for _, pid := range treePid {
@@ -135,7 +135,7 @@ func procTreeKill(ppid uint32) *errco.MshLog {
 		return errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_PROCESS_LIST, "could't get processes slice (%s)", err.Error())
 	}
 
-	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "killing proc tree [pid: %v]", treePid)
+	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "killing proc tree (pid: %v)", treePid)
 
 	// kill processes that are in process tree
 	for _, p := range processes {
