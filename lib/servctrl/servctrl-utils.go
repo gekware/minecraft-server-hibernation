@@ -18,7 +18,9 @@ import (
 
 // countPlayerSafe returns the number of players on the server.
 //
-// players are retrived by (in order): server info, list command, internal player count.
+// Players are retrived by (in order): server info, list command, internal player count.
+//
+// Internal player counter is reset if a more reliable method is used.
 //
 // no error is returned: the return integer is always meaningful
 // (might be more or less reliable depending from where it retrieved).
@@ -31,11 +33,13 @@ func countPlayerSafe() int {
 
 	if playerCount, logMsh = getPlayersByServInfo(); logMsh.Log(true) == nil {
 		method = "server info"
+		servstats.Stats.PlayerCount = playerCount // reset internal player counter with a more reliable method
 	} else if playerCount, logMsh = getPlayersByListCom(); logMsh.Log(true) == nil {
 		method = "list command"
+		servstats.Stats.PlayerCount = playerCount // reset internal player counter with a more reliable method
 	} else {
-		playerCount = servstats.Stats.PlayerCount
 		method = "internal"
+		playerCount = servstats.Stats.PlayerCount
 	}
 
 	errco.NewLogln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "%d online players - method for player count: %s", playerCount, method)
