@@ -70,7 +70,7 @@ func FreezeMS(force bool) *errco.MshLog {
 
 		if force {
 			// if forceful freeze, resume and stop ms
-			logMsh = ResumeStopMS()
+			logMsh = resumeStopMS()
 			if logMsh != nil {
 				return logMsh.AddTrace()
 			}
@@ -87,7 +87,7 @@ func FreezeMS(force bool) *errco.MshLog {
 
 		if force {
 			// if forceful freeze, resume and stop ms
-			logMsh = ResumeStopMS()
+			logMsh = resumeStopMS()
 			if logMsh != nil {
 				return logMsh.AddTrace()
 			}
@@ -107,7 +107,7 @@ func FreezeMS(force bool) *errco.MshLog {
 			}
 		} else {
 			// resume and stop ms
-			logMsh = ResumeStopMS()
+			logMsh = resumeStopMS()
 			if logMsh != nil {
 				return logMsh.AddTrace()
 			}
@@ -178,10 +178,10 @@ func FreezeMSSchedule() {
 	)
 }
 
-// ResumeStopMS resumes ms process and executes a stop command in ms terminal.
+// resumeStopMS resumes ms process and executes a stop command in ms terminal.
 //
 // should be called only when ms status is online
-func ResumeStopMS() *errco.MshLog {
+func resumeStopMS() *errco.MshLog {
 	var logMsh *errco.MshLog
 
 	// resume ms process (un/suspended)
@@ -234,7 +234,7 @@ func killMSifOnlineAfterTimeout() {
 		}
 
 		countdown--
-		time.Sleep(time.Second)
+		time.Sleep(1 * time.Second)
 	}
 
 	// save world before killing the server, do not check for errors
