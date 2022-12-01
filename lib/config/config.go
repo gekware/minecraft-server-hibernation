@@ -24,7 +24,7 @@ var (
 
 	configDefaultSave bool = false // if true, the config will be saved after successful loading
 
-	Javav string // Javav is the java version on the system. format: "java 16.0.1 2021-04-20"
+	JavaV string // Javav is the java version on the system. format: "java 16.0.1 2021-04-20"
 
 	ServerIcon string = defaultServerIcon // ServerIcon contains the minecraft server icon
 
@@ -259,9 +259,9 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 	} else if out, err := exec.Command("java", "--version").Output(); err != nil {
 		// non blocking error
 		errco.NewLogln(errco.TYPE_WAR, errco.LVL_1, errco.ERROR_CONFIG_CHECK, "could not execute 'java -version' command")
-		Javav = "unknown"
+		JavaV = "unknown"
 	} else {
-		Javav = strings.ReplaceAll(strings.Split(string(out), "\n")[0], "\r", "")
+		JavaV = strings.ReplaceAll(strings.Split(string(out), "\n")[0], "\r", "")
 	}
 
 	// initialize ip and ports for connection

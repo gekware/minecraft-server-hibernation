@@ -22,28 +22,28 @@ var (
 
 	// segment used for stats
 	sgm *segment = &segment{
-		m:           &sync.Mutex{},
-		tk:          time.NewTicker(time.Second),
-		defDuration: 4 * time.Hour,
+		m:      &sync.Mutex{},
+		tk:     time.NewTicker(time.Second),
+		defDur: 4 * time.Hour,
 	}
 )
 
 type segment struct {
 	m *sync.Mutex // segment mutex (initialized with sgm and not affected by reset function)
 
-	tk          *time.Ticker  // segment ticker (every second)
-	defDuration time.Duration // segment default duration
-	startTime   time.Time     // segment start time
-	end         *time.Timer   // segment end timer
+	tk        *time.Ticker  // segment ticker (every second)
+	defDur    time.Duration // segment default duration
+	startTime time.Time     // segment start time
+	end       *time.Timer   // segment end timer
 
 	// stats are reset when segment reset is invoked
 	stats struct {
-		seconds     int
-		secondsHibe int
-		cpuUsage    float64
-		memUsage    float64
-		playerSec   int
-		preTerm     bool
+		preTerm  bool
+		dur      int
+		hibeDur  int
+		usageCpu float64
+		usageMem float64
+		playSec  int
 	}
 
 	// push contains data for user notification
@@ -69,20 +69,20 @@ func sgmMgr() {
 			sgm.m.Lock()
 
 			// increment segment second counter
-			sgm.stats.seconds += 1
+			sgm.stats.dur += 1
 
 			// increment work/hibernation second counter
 			if !servctrl.ServTerm.IsActive {
-				sgm.stats.secondsHibe += 1
+				sgm.stats.hibeDur += 1
 			}
 
 			// increment play seconds sum
-			sgm.stats.playerSec += servstats.Stats.PlayerCount
+			sgm.stats.playSec += servstats.Stats.PlayerCount
 
 			// update segment average cpu/memory usage
 			mshTreeCpu, mshTreeMem := getMshTreeStats()
-			sgm.stats.cpuUsage = (sgm.stats.cpuUsage*float64(sgm.stats.seconds-1) + float64(mshTreeCpu)) / float64(sgm.stats.seconds) // sgm.stats.seconds-1 because the average is relative to 1 sec ago
-			sgm.stats.memUsage = (sgm.stats.memUsage*float64(sgm.stats.seconds-1) + float64(mshTreeMem)) / float64(sgm.stats.seconds)
+			sgm.stats.usageCpu = (sgm.stats.usageCpu*float64(sgm.stats.dur-1) + float64(mshTreeCpu)) / float64(sgm.stats.dur) // sgm.stats.seconds-1 because the average is relative to 1 sec ago
+			sgm.stats.usageMem = (sgm.stats.usageMem*float64(sgm.stats.dur-1) + float64(mshTreeMem)) / float64(sgm.stats.dur)
 
 			sgm.m.Unlock() // not using defer since it's an infinite loop
 
@@ -140,7 +140,7 @@ func sgmMgr() {
 			switch resJson.Result {
 			case "dep": // local version deprecated
 				// don't check NotifyUpdate
-				verCheck := fmt.Sprintf("msh (%s) is deprecated: visit github to update to %s!", MshVersion, resJson.Official.Version)
+				verCheck := fmt.Sprintf("msh (%s) is deprecated: visit github to update to %s!", MshVersion, resJson.Official.V)
 				errco.NewLogln(errco.TYPE_WAR, errco.LVL_0, errco.ERROR_VERSION, verCheck)
 				sgm.push.verCheck = verCheck
 
@@ -150,7 +150,7 @@ func sgmMgr() {
 
 			case "upd": // local version to update
 				if config.ConfigRuntime.Msh.NotifyUpdate {
-					verCheck := fmt.Sprintf("msh (%s) can be updated: visit github to update to %s!", MshVersion, resJson.Official.Version)
+					verCheck := fmt.Sprintf("msh (%s) can be updated: visit github to update to %s!", MshVersion, resJson.Official.V)
 					errco.NewLogln(errco.TYPE_WAR, errco.LVL_0, errco.ERROR_VERSION, verCheck)
 					sgm.push.verCheck = verCheck
 				}
@@ -206,16 +206,16 @@ func (sgm *segment) reset(i interface{}) *segment {
 		if xrr, err := strconv.Atoi(v.Header.Get("x-ratelimit-reset")); err == nil {
 			sgm.end = time.NewTimer(time.Duration(xrr) * time.Second)
 		} else {
-			sgm.end = time.NewTimer(sgm.defDuration)
+			sgm.end = time.NewTimer(sgm.defDur)
 		}
 	default:
-		sgm.end = time.NewTimer(sgm.defDuration)
+		sgm.end = time.NewTimer(sgm.defDur)
 	}
 
-	sgm.stats.seconds = 0
-	sgm.stats.secondsHibe = 0
-	sgm.stats.cpuUsage, sgm.stats.memUsage = getMshTreeStats()
-	sgm.stats.playerSec = 0
+	sgm.stats.dur = 0
+	sgm.stats.hibeDur = 0
+	sgm.stats.usageCpu, sgm.stats.usageMem = getMshTreeStats()
+	sgm.stats.playSec = 0
 	sgm.stats.preTerm = false
 
 	sgm.push.tk = time.NewTicker(20 * time.Minute)
@@ -240,9 +240,9 @@ func (sgm *segment) prolong(i interface{}) {
 		if xrr, err := strconv.Atoi(v.Header.Get("x-ratelimit-reset")); err == nil {
 			sgm.end.Reset(time.Duration(xrr) * time.Second)
 		} else {
-			sgm.end.Reset(sgm.defDuration)
+			sgm.end.Reset(sgm.defDur)
 		}
 	default:
-		sgm.end.Reset(sgm.defDuration)
+		sgm.end.Reset(sgm.defDur)
 	}
 }

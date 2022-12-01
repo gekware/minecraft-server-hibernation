@@ -52,25 +52,25 @@ type DataInfo struct {
 }
 
 type Api2Req struct {
-	Protv int `json:"prot-v"` // msh protocol version
+	ProtV int `json:"prot-v"` // msh protocol version
 	Msh   struct {
+		V            string `json:"msh-v"`         // msh version
 		ID           string `json:"id"`            // msh id
-		Mshv         string `json:"msh-v"`         // msh version
 		Uptime       int    `json:"uptime"`        // msh uptime
 		SuspendAllow bool   `json:"allow-suspend"` // specify if msh hibernates ms by suspending process
 		Sgm          struct {
-			Seconds     int     `json:"seconds"`         // segment duration in seconds
-			SecondsHibe int     `json:"seconds-hibe"`    // segment seconds in which ms server was hibernating
-			CpuUsage    float64 `json:"cpu-usage"`       // segment cpu usage by msh
-			MemUsage    float64 `json:"mem-usage"`       // segment memory usage by msh
-			PlayerSec   int     `json:"play-second-sum"` // segment player seconds (total seconds spent playing)
-			PreTerm     bool    `json:"preterm"`         // segment forcefully ended preterm
+			PreTerm  bool    `json:"preterm"`         // segment ended before expiration
+			Dur      int     `json:"seconds"`         // segment duration in seconds
+			HibeDur  int     `json:"seconds-hibe"`    // segment seconds in which ms server was hibernating
+			PlaySec  int     `json:"play-second-sum"` // segment play seconds (sum of seconds spent playing)
+			UsageCpu float64 `json:"cpu-usage"`       // segment usage of cpu by msh
+			UsageMem float64 `json:"mem-usage"`       // segment usage of memory by msh
 		} `json:"sgm"`
 	} `json:"msh"`
 	Machine struct {
 		Os        string `json:"os"`
 		Arch      string `json:"arch"`
-		Javav     string `json:"java-v"`
+		JavaV     string `json:"java-v"`
 		CpuModel  string `json:"cpu-model"`  // cpu model
 		CpuVendor string `json:"cpu-vendor"` // cpu vendor
 		CoresMsh  int    `json:"cores-msh"`  // cores for msh
@@ -79,27 +79,27 @@ type Api2Req struct {
 	} `json:"machine"`
 	Server struct {
 		Uptime int    `json:"uptime"`  // mc server uptime
-		Msv    string `json:"ms-v"`    // mc server version
-		MsProt int    `json:"ms-prot"` // mc server protocol
+		V      string `json:"ms-v"`    // mc server version
+		Prot   int    `json:"ms-prot"` // mc server protocol
 	} `json:"server"`
 }
 
 type Api2Res struct {
 	Result string `json:"result"`
 	Dev    struct {
-		Version string `json:"version"`
-		Date    string `json:"date"`
-		Commit  string `json:"commit"`
+		V      string `json:"version"`
+		Date   string `json:"date"`
+		Commit string `json:"commit"`
 	} `json:"dev"`
 	Official struct {
-		Version string `json:"version"`
-		Date    string `json:"date"`
-		Commit  string `json:"commit"`
+		V      string `json:"version"`
+		Date   string `json:"date"`
+		Commit string `json:"commit"`
 	} `json:"official"`
 	Deprecated struct {
-		Version string `json:"version"`
-		Date    string `json:"date"`
-		Commit  string `json:"commit"`
+		V      string `json:"version"`
+		Date   string `json:"date"`
+		Commit string `json:"commit"`
 	} `json:"deprecated"`
 	Messages []string `json:"messages"`
 }

@@ -25,22 +25,22 @@ import (
 func buildApi2Req(preTerm bool) *model.Api2Req {
 	reqJson := &model.Api2Req{}
 
-	reqJson.Protv = protv
+	reqJson.ProtV = protv
 
+	reqJson.Msh.V = MshVersion
 	reqJson.Msh.ID = config.ConfigRuntime.Msh.ID
-	reqJson.Msh.Mshv = MshVersion
 	reqJson.Msh.Uptime = utility.RoundSec(time.Since(msh.startTime))
 	reqJson.Msh.SuspendAllow = config.ConfigRuntime.Msh.SuspendAllow
-	reqJson.Msh.Sgm.Seconds = sgm.stats.seconds
-	reqJson.Msh.Sgm.SecondsHibe = sgm.stats.secondsHibe
-	reqJson.Msh.Sgm.CpuUsage = sgm.stats.cpuUsage
-	reqJson.Msh.Sgm.MemUsage = sgm.stats.memUsage
-	reqJson.Msh.Sgm.PlayerSec = sgm.stats.playerSec
+	reqJson.Msh.Sgm.Dur = sgm.stats.dur
+	reqJson.Msh.Sgm.HibeDur = sgm.stats.hibeDur
+	reqJson.Msh.Sgm.UsageCpu = sgm.stats.usageCpu
+	reqJson.Msh.Sgm.UsageMem = sgm.stats.usageMem
+	reqJson.Msh.Sgm.PlaySec = sgm.stats.playSec
 	reqJson.Msh.Sgm.PreTerm = preTerm
 
 	reqJson.Machine.Os = runtime.GOOS
 	reqJson.Machine.Arch = runtime.GOARCH
-	reqJson.Machine.Javav = config.Javav
+	reqJson.Machine.JavaV = config.JavaV
 
 	// get cpu model and vendor
 	if cpuInfo, err := cpu.Info(); err != nil {
@@ -74,8 +74,8 @@ func buildApi2Req(preTerm bool) *model.Api2Req {
 	}
 
 	reqJson.Server.Uptime = servctrl.TermUpTime()
-	reqJson.Server.Msv = config.ConfigRuntime.Server.Version
-	reqJson.Server.MsProt = config.ConfigRuntime.Server.Protocol
+	reqJson.Server.V = config.ConfigRuntime.Server.Version
+	reqJson.Server.Prot = config.ConfigRuntime.Server.Protocol
 
 	return reqJson
 }
@@ -148,15 +148,15 @@ func getMshTreeStats() (float64, float64) {
 
 	if mshProc, err := process.NewProcess(int32(os.Getpid())); err != nil {
 		// return current avg usage in case of error
-		return sgm.stats.cpuUsage, sgm.stats.memUsage
+		return sgm.stats.usageCpu, sgm.stats.usageMem
 	} else {
 		for _, c := range treeProc(mshProc) {
 			if pCpu, err := c.CPUPercent(); err != nil {
 				// return current avg usage in case of error
-				return sgm.stats.cpuUsage, sgm.stats.memUsage
+				return sgm.stats.usageCpu, sgm.stats.usageMem
 			} else if pMem, err := c.MemoryPercent(); err != nil {
 				// return current avg usage in case of error
-				return sgm.stats.cpuUsage, sgm.stats.memUsage
+				return sgm.stats.usageCpu, sgm.stats.usageMem
 			} else {
 				mshTreeCpu += float64(pCpu)
 				mshTreeMem += float64(pMem)
