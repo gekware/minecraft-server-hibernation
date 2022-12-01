@@ -54,6 +54,8 @@ func WarmMS() *errco.MshLog {
 
 // FreezeMS executes "stop" command on the minecraft server.
 // When force == true, it does not perform player check and orders the server shutdown (according to ms status)
+//
+// If force freeze is issued while ms is starting, this func waits for ms to reach online state and then force freeze it.
 func FreezeMS(force bool) *errco.MshLog {
 	var logMsh *errco.MshLog
 
@@ -66,27 +68,49 @@ func FreezeMS(force bool) *errco.MshLog {
 	switch servstats.Stats.Status {
 
 	case errco.SERVER_STATUS_STARTING:
-		// ms is starting, resume the ms process, wait for status online and then freeze ms
+		// ms is starting, resume the ms process and freeze ms
 
-		if force {
-			// if forceful freeze, resume and stop ms
-			logMsh = resumeStopMS()
+		// resume ms process (un/suspended)
+		// to be sure that ms process is running to allow ms start
+		if config.ConfigRuntime.Msh.SuspendAllow {
+			servstats.Stats.Suspended, logMsh = opsys.ProcTreeResume(uint32(ServTerm.cmd.Process.Pid))
 			if logMsh != nil {
 				return logMsh.AddTrace()
 			}
-		} else {
-			// schedule soft freeze of ms
-			// to give ms more time to start up
-			FreezeMSSchedule()
 		}
 
-		return nil
+		if force {
+			// wait ms to go online
+			errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "waiting for minecraft server to go online... (msh will stop it after)")
+			for servstats.Stats.Status == errco.SERVER_STATUS_STARTING {
+				time.Sleep(1 * time.Second)
+			}
+
+			// if ms not online return error
+			if servstats.Stats.Status != errco.SERVER_STATUS_ONLINE {
+				return errco.NewLog(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_SERVER_NOT_ONLINE, "minecraft server did not reach online status after starting")
+			}
+
+			// ms is now online
+			errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "minecraft server is now online! (msh proceeds to stop it)")
+
+			// proceed to fallthrough
+
+		} else {
+			// schedule soft freeze of ms
+			// (give ms more time to start)
+			FreezeMSSchedule()
+			return nil
+		}
+
+		// ms is now online
+		fallthrough
 
 	case errco.SERVER_STATUS_ONLINE:
-		// is ms is online, resume the process and then stop it
+		// ms is online, resume the process and then stop ms
 
+		// if force freeze, resume and stop ms
 		if force {
-			// if forceful freeze, resume and stop ms
 			logMsh = resumeStopMS()
 			if logMsh != nil {
 				return logMsh.AddTrace()
@@ -180,7 +204,7 @@ func FreezeMSSchedule() {
 
 // resumeStopMS resumes ms process and executes a stop command in ms terminal.
 //
-// should be called only when ms status is online
+// Should be called only when servstats.Stats.Status == ONLINE
 func resumeStopMS() *errco.MshLog {
 	var logMsh *errco.MshLog
 
