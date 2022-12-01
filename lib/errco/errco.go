@@ -45,7 +45,7 @@ const (
 // If you really want to use NewLog(), use NewLog().Log(false)
 // Find bad usage with reg exp: `NewLog\((.*)\).Log\(true`
 func NewLog(t LogTyp, l LogLvl, c LogCod, m string, a ...interface{}) *MshLog {
-	logMsh := &MshLog{trace(2), t, l, c, m, a}
+	logMsh := &MshLog{Trace(2), t, l, c, m, a}
 	return logMsh
 }
 
@@ -56,7 +56,7 @@ func NewLog(t LogTyp, l LogLvl, c LogCod, m string, a ...interface{}) *MshLog {
 // the parent function should handle the logging of msh log struct
 // Find bad usage with reg exp: `return (.*)NewLogln\(`
 func NewLogln(t LogTyp, l LogLvl, c LogCod, m string, a ...interface{}) *MshLog {
-	logMsh := &MshLog{trace(2), t, l, c, m, a}
+	logMsh := &MshLog{Trace(2), t, l, c, m, a}
 	// trace was just set, no need to set it again
 	// it would also be wrong:
 	// 1) example()               -> Log() -> trace(2) : example
@@ -82,7 +82,7 @@ func (log *MshLog) Log(tracing bool) *MshLog {
 
 	// add trace if requested
 	if tracing {
-		log.Ori = trace(2) + LogOri(": ") + log.Ori
+		log.Ori = Trace(2) + LogOri(": ") + log.Ori
 	}
 
 	// return original log if log level is not high enough
@@ -147,15 +147,15 @@ func (log *MshLog) AddTrace() *MshLog {
 		return log
 	}
 
-	log.Ori = trace(2) + LogOri(": ") + log.Ori
+	log.Ori = Trace(2) + LogOri(": ") + log.Ori
 
 	return log
 }
 
-// trace returns the function name the parent was called from
+// Trace returns the function name the parent was called from
 //
 // skip == 2: example() -> NewLog() -> trace(): example
-func trace(skip int) LogOri {
+func Trace(skip int) LogOri {
 	var o string = "?"
 
 	if pc, _, _, ok := runtime.Caller(skip); !ok {

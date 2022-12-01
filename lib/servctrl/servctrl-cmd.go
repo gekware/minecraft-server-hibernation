@@ -38,14 +38,14 @@ var lastOut = make(chan string)
 // Commands with no terminal output don't cause hanging:
 // a timeout is set to receive a new terminal output line after which Execute returns.
 // [non-blocking]
-func Execute(command, origin string) (string, *errco.MshLog) {
+func Execute(command string) (string, *errco.MshLog) {
 	// check if ms is running
 	logMsh := checkMSRunning()
 	if logMsh != nil {
 		return "", logMsh.AddTrace()
 	}
 
-	errco.NewLogln(errco.TYPE_INF, errco.LVL_2, errco.ERROR_NIL, "ms command: %s%s%s\t(origin: %s)", errco.COLOR_YELLOW, command, errco.COLOR_RESET, origin)
+	errco.NewLogln(errco.TYPE_INF, errco.LVL_2, errco.ERROR_NIL, "ms command: %s%s%s\t(origin: %s)", errco.COLOR_YELLOW, command, errco.COLOR_RESET, errco.Trace(2))
 
 	// write to server terminal (\n indicates the enter key)
 	_, err := ServTerm.inPipe.Write([]byte(command + "\n"))

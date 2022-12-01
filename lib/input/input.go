@@ -95,7 +95,7 @@ func GetInput() {
 			}
 
 			// pass the command to the minecraft server terminal
-			_, logMsh := servctrl.Execute(strings.Join(lineSplit[1:], " "), "user input")
+			_, logMsh := servctrl.Execute(strings.Join(lineSplit[1:], " "))
 			if logMsh != nil {
 				logMsh.Log(true)
 			}

@@ -45,7 +45,7 @@ func countPlayerSafe() int {
 
 // getPlayersByListCom returns the number of players using "list" command
 func getPlayersByListCom() (int, *errco.MshLog) {
-	outStr, logMsh := Execute("list", "getPlayersByListCom")
+	outStr, logMsh := Execute("list")
 	if logMsh != nil {
 		return 0, logMsh.AddTrace()
 	}
