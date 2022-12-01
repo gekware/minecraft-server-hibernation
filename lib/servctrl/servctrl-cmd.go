@@ -45,7 +45,7 @@ func Execute(command string) (string, *errco.MshLog) {
 		return "", logMsh.AddTrace()
 	}
 
-	errco.NewLogln(errco.TYPE_INF, errco.LVL_2, errco.ERROR_NIL, "ms command: %s%s%s\t(origin: %s)", errco.COLOR_YELLOW, command, errco.COLOR_RESET, errco.Trace(2))
+	errco.NewLogln(errco.TYPE_INF, errco.LVL_2, errco.ERROR_NIL, "ms command: %s%s%s\t(origin: %s%s%s)", errco.COLOR_CYAN, command, errco.COLOR_RESET, errco.COLOR_YELLOW, errco.Trace(2), errco.COLOR_RESET)
 
 	// write to server terminal (\n indicates the enter key)
 	_, err := ServTerm.inPipe.Write([]byte(command + "\n"))
