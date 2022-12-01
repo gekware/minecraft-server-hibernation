@@ -282,7 +282,7 @@ func printerOutErr() {
 
 						// if player count has no sense, reset it from a more reliable source
 						if servstats.Stats.PlayerCount < 0 {
-							errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "wrong playercount, resetting it from a more reliable source")
+							errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "wrong playercount (%d), resetting it from a more reliable source", servstats.Stats.PlayerCount)
 							servstats.Stats.PlayerCount = countPlayerSafe()
 						}
 
