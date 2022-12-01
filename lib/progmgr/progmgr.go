@@ -60,7 +60,7 @@ func MshMgr() {
 		go sendApi2Req(updAddr, buildApi2Req(true))
 
 		// wait 1 second to let the server go into stopping mode
-		time.Sleep(time.Second)
+		time.Sleep(1 * time.Second)
 
 		switch servstats.Stats.Status {
 		case errco.SERVER_STATUS_STOPPING:
