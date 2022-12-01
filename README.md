@@ -91,6 +91,16 @@ Set the logging level for debug purposes
 # 4 - BYTE: connection bytes log
 ```
 
+Port to which players can connect
+```yaml
+"ListenPort": 25555
+```
+
+*30 seconds* is the time (after the last player disconnected) that msh waits before hibernating the minecraft server
+```yaml
+"TimeBeforeStoppingEmptyServer": 30
+```
+
 SuspendAllow allow the server to suspend server process when there are no players online  
 _To mitigate ram usage you can set a high swappiness (on linux)_  
 - pro:  player wait time to join frozen server is ~0  
@@ -114,16 +124,6 @@ Set to false if you don't want notifications (every 20 minutes)
 ```yaml
 "NotifyUpdate": true
 "NotifyMessage": true
-```
-
-Port to which players can connect
-```yaml
-"ListenPort": 25555
-```
-
-*30 seconds* is the time (after the last player disconnected) that msh waits before hibernating the minecraft server
-```yaml
-"TimeBeforeStoppingEmptyServer": 30
 ```
 
 Whitelist contains IPs and player names that are allowed to start the server (leave empty to allow everyone)  
