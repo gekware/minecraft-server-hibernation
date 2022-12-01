@@ -363,9 +363,10 @@ func waitForExit() {
 }
 
 // suspendRefresher refreshes ms suspension by warming and freezing the server every set amount of time.
-// if suspension is not allowed this func just returns
-// if suspension refresh is not allowed this func just returns
-// [goroutine]
+//
+// If (suspension || suspension refresh) is not allowed this func just returns.
+//
+// [goroutine stoppable]
 func suspendRefresher(stop chan bool) {
 	if !config.ConfigRuntime.Msh.SuspendAllow {
 		return
@@ -377,7 +378,7 @@ func suspendRefresher(stop chan bool) {
 
 	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "suspension refresher is starting")
 
-	servstats.Stats.SuspendRefreshTick.Reset(time.Duration(config.ConfigRuntime.Msh.SuspendRefresh) * time.Second)
+	ticker := time.NewTicker(time.Duration(config.ConfigRuntime.Msh.SuspendRefresh) * time.Second)
 
 	for {
 		select {
@@ -387,7 +388,7 @@ func suspendRefresher(stop chan bool) {
 			errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "suspension refresher is stopping")
 			return
 
-		case <-servstats.Stats.SuspendRefreshTick.C:
+		case <-ticker.C:
 			// check if ms is responding, not offline, suspended
 			switch {
 			case servstats.Stats.MajorError != nil:
