@@ -152,7 +152,7 @@ func (log *MshLog) AddTrace() *MshLog {
 	return log
 }
 
-// Trace returns the function name the parent was called from
+// Trace returns the parent^(skip) function name
 //
 // skip == 2: example() -> NewLog() -> trace(): example
 func Trace(skip int) LogOri {
