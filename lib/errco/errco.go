@@ -73,9 +73,9 @@ func NewLogln(t LogTyp, l LogLvl, c LogCod, m string, a ...interface{}) *MshLog 
 // returns the original log for convenience.
 // returns nil if msh log struct is nil.
 func (log *MshLog) Log(tracing bool) *MshLog {
-	// return original log if it's nil
+	// return immediately if original log is nil
 	if log == nil {
-		return log
+		return nil
 	}
 
 	// ------- operations on original log -------
@@ -95,14 +95,14 @@ func (log *MshLog) Log(tracing bool) *MshLog {
 
 	// -------- operations on copied log --------
 
-	// set logC colors depending on logC level
+	// set logMod colors depending on logMod level
 	switch logMod.Lvl {
 	case LVL_0:
 		// make important logs more visible
 		logMod.Mex = COLOR_CYAN + logMod.Mex + COLOR_RESET
 	}
 
-	// set log colors depending on log type
+	// set logMod colors depending on logMod type
 	var t string
 	switch logMod.Typ {
 	case TYPE_INF:
@@ -118,6 +118,7 @@ func (log *MshLog) Log(tracing bool) *MshLog {
 		t = COLOR_RED + string(logMod.Typ) + COLOR_RESET
 	}
 
+	// print logMod depending on logMod type
 	switch logMod.Typ {
 	case TYPE_INF, TYPE_SER, TYPE_BYT:
 		fmt.Printf("%s [%-16s %-4s] %s\n",
@@ -153,9 +154,7 @@ func (log *MshLog) AddTrace() *MshLog {
 
 // trace returns the function name the parent was called from
 //
-// skip == 2: example() -> NewLog() -> trace()
-//
-// result:	  example
+// skip == 2: example() -> NewLog() -> trace(): example
 func trace(skip int) LogOri {
 	var o string = "?"
 
