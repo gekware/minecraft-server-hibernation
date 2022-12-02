@@ -95,7 +95,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 			// ms online and not suspended
 
 			// open proxy between client and server
-			openProxy(clientSocket, reqPacket)
+			openProxy(clientSocket, reqPacket, errco.CLIENT_REQ_INFO)
 		}
 
 	case errco.CLIENT_REQ_JOIN:
@@ -156,12 +156,17 @@ func HandleClientSocket(clientSocket net.Conn) {
 			}
 
 			// open proxy between client and server
-			openProxy(clientSocket, reqPacket)
+			openProxy(clientSocket, reqPacket, errco.CLIENT_REQ_JOIN)
 		}
 	}
 }
 
-func openProxy(clientSocket net.Conn, serverInitPacket []byte) {
+// openProxy opens a proxy connections between mincraft server and mincraft client.
+//
+// It forwards the server init packet for ms to interpret.
+//
+// The req parameter indicates what request type (INFO os JOIN) the proxy will be used for.
+func openProxy(clientSocket net.Conn, serverInitPacket []byte, req int) {
 	// open a connection to ms and connect it with the client
 	serverSocket, err := net.Dial("tcp", fmt.Sprintf("%s:%d", config.TargetHost, config.TargetPort))
 	if err != nil {
@@ -182,22 +187,41 @@ func openProxy(clientSocket net.Conn, serverInitPacket []byte) {
 	serverSocket.Write(serverInitPacket)
 
 	// launch proxy client -> server
-	go forward(clientSocket, serverSocket, false, stopC)
+	go forward(clientSocket, serverSocket, false, stopC, req)
 
 	// launch proxy server -> client
-	go forward(serverSocket, clientSocket, true, stopC)
+	go forward(serverSocket, clientSocket, true, stopC, req)
 }
 
 // forward takes a source and a destination net.Conn and forwards them.
-// (isServerToClient used to know the forward direction).
+//
+// isServerToClient used to know the forward direction
+//
+// req indicates if connection should be counted in servstats.Stats.ConnCount
+//
 // [goroutine]
-func forward(source, destination net.Conn, isServerToClient bool, stopC chan bool) {
+func forward(source, destination net.Conn, isServerToClient bool, stopC chan bool, req int) {
 	data := make([]byte, 1024)
 
+	// if client has requested ms join, change connection count
+	if isServerToClient && req == errco.CLIENT_REQ_JOIN { // isServerToClient used to count in only one of the 2 forward func
+		servstats.Stats.ConnCount++
+		errco.NewLogln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "A CLIENT CONNECTED TO THE SERVER! (join req) - %d active connections", servstats.Stats.ConnCount)
+
+		defer func() {
+			servstats.Stats.ConnCount--
+			errco.NewLogln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "A CLIENT DISCONNECTED FROM THE SERVER! (join req) - %d active connections", servstats.Stats.ConnCount)
+
+			servctrl.FreezeMSSchedule()
+		}()
+	}
+
 	for {
-		// if stopC receives true, close the source connection, otherwise continue
+		// if client or server disconnect, msh should close the connection with server or client.
+		// otherwise client/server (being connected to msh) thinks the connection is still alive and reaches a timeout.
 		select {
 		case <-stopC:
+			errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_CONN_EOF, "closing %15s --> %15s (cause: %s, server to client: %t)", strings.Split(source.RemoteAddr().String(), ":")[0], strings.Split(destination.RemoteAddr().String(), ":")[0], "stop channel", isServerToClient)
 			source.Close()
 			return
 		default:
@@ -212,9 +236,9 @@ func forward(source, destination net.Conn, isServerToClient bool, stopC chan boo
 		if err != nil {
 			// case in which the connection is closed by the source or closed by target
 			if err == io.EOF {
-				errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_CONN_EOF, "closing %15s --> %15s (cause: %s)", strings.Split(source.RemoteAddr().String(), ":")[0], strings.Split(destination.RemoteAddr().String(), ":")[0], err.Error())
+				errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_CONN_EOF, "closing %15s --> %15s (cause: %s, server to client: %t)", strings.Split(source.RemoteAddr().String(), ":")[0], strings.Split(destination.RemoteAddr().String(), ":")[0], err.Error(), isServerToClient)
 			} else {
-				errco.NewLogln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONN_READ, "closing %15s --> %15s (cause: %s)", strings.Split(source.RemoteAddr().String(), ":")[0], strings.Split(destination.RemoteAddr().String(), ":")[0], err.Error())
+				errco.NewLogln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONN_READ, "closing %15s --> %15s (cause: %s, server to client: %t)", strings.Split(source.RemoteAddr().String(), ":")[0], strings.Split(destination.RemoteAddr().String(), ":")[0], err.Error(), isServerToClient)
 			}
 
 			// close the source connection

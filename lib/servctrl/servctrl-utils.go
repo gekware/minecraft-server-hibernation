@@ -18,9 +18,9 @@ import (
 
 // countPlayerSafe returns the number of players on the server.
 //
-// Players are retrived by (in order): server info, list command, internal player count.
+// Players are retrived by (in order): server info, list command, internal connection count.
 //
-// Internal player counter is reset if a more reliable method is used.
+// Internal connection count is reset if a more reliable method is used.
 //
 // no error is returned: the return integer is always meaningful
 // (might be more or less reliable depending from where it retrieved).
@@ -33,25 +33,13 @@ func countPlayerSafe() int {
 
 	if playerCount, logMsh = getPlayersByServInfo(); logMsh.Log(true) == nil {
 		method = "server info"
-		if servstats.Stats.PlayerCount != playerCount {
-			errco.NewLogln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_PLAYER_INTERNAL_COUNT, "internal player count (%d) different from %s player count (%d), resetting internal player count", servstats.Stats.PlayerCount, method, playerCount)
-
-			// reset internal player counter with a more reliable method
-			servstats.Stats.PlayerCount = playerCount
-		}
 
 	} else if playerCount, logMsh = getPlayersByListCom(); logMsh.Log(true) == nil {
 		method = "list command"
-		if servstats.Stats.PlayerCount != playerCount {
-			errco.NewLogln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_PLAYER_INTERNAL_COUNT, "internal player count (%d) different from %s player count (%d), resetting internal player count", servstats.Stats.PlayerCount, method, playerCount)
-
-			// reset internal player counter with a more reliable method
-			servstats.Stats.PlayerCount = playerCount
-		}
 
 	} else {
-		method = "internal"
-		playerCount = servstats.Stats.PlayerCount
+		method = "connection count"
+		playerCount = servstats.Stats.ConnCount
 	}
 
 	errco.NewLogln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "%d online players - method for player count: %s", playerCount, method)

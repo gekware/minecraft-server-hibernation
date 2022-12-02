@@ -77,7 +77,7 @@ func sgmMgr() {
 			}
 
 			// increment play seconds sum
-			sgm.stats.playSec += servstats.Stats.PlayerCount
+			sgm.stats.playSec += servstats.Stats.ConnCount
 
 			// update segment average cpu/memory usage
 			mshTreeCpu, mshTreeMem := getMshTreeStats()
@@ -89,14 +89,14 @@ func sgmMgr() {
 		// send a notification in game chat for players to see.
 		// (should not send notification in console)
 		case <-sgm.push.tk.C:
-			if sgm.push.verCheck != "" && servstats.Stats.PlayerCount > 0 {
+			if sgm.push.verCheck != "" && servstats.Stats.ConnCount > 0 {
 				logMsh := servctrl.TellRaw("manager", sgm.push.verCheck, "sgmMgr")
 				if logMsh != nil {
 					logMsh.Log(true)
 				}
 			}
 
-			if len(sgm.push.messages) != 0 && servstats.Stats.PlayerCount > 0 {
+			if len(sgm.push.messages) != 0 && servstats.Stats.ConnCount > 0 {
 				for _, m := range sgm.push.messages {
 					logMsh := servctrl.TellRaw("message", m, "sgmMgr")
 					if logMsh != nil {

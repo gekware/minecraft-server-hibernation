@@ -262,29 +262,10 @@ func printerOutErr() {
 					switch {
 					// player sends a chat message
 					case strings.HasPrefix(lineContent, "<") || strings.HasPrefix(lineContent, "["):
-						// just log that the line is a chat message
 						errco.NewLogln(errco.TYPE_INF, errco.LVL_2, errco.ERROR_NIL, "a chat message was sent")
 
-					// player joins the server
-					// using "UUID of player" since minecraft server v1.12.2 does not use "joined the game"
-					case strings.Contains(lineContent, "UUID of player"):
-						servstats.Stats.PlayerCount++
-						errco.NewLogln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "A PLAYER JOINED THE SERVER! - %d players online", servstats.Stats.PlayerCount)
-
 					// player leaves the server
-					// using "lost connection" (instead of "left the game") because it's more general (issue #116)
-					case strings.Contains(lineContent, "lost connection"):
-						servstats.Stats.PlayerCount--
-
-						// if player count has no sense, reset it from a more reliable source
-						if servstats.Stats.PlayerCount < 0 {
-							errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "wrong playercount (%d), resetting it from a more reliable source", servstats.Stats.PlayerCount)
-							servstats.Stats.PlayerCount = countPlayerSafe()
-						}
-
-						errco.NewLogln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "A PLAYER LEFT THE SERVER! - %d players online", servstats.Stats.PlayerCount)
-
-						// schedule soft freeze of ms
+					case strings.Contains(lineContent, "lost connection:"): // "lost connection" is more general compared to "left the game" (even too much: player might write it in chat -> added ":")
 						FreezeMSSchedule()
 
 					// the server is stopping
@@ -331,7 +312,7 @@ func printerOutErr() {
 //
 // - ServTerm.isActive, ServTerm.startTime.
 //
-// - Stats.Status, Stats.Suspended, Stats.PlayerCount, Stats.LoadProgress.
+// - Stats.Status, Stats.Suspended, Stats.ConnCount, Stats.LoadProgress.
 //
 // - Suspension refresher.
 //
@@ -343,7 +324,7 @@ func waitForExit() {
 
 	servstats.Stats.Status = errco.SERVER_STATUS_STARTING
 	servstats.Stats.Suspended = false
-	servstats.Stats.PlayerCount = 0
+	servstats.Stats.ConnCount = 0
 	servstats.Stats.LoadProgress = "0%"
 	errco.NewLogln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "MINECRAFT SERVER IS STARTING!")
 
@@ -364,7 +345,7 @@ func waitForExit() {
 
 	servstats.Stats.Status = errco.SERVER_STATUS_OFFLINE
 	servstats.Stats.Suspended = false
-	servstats.Stats.PlayerCount = 0
+	servstats.Stats.ConnCount = 0
 	servstats.Stats.LoadProgress = "0%"
 	errco.NewLogln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "MINECRAFT SERVER IS OFFLINE!")
 

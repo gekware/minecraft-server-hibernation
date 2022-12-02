@@ -13,7 +13,7 @@ var Stats *serverStats = &serverStats{
 	Status:         errco.SERVER_STATUS_OFFLINE,
 	Suspended:      false,
 	MajorError:     nil,
-	PlayerCount:    0,
+	ConnCount:      0,
 	FreezeTimer:    time.NewTimer(5 * time.Minute),
 	LoadProgress:   "0%",
 	BytesToClients: 0,
@@ -25,7 +25,7 @@ type serverStats struct {
 	Status         int           // represent the status of the minecraft server
 	Suspended      bool          // status of minecraft server process (if ms is offline, should be set to false)
 	MajorError     *errco.MshLog // if !nil the server is having some major problems
-	PlayerCount    int           // tracks players connected to the server (cannot be < 0)
+	ConnCount      int           // tracks active client connections to ms (only clients that are playing on ms)
 	FreezeTimer    *time.Timer   // timer to freeze minecraft server
 	LoadProgress   string        // tracks loading percentage of starting server
 	BytesToClients float64       // tracks bytes/s server->clients
