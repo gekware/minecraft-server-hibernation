@@ -90,6 +90,7 @@ const (
 	ERROR_PIPE_INPUT_WRITE         LogCod = 0x00f300 // terminal input writing error
 	ERROR_PIPE_LOAD                LogCod = 0x00f301 // terminal pipe load error
 	ERROR_CONVERSION               LogCod = 0x00f400 // variable conversion error
+	ERROR_PLAYER_INTERNAL_COUNT    LogCod = 0x00f500 // player internal count error
 
 	// program manager package
 
