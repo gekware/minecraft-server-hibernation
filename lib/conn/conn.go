@@ -2,7 +2,6 @@ package conn
 
 import (
 	"fmt"
-	"io"
 	"net"
 	"strings"
 	"time"
@@ -180,28 +179,32 @@ func openProxy(clientSocket net.Conn, serverInitPacket []byte, req int) {
 		return
 	}
 
-	// stopC is used to close serv->client and client->serv at the same time
-	stopC := make(chan bool, 1)
-
 	// forward the request packet data
 	serverSocket.Write(serverInitPacket)
 
 	// launch proxy client -> server
-	go forward(clientSocket, serverSocket, false, stopC, req)
+	go forward(clientSocket, serverSocket, false, req)
 
 	// launch proxy server -> client
-	go forward(serverSocket, clientSocket, true, stopC, req)
+	go forward(serverSocket, clientSocket, true, req)
 }
 
 // forward takes a source and a destination net.Conn and forwards them.
 //
 // isServerToClient used to know the forward direction
 //
-// req indicates if connection should be counted in servstats.Stats.ConnCount
+// req is used to decide if connection should be counted in servstats.Stats.ConnCount
 //
 // [goroutine]
-func forward(source, destination net.Conn, isServerToClient bool, stopC chan bool, req int) {
-	data := make([]byte, 1024)
+func forward(source, destination net.Conn, isServerToClient bool, req int) {
+	var data []byte = make([]byte, 1024)
+	var direction string
+
+	if isServerToClient {
+		direction = "server --> client"
+	} else {
+		direction = "client --> server"
+	}
 
 	// if client has requested ms join, change connection count
 	if isServerToClient && req == errco.CLIENT_REQ_JOIN { // isServerToClient used to count in only one of the 2 forward func
@@ -217,48 +220,41 @@ func forward(source, destination net.Conn, isServerToClient bool, stopC chan boo
 	}
 
 	for {
-		// if client or server disconnect, msh should close the connection with server or client.
-		// otherwise client/server (being connected to msh) thinks the connection is still alive and reaches a timeout.
-		select {
-		case <-stopC:
-			errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_CONN_EOF, "closing %15s --> %15s (cause: %s, server to client: %t)", strings.Split(source.RemoteAddr().String(), ":")[0], strings.Split(destination.RemoteAddr().String(), ":")[0], "stop channel", isServerToClient)
-			source.Close()
-			return
-		default:
-		}
-
 		// update read and write timeout
-		source.SetReadDeadline(time.Now().Add(time.Duration(config.ConfigRuntime.Msh.TimeBeforeStoppingEmptyServer) * time.Second))
-		destination.SetWriteDeadline(time.Now().Add(time.Duration(config.ConfigRuntime.Msh.TimeBeforeStoppingEmptyServer) * time.Second))
+		source.SetReadDeadline(time.Now().Add(10 * time.Second))
+		destination.SetWriteDeadline(time.Now().Add(10 * time.Second))
 
 		// read data from source
 		dataLen, err := source.Read(data)
 		if err != nil {
-			// case in which the connection is closed by the source or closed by target
-			if err == io.EOF {
-				errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_CONN_EOF, "closing %15s --> %15s (cause: %s, server to client: %t)", strings.Split(source.RemoteAddr().String(), ":")[0], strings.Split(destination.RemoteAddr().String(), ":")[0], err.Error(), isServerToClient)
-			} else {
-				errco.NewLogln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONN_READ, "closing %15s --> %15s (cause: %s, server to client: %t)", strings.Split(source.RemoteAddr().String(), ":")[0], strings.Split(destination.RemoteAddr().String(), ":")[0], err.Error(), isServerToClient)
-			}
+			errco.NewLogln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_CONN_EOF, "closing %15s --> %15s | %s (cause: %s)", strings.Split(source.RemoteAddr().String(), ":")[0], strings.Split(destination.RemoteAddr().String(), ":")[0], direction, err.Error())
 
-			// close the source connection
-			stopC <- true
-			source.Close()
+			// close the source/destination connections
+			_ = destination.Close()
+			_ = source.Close()
 			return
 		}
 
 		// write data to destination
-		destination.Write(data[:dataLen])
+		_, err = destination.Write(data[:dataLen])
+		if err != nil {
+			errco.NewLogln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_CONN_WRITE, "closing %15s --> %15s | %s (cause: %s)", strings.Split(source.RemoteAddr().String(), ":")[0], strings.Split(destination.RemoteAddr().String(), ":")[0], direction, err.Error())
+
+			// close the source/destination connections
+			_ = destination.Close()
+			_ = source.Close()
+			return
+		}
 
 		// calculate bytes/s to client/server
 		if errco.DebugLvl >= errco.LVL_3 {
+			errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%s%s%s: %v", errco.COLOR_BLUE, direction, errco.COLOR_RESET, data[:dataLen])
+
 			servstats.Stats.M.Lock()
 			if isServerToClient {
 				servstats.Stats.BytesToClients += float64(dataLen)
-				errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%sserver --> client%s: %v", errco.COLOR_BLUE, errco.COLOR_RESET, data[:dataLen])
 			} else {
 				servstats.Stats.BytesToServer += float64(dataLen)
-				errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%sclient --> server%s: %v", errco.COLOR_GREEN, errco.COLOR_RESET, data[:dataLen])
 			}
 			servstats.Stats.M.Unlock()
 		}
