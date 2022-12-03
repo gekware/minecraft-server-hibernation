@@ -48,7 +48,8 @@ func MshMgr() {
 
 	for {
 		// msh termination signal is received
-		<-msh.sigExit
+		sig := <-msh.sigExit
+		errco.NewLogln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "received signal: %s", sig.String())
 
 		// stop the minecraft server forcefully
 		logMsh := servctrl.FreezeMS(true)
