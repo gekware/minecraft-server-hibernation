@@ -33,9 +33,15 @@ func countPlayerSafe() int {
 
 	if playerCount, logMsh = getPlayersByServInfo(); logMsh.Log(true) == nil {
 		method = "server info"
+		if playerCount != servstats.Stats.ConnCount {
+			errco.NewLogln(errco.TYPE_WAR, errco.LVL_1, errco.ERROR_WRONG_CONNECTION_COUNT, "connection count (%d) different from %s player count (%d)", servstats.Stats.ConnCount, method, playerCount)
+		}
 
 	} else if playerCount, logMsh = getPlayersByListCom(); logMsh.Log(true) == nil {
 		method = "list command"
+		if playerCount != servstats.Stats.ConnCount {
+			errco.NewLogln(errco.TYPE_WAR, errco.LVL_1, errco.ERROR_WRONG_CONNECTION_COUNT, "connection count (%d) different from %s player count (%d)", servstats.Stats.ConnCount, method, playerCount)
+		}
 
 	} else {
 		method = "connection count"
