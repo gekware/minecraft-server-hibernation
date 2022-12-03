@@ -130,7 +130,7 @@ func ScaleImg(srcImg image.Image, rect image.Rectangle) (image.Image, time.Durat
 }
 
 // Entropy measures the Shannon entropy of a string.
-// Check http://bearcave.com/misl/misl_tech/wavelets/compression/shannon.html for the algorithmic explanation.
+// Check bearcave.com/misl/misl_tech/wavelets/compression/shannon.html for the algorithmic explanation.
 func Entropy(value string) int {
 	frq := make(map[rune]float64)
 
