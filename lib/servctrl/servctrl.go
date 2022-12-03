@@ -14,12 +14,12 @@ import (
 func WarmMS() *errco.MshLog {
 	var logMsh *errco.MshLog
 
+	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "issued minecraft server warm...")
+
 	// don't try to warm ms if it has encountered major errors
 	if servstats.Stats.MajorError != nil {
 		return errco.NewLog(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_MINECRAFT_SERVER, "minecraft server has encountered major problems")
 	}
-
-	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "warming minecraft server...")
 
 	switch servstats.Stats.Status {
 
