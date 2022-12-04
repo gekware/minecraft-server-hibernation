@@ -83,21 +83,22 @@ func getPlayersByServInfo() (int, *errco.MshLog) {
 
 // getServInfo returns server info after emulating a server info request to the minecraft server
 func getServInfo() (*model.DataInfo, *errco.MshLog) {
+	var recInfoData []byte = []byte{}
+	var recInfo *model.DataInfo = &model.DataInfo{}
+	var buf []byte = make([]byte, 1024)
+
 	// check if ms is running
 	logMsh := checkMSRunning()
 	if logMsh != nil {
-		return &model.DataInfo{}, logMsh.AddTrace()
+		return nil, logMsh.AddTrace()
 	}
 
 	// open connection to minecraft server
 	serverSocket, err := net.Dial("tcp", fmt.Sprintf("%s:%d", config.TargetHost, config.TargetPort))
 	if err != nil {
-		return &model.DataInfo{}, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_SERVER_DIAL, err.Error())
+		return nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_SERVER_DIAL, err.Error())
 	}
 	defer serverSocket.Close()
-
-	// timeout can be low since its a connection to 127.0.0.1
-	serverSocket.SetDeadline(time.Now().Add(100 * time.Millisecond))
 
 	// building byte array to request minecraft server info
 	// [16 0 244 5 9 49 50 55 46 48 46 48 46 49 99 211 1 1 0 ]
@@ -111,9 +112,12 @@ func getServInfo() (*model.DataInfo, *errco.MshLog) {
 	errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%smsh --> server%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
 
 	// read response from server
-	recInfoData := []byte{}
-	buf := make([]byte, 1024)
 	for {
+		// timeout can be low since its a connection to 127.0.0.1
+		// the first time the ms info are requested it timeout is <100 mills
+		// (probably the ms function that handles ms info needs time to load the first time it's called)
+		serverSocket.SetReadDeadline(time.Now().Add(200 * time.Millisecond))
+
 		dataLen, err := serverSocket.Read(buf)
 		if err != nil {
 			// cannot break on io.EOF since it's not sent, so break happens on timeout
@@ -121,7 +125,8 @@ func getServInfo() (*model.DataInfo, *errco.MshLog) {
 			if err, ok := err.(net.Error); ok && err.Timeout() {
 				break
 			}
-			return &model.DataInfo{}, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_SERVER_REQUEST_INFO, err.Error())
+
+			return nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_SERVER_REQUEST_INFO, err.Error())
 		}
 
 		errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%sserver --> msh%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, buf[:dataLen])
@@ -132,14 +137,14 @@ func getServInfo() (*model.DataInfo, *errco.MshLog) {
 	// remove first 5 bytes that are used as header to get only the json data
 	// [178 88 0 175 88]{"description":{ ...
 	if len(recInfoData) < 5 {
-		return &model.DataInfo{}, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_SERVER_REQUEST_INFO, "received data unexpected format (%v)", recInfoData)
+		return nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_SERVER_REQUEST_INFO, "not enough data received (%v)", recInfoData)
 	}
 	recInfoData = recInfoData[5:]
 
-	recInfo := &model.DataInfo{}
+	// load data into struct
 	err = json.Unmarshal(recInfoData, recInfo)
 	if err != nil {
-		return &model.DataInfo{}, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_JSON_UNMARSHAL, err.Error())
+		return nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_JSON_UNMARSHAL, err.Error())
 	}
 
 	// update server version and protocol in config
