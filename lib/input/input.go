@@ -56,6 +56,7 @@ func GetInput() {
 			}
 
 			switch lineSplit[1] {
+
 			case "start":
 				logMsh := servctrl.WarmMS()
 				if logMsh != nil {
@@ -73,8 +74,7 @@ func GetInput() {
 				if logMsh != nil {
 					logMsh.Log(true)
 				}
-				// exit msh
-				errco.NewLogln(errco.TYPE_INF, errco.LVL_0, errco.ERROR_NIL, "issuing msh termination")
+				// terminate msh
 				progmgr.AutoTerminate()
 			default:
 				errco.NewLogln(errco.TYPE_WAR, errco.LVL_0, errco.ERROR_COMMAND_UNKNOWN, "unknown command (start - freeze - exit)")

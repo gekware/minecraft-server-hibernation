@@ -85,6 +85,7 @@ func MshMgr() {
 
 // AutoTerminate induces correct msh termination via msh manager
 func AutoTerminate() {
+	errco.NewLogln(errco.TYPE_INF, errco.LVL_0, errco.ERROR_NIL, "issuing msh termination")
 	if msh.mgrActive {
 		// send signal to msh.sigExit so that msh manager handles msh termination
 		msh.sigExit <- syscall.SIGINT
