@@ -87,8 +87,8 @@ func getServInfo() (*model.DataInfo, *errco.MshLog) {
 	var recInfo *model.DataInfo = &model.DataInfo{}
 	var buf []byte = make([]byte, 1024)
 
-	// check if ms is running
-	logMsh := checkMSRunning()
+	// check if ms is warm and interactable
+	logMsh := CheckMSWarm()
 	if logMsh != nil {
 		return nil, logMsh.AddTrace()
 	}

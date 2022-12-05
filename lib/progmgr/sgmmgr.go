@@ -68,11 +68,12 @@ func sgmMgr() {
 		case <-sgm.tk.C:
 			sgm.m.Lock()
 
-			// increment segment second counter
+			// increment segment duration counter
 			sgm.stats.dur += 1
 
-			// increment work/hibernation second counter
-			if !servctrl.ServTerm.IsActive {
+			// increment hibernation duration counter if ms is not warm/interactable
+			logMsh := servctrl.CheckMSWarm()
+			if logMsh != nil {
 				sgm.stats.hibeDur += 1
 			}
 

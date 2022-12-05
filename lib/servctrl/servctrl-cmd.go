@@ -39,8 +39,8 @@ var lastOut = make(chan string)
 // a timeout is set to receive a new terminal output line after which Execute returns.
 // [non-blocking]
 func Execute(command string) (string, *errco.MshLog) {
-	// check if ms is running
-	logMsh := checkMSRunning()
+	// check if ms is warm and interactable
+	logMsh := CheckMSWarm()
 	if logMsh != nil {
 		return "", logMsh.AddTrace()
 	}
@@ -73,8 +73,8 @@ a:
 // TellRaw executes a tellraw on ms
 // [non-blocking]
 func TellRaw(reason, text, origin string) *errco.MshLog {
-	// check if ms is running
-	logMsh := checkMSRunning()
+	// check if ms is warm and interactable
+	logMsh := CheckMSWarm()
 	if logMsh != nil {
 		return logMsh.AddTrace()
 	}
@@ -108,10 +108,12 @@ func TermUpTime() int {
 	return utility.RoundSec(time.Since(ServTerm.startTime))
 }
 
-// checkMSRunning checks if minecraft server is running and it's possible to interact with it.
+// CheckMSWarm checks if minecraft server is warm and it's possible to interact with it.
 //
-// checks if terminal is active, ms status is online and ms process not suspended.
-func checkMSRunning() *errco.MshLog {
+// Checks if there is no major error, terminal is active, ms status is online and ms process not suspended.
+//
+// If ms is warm and interactable, returns nil
+func CheckMSWarm() *errco.MshLog {
 	switch {
 	case servstats.Stats.MajorError != nil:
 		return errco.NewLog(errco.TYPE_ERR, errco.LVL_2, errco.ERROR_SERVER_UNRESPONDING, "minecraft server not responding")
