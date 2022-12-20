@@ -99,10 +99,10 @@ func TellRaw(reason, text, origin string) *errco.MshLog {
 }
 
 // TermUpTime returns the current minecraft server uptime.
-// In case of error 0 is returned.
+// If ms terminal is not running returns -1.
 func TermUpTime() int {
 	if !ServTerm.IsActive {
-		return 0
+		return -1
 	}
 
 	return utility.RoundSec(time.Since(ServTerm.startTime))
