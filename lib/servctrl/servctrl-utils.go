@@ -6,14 +6,15 @@ import (
 	"fmt"
 	"math/big"
 	"net"
+	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"msh/lib/config"
 	"msh/lib/errco"
 	"msh/lib/model"
 	"msh/lib/servstats"
-	"msh/lib/utility"
 )
 
 // countPlayerSafe returns the number of players on the server.
@@ -55,15 +56,17 @@ func countPlayerSafe() int {
 
 // getPlayersByListCom returns the number of players using "list" command
 func getPlayersByListCom() (int, *errco.MshLog) {
-	outStr, logMsh := Execute("list")
+	output, logMsh := Execute("list")
 	if logMsh != nil {
 		return 0, logMsh.AddTrace()
 	}
-	playersStr, logMsh := utility.StrBetween(outStr, "There are ", " of a max")
-	if logMsh != nil {
-		return 0, logMsh.AddTrace()
-	}
-	players, err := strconv.Atoi(playersStr)
+
+	// possible outputs:
+	// [12:26:33] [Server thread/INFO]: There are 0 of a max of 20 players online:
+	// [12:26:33] [Server INFO]: There are 0 out of maximum 20 players online.
+	firstNumber := regexp.MustCompile(`\d+`).FindString(strings.Split(output, "INFO]:")[1])
+
+	players, err := strconv.Atoi(firstNumber)
 	if err != nil {
 		return 0, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONVERSION, err.Error())
 	}
