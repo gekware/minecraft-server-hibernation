@@ -61,9 +61,7 @@ func getPlayersByListCom() (int, *errco.MshLog) {
 		return 0, logMsh.AddTrace()
 	}
 
-	// possible outputs:
-	// [12:26:33] [Server thread/INFO]: There are 0 of a max of 20 players online:
-	// [12:26:33] [Server INFO]: There are 0 out of maximum 20 players online.
+	// check test function for possible `list` outputs
 	firstNumber := regexp.MustCompile(`\d+`).FindString(strings.Split(output, "INFO]:")[1])
 
 	players, err := strconv.Atoi(firstNumber)
