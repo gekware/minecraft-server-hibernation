@@ -157,3 +157,14 @@ func Reverse[slice ~[]ele, ele any](sli slice) slice {
 	}
 	return sli
 }
+
+// FirstNon returns the first string different from the one specified.
+func FirstNon(s string, vals ...string) string {
+	for _, v := range vals {
+		if v != s {
+			return v
+		}
+	}
+
+	return s
+}

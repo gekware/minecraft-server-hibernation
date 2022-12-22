@@ -190,11 +190,11 @@ func (c *Configuration) loadIpPorts() *errco.MshLog {
 
 // getVersionInfo reads version.json from the server JAR file
 // and returns minecraft server version and protocol.
-// In case of error "", 0, *errco.MshLog are returned.
+// In case of error "", -1, *errco.MshLog are returned.
 func (c *Configuration) getVersionInfo() (string, int, *errco.MshLog) {
 	reader, err := zip.OpenReader(filepath.Join(c.Server.Folder, c.Server.FileName))
 	if err != nil {
-		return "", 0, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_VERSION_LOAD, err.Error())
+		return "", -1, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_VERSION_LOAD, err.Error())
 	}
 	defer reader.Close()
 
@@ -206,23 +206,23 @@ func (c *Configuration) getVersionInfo() (string, int, *errco.MshLog) {
 
 		f, err := file.Open()
 		if err != nil {
-			return "", 0, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_VERSION_LOAD, err.Error())
+			return "", -1, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_VERSION_LOAD, err.Error())
 		}
 		defer f.Close()
 
 		versionsBytes, err := io.ReadAll(f)
 		if err != nil {
-			return "", 0, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_VERSION_LOAD, err.Error())
+			return "", -1, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_VERSION_LOAD, err.Error())
 		}
 
 		var info model.VersionInfo
 		err = json.Unmarshal(versionsBytes, &info)
 		if err != nil {
-			return "", 0, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_VERSION_LOAD, err.Error())
+			return "", -1, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_VERSION_LOAD, err.Error())
 		}
 
-		return info.Version, info.Protocol, nil
+		return utility.FirstNon("", info.Version1, info.Version2), info.Protocol, nil
 	}
 
-	return "", 0, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_VERSION_LOAD, "minecraft server version and protocol could not be extracted from version.json")
+	return "", -1, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_VERSION_LOAD, "minecraft server version and protocol could not be extracted from version.json")
 }

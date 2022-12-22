@@ -143,6 +143,9 @@ func (c *Configuration) loadDefault() *errco.MshLog {
 	if logMsh != nil {
 		// just log it since ms version/protocol are not vital for the connection with clients
 		logMsh.Log(true)
+	} else if version == "" || protocol == -1 {
+		// check that version and protocol are significant
+		errco.NewLogln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_VERSION_LOAD, "version (%s) and protocol (%d) are not significant", version, protocol)
 	} else if c.Server.Version != version || c.Server.Protocol != protocol {
 		c.Server.Version = version
 		c.Server.Protocol = protocol

@@ -111,9 +111,11 @@ type GameRawMessage struct {
 	Bold  bool   `json:"bold"`
 }
 
-// struct for version.json of server JAR
+// struct for version.json of server JAR.
+// use 2 version json definitions as it might change depending on ms version.
 type VersionInfo struct {
-	Version  string `json:"release_target"`
+	Version1 string `json:"release_target"`
+	Version2 string `json:"name"`
 	Protocol int    `json:"protocol_version"`
 }
 
