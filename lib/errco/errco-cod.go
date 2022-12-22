@@ -99,6 +99,7 @@ const (
 	ERROR_GET_CORES       LogCod = 0x01f100 // error getting system cores count
 	ERROR_GET_CPU_INFO    LogCod = 0x01f101 // error getting cpu info
 	ERROR_GET_MEMORY      LogCod = 0x01f102 // error getting system memory info
+	ERROR_BODY_READ       LogCod = 0x01f200 // error reading a body response
 
 	// server connection package
 

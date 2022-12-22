@@ -2,6 +2,7 @@ package progmgr
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 	"sync"
@@ -125,7 +126,12 @@ func sgmMgr() {
 				errco.NewLogln(errco.TYPE_WAR, errco.LVL_0, errco.ERROR_VERSION, "client is unauthorized, issuing msh termination")
 				AutoTerminate()
 			default:
-				errco.NewLogln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_VERSION, "response status code is %s -> prolonging segment...", res.Status)
+				body, err := io.ReadAll(res.Body)
+				if err != nil {
+					errco.NewLogln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_BODY_READ, err.Error())
+				}
+
+				errco.NewLogln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_VERSION, "response status code is %s [ %s ] -> prolonging segment...", res.Status, body)
 				sgm.prolong(res)
 				break mainselect
 			}
