@@ -252,7 +252,6 @@ func printerOutErr() {
 				// Continue if line does not contain ": "
 				// (it does not adhere to expected log format or it is a multiline java exception)
 				if !strings.Contains(line, ": ") {
-					errco.NewLogln(errco.TYPE_WAR, errco.LVL_2, errco.ERROR_SERVER_UNEXP_OUTPUT, "line does not adhere to expected log format")
 					continue
 				}
 
