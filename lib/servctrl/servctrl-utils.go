@@ -61,8 +61,18 @@ func getPlayersByListCom() (int, *errco.MshLog) {
 		return 0, logMsh.AddTrace()
 	}
 
+	// return if output has unexpected format
+	if !strings.Contains(output, "INFO]:") {
+		return 0, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_SERVER_UNEXP_OUTPUT, "string does not contain \"INFO]:\"")
+	}
+
 	// check test function for possible `list` outputs
 	firstNumber := regexp.MustCompile(`\d+`).FindString(strings.Split(output, "INFO]:")[1])
+
+	// check if firstNumber has been found
+	if firstNumber == "" {
+		return 0, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_SERVER_UNEXP_OUTPUT, "firstNumber string is empty")
+	}
 
 	players, err := strconv.Atoi(firstNumber)
 	if err != nil {
