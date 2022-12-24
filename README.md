@@ -106,8 +106,9 @@ _To mitigate ram usage you can set a high swappiness (on linux)_
 - pro:  player wait time to join frozen server is ~0  
 - cons: ram usage as minecraft server without msh (cpu remains ~0)  
 
-SuspendRefresh enables refresh of minecraft server suspension every set seconds (to avoid watchdog crash at unsuspension)
-- setting `these variables` and `SuspendRefresh` might prevent minecraft server watchdog crash when `SuspendAllow` is enabled
+SuspendRefresh enables refresh of minecraft server suspension every set seconds (to avoid watchdog crash at unsuspension)  
+- setting `these variables` and `SuspendRefresh` might prevent minecraft server watchdog crash when `SuspendAllow` is enabled  
+
 |       file        |                       variable                       |
 | ----------------- | ---------------------------------------------------- |
 | server.properties | `max-tick-time= -1`                                  |
