@@ -1,36 +1,62 @@
 package input
 
 import (
-	"bufio"
 	"io"
-	"os"
+	"log"
 	"strings"
 
 	"msh/lib/errco"
 	"msh/lib/progmgr"
 	"msh/lib/servctrl"
 	"msh/lib/servstats"
+
+	"github.com/chzyer/readline"
 )
 
 // GetInput is used to read input from user.
 // [goroutine]
 func GetInput() {
-	var line string
-	var err error
+	l, err := readline.NewEx(
+		&readline.Config{
+			Prompt: "» ",
+			AutoComplete: readline.NewPrefixCompleter(
+				readline.PcItem("msh",
+					readline.PcItem("start"),
+					readline.PcItem("freeze"),
+					readline.PcItem("exit"),
+				),
+				readline.PcItem("mine"),
+			),
+			FuncFilterInputRune: func(r rune) (rune, bool) {
+				switch r {
+				case readline.CharCtrlZ: // block CtrlZ feature
+					return r, false
+				}
+				return r, true
+			},
+		})
+	if err != nil {
+		errco.NewLogln(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_INPUT, "error while starting readline: %s", err.Error())
+		return
+	}
+	defer l.Close()
 
-	reader := bufio.NewReader(os.Stdin)
-
+	log.SetOutput(l.Stderr()) // autorefresh prompt line
 	for {
-		line, err = reader.ReadString('\n')
-		if err != nil {
+		line, err := l.Readline()
+		switch err {
+		case nil:
+			// analyze line
+		case io.EOF:
 			// if stdin is unavailable (msh running without terminal console)
 			// exit from input goroutine to avoid an infinite loop
-			if err == io.EOF {
-				// in case input goroutine returns abnormally while msh is running in terminal,
-				// the user must be notified with errco.LVL_1
-				errco.NewLogln(errco.TYPE_WAR, errco.LVL_1, errco.ERROR_INPUT_EOF, "stdin unavailable, exiting input goroutine")
-				return
-			}
+			// (user must be notified with errco.LVL_1)
+			errco.NewLogln(errco.TYPE_WAR, errco.LVL_1, errco.ERROR_INPUT_EOF, "stdin unavailable, exiting input goroutine")
+			return
+		case readline.ErrInterrupt:
+			progmgr.AutoTerminate()
+			return
+		default:
 			errco.NewLogln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_INPUT_READ, err.Error())
 			continue
 		}

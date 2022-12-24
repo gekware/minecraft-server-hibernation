@@ -151,8 +151,9 @@ const (
 
 	ERROR_COMMAND_INPUT   LogCod = 0x07f000 // general error while reading command input
 	ERROR_COMMAND_UNKNOWN LogCod = 0x07f001 // command is unknown
-	ERROR_INPUT_READ      LogCod = 0x07f100 // error while reading input)
-	ERROR_INPUT_EOF       LogCod = 0x07f101 // read EOF from stdin
+	ERROR_INPUT           LogCod = 0x07f100 // error input
+	ERROR_INPUT_READ      LogCod = 0x07f101 // error while reading input
+	ERROR_INPUT_EOF       LogCod = 0x07f102 // read EOF from stdin
 
 	// errco package
 	ERROR_COLOR_ENABLE LogCod = 0x08f000 // error while trying to enable colors on terminal
