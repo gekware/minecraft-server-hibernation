@@ -96,22 +96,28 @@ Port to which players can connect
 "ListenPort": 25555
 ```
 
-*30 seconds* is the time (after the last player disconnected) that msh waits before hibernating the minecraft server
+TimeBeforeStoppingEmptyServer sets the time (after the last player disconnected) that msh waits before hibernating the minecraft server
 ```yaml
 "TimeBeforeStoppingEmptyServer": 30
 ```
 
-SuspendAllow allow the server to suspend server process when there are no players online  
+SuspendAllow enables msh to suspend minecraft server process when there are no players online  
 _To mitigate ram usage you can set a high swappiness (on linux)_  
 - pro:  player wait time to join frozen server is ~0  
 - cons: ram usage as minecraft server without msh (cpu remains ~0)  
 
-SuspendRefresh enables refresh of minecraft server suspension every set seconds (to avoid unexplained crashes at unsuspension)
-- set -1 to disable
-- set it to a value that suits you
+SuspendRefresh enables refresh of minecraft server suspension every set seconds (to avoid watchdog crash at unsuspension)
+- setting `these variables` and `SuspendRefresh` might prevent minecraft server watchdog crash when `SuspendAllow` is enabled
+|       file        |                       variable                       |
+| ----------------- | ---------------------------------------------------- |
+| server.properties | `max-tick-time= -1`                                  |
+| spigot.yml        | `timeout-time: -1`, `restart-on-crash: false`        |
+| bukkit.yml        | `warn-on-overload: false`                            |
+| paper-global.yml  | `early-warning-delay: -1`, `early-warning-every: -1` |
+
 ```yaml
 "SuspendAllow": false
-"SuspendRefresh": -1
+"SuspendRefresh": -1	# set -1 to disable, advised value: 120 (reduce if minecraft server keeps crashing)
 ```
 
 Hibernation and Starting server description
