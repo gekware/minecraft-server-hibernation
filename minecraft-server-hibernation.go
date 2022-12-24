@@ -41,9 +41,6 @@ func main() {
 	// wait for the initial update check
 	<-progmgr.ReqSent
 
-	// launch GetInput()
-	go input.GetInput()
-
 	// if ms suspension is allowed, pre-warm the server
 	if config.ConfigRuntime.Msh.SuspendAllow {
 		errco.NewLogln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "minecraft server will now pre-warm (SuspendAllow is enabled)...")
@@ -61,6 +58,9 @@ func main() {
 	}
 
 	errco.NewLogln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "listening for new clients to connect on %s:%d ...", config.ListenHost, config.ListenPort)
+
+	// launch GetInput()
+	go input.GetInput()
 
 	// infinite cycle to accept clients. when a clients connects it is passed to handleClientSocket()
 	for {
