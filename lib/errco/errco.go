@@ -25,9 +25,13 @@ type LogTyp string
 type LogLvl int
 type LogCod int
 
+// COLOR_GRAY is "\033[1m\033[30m" instead of "\033[1;30m"
+// because `log.SetOutput(l.Stdout())` makes the color disappear for the second case
+// https://github.com/gekware/minecraft-server-hibernation/blob/92607c76d9c9f872153578a612e88a5147a663ee/lib/input/input.go#L44
+
 const (
 	COLOR_RESET  = "\033[0m"
-	COLOR_GRAY   = "\033[30m"
+	COLOR_GRAY   = "\033[1m\033[30m"
 	COLOR_RED    = "\033[31m"
 	COLOR_GREEN  = "\033[32m"
 	COLOR_YELLOW = "\033[33m"
@@ -102,8 +106,8 @@ func (logMsh *MshLog) Log(tracing bool) *MshLog {
 		logMod.Mex = COLOR_CYAN + logMod.Mex + COLOR_RESET
 	}
 
-	// set logMod colors depending on logMod type
 	var t string
+	// set logMod colors depending on logMod type
 	switch logMod.Typ {
 	case TYPE_INF:
 		t = COLOR_BLUE + string(logMod.Typ) + COLOR_RESET
@@ -121,12 +125,12 @@ func (logMsh *MshLog) Log(tracing bool) *MshLog {
 	// print logMod depending on logMod type
 	switch logMod.Typ {
 	case TYPE_INF, TYPE_SER, TYPE_BYT:
-		log.Printf("[%-16s %-4s] %s\n",
+		log.Printf("[%-13s %-4s] %s\n",
 			t,
 			strings.Repeat("≡", 4-int(logMod.Lvl)),
 			fmt.Sprintf(logMod.Mex, logMod.Arg...))
 	case TYPE_WAR, TYPE_ERR:
-		log.Printf("[%-16s %-4s] %s %s %s\n",
+		log.Printf("[%-13s %-4s] %s %s %s\n",
 			t,
 			strings.Repeat("≡", 4-int(logMod.Lvl)),
 			LogOri(COLOR_YELLOW)+logMod.Ori+":"+LogOri(COLOR_RESET),
