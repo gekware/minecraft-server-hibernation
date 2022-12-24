@@ -317,7 +317,7 @@ func printerOutErr() {
 func waitForExit() {
 	ServTerm.IsActive = true
 	ServTerm.startTime = time.Now()
-	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "terminal started")
+	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "ms terminal started")
 
 	servstats.Stats.Status = errco.SERVER_STATUS_STARTING
 	servstats.Stats.Suspended = false
@@ -347,7 +347,7 @@ func waitForExit() {
 	errco.NewLogln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "MINECRAFT SERVER IS OFFLINE!")
 
 	ServTerm.IsActive = false
-	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "terminal exited")
+	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "ms terminal exited")
 }
 
 // suspendRefresher refreshes ms suspension by warming and freezing the server every set amount of time.
