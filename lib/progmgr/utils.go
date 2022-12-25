@@ -70,7 +70,10 @@ func buildApi2Req(preTerm bool) *model.Api2Req {
 		errco.NewLogln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_GET_MEMORY, err.Error()) // log warning
 		reqJson.Machine.Mem = -1
 	} else {
-		reqJson.Machine.Mem = int(memInfo.Total)
+		// `int64` conversion
+		// `int` leads to overflow in 32bit arch (386)
+		// `uint64` doesn't allow -1 as error signaling value
+		reqJson.Machine.Mem = int64(memInfo.Total)
 	}
 
 	reqJson.Server.Uptime = servctrl.TermUpTime()

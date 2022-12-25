@@ -75,7 +75,7 @@ type Api2Req struct {
 		CpuVendor string `json:"cpu-vendor"` // cpu vendor
 		CoresMsh  int    `json:"cores-msh"`  // cores for msh
 		CoresSys  int    `json:"cores-sys"`  // cores for system
-		Mem       int    `json:"mem"`        // system memory
+		Mem       int64  `json:"mem"`        // system memory
 	} `json:"machine"`
 	Server struct {
 		Uptime int    `json:"uptime"`  // mc server uptime
