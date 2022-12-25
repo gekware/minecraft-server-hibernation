@@ -6,7 +6,7 @@
 [![msh - license](https://img.shields.io/github/license/gekware/minecraft-server-hibernation?color=6fff00)](https://github.com/gekware/minecraft-server-hibernation/blob/master/LICENSE)
 [![msh - stars](https://img.shields.io/github/stars/gekware/minecraft-server-hibernation?color=ffbd19)](https://github.com/gekware/minecraft-server-hibernation/stargazers)
 
-Avoid wasting of resources by **automatically starting** your minecraft server when a player join **and stopping** it when no one is online  
+Avoid wasting resources by starting your Minecraft server automatically when a player joins and stopping it when no one is online  
 _(for vanilla/modded on linux/windows/macos)_  
 
 <p align="center" >
@@ -16,11 +16,11 @@ _(for vanilla/modded on linux/windows/macos)_
 </p>
 
 version: v2.4.4  
-Copyright (C) 2019-2021 [gekigek99](https://github.com/gekigek99)  
+Copyright (C) 2019-2022 [gekigek99](https://github.com/gekigek99)  
 
 Check the [releases](https://github.com/gekware/minecraft-server-hibernation/releases) to download the binaries (for linux, windows and macos)
 
-_You can compile msh from the dev branch to access a more updated version but beware that it might still need testing_
+_You can compile msh from the dev branch to access a more recent version, but note that it may still need to be tested_
 
 -----
 ### PROGRAM COMPILATION:
@@ -34,8 +34,8 @@ go build .
 
 -----
 ### INSTRUCTIONS:
-1. Install your desired minecraft server
-2. Edit the parameters in config file as needed (*check definitions*):
+1. Install the Minecraft server you want
+2. Edit the parameters in the configuration file as needed (*check definitions*):
     - Folder
     - FileName
     - StartServerParam
@@ -48,7 +48,7 @@ go build .
 4. on the router (to which the server is connected): forward port 25555 to server ([tutorial](https://www.wikihow.com/Open-Ports#Opening-Router-Firewall-Ports))
 5. on the server: open port 25555 (example: [ufw firewall](https://www.configserverfirewall.com/ufw-ubuntu-firewall/ubuntu-firewall-open-port/))
 6. run the msh executable
-7. you can connect to the server through port 25555
+7. You can connect to the server using the port from the configuration file (default 25555).
 
 \* = it's not compulsory to modify this parameter
 
