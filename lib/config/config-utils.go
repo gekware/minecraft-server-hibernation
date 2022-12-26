@@ -190,7 +190,10 @@ func (c *Configuration) loadIpPorts() *errco.MshLog {
 
 // getVersionInfo reads version.json from the server JAR file
 // and returns minecraft server version and protocol.
+//
 // In case of error "", -1, *errco.MshLog are returned.
+//
+// (checkout version.json info: https://minecraft.fandom.com/wiki/Version.json)
 func (c *Configuration) getVersionInfo() (string, int, *errco.MshLog) {
 	reader, err := zip.OpenReader(filepath.Join(c.Server.Folder, c.Server.FileName))
 	if err != nil {

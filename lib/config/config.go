@@ -74,6 +74,9 @@ func LoadConfig() *errco.MshLog {
 		if logMsh != nil {
 			return logMsh.AddTrace()
 		}
+
+		// reset config default save flag
+		configDefaultSave = false
 	}
 
 	return nil
@@ -137,21 +140,6 @@ func (c *Configuration) loadDefault() *errco.MshLog {
 		configDefaultSave = true
 	}
 
-	// load ms version/protocol
-	// (checkout version.json info: https://minecraft.fandom.com/wiki/Version.json)
-	version, protocol, logMsh := c.getVersionInfo()
-	if logMsh != nil {
-		// just log it since ms version/protocol are not vital for the connection with clients
-		logMsh.Log(true)
-	} else if version == "" || protocol == -1 {
-		// check that version and protocol are significant
-		errco.NewLogln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_VERSION_LOAD, "version (%s) and protocol (%d) are not significant", version, protocol)
-	} else if c.Server.Version != version || c.Server.Protocol != protocol {
-		c.Server.Version = version
-		c.Server.Protocol = protocol
-		configDefaultSave = true
-	}
-
 	return nil
 }
 
@@ -203,7 +191,7 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 	errco.NewLogln(errco.TYPE_INF, errco.LVL_0, errco.ERROR_NIL, "setting log level to: %d", c.Msh.Debug)
 	errco.DebugLvl = errco.LogLvl(c.Msh.Debug)
 
-	// ------------------- setup ------------------- //
+	// ---------------- setup check ---------------- //
 
 	// check if server folder/executeble exist
 	serverFileFolderPath := filepath.Join(c.Server.Folder, c.Server.FileName)
@@ -212,7 +200,6 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 
 		logMsh := errco.NewLogln(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_MINECRAFT_SERVER, "specified minecraft server folder/file does not exist: %s", serverFileFolderPath)
 		servstats.Stats.SetMajorError(logMsh)
-
 	} else {
 		// server folder/executeble exist
 
@@ -267,13 +254,30 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 		JavaV = strings.ReplaceAll(strings.Split(string(out), "\n")[0], "\r", "")
 	}
 
-	// initialize ip and ports for connection
+	// ---------------- setup load ----------------- //
+
+	// load ip and ports for connection
 	logMsh := c.loadIpPorts()
 	if logMsh != nil {
 		logMsh.Log(true)
 		servstats.Stats.SetMajorError(logMsh)
 	} else {
 		errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "msh proxy setup: %s:%d --> %s:%d", ListenHost, ListenPort, TargetHost, TargetPort)
+	}
+
+	// load ms version/protocol
+	c.Server.Version, c.Server.Protocol, logMsh = c.getVersionInfo()
+	if logMsh != nil {
+		// just log it since ms version/protocol are not vital for the connection with clients
+		logMsh.Log(true)
+	} else if c.Server.Version == "" || c.Server.Protocol == -1 {
+		// found ms version/protocol are invalid
+		errco.NewLogln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_VERSION_LOAD, "version (%s) and protocol (%d) are invalid", c.Server.Version, c.Server.Protocol)
+	} else if confdef.Server.Version != c.Server.Version || confdef.Server.Protocol != c.Server.Protocol {
+		// replace found ms version/protocol in default config,
+		confdef.Server.Version = c.Server.Version
+		confdef.Server.Protocol = c.Server.Protocol
+		configDefaultSave = true
 	}
 
 	// load server icon
