@@ -48,8 +48,17 @@ body:
   id: OS
   attributes:
     label: Operating system
-    description: Your OS (Operating system) where you installed MSH.
+    description: The OS (Operating system) where you installed MSH.
     placeholder: Windows 10, Ubuntu 20.04
+  validations:
+    required: true
+
+- type: input
+  id: Architecture
+  attributes:
+    label: System architecture
+    description: The architecture where you installed MSH.
+    placeholder: amd64, i386, arm (32bit / 64bit)
   validations:
     required: true
 
