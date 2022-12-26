@@ -125,12 +125,12 @@ func (logMsh *MshLog) Log(tracing bool) *MshLog {
 	// print logMod depending on logMod type
 	switch logMod.Typ {
 	case TYPE_INF, TYPE_SER, TYPE_BYT:
-		log.Printf("[%-13s %-4s] %s\n",
+		log.Printf("[%-14s %-4s] %s\n",
 			t,
 			strings.Repeat("≡", 4-int(logMod.Lvl)),
 			fmt.Sprintf(logMod.Mex, logMod.Arg...))
 	case TYPE_WAR, TYPE_ERR:
-		log.Printf("[%-13s %-4s] %s %s %s\n",
+		log.Printf("[%-14s %-4s] %s %s %s\n",
 			t,
 			strings.Repeat("≡", 4-int(logMod.Lvl)),
 			LogOri(COLOR_YELLOW)+logMod.Ori+":"+LogOri(COLOR_RESET),
