@@ -62,13 +62,7 @@ func GetInput() {
 		}
 
 		// make sure that only 1 space separates words
-		line = strings.ReplaceAll(line, "\n", "")
-		line = strings.ReplaceAll(line, "\r", "")
-		line = strings.ReplaceAll(line, "\t", " ")
-		for strings.Contains(line, "  ") {
-			line = strings.ReplaceAll(line, "  ", " ")
-		}
-		lineSplit := strings.Split(line, " ")
+		lineSplit := strings.Fields(line)
 
 		errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "user input: %s", lineSplit[:])
 
