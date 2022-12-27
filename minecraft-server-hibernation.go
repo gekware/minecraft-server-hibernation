@@ -50,6 +50,14 @@ func main() {
 		}
 	}
 
+	// launch GetInput()
+	go input.GetInput()
+
+	// ---------------- connections ---------------- //
+
+	// launch query handler
+	go conn.HandlerQuery()
+
 	// open a listener
 	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", config.ListenHost, config.ListenPort))
 	if err != nil {
@@ -57,12 +65,8 @@ func main() {
 		progmgr.AutoTerminate()
 	}
 
+	// infinite cycle to handle new clients.
 	errco.NewLogln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "listening for new clients to connect on %s:%d ...", config.ListenHost, config.ListenPort)
-
-	// launch GetInput()
-	go input.GetInput()
-
-	// infinite cycle to accept clients. when a clients connects it is passed to handleClientSocket()
 	for {
 		clientSocket, err := listener.Accept()
 		if err != nil {
