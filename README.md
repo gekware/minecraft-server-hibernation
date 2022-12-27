@@ -53,10 +53,11 @@ go build .
 
 _\* = it's not compulsory to modify this parameter_
 
-#### reminders
-_automatically run msh at reboot_
-_in `server.properties` set `server-ip=0.0.0.0` to avoid errors when msh tryes to connect to minecraft server locally_
-_you must remove all braces from msh config file_  
+#### notes
+- _`msh-config.json` is not generated automatically. You will need to download it from the [releases](https://github.com/gekware/minecraft-server-hibernation/releases)._
+- _Automatically run msh at reboot._
+- _In `server.properties` set `server-ip=0.0.0.0` to avoid errors when msh tries to connect to the minecraft server._
+- _You must remove all braces from `msh-config.json`._  
 
 -----
 ### DEFINITIONS:
@@ -88,7 +89,7 @@ Set the logging level for debug purposes
 "Debug": 1
 # 0 - NONE: no log
 # 1 - BASE: basic log
-# 2 - SERV: mincraft server log
+# 2 - SERV: minecraft server log
 # 3 - DEVE: developement log
 # 4 - BYTE: connection bytes log
 ```
