@@ -54,10 +54,13 @@ go build .
 _\* = it's not compulsory to modify this parameter_
 
 #### notes
-_`msh-config.json` is not generated automatically. You will need to download it from the [releases](https://github.com/gekware/minecraft-server-hibernation/releases)
-_automatically run msh at reboot_
-_in `server.properties` set `server-ip=0.0.0.0` to avoid errors when msh tries to connect to minecraft server locally_
-_you must remove all braces from msh config file_  
+_`msh-config.json` is not generated automatically. You will need to download it from the [releases](https://github.com/gekware/minecraft-server-hibernation/releases)._
+
+_Automatically run msh at reboot._
+
+_In `server.properties` set `server-ip=0.0.0.0` to avoid errors when msh tries to connect to the minecraft server._
+
+_You must remove all braces from msh config file._  
 
 -----
 ### DEFINITIONS:
