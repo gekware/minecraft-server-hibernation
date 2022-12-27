@@ -183,10 +183,6 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 	// parse arguments
 	flag.Parse()
 
-	// replace placeholders
-	c.Commands.StartServer = strings.ReplaceAll(c.Commands.StartServer, "<Server.FileName>", c.Server.FileName)
-	c.Commands.StartServer = strings.ReplaceAll(c.Commands.StartServer, "<Commands.StartServerParam>", c.Commands.StartServerParam)
-
 	// after config variables are set, set debug level
 	errco.NewLogln(errco.TYPE_INF, errco.LVL_0, errco.ERROR_NIL, "setting log level to: %d", c.Msh.Debug)
 	errco.DebugLvl = errco.LogLvl(c.Msh.Debug)

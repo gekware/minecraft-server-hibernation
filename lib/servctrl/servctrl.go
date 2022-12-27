@@ -31,7 +31,7 @@ func WarmMS() *errco.MshLog {
 			servstats.Stats.Suspended = false // if ms is offline it's process can't be suspended
 		}
 
-		logMsh = termStart(config.ConfigRuntime.Server.Folder, config.ConfigRuntime.Commands.StartServer)
+		logMsh = termStart()
 		if logMsh != nil {
 			servstats.Stats.SetMajorError(errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_MINECRAFT_SERVER, "error starting minecraft server (check logs)"))
 			return logMsh.AddTrace()

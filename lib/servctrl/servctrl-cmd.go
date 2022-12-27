@@ -131,13 +131,13 @@ func CheckMSWarm() *errco.MshLog {
 // termStart starts a new terminal.
 // If server terminal is already active it returns without doing anything
 // [non-blocking]
-func termStart(dir, command string) *errco.MshLog {
+func termStart() *errco.MshLog {
 	if ServTerm.IsActive {
 		errco.NewLogln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_SERVER_IS_WARM, "minecraft server terminal already active")
 		return nil
 	}
 
-	logMsh := termLoad(dir, command)
+	logMsh := termLoad()
 	if logMsh != nil {
 		return logMsh.AddTrace()
 	}
@@ -155,12 +155,22 @@ func termStart(dir, command string) *errco.MshLog {
 }
 
 // termLoad loads cmd/pipes into ServTerm
-func termLoad(dir, command string) *errco.MshLog {
-	cSplit := strings.Split(command, " ")
+func termLoad() *errco.MshLog {
+	var command = []string{}
+	for _, ss := range strings.Fields(config.ConfigRuntime.Commands.StartServer) {
+		switch ss {
+		case "<Server.FileName>":
+			command = append(command, config.ConfigRuntime.Server.FileName)
+		case "<Commands.StartServerParam>":
+			command = append(command, strings.Fields(config.ConfigRuntime.Commands.StartServerParam)...)
+		default:
+			command = append(command, ss)
+		}
+	}
 
 	// set terminal cmd
-	ServTerm.cmd = exec.Command(cSplit[0], cSplit[1:]...)
-	ServTerm.cmd.Dir = dir
+	ServTerm.cmd = exec.Command(command[0], command[1:]...)
+	ServTerm.cmd.Dir = config.ConfigRuntime.Server.Folder
 
 	// launch as new process group so that signals (ex: SIGINT) are sent to msh
 	// (not relayed to the java server child process)
