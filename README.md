@@ -35,7 +35,7 @@ go build .
 -----
 ### INSTRUCTIONS:
 1. Install the Minecraft server you want
-2. Edit the parameters in the configuration file as needed (*check definitions*):
+2. Edit the parameters in `msh-config.json` as needed (*check definitions*):
     - Folder
     - FileName
     - StartServerParam
@@ -51,13 +51,15 @@ go build .
 6. run the msh executable
 7. You can connect to the server using the port from the configuration file (default 25555).
 
-\* = it's not compulsory to modify this parameter
+_\* = it's not compulsory to modify this parameter_
 
-_remember to automatically run msh at reboot_
+#### reminders
+_automatically run msh at reboot_
+_in `server.properties` set `server-ip=0.0.0.0` to avoid errors when msh tryes to connect to minecraft server locally_
+_you must remove all braces from msh config file_  
 
 -----
 ### DEFINITIONS:
-- _only text in braces needs to be modified (remember to remove all braces)_  
 - _Some of these parameters can be configured with command-line arguments (--help to know which)_  
 
 Location of server folder and executable. You can find protocol/version [here](https://wiki.vg/Protocol_version_numbers) (but msh should set them automatically):
