@@ -86,7 +86,7 @@ func (logMsh *MshLog) Log(tracing bool) *MshLog {
 
 	// add trace if requested
 	if tracing {
-		logMsh.Ori = Trace(2) + LogOri(": ") + logMsh.Ori
+		logMsh.Ori = Trace(2) + LogOri(" -> ") + logMsh.Ori
 	}
 
 	// return original log if log level is not high enough
@@ -149,7 +149,7 @@ func (log *MshLog) AddTrace() *MshLog {
 		return log
 	}
 
-	log.Ori = Trace(2) + LogOri(": ") + log.Ori
+	log.Ori = Trace(2) + LogOri(" -> ") + log.Ori
 
 	return log
 }
