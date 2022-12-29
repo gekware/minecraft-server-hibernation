@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"image"
 	"image/jpeg"
 	"image/png"
@@ -201,8 +202,8 @@ func (c *Configuration) getVersionInfo() (string, int, *errco.MshLog) {
 	return "", -1, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_VERSION_LOAD, "minecraft server version and protocol could not be extracted from version.json")
 }
 
-// parsePropertiesInt reads server.properties file and returns the requested variable
-func (c *Configuration) parsePropertiesInt(key string) (int, *errco.MshLog) {
+// ParsePropertiesInt reads server.properties file and returns the requested variable
+func (c *Configuration) ParsePropertiesInt(key string) (int, *errco.MshLog) {
 	data, err := os.ReadFile(filepath.Join(c.Server.Folder, "server.properties"))
 	if err != nil {
 		return -1, errco.NewLog(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_CONFIG_LOAD, err.Error())
@@ -227,4 +228,33 @@ func (c *Configuration) parsePropertiesInt(key string) (int, *errco.MshLog) {
 	}
 
 	return -1, errco.NewLog(errco.TYPE_WAR, errco.LVL_1, errco.ERROR_CONFIG_LOAD, "key (%s) not found while parsing server.properties", key)
+}
+
+// ParsePropertiesBool reads server.properties file and returns the requested variable
+func (c *Configuration) ParsePropertiesBool(key string) (bool, *errco.MshLog) {
+	fmt.Println(filepath.Join(c.Server.Folder, "server.properties")) //!!!
+	data, err := os.ReadFile(filepath.Join(c.Server.Folder, "server.properties"))
+	if err != nil {
+		return false, errco.NewLog(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_CONFIG_LOAD, err.Error())
+	}
+
+	for _, line := range strings.Split(string(data), "\n") {
+		parts := strings.Split(strings.Join(strings.Fields(line), ""), "=")
+		if len(parts) != 2 {
+			continue
+		}
+
+		if parts[0] != key {
+			continue
+		}
+
+		val, err := strconv.ParseBool(parts[1])
+		if err != nil {
+			return false, errco.NewLog(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_CONFIG_LOAD, err.Error())
+		}
+
+		return val, nil
+	}
+
+	return false, errco.NewLog(errco.TYPE_WAR, errco.LVL_1, errco.ERROR_CONFIG_LOAD, "key (%s) not found while parsing server.properties", key)
 }

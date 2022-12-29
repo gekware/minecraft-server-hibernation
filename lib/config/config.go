@@ -258,7 +258,7 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 	// ListenHost	defined in global definition
 	ListenPort = c.Msh.ListenPort
 	// TargetHost	defined in global definition
-	if TargetPort, logMsh = c.parsePropertiesInt("server-port"); logMsh != nil {
+	if TargetPort, logMsh = c.ParsePropertiesInt("server-port"); logMsh != nil {
 		logMsh.Log(true)
 	} else if TargetPort == c.Msh.ListenPort {
 		logMsh := errco.NewLogln(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_CONFIG_LOAD, "TargetPort and ListenPort appear to be the same, please change one of them")
