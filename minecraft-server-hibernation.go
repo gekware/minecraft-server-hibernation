@@ -56,7 +56,15 @@ func main() {
 	// ---------------- connections ---------------- //
 
 	// launch query handler
-	go conn.HandlerQuery()
+	queryEnabled, logMsh := config.ConfigRuntime.ParsePropertiesBool("enable-query")
+	if logMsh != nil {
+		logMsh.Log(true)
+	}
+	if queryEnabled {
+		go conn.HandlerQuery()
+	} else {
+		errco.NewLogln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "query not enabled in server.properties file")
+	}
 
 	// open a listener
 	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", config.ListenHost, config.ListenPort))
