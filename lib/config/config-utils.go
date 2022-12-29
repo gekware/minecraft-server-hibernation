@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"image"
 	"image/jpeg"
 	"image/png"
@@ -232,7 +231,6 @@ func (c *Configuration) ParsePropertiesInt(key string) (int, *errco.MshLog) {
 
 // ParsePropertiesBool reads server.properties file and returns the requested variable
 func (c *Configuration) ParsePropertiesBool(key string) (bool, *errco.MshLog) {
-	fmt.Println(filepath.Join(c.Server.Folder, "server.properties")) //!!!
 	data, err := os.ReadFile(filepath.Join(c.Server.Folder, "server.properties"))
 	if err != nil {
 		return false, errco.NewLog(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_CONFIG_LOAD, err.Error())
