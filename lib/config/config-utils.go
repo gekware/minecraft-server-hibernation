@@ -159,35 +159,6 @@ func (c *Configuration) loadIcon() *errco.MshLog {
 	return nil
 }
 
-// loadIpPorts reads server.properties server file and loads correct ports to global variables
-func (c *Configuration) loadIpPorts() *errco.MshLog {
-	// ListenHost remains the same
-	ListenPort = c.Msh.ListenPort
-	// TargetHost remains the same
-	// TargetPort is extracted from server.properties
-
-	data, err := os.ReadFile(filepath.Join(c.Server.Folder, "server.properties"))
-	if err != nil {
-		return errco.NewLog(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_CONFIG_LOAD, err.Error())
-	}
-
-	TargetPortStr, logMsh := utility.StrBetween(strings.ReplaceAll(string(data), "\r", ""), "server-port=", "\n")
-	if logMsh != nil {
-		return logMsh.AddTrace()
-	}
-
-	TargetPort, err = strconv.Atoi(TargetPortStr)
-	if err != nil {
-		return errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONVERSION, err.Error())
-	}
-
-	if TargetPort == c.Msh.ListenPort {
-		return errco.NewLog(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_CONFIG_LOAD, "TargetPort and ListenPort appear to be the same, please change one of them")
-	}
-
-	return nil
-}
-
 // getVersionInfo reads version.json from the server JAR file
 // and returns minecraft server version and protocol.
 //
@@ -228,4 +199,32 @@ func (c *Configuration) getVersionInfo() (string, int, *errco.MshLog) {
 	}
 
 	return "", -1, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_VERSION_LOAD, "minecraft server version and protocol could not be extracted from version.json")
+}
+
+// parsePropertiesInt reads server.properties file and returns the requested variable
+func (c *Configuration) parsePropertiesInt(key string) (int, *errco.MshLog) {
+	data, err := os.ReadFile(filepath.Join(c.Server.Folder, "server.properties"))
+	if err != nil {
+		return -1, errco.NewLog(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_CONFIG_LOAD, err.Error())
+	}
+
+	for _, line := range strings.Split(string(data), "\n") {
+		parts := strings.Split(strings.Join(strings.Fields(line), ""), "=")
+		if len(parts) != 2 {
+			continue
+		}
+
+		if parts[0] != key {
+			continue
+		}
+
+		val, err := strconv.Atoi(parts[1])
+		if err != nil {
+			return -1, errco.NewLog(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_CONFIG_LOAD, err.Error())
+		}
+
+		return val, nil
+	}
+
+	return -1, errco.NewLog(errco.TYPE_WAR, errco.LVL_1, errco.ERROR_CONFIG_LOAD, "key (%s) not found while parsing server.properties", key)
 }

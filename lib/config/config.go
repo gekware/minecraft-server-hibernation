@@ -146,6 +146,8 @@ func (c *Configuration) loadDefault() *errco.MshLog {
 // loadRuntime initializes runtime config to default config.
 // Then parses start arguments into runtime config, replaces placeholders and does the runtime config setup
 func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
+	var logMsh *errco.MshLog
+
 	// initialize config to base
 	*c = *confdef
 
@@ -252,14 +254,17 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 
 	// ---------------- setup load ----------------- //
 
-	// load ip and ports for connection
-	logMsh := c.loadIpPorts()
-	if logMsh != nil {
+	// load ports
+	// ListenHost	defined in global definition
+	ListenPort = c.Msh.ListenPort
+	// TargetHost	defined in global definition
+	if TargetPort, logMsh = c.parsePropertiesInt("server-port"); logMsh != nil {
 		logMsh.Log(true)
+	} else if TargetPort == c.Msh.ListenPort {
+		logMsh := errco.NewLogln(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_CONFIG_LOAD, "TargetPort and ListenPort appear to be the same, please change one of them")
 		servstats.Stats.SetMajorError(logMsh)
-	} else {
-		errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "msh proxy setup: %s:%d --> %s:%d", ListenHost, ListenPort, TargetHost, TargetPort)
 	}
+	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "msh proxy setup: %s:%d --> %s:%d", ListenHost, ListenPort, TargetHost, TargetPort)
 
 	// load ms version/protocol
 	c.Server.Version, c.Server.Protocol, logMsh = c.getVersionInfo()
