@@ -15,12 +15,17 @@ func Test_QueryFull(t *testing.T) {
 	go HandlerQuery()
 
 	minequery.WithUseStrict(true)
-	res, err := minequery.QueryFull(config.ListenHost, config.ListenPort)
-	if err != nil {
-		t.Fatalf(err.Error())
-	}
 
-	fmt.Printf("%+v\n", res)
+	for i := 0; i < 2; i++ {
+		fmt.Println("--------------------")
+
+		res, err := minequery.QueryFull(config.ListenHost, config.ListenPort)
+		if err != nil {
+			t.Fatalf(err.Error())
+		}
+
+		fmt.Printf("result: %+v\n", res)
+	}
 }
 
 func Test_QueryBasic(t *testing.T) {
@@ -29,10 +34,15 @@ func Test_QueryBasic(t *testing.T) {
 	go HandlerQuery()
 
 	minequery.WithUseStrict(true)
-	res, err := minequery.QueryBasic(config.ListenHost, config.ListenPort)
-	if err != nil {
-		t.Fatalf(err.Error())
-	}
 
-	fmt.Printf("%+v\n", res)
+	for i := 0; i < 2; i++ {
+		fmt.Println("--------------------")
+
+		res, err := minequery.QueryBasic(config.ListenHost, config.ListenPort)
+		if err != nil {
+			t.Fatalf(err.Error())
+		}
+
+		fmt.Printf("result: %+v\n", res)
+	}
 }

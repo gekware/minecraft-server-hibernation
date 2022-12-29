@@ -19,11 +19,10 @@ import (
 
 // HandlerQuery handles query requests
 //
-// this is just a test
-//
 // can only receive query requests on config.ListenHost, config.ListenPort
 func HandlerQuery() {
 	// TODO
+	// remove fmt, use errco
 	// get query port from server.properties
 
 	connUDP, err := net.ListenPacket("udp", fmt.Sprintf("%s:%d", config.ListenHost, config.ListenPort))
@@ -35,41 +34,20 @@ func HandlerQuery() {
 	// infinite cycle to handle new clients queries
 	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "listening for new clients queries on %s:%d ...", config.ListenHost, config.ListenPort)
 	for {
-		// ----------- Handshake ----------- //
-		buf := make([]byte, 1024)
-
-		// read request
-		n, addr, err := connUDP.ReadFrom(buf)
-		if err != nil {
-			errco.NewLogln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONN_READ, err.Error())
+		buf, addr, logMsh := getStatRequest(connUDP)
+		if logMsh != nil {
+			logMsh.Log(true)
 			continue
 		}
-		fmt.Println("received:", buf[:n])
+
+		fmt.Println(len(buf))
 
 		sessionID := buf[3:7]
-		fmt.Println("session id:", sessionID)
+		chall := buf[7:11]
 
-		res := []byte{buf[2]}
-		res = append(res, sessionID...)
-		res = append(res, []byte("9513307\x00")...)
-
-		// send response
-		_, err = connUDP.WriteTo(res, addr)
-		if err != nil {
-			errco.NewLogln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONN_WRITE, err.Error())
-			continue
-		}
-
-		// ------------- Stats ------------- //
-		buf = make([]byte, 1024)
-
-		// read request
-		n, addr, err = connUDP.ReadFrom(buf)
-		if err != nil {
-			errco.NewLogln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CLIENT_SOCKET_READ, err.Error())
-			continue
-		}
-		fmt.Println("received:", buf[:n])
+		fmt.Println("received:", buf)
+		fmt.Println("\tsession id:", sessionID)
+		fmt.Println("\tchallenge:           ", chall)
 
 		challNum, err := strconv.ParseUint("9513307", 10, 32)
 		if err != nil {
@@ -77,25 +55,74 @@ func HandlerQuery() {
 			continue
 		}
 
-		if binary.BigEndian.Uint32(buf[7:11]) != uint32(challNum) {
+		if binary.BigEndian.Uint32(chall) != uint32(challNum) {
 			errco.NewLogln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_QUERY_CHALLENGE, "challenge failed")
 			continue
 		}
 		fmt.Println("challenge ok")
 
-		sessionID = buf[3:7]
-		fmt.Println("session id:", sessionID)
-
-		// check if there is Padding (Full stat) or no padding (Basic stat)
-		switch {
-		case n == 15:
-			statRespFull(connUDP, addr, sessionID)
-		case n == 11:
+		switch len(buf) {
+		case 11:
 			statRespBasic(connUDP, addr, sessionID)
+		case 15:
+			statRespFull(connUDP, addr, sessionID)
 		default:
-			errco.NewLogln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_QUERY_BAD_REQUEST, "cannot define the stat request type (unexpected number of bytes)")
+			errco.NewLogln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_QUERY_BAD_REQUEST, "cannot define stat request type (unexpected number of bytes)")
 			continue
 		}
+	}
+}
+
+// getStatRequest gets stats request from client.
+// (performing handshake if necessay)
+//
+// returns buffer (lenght: 11, 15), address, error
+func getStatRequest(connUDP net.PacketConn) ([]byte, net.Addr, *errco.MshLog) {
+	var n int
+	var addr net.Addr
+	var err error
+	var buf []byte = make([]byte, 1024)
+
+	// read request (can be a handshake request or a stats request)
+	n, addr, err = connUDP.ReadFrom(buf)
+	if err != nil {
+		return nil, nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONN_READ, err.Error())
+	}
+
+	switch n {
+	case 7: // handshake request from client
+		fmt.Println("performing handshake")
+
+		fmt.Println("received:", buf[:7])
+
+		sessionID := buf[3:7]
+		fmt.Println("\tsession id:", sessionID)
+
+		res := bytes.NewBuffer([]byte{9})
+		res.Write(sessionID)
+		res.WriteString("9513307\x00")
+		_, err = connUDP.WriteTo(res.Bytes(), addr)
+		if err != nil {
+			return nil, nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONN_WRITE, err.Error())
+		}
+
+		n, addr, err = connUDP.ReadFrom(buf)
+		if err != nil {
+			return nil, nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONN_READ, err.Error())
+		}
+
+		// if stats request is different from 11 (basic) or 15 (full) then it's unexpected
+		if n != 11 && n != 15 {
+			return nil, nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONN_READ, "read unexpected number of bytes in stats request")
+		}
+
+		fallthrough
+
+	case 11, 15: // full/basic stat request from client
+		return buf[:n], addr, nil
+
+	default:
+		return nil, nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONN_READ, "cannot define stat/handshake request (unexpected number of bytes)")
 	}
 }
 
