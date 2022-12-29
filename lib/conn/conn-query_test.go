@@ -3,6 +3,7 @@ package conn
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/dreamscached/minequery/v2"
 
@@ -16,7 +17,7 @@ func Test_QueryFull(t *testing.T) {
 
 	minequery.WithUseStrict(true)
 
-	for i := 0; i < 2; i++ {
+	for i := 0; i < 3; i++ {
 		fmt.Println("--------------------")
 
 		res, err := minequery.QueryFull(config.ListenHost, config.ListenPort)
@@ -35,7 +36,7 @@ func Test_QueryBasic(t *testing.T) {
 
 	minequery.WithUseStrict(true)
 
-	for i := 0; i < 2; i++ {
+	for i := 0; i < 3; i++ {
 		fmt.Println("--------------------")
 
 		res, err := minequery.QueryBasic(config.ListenHost, config.ListenPort)
@@ -44,5 +45,7 @@ func Test_QueryBasic(t *testing.T) {
 		}
 
 		fmt.Printf("result: %+v\n", res)
+
+		time.Sleep(time.Second)
 	}
 }

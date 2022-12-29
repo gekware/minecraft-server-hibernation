@@ -5,8 +5,9 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math/big"
+	"math/rand"
 	"net"
-	"strconv"
+	"time"
 
 	"msh/lib/config"
 	"msh/lib/errco"
@@ -17,13 +18,29 @@ import (
 // - wiki.vg/Query
 // - github.com/dreamscached/minequery/v2
 
-// HandlerQuery handles query requests
+// clib is a group of query challenges
+var clib *challengeLibrary = &challengeLibrary{}
+
+// challenge represents a query challenge uint32 value and its expiration timer
+type challenge struct {
+	time.Timer
+	val uint32
+}
+
+// challengeLibrary represents a group of query challenges
+type challengeLibrary struct {
+	list []challenge
+}
+
+// HandlerQuery handles query stats requests.
 //
-// can only receive query requests on config.ListenHost, config.ListenPort
+// can only receive requests on config.ListenHost, config.ListenPort
 func HandlerQuery() {
 	// TODO
 	// remove fmt, use errco
-	// get query port from server.properties
+	// get query port from msh.config
+	// respond with real server info
+	// emulate/forward depending on server status
 
 	connUDP, err := net.ListenPacket("udp", fmt.Sprintf("%s:%d", config.ListenHost, config.ListenPort))
 	if err != nil {
@@ -34,36 +51,17 @@ func HandlerQuery() {
 	// infinite cycle to handle new clients queries
 	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "listening for new clients queries on %s:%d ...", config.ListenHost, config.ListenPort)
 	for {
-		buf, addr, logMsh := getStatRequest(connUDP)
+		res, addr, sessionID, logMsh := getStatRequest(connUDP)
 		if logMsh != nil {
 			logMsh.Log(true)
 			continue
 		}
 
-		fmt.Println(len(buf))
-
-		sessionID := buf[3:7]
-		chall := buf[7:11]
-
-		fmt.Println("received:", buf)
-		fmt.Println("\tsession id:", sessionID)
-		fmt.Println("\tchallenge:           ", chall)
-
-		challNum, err := strconv.ParseUint("9513307", 10, 32)
-		if err != nil {
-			errco.NewLogln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_ANALYSIS, err.Error())
-			continue
-		}
-
-		if binary.BigEndian.Uint32(chall) != uint32(challNum) {
-			errco.NewLogln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_QUERY_CHALLENGE, "challenge failed")
-			continue
-		}
-		fmt.Println("challenge ok")
-
-		switch len(buf) {
+		switch len(res) {
+		// basic stats response
 		case 11:
 			statRespBasic(connUDP, addr, sessionID)
+		// full stats response
 		case 15:
 			statRespFull(connUDP, addr, sessionID)
 		default:
@@ -77,20 +75,20 @@ func HandlerQuery() {
 // (performing handshake if necessay)
 //
 // returns buffer (lenght: 11, 15), address, error
-func getStatRequest(connUDP net.PacketConn) ([]byte, net.Addr, *errco.MshLog) {
-	var n int
-	var addr net.Addr
-	var err error
+func getStatRequest(connUDP net.PacketConn) ([]byte, net.Addr, []byte, *errco.MshLog) {
 	var buf []byte = make([]byte, 1024)
 
 	// read request (can be a handshake request or a stats request)
-	n, addr, err = connUDP.ReadFrom(buf)
+	n, addr, err := connUDP.ReadFrom(buf)
 	if err != nil {
-		return nil, nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONN_READ, err.Error())
+		return nil, nil, nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONN_READ, err.Error())
 	}
+	fmt.Println("received:", buf[:n])
 
 	switch n {
-	case 7: // handshake request from client
+
+	// handshake request from client
+	case 7:
 		fmt.Println("performing handshake")
 
 		fmt.Println("received:", buf[:7])
@@ -98,31 +96,42 @@ func getStatRequest(connUDP net.PacketConn) ([]byte, net.Addr, *errco.MshLog) {
 		sessionID := buf[3:7]
 		fmt.Println("\tsession id:", sessionID)
 
+		challenge := clib.gen()
+		fmt.Println("\tchallenge:", challenge)
+
 		res := bytes.NewBuffer([]byte{9})
 		res.Write(sessionID)
-		res.WriteString("9513307\x00")
+		res.WriteString(fmt.Sprintf("%d", challenge) + "\x00")
+
 		_, err = connUDP.WriteTo(res.Bytes(), addr)
 		if err != nil {
-			return nil, nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONN_WRITE, err.Error())
+			return nil, nil, nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONN_WRITE, err.Error())
 		}
 
 		n, addr, err = connUDP.ReadFrom(buf)
 		if err != nil {
-			return nil, nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONN_READ, err.Error())
+			return nil, nil, nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONN_READ, err.Error())
 		}
+		fmt.Println("received:", buf[:n])
 
 		// if stats request is different from 11 (basic) or 15 (full) then it's unexpected
 		if n != 11 && n != 15 {
-			return nil, nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONN_READ, "read unexpected number of bytes in stats request")
+			return nil, nil, nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONN_READ, "unexpected number of bytes in stats request")
 		}
 
 		fallthrough
 
-	case 11, 15: // full/basic stat request from client
-		return buf[:n], addr, nil
+	// full/basic stat request from client
+	case 11, 15:
+		// challenge verification with challenge library
+		if !clib.inLibrary(binary.BigEndian.Uint32(buf[7:11])) {
+			return nil, nil, nil, errco.NewLog(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_QUERY_CHALLENGE, "challenge failed")
+		}
+
+		return buf[:n], addr, buf[3:7], nil
 
 	default:
-		return nil, nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONN_READ, "cannot define stat/handshake request (unexpected number of bytes)")
+		return nil, nil, nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONN_READ, "unexpected number of bytes in stats/handshake request")
 	}
 }
 
@@ -173,4 +182,36 @@ func statRespBasic(connUDP net.PacketConn, addr net.Addr, sessionID []byte) {
 	if err != nil {
 		errco.NewLogln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONN_WRITE, err.Error())
 	}
+}
+
+// InLibrary searches library for non-expired test value
+func (cl *challengeLibrary) inLibrary(t uint32) bool {
+	for i := 0; i < len(cl.list); i++ {
+		select {
+		case <-cl.list[i].C:
+			// if timer expired, remove challenge and continue iterating
+			cl.list = append(cl.list[:i], cl.list[i+1:]...)
+			continue
+		default:
+		}
+		if t == cl.list[i].val {
+			return true
+		}
+	}
+	return false
+}
+
+// Gen generates a int32 challenge and adds it to the challenge library
+func (cl *challengeLibrary) gen() uint32 {
+	rand.Seed(time.Now().UnixNano())
+	cval := (rand.Uint32() % 10_000_000) + 1_000_000
+
+	c := challenge{
+		Timer: *time.NewTimer(60 * time.Second),
+		val:   cval,
+	}
+
+	cl.list = append(cl.list, c)
+
+	return cval
 }
