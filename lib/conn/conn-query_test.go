@@ -22,3 +22,17 @@ func Test_QueryFull(t *testing.T) {
 
 	fmt.Printf("%+v\n", res)
 }
+
+func Test_QueryBasic(t *testing.T) {
+	config.ListenHost, config.ListenPort = "127.0.0.1", 24444
+
+	go HandlerQuery()
+
+	minequery.WithUseStrict(true)
+	res, err := minequery.QueryBasic(config.ListenHost, config.ListenPort)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	fmt.Printf("%+v\n", res)
+}
