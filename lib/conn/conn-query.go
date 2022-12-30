@@ -11,6 +11,7 @@ import (
 
 	"msh/lib/config"
 	"msh/lib/errco"
+	"msh/lib/progmgr"
 	"msh/lib/utility"
 )
 
@@ -132,21 +133,22 @@ func statRespFull(connUDP net.PacketConn, addr net.Addr, sessionID []byte) {
 	buf.WriteString("splitnum\x00\x80\x00") // padding (default)
 
 	// K, V section
-	buf.WriteString("hostname\x00A Minecraft Server\x00")
-	buf.WriteString("gametype\x00SMP\x00")
-	buf.WriteString("game_id\x00MINECRAFT\x00")
-	buf.WriteString("version\x001.2.5\x00")
-	buf.WriteString("plugins\x00vanilla: plug1 v1; plug2 v2\x00")
-	buf.WriteString("map\x00world\x00")
-	buf.WriteString("numplayers\x001\x00")
-	buf.WriteString("maxplayers\x0020\x00")
-	buf.WriteString("hostport\x0025565\x00")
-	buf.WriteString("hostip\x00127.0.0.1\x00")
+	buf.WriteString(fmt.Sprintf("hostname\x00%s\x00", config.ConfigRuntime.Msh.InfoHibernation))
+	buf.WriteString(fmt.Sprintf("gametype\x00%s\x00", "SMP"))      // hardcoded (default)
+	buf.WriteString(fmt.Sprintf("game_id\x00%s\x00", "MINECRAFT")) // hardcoded (default)
+	buf.WriteString(fmt.Sprintf("version\x00%s\x00", config.ConfigRuntime.Server.Version))
+	buf.WriteString(fmt.Sprintf("plugins\x00msh/%s: msh %s\x00", config.ConfigRuntime.Server.Version, progmgr.MshVersion)) // example: "plugins\x00{ServerVersion}: {Name} {Version}; {Name} {Version}\x00"
+	levelName, _ := config.ConfigRuntime.ParsePropertiesString("level-name")
+	buf.WriteString(fmt.Sprintf("map\x00%s\x00", levelName))
+	buf.WriteString("numplayers\x000\x00") // hardcoded
+	buf.WriteString("maxplayers\x000\x00") // hardcoded
+	buf.WriteString(fmt.Sprintf("hostport\x00%d\x00", config.MshPort))
+	buf.WriteString(fmt.Sprintf("hostip\x00%s\x00", utility.GetOutboundIP4()))
 	buf.WriteByte(0) // termination of section (?)
 
 	// Players
 	buf.WriteString("\x01player_\x00\x00") // padding (default)
-	buf.WriteString("aaa\x00bbb\x00\x00")  // null terminated list
+	buf.WriteString("\x00")                // example: "aaa\x00bbb\x00\x00"
 
 	errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "sending stats full response:\t%v", buf.Bytes())
 	_, err := connUDP.WriteTo(buf.Bytes(), addr)
@@ -158,15 +160,16 @@ func statRespFull(connUDP net.PacketConn, addr net.Addr, sessionID []byte) {
 // statRespFull writes a full stats response to udp connection
 func statRespBasic(connUDP net.PacketConn, addr net.Addr, sessionID []byte) {
 	var buf bytes.Buffer
-	buf.WriteByte(0)                                                              // type
-	buf.Write(sessionID)                                                          // session ID
-	buf.WriteString("A Minecraft Server\x00")                                     // MOTD
-	buf.WriteString("SMP\x00")                                                    // gametype
-	buf.WriteString("world\x00")                                                  // map
-	buf.WriteString("1\x00")                                                      // numplayers
-	buf.WriteString("20\x00")                                                     // maxplayers
-	buf.Write(append(utility.Reverse(big.NewInt(int64(25565)).Bytes()), byte(0))) // hostport
-	buf.WriteString("127.0.0.1\x00")                                              // hostip
+	buf.WriteByte(0)                                                                 // type
+	buf.Write(sessionID)                                                             // session ID
+	buf.WriteString(fmt.Sprintf("%s\x00", config.ConfigRuntime.Msh.InfoHibernation)) // MOTD
+	buf.WriteString("SMP\x00")                                                       // gametype hardcoded (default)
+	levelName, _ := config.ConfigRuntime.ParsePropertiesString("level-name")
+	buf.WriteString(fmt.Sprintf("%s\x00", levelName))                                      // map
+	buf.WriteString("0\x00")                                                               // numplayers hardcoded
+	buf.WriteString("0\x00")                                                               // maxplayers hardcoded
+	buf.Write(append(utility.Reverse(big.NewInt(int64(config.MshPort)).Bytes()), byte(0))) // hostport
+	buf.WriteString(fmt.Sprintf("%s\x00", utility.GetOutboundIP4()))                       // hostip
 
 	errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "sending stats basic response:\t%v", buf.Bytes())
 	_, err := connUDP.WriteTo(buf.Bytes(), addr)

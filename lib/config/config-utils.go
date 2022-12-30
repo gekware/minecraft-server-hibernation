@@ -201,6 +201,29 @@ func (c *Configuration) getVersionInfo() (string, int, *errco.MshLog) {
 	return "", -1, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_VERSION_LOAD, "minecraft server version and protocol could not be extracted from version.json")
 }
 
+// ParsePropertiesString reads server.properties file and returns the requested variable
+func (c *Configuration) ParsePropertiesString(key string) (string, *errco.MshLog) {
+	data, err := os.ReadFile(filepath.Join(c.Server.Folder, "server.properties"))
+	if err != nil {
+		return "", errco.NewLog(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_CONFIG_LOAD, err.Error())
+	}
+
+	for _, line := range strings.Split(string(data), "\n") {
+		parts := strings.Split(strings.Join(strings.Fields(line), ""), "=")
+		if len(parts) != 2 {
+			continue
+		}
+
+		if parts[0] != key {
+			continue
+		}
+
+		return parts[1], nil
+	}
+
+	return "", errco.NewLog(errco.TYPE_WAR, errco.LVL_1, errco.ERROR_CONFIG_LOAD, "key (%s) not found while parsing server.properties", key)
+}
+
 // ParsePropertiesInt reads server.properties file and returns the requested variable
 func (c *Configuration) ParsePropertiesInt(key string) (int, *errco.MshLog) {
 	data, err := os.ReadFile(filepath.Join(c.Server.Folder, "server.properties"))
