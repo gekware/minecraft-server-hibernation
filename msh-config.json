@@ -15,6 +15,7 @@
     "Debug": 1,
     "ID": "",
     "MshPort": 25555,
+    "MshPortQuery": 25555,
     "TimeBeforeStoppingEmptyServer": 30,
     "SuspendAllow": false,
     "SuspendRefresh": -1,

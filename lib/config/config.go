@@ -28,10 +28,12 @@ var (
 
 	ServerIcon string = defaultServerIcon // ServerIcon contains the minecraft server icon
 
-	MshHost  string = "0.0.0.0"   // MshHost is the ip address for clients to connect to msh
-	MshPort  int                  // MshPort is the port for clients to connect to msh
-	ServHost string = "127.0.0.1" // ServHost is the ip address for msh to connect to minecraft server
-	ServPort int                  // ServPort is the port for msh to connect to minecraft server
+	MshHost       string = "0.0.0.0"   // MshHost		is the ip address for clients to connect to msh
+	MshPort       int                  // MshPort		is the port for clients to connect to msh
+	MshPortQuery  int                  // MshPortQuery	is the port for clients to perform stats query requests at msh
+	ServHost      string = "127.0.0.1" // ServHost		is the ip address for msh to connect to minecraft server
+	ServPort      int                  // ServPort		is the port for msh to connect to minecraft server
+	ServPortQuery int                  // ServPortQuery	is the port for msh to perform stats query requests at minecraft server
 )
 
 type Configuration struct {
@@ -257,6 +259,7 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 	// load ports
 	// MshHost	defined in global definition
 	MshPort = c.Msh.MshPort
+	MshPortQuery = c.Msh.MshPortQuery
 	// ServHost	defined in global definition
 	if ServPort, logMsh = c.ParsePropertiesInt("server-port"); logMsh != nil {
 		logMsh.Log(true)
@@ -264,7 +267,15 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 		logMsh := errco.NewLogln(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_CONFIG_LOAD, "ServPort and MshPort appear to be the same, please change one of them")
 		servstats.Stats.SetMajorError(logMsh)
 	}
-	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "msh proxy setup: %s:%d --> %s:%d", MshHost, MshPort, ServHost, ServPort)
+	if ServPortQuery, logMsh = c.ParsePropertiesInt("query.port"); logMsh != nil {
+		logMsh.Log(true)
+	} else if ServPortQuery == c.Msh.MshPortQuery {
+		logMsh := errco.NewLogln(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_CONFIG_LOAD, "ServPortQuery and MshPortQuery appear to be the same, please change one of them")
+		servstats.Stats.SetMajorError(logMsh)
+	}
+
+	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "msh connection  proxy setup: %s:%d --> %s:%d", MshHost, MshPort, ServHost, ServPort)
+	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "msh stats query proxy setup: %s:%d --> %s:%d", MshHost, MshPortQuery, ServHost, ServPortQuery)
 
 	// load ms version/protocol
 	c.Server.Version, c.Server.Protocol, logMsh = c.getVersionInfo()
