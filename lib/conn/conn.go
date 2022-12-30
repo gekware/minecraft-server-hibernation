@@ -30,7 +30,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 
 	// if there is a major error warn the client and return
 	if servstats.Stats.MajorError != nil {
-		errco.NewLogln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_MINECRAFT_SERVER, "a client connected to msh (%s:%d to %s:%d) but minecraft server has encountered major problems", clientAddress, config.ListenPort, config.TargetHost, config.TargetPort)
+		errco.NewLogln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_MINECRAFT_SERVER, "a client connected to msh (%s:%d to %s:%d) but minecraft server has encountered major problems", clientAddress, config.MshPort, config.ServHost, config.ServPort)
 
 		// close the client connection before returning
 		defer func() {
@@ -57,7 +57,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 	// handle the request depending on request type
 	switch reqType {
 	case errco.CLIENT_REQ_INFO:
-		errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "a client requested server info from %s:%d to %s:%d", clientAddress, config.ListenPort, config.TargetHost, config.TargetPort)
+		errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "a client requested server info from %s:%d to %s:%d", clientAddress, config.MshPort, config.ServHost, config.ServPort)
 
 		if servstats.Stats.Status != errco.SERVER_STATUS_ONLINE || servstats.Stats.Suspended {
 			// ms not online or suspended
@@ -98,7 +98,7 @@ func HandleClientSocket(clientSocket net.Conn) {
 		}
 
 	case errco.CLIENT_REQ_JOIN:
-		errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "a client tried to join from %s:%d to %s:%d", clientAddress, config.ListenPort, config.TargetHost, config.TargetPort)
+		errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "a client tried to join from %s:%d to %s:%d", clientAddress, config.MshPort, config.ServHost, config.ServPort)
 
 		if servstats.Stats.Status != errco.SERVER_STATUS_ONLINE {
 			// ms not online (un/suspended)
@@ -167,12 +167,12 @@ func HandleClientSocket(clientSocket net.Conn) {
 // The req parameter indicates what request type (INFO os JOIN) the proxy will be used for.
 func openProxy(clientSocket net.Conn, serverInitPacket []byte, req int) {
 	// open a connection to ms and connect it with the client
-	serverSocket, err := net.Dial("tcp", fmt.Sprintf("%s:%d", config.TargetHost, config.TargetPort))
+	serverSocket, err := net.Dial("tcp", fmt.Sprintf("%s:%d", config.ServHost, config.ServPort))
 	if err != nil {
 		errco.NewLogln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_SERVER_DIAL, err.Error())
 
 		// msh JOIN response (warn client with text in the loadscreen)
-		mes := buildMessage(errco.CLIENT_REQ_JOIN, "can't connect to server... check if minecraft server is running and set the correct targetPort")
+		mes := buildMessage(errco.CLIENT_REQ_JOIN, "can't connect to server... check if minecraft server is running and set the correct ServPort")
 		clientSocket.Write(mes)
 		errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%smsh --> client%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
 

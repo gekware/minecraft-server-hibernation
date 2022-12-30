@@ -63,14 +63,14 @@ func main() {
 	}
 
 	// open a listener
-	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", config.ListenHost, config.ListenPort))
+	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", config.MshHost, config.MshPort))
 	if err != nil {
 		errco.NewLogln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CLIENT_LISTEN, err.Error())
 		progmgr.AutoTerminate()
 	}
 
 	// infinite cycle to handle new clients.
-	errco.NewLogln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "listening for new clients connections on %s:%d ...", config.ListenHost, config.ListenPort)
+	errco.NewLogln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "listening for new clients connections on %s:%d ...", config.MshHost, config.MshPort)
 	for {
 		clientSocket, err := listener.Accept()
 		if err != nil {

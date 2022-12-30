@@ -34,21 +34,21 @@ type challengeLibrary struct {
 
 // HandlerQuery handles query stats requests.
 //
-// can only receive requests on config.ListenHost, config.ListenPort
+// can only receive requests on config.MshHost, config.MshPort
 func HandlerQuery() {
 	// TODO
 	// get query port from msh.config
 	// respond with real server info
 	// emulate/forward depending on server status
 
-	connUDP, err := net.ListenPacket("udp", fmt.Sprintf("%s:%d", config.ListenHost, config.ListenPort))
+	connUDP, err := net.ListenPacket("udp", fmt.Sprintf("%s:%d", config.MshHost, config.MshPort))
 	if err != nil {
 		errco.NewLogln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CLIENT_LISTEN, err.Error())
 		return
 	}
 
 	// infinite cycle to handle new clients queries
-	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "listening for new clients queries on %s:%d ...", config.ListenHost, config.ListenPort)
+	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "listening for new clients queries on %s:%d ...", config.MshHost, config.MshPort)
 	for {
 		res, addr, sessionID, logMsh := getStatsRequest(connUDP)
 		if logMsh != nil {

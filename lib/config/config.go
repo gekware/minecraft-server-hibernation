@@ -28,10 +28,10 @@ var (
 
 	ServerIcon string = defaultServerIcon // ServerIcon contains the minecraft server icon
 
-	ListenHost string = "0.0.0.0"   // ListenHost is the ip address for clients to connect to msh
-	ListenPort int                  // ListenPort is the port for clients to connect to msh
-	TargetHost string = "127.0.0.1" // TargetHost is the ip address for msh to connect to minecraft server
-	TargetPort int                  // TargetPort is the port for msh to connect to minecraft server
+	MshHost  string = "0.0.0.0"   // MshHost is the ip address for clients to connect to msh
+	MshPort  int                  // MshPort is the port for clients to connect to msh
+	ServHost string = "127.0.0.1" // ServHost is the ip address for msh to connect to minecraft server
+	ServPort int                  // ServPort is the port for msh to connect to minecraft server
 )
 
 type Configuration struct {
@@ -164,7 +164,7 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 
 	flag.IntVar(&c.Msh.Debug, "d", c.Msh.Debug, "Specify debug level.")
 	// c.Msh.ID should not be set by a flag
-	flag.IntVar(&c.Msh.ListenPort, "port", c.Msh.ListenPort, "Specify msh port.")
+	flag.IntVar(&c.Msh.MshPort, "port", c.Msh.MshPort, "Specify msh port.")
 	flag.Int64Var(&c.Msh.TimeBeforeStoppingEmptyServer, "timeout", c.Msh.TimeBeforeStoppingEmptyServer, "Specify time to wait before stopping minecraft server.")
 	flag.BoolVar(&c.Msh.SuspendAllow, "SuspendAllow", c.Msh.SuspendAllow, "Specify if minecraft server process can be suspended.")
 	flag.IntVar(&c.Msh.SuspendRefresh, "SuspendRefresh", c.Msh.SuspendRefresh, "Specify how often the suspended minecraft server process must be refreshed.")
@@ -255,16 +255,16 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 	// ---------------- setup load ----------------- //
 
 	// load ports
-	// ListenHost	defined in global definition
-	ListenPort = c.Msh.ListenPort
-	// TargetHost	defined in global definition
-	if TargetPort, logMsh = c.ParsePropertiesInt("server-port"); logMsh != nil {
+	// MshHost	defined in global definition
+	MshPort = c.Msh.MshPort
+	// ServHost	defined in global definition
+	if ServPort, logMsh = c.ParsePropertiesInt("server-port"); logMsh != nil {
 		logMsh.Log(true)
-	} else if TargetPort == c.Msh.ListenPort {
-		logMsh := errco.NewLogln(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_CONFIG_LOAD, "TargetPort and ListenPort appear to be the same, please change one of them")
+	} else if ServPort == c.Msh.MshPort {
+		logMsh := errco.NewLogln(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_CONFIG_LOAD, "ServPort and MshPort appear to be the same, please change one of them")
 		servstats.Stats.SetMajorError(logMsh)
 	}
-	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "msh proxy setup: %s:%d --> %s:%d", ListenHost, ListenPort, TargetHost, TargetPort)
+	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "msh proxy setup: %s:%d --> %s:%d", MshHost, MshPort, ServHost, ServPort)
 
 	// load ms version/protocol
 	c.Server.Version, c.Server.Protocol, logMsh = c.getVersionInfo()

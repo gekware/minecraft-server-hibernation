@@ -105,7 +105,7 @@ func getServInfo() (*model.DataInfo, *errco.MshLog) {
 	}
 
 	// open connection to minecraft server
-	serverSocket, err := net.Dial("tcp", fmt.Sprintf("%s:%d", config.TargetHost, config.TargetPort))
+	serverSocket, err := net.Dial("tcp", fmt.Sprintf("%s:%d", config.ServHost, config.ServPort))
 	if err != nil {
 		return nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_SERVER_DIAL, err.Error())
 	}
@@ -115,7 +115,7 @@ func getServInfo() (*model.DataInfo, *errco.MshLog) {
 	// [16 0 244 5 9 49 50 55 46 48 46 48 46 49 99 211 1 1 0 ]
 	//                                          └port┘ └info┘
 	reqInfoMessage := bytes.NewBuffer([]byte{16, 0, 244, 5, 9, 49, 50, 55, 46, 48, 46, 48, 46, 49})
-	reqInfoMessage.Write(big.NewInt(int64(config.ListenPort)).Bytes())
+	reqInfoMessage.Write(big.NewInt(int64(config.MshPort)).Bytes())
 	reqInfoMessage.Write([]byte{1, 1, 0})
 
 	mes := reqInfoMessage.Bytes()

@@ -11,7 +11,7 @@ import (
 )
 
 func Test_QueryFull(t *testing.T) {
-	config.ListenHost, config.ListenPort = "127.0.0.1", 24444
+	config.MshHost, config.MshPort = "127.0.0.1", 24444
 
 	go HandlerQuery()
 
@@ -20,7 +20,7 @@ func Test_QueryFull(t *testing.T) {
 	for i := 0; i < 3; i++ {
 		fmt.Println("--------------------")
 
-		res, err := minequery.QueryFull(config.ListenHost, config.ListenPort)
+		res, err := minequery.QueryFull(config.MshHost, config.MshPort)
 		if err != nil {
 			t.Fatalf(err.Error())
 		}
@@ -30,7 +30,7 @@ func Test_QueryFull(t *testing.T) {
 }
 
 func Test_QueryBasic(t *testing.T) {
-	config.ListenHost, config.ListenPort = "127.0.0.1", 24444
+	config.MshHost, config.MshPort = "127.0.0.1", 24444
 
 	go HandlerQuery()
 
@@ -39,7 +39,7 @@ func Test_QueryBasic(t *testing.T) {
 	for i := 0; i < 3; i++ {
 		fmt.Println("--------------------")
 
-		res, err := minequery.QueryBasic(config.ListenHost, config.ListenPort)
+		res, err := minequery.QueryBasic(config.MshHost, config.MshPort)
 		if err != nil {
 			t.Fatalf(err.Error())
 		}

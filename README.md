@@ -95,7 +95,7 @@ Set the logging level for debug purposes
 
 Port to which players can connect
 ```yaml
-"ListenPort": 25555
+"MshPort": 25555
 ```
 
 TimeBeforeStoppingEmptyServer sets the time (after the last player disconnected) that msh waits before hibernating the minecraft server
