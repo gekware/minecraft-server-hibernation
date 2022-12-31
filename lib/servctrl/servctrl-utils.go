@@ -17,66 +17,82 @@ import (
 )
 
 // countPlayerSafe returns the number of players on the server.
-// The /list command is used for safety and if it fails, internal player count is returned.
-// No error is returned: the integer is always meaningful
+//
+// Players are retrived by (in order): server info, list command, internal connection count.
+//
+// Internal connection count is reset if a more reliable method is used.
+//
+// no error is returned: the return integer is always meaningful
 // (might be more or less reliable depending from where it retrieved).
-// The method used to count players is returned as second parameter.
-func countPlayerSafe() (int, string) {
-	errco.Logln(errco.LVL_B, "retrieving  player count...")
+func countPlayerSafe() int {
+	var logMsh *errco.MshLog
+	var playerCount int
+	var method string
 
-	playerCount, errMsh := getPlayersByServInfo()
-	if errMsh == nil {
-		return playerCount, "server info"
+	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "retrieving player count...")
+
+	if playerCount, logMsh = getPlayersByServInfo(); logMsh.Log(true) == nil {
+		method = "server info"
+		if playerCount != servstats.Stats.ConnCount {
+			errco.NewLogln(errco.TYPE_WAR, errco.LVL_1, errco.ERROR_WRONG_CONNECTION_COUNT, "connection count (%d) different from %s player count (%d)", servstats.Stats.ConnCount, method, playerCount)
+		}
+
+	} else if playerCount, logMsh = getPlayersByListCom(); logMsh.Log(true) == nil {
+		method = "list command"
+		if playerCount != servstats.Stats.ConnCount {
+			errco.NewLogln(errco.TYPE_WAR, errco.LVL_1, errco.ERROR_WRONG_CONNECTION_COUNT, "connection count (%d) different from %s player count (%d)", servstats.Stats.ConnCount, method, playerCount)
+		}
+
+	} else {
+		method = "connection count"
+		playerCount = servstats.Stats.ConnCount
 	}
-	errco.LogMshErr(errMsh.AddTrace("countPlayerSafe"))
 
-	playerCount, errMsh = getPlayersByListCom()
-	if errMsh == nil {
-		return playerCount, "list command"
-	}
-	errco.LogMshErr(errMsh.AddTrace("countPlayerSafe"))
+	errco.NewLogln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "%d online players - method for player count: %s", playerCount, method)
 
-	return servstats.Stats.PlayerCount, "internal"
+	return playerCount
 }
 
 // getPlayersByListCom returns the number of players using "list" command
-func getPlayersByListCom() (int, *errco.Error) {
-	outStr, errMsh := Execute("list", "getPlayersByListCom")
-	if errMsh != nil {
-		return 0, errMsh.AddTrace("getPlayersByListCom")
+func getPlayersByListCom() (int, *errco.MshLog) {
+	outStr, logMsh := Execute("list")
+	if logMsh != nil {
+		return 0, logMsh.AddTrace()
 	}
-	playersStr, errMsh := utility.StrBetween(outStr, "There are ", " of a max")
-	if errMsh != nil {
-		return 0, errMsh.AddTrace("getPlayersByListCom")
+	playersStr, logMsh := utility.StrBetween(outStr, "There are ", " of a max")
+	if logMsh != nil {
+		return 0, logMsh.AddTrace()
 	}
 	players, err := strconv.Atoi(playersStr)
 	if err != nil {
-		return 0, errco.NewErr(errco.ERROR_CONVERSION, errco.LVL_D, "getPlayersByListCom", err.Error())
+		return 0, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONVERSION, err.Error())
 	}
 
 	return players, nil
 }
 
 // getPlayersByServInfo returns the number of players using server info request
-func getPlayersByServInfo() (int, *errco.Error) {
-	servInfo, errMsh := getServInfo()
-	if errMsh != nil {
-		return -1, errMsh.AddTrace("getPlayersByServInfo")
+func getPlayersByServInfo() (int, *errco.MshLog) {
+	servInfo, logMsh := getServInfo()
+	if logMsh != nil {
+		return -1, logMsh.AddTrace()
 	}
 
 	return servInfo.Players.Online, nil
 }
 
 // getServInfo returns server info after emulating a server info request to the minecraft server
-func getServInfo() (*model.DataInfo, *errco.Error) {
-	if servstats.Stats.Status != errco.SERVER_STATUS_ONLINE {
-		return &model.DataInfo{}, errco.NewErr(errco.ERROR_SERVER_NOT_ONLINE, errco.LVL_D, "getServInfo", "")
+func getServInfo() (*model.DataInfo, *errco.MshLog) {
+	// check if ms is running
+	logMsh := checkMSRunning()
+	if logMsh != nil {
+		return &model.DataInfo{}, logMsh.AddTrace()
 	}
 
 	// open connection to minecraft server
 	serverSocket, err := net.Dial("tcp", fmt.Sprintf("%s:%d", config.TargetHost, config.TargetPort))
 	if err != nil {
-		return nil, errco.NewErr(errco.ERROR_SERVER_DIAL, errco.LVL_D, "getServInfo", err.Error())
+		return &model.DataInfo{}, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_SERVER_DIAL, err.Error())
 	}
 	defer serverSocket.Close()
 
@@ -92,7 +108,7 @@ func getServInfo() (*model.DataInfo, *errco.Error) {
 
 	mes := reqInfoMessage.Bytes()
 	serverSocket.Write(mes)
-	errco.Logln(errco.LVL_E, "%smsh --> server%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
+	errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%smsh --> server%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
 
 	// read response from server
 	recInfoData := []byte{}
@@ -105,10 +121,10 @@ func getServInfo() (*model.DataInfo, *errco.Error) {
 			if err, ok := err.(net.Error); ok && err.Timeout() {
 				break
 			}
-			return &model.DataInfo{}, errco.NewErr(errco.ERROR_SERVER_REQUEST_INFO, errco.LVL_D, "getServInfo", err.Error())
+			return &model.DataInfo{}, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_SERVER_REQUEST_INFO, err.Error())
 		}
 
-		errco.Logln(errco.LVL_E, "%sserver --> msh%s:%v", errco.COLOR_PURPLE, errco.COLOR_RESET, buf[:dataLen])
+		errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%sserver --> msh%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, buf[:dataLen])
 
 		recInfoData = append(recInfoData, buf[:dataLen]...)
 	}
@@ -116,31 +132,32 @@ func getServInfo() (*model.DataInfo, *errco.Error) {
 	// remove first 5 bytes that are used as header to get only the json data
 	// [178 88 0 175 88]{"description":{ ...
 	if len(recInfoData) < 5 {
-		return &model.DataInfo{}, errco.NewErr(errco.ERROR_SERVER_REQUEST_INFO, errco.LVL_D, "getServInfo", "received data unexpected format")
+		return &model.DataInfo{}, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_SERVER_REQUEST_INFO, "received data unexpected format (%v)", recInfoData)
 	}
 	recInfoData = recInfoData[5:]
 
 	recInfo := &model.DataInfo{}
 	err = json.Unmarshal(recInfoData, recInfo)
 	if err != nil {
-		return &model.DataInfo{}, errco.NewErr(errco.ERROR_JSON_UNMARSHAL, errco.LVL_D, "getServInfo", err.Error())
+		return &model.DataInfo{}, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_JSON_UNMARSHAL, err.Error())
 	}
 
 	// update server version and protocol in config
 	if recInfo.Version.Name != config.ConfigRuntime.Server.Version || recInfo.Version.Protocol != config.ConfigRuntime.Server.Protocol {
-		errco.Logln(errco.LVL_D, "server version found! serverVersion: %s serverProtocol: %d", recInfo.Version.Name, recInfo.Version.Protocol)
+		errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "server version found! serverVersion: %s serverProtocol: %d", recInfo.Version.Name, recInfo.Version.Protocol)
 
-		// update the runtime config
-		config.ConfigRuntime.Server.Version = recInfo.Version.Name
-		config.ConfigRuntime.Server.Protocol = recInfo.Version.Protocol
+		// update runtime config if version is not specified
+		if config.ConfigRuntime.Server.Version == "" {
+			config.ConfigRuntime.Server.Version = recInfo.Version.Name
+			config.ConfigRuntime.Server.Protocol = recInfo.Version.Protocol
+		}
 
-		// update the file config
+		// update and save default config
 		config.ConfigDefault.Server.Version = recInfo.Version.Name
 		config.ConfigDefault.Server.Protocol = recInfo.Version.Protocol
-
-		errMsh := config.ConfigDefaultFileWrite()
-		if errMsh != nil {
-			return nil, errMsh.AddTrace("getServInfo")
+		logMsh := config.ConfigDefault.Save()
+		if logMsh != nil {
+			return nil, logMsh.AddTrace()
 		}
 	}
 

@@ -8,44 +8,57 @@ import (
 )
 
 // Stats contains the info relative to server
-var Stats *serverStats
+var Stats *serverStats = &serverStats{
+	M:              &sync.Mutex{},
+	Status:         errco.SERVER_STATUS_OFFLINE,
+	Suspended:      false,
+	MajorError:     nil,
+	ConnCount:      0,
+	FreezeTimer:    time.NewTimer(5 * time.Minute),
+	LoadProgress:   "0%",
+	BytesToClients: 0,
+	BytesToServer:  0,
+}
 
 type serverStats struct {
 	M              *sync.Mutex
-	Status         int     // represent the status of the minecraft server
-	PlayerCount    int     // tracks players connected to the server
-	StopMSRequests int32   // tracks active StopMSRequest() instances. (int32 for atomic operations)
-	LoadProgress   string  // tracks loading percentage of starting server
-	BytesToClients float64 // tracks bytes/s server->clients
-	BytesToServer  float64 // tracks bytes/s clients->server
+	Status         int           // represent the status of the minecraft server
+	Suspended      bool          // status of minecraft server process (if ms is offline, should be set to false)
+	MajorError     *errco.MshLog // if !nil the server is having some major problems
+	ConnCount      int           // tracks active client connections to ms (only clients that are playing on ms)
+	FreezeTimer    *time.Timer   // timer to freeze minecraft server
+	LoadProgress   string        // tracks loading percentage of starting server
+	BytesToClients float64       // tracks bytes/s server->clients
+	BytesToServer  float64       // tracks bytes/s clients->server
 }
 
 func init() {
-	Stats = &serverStats{
-		M:              &sync.Mutex{},
-		Status:         errco.SERVER_STATUS_OFFLINE,
-		PlayerCount:    0,
-		StopMSRequests: 0,
-		LoadProgress:   "0%",
-		BytesToClients: 0,
-		BytesToServer:  0,
-	}
-
 	go printDataUsage()
 }
 
 // printDataUsage prints each second bytes/s to clients and to server.
-// (must be launched after ServTerm.IsActive has been set to true)
+// prints data exchanged by clients and server only when servctrl.ServTerm.IsActive
+// Stats.BytesToClients and Stats.BytesToServer are only set when there are clients connected to the server
 // [goroutine]
 func printDataUsage() {
-	if Stats.BytesToClients != 0 || Stats.BytesToServer != 0 {
-		errco.Logln(errco.LVL_D, "data/s: %8.3f KB/s to clients | %8.3f KB/s to server", Stats.BytesToClients/1024, Stats.BytesToServer/1024)
+	ticker := time.NewTicker(time.Second)
 
-		Stats.M.Lock()
-		Stats.BytesToClients = 0
-		Stats.BytesToServer = 0
-		Stats.M.Unlock()
+	for {
+		<-ticker.C
+
+		if Stats.BytesToClients != 0 || Stats.BytesToServer != 0 {
+			errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "data/s: %8.3f KB/s to clients | %8.3f KB/s to server", Stats.BytesToClients/1024, Stats.BytesToServer/1024)
+			Stats.M.Lock()
+			Stats.BytesToClients = 0
+			Stats.BytesToServer = 0
+			Stats.M.Unlock()
+		}
 	}
+}
 
-	time.Sleep(time.Second)
+// SetMajorError sets *serverStats.MajorError only if nil
+func (s *serverStats) SetMajorError(e *errco.MshLog) {
+	if s.MajorError == nil {
+		s.MajorError = e
+	}
 }

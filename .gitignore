@@ -1,0 +1,8 @@
+.vscode
+.VSCodeCounter
+
+*.exe
+*.bin
+*.osx
+
+msh.instance
