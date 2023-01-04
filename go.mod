@@ -5,8 +5,8 @@ go 1.19
 require (
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/shirou/gopsutil v3.21.11+incompatible
-	golang.org/x/image v0.1.0
-	golang.org/x/sys v0.1.0
+	golang.org/x/image v0.3.0
+	golang.org/x/sys v0.4.0
 )
 
 require (
