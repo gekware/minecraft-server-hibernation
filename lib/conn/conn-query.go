@@ -50,79 +50,87 @@ func HandlerQuery() {
 	// infinite cycle to handle new clients queries
 	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "listening for new clients queries\ton %s:%d ...", config.MshHost, config.MshPortQuery)
 	for {
-		res, addr, sessionID, logMsh := getStatsRequest(connUDP)
-		if logMsh != nil {
-			logMsh.Log(true)
+		// handshake / stats request read
+		var buf []byte = make([]byte, 1024)
+		n, addr, err := connUDP.ReadFrom(buf)
+		if err != nil {
+			errco.NewLogln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONN_READ, err.Error())
 			continue
 		}
 
-		switch len(res) {
-		case 11: // basic stats response
-			statRespBasic(connUDP, addr, sessionID)
-		case 15: // full stats response
-			statRespFull(connUDP, addr, sessionID)
-		default:
-			errco.NewLogln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_QUERY_BAD_REQUEST, "cannot define stat request type (unexpected number of bytes)")
+		logMsh := handleRequest(connUDP, buf[:n], addr)
+		if logMsh != nil {
+			logMsh.Log(true)
 		}
 	}
 }
 
-// getStatsRequest gets stats request from client.
-// (performing handshake if necessay)
-//
-// returns buffer (lenght: 11, 15), address, session id, error
-func getStatsRequest(connUDP net.PacketConn) ([]byte, net.Addr, []byte, *errco.MshLog) {
-	var buf []byte = make([]byte, 1024)
-
-	// stats / handshake request read
-	n, addr, err := connUDP.ReadFrom(buf)
-	if err != nil {
-		return nil, nil, nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONN_READ, err.Error())
-	}
-
-	switch n {
+// handleRequest handles handshake / stats request from client performing handshake / stats response.
+func handleRequest(connUDP net.PacketConn, req []byte, addr net.Addr) *errco.MshLog {
+	switch len(req) {
 
 	case 7: // handshake request from client
-		errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "recv handshake request:\t%v", buf[:7])
+		errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "recv handshake request:\t%v", req)
+
+		sessionID := req[3:7]
 
 		// handshake response composition
 		res := bytes.NewBuffer([]byte{9})                       // type: handshake
-		res.Write(buf[3:7])                                     // session id
+		res.Write(sessionID)                                    // session id
 		res.WriteString(fmt.Sprintf("%d", clib.gen()) + "\x00") // challenge (int32 written as string, null terminated)
 
 		// handshake response send
 		errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "send handshake response:\t%v", res.Bytes())
-		_, err = connUDP.WriteTo(res.Bytes(), addr)
+		_, err := connUDP.WriteTo(res.Bytes(), addr)
 		if err != nil {
-			return nil, nil, nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONN_WRITE, err.Error())
+			return errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONN_WRITE, err.Error())
 		}
 
-		// stats request read
-		n, addr, err = connUDP.ReadFrom(buf)
-		if err != nil {
-			return nil, nil, nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONN_READ, err.Error())
-		}
+		return nil
 
-		// check that stats request has expected lenght (11: basic, 15: full)
-		if n != 11 && n != 15 {
-			return nil, nil, nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONN_READ, "unexpected number of bytes in stats request")
-		}
+	case 11, 15: // full / base stats request from client
+		errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "recv stats request:\t%v", req)
 
-		fallthrough
-
-	case 11, 15: // full / basic stats request from client
-		errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "recv stats request:\t%v", buf[:n])
+		sessionID := req[3:7]
+		challenge := req[7:11]
 
 		// check that received challenge is known and not expired
-		if !clib.inLibrary(binary.BigEndian.Uint32(buf[7:11])) {
-			return nil, nil, nil, errco.NewLog(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_QUERY_CHALLENGE, "challenge failed")
+		if !clib.inLibrary(binary.BigEndian.Uint32(challenge)) {
+			return errco.NewLog(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_QUERY_CHALLENGE, "challenge failed")
 		}
 
-		// return buffer (lenght: 11, 15), address, session id, error
-		return buf[:n], addr, buf[3:7], nil
+		switch len(req) {
+		case 11: // base stats response
+			statRespBase(connUDP, addr, sessionID)
+		case 15: // full stats response
+			statRespFull(connUDP, addr, sessionID)
+		}
+
+		return nil
 
 	default:
-		return nil, nil, nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONN_READ, "unexpected number of bytes in stats / handshake request")
+		return errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONN_READ, "unexpected number of bytes in stats / handshake request")
+	}
+}
+
+// statRespBase writes a base stats response to udp connection
+func statRespBase(connUDP net.PacketConn, addr net.Addr, sessionID []byte) {
+	var buf bytes.Buffer
+	buf.WriteByte(0)                                                                 // type
+	buf.Write(sessionID)                                                             // session ID
+	buf.WriteString(fmt.Sprintf("%s\x00", config.ConfigRuntime.Msh.InfoHibernation)) // MOTD
+	buf.WriteString("SMP\x00")                                                       // gametype hardcoded (default)
+	levelName, _ := config.ConfigRuntime.ParsePropertiesString("level-name")
+	buf.WriteString(fmt.Sprintf("%s\x00", levelName))                                      // map
+	buf.WriteString("0\x00")                                                               // numplayers hardcoded
+	buf.WriteString("0\x00")                                                               // maxplayers hardcoded
+	buf.Write(append(utility.Reverse(big.NewInt(int64(config.MshPort)).Bytes()), byte(0))) // hostport
+	buf.WriteString(fmt.Sprintf("%s\x00", utility.GetOutboundIP4()))                       // hostip
+
+	errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "send stats base response:\t%v", buf.Bytes())
+	_, err := connUDP.WriteTo(buf.Bytes(), addr)
+	if err != nil {
+		errco.NewLogln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONN_WRITE, err.Error())
 	}
 }
 
@@ -152,27 +160,6 @@ func statRespFull(connUDP net.PacketConn, addr net.Addr, sessionID []byte) {
 	buf.WriteString("\x00")                // example: "aaa\x00bbb\x00\x00"
 
 	errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "send stats full response:\t%v", buf.Bytes())
-	_, err := connUDP.WriteTo(buf.Bytes(), addr)
-	if err != nil {
-		errco.NewLogln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONN_WRITE, err.Error())
-	}
-}
-
-// statRespFull writes a full stats response to udp connection
-func statRespBasic(connUDP net.PacketConn, addr net.Addr, sessionID []byte) {
-	var buf bytes.Buffer
-	buf.WriteByte(0)                                                                 // type
-	buf.Write(sessionID)                                                             // session ID
-	buf.WriteString(fmt.Sprintf("%s\x00", config.ConfigRuntime.Msh.InfoHibernation)) // MOTD
-	buf.WriteString("SMP\x00")                                                       // gametype hardcoded (default)
-	levelName, _ := config.ConfigRuntime.ParsePropertiesString("level-name")
-	buf.WriteString(fmt.Sprintf("%s\x00", levelName))                                      // map
-	buf.WriteString("0\x00")                                                               // numplayers hardcoded
-	buf.WriteString("0\x00")                                                               // maxplayers hardcoded
-	buf.Write(append(utility.Reverse(big.NewInt(int64(config.MshPort)).Bytes()), byte(0))) // hostport
-	buf.WriteString(fmt.Sprintf("%s\x00", utility.GetOutboundIP4()))                       // hostip
-
-	errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "send stats basic response:\t%v", buf.Bytes())
 	_, err := connUDP.WriteTo(buf.Bytes(), addr)
 	if err != nil {
 		errco.NewLogln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONN_WRITE, err.Error())
