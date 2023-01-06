@@ -185,7 +185,7 @@ func (cl *challengeLibrary) gen() uint32 {
 	cval := uint32(rand.Int31n(9_999_999-1_000_000+1) + 1_000_000)
 
 	c := challenge{
-		Timer: *time.NewTimer(60 * time.Second),
+		Timer: *time.NewTimer(time.Hour),
 		val:   cval,
 	}
 
