@@ -83,7 +83,7 @@ func getStatsRequest(connUDP net.PacketConn) ([]byte, net.Addr, []byte, *errco.M
 	switch n {
 
 	case 7: // handshake request from client
-		errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "received handshake request:\t%v", buf[:7])
+		errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "recv handshake request:\t%v", buf[:7])
 
 		// handshake response composition
 		res := bytes.NewBuffer([]byte{9})                       // type: handshake
@@ -91,7 +91,7 @@ func getStatsRequest(connUDP net.PacketConn) ([]byte, net.Addr, []byte, *errco.M
 		res.WriteString(fmt.Sprintf("%d", clib.gen()) + "\x00") // challenge (int32 written as string, null terminated)
 
 		// handshake response send
-		errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "sending handshake response:\t%v", res.Bytes())
+		errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "send handshake response:\t%v", res.Bytes())
 		_, err = connUDP.WriteTo(res.Bytes(), addr)
 		if err != nil {
 			return nil, nil, nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONN_WRITE, err.Error())
@@ -111,7 +111,7 @@ func getStatsRequest(connUDP net.PacketConn) ([]byte, net.Addr, []byte, *errco.M
 		fallthrough
 
 	case 11, 15: // full / basic stats request from client
-		errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "received stats request:\t%v", buf[:n])
+		errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "recv stats request:\t%v", buf[:n])
 
 		// check that received challenge is known and not expired
 		if !clib.inLibrary(binary.BigEndian.Uint32(buf[7:11])) {
@@ -151,7 +151,7 @@ func statRespFull(connUDP net.PacketConn, addr net.Addr, sessionID []byte) {
 	buf.WriteString("\x01player_\x00\x00") // padding (default)
 	buf.WriteString("\x00")                // example: "aaa\x00bbb\x00\x00"
 
-	errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "sending stats full response:\t%v", buf.Bytes())
+	errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "send stats full response:\t%v", buf.Bytes())
 	_, err := connUDP.WriteTo(buf.Bytes(), addr)
 	if err != nil {
 		errco.NewLogln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONN_WRITE, err.Error())
@@ -172,7 +172,7 @@ func statRespBasic(connUDP net.PacketConn, addr net.Addr, sessionID []byte) {
 	buf.Write(append(utility.Reverse(big.NewInt(int64(config.MshPort)).Bytes()), byte(0))) // hostport
 	buf.WriteString(fmt.Sprintf("%s\x00", utility.GetOutboundIP4()))                       // hostip
 
-	errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "sending stats basic response:\t%v", buf.Bytes())
+	errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "send stats basic response:\t%v", buf.Bytes())
 	_, err := connUDP.WriteTo(buf.Bytes(), addr)
 	if err != nil {
 		errco.NewLogln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONN_WRITE, err.Error())
