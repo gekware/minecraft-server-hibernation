@@ -70,7 +70,7 @@ func HandlerQuery() {
 // getStatsRequest gets stats request from client.
 // (performing handshake if necessay)
 //
-// returns buffer (lenght: 11, 15), address, error
+// returns buffer (lenght: 11, 15), address, session id, error
 func getStatsRequest(connUDP net.PacketConn) ([]byte, net.Addr, []byte, *errco.MshLog) {
 	var buf []byte = make([]byte, 1024)
 
@@ -118,6 +118,7 @@ func getStatsRequest(connUDP net.PacketConn) ([]byte, net.Addr, []byte, *errco.M
 			return nil, nil, nil, errco.NewLog(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_QUERY_CHALLENGE, "challenge failed")
 		}
 
+		// return buffer (lenght: 11, 15), address, session id, error
 		return buf[:n], addr, buf[3:7], nil
 
 	default:
@@ -178,27 +179,10 @@ func statRespBasic(connUDP net.PacketConn, addr net.Addr, sessionID []byte) {
 	}
 }
 
-// InLibrary searches library for non-expired test value
-func (cl *challengeLibrary) inLibrary(t uint32) bool {
-	for i := 0; i < len(cl.list); i++ {
-		select {
-		case <-cl.list[i].C:
-			// if timer expired, remove challenge and continue iterating
-			cl.list = append(cl.list[:i], cl.list[i+1:]...)
-			continue
-		default:
-		}
-		if t == cl.list[i].val {
-			return true
-		}
-	}
-	return false
-}
-
 // Gen generates a int32 challenge and adds it to the challenge library
 func (cl *challengeLibrary) gen() uint32 {
 	rand.Seed(time.Now().UnixNano())
-	cval := (rand.Uint32() % 10_000_000) + 1_000_000
+	cval := uint32(rand.Int31n(9_999_999-1_000_000+1) + 1_000_000)
 
 	c := challenge{
 		Timer: *time.NewTimer(60 * time.Second),
@@ -208,4 +192,27 @@ func (cl *challengeLibrary) gen() uint32 {
 	cl.list = append(cl.list, c)
 
 	return cval
+}
+
+// InLibrary searches library for non-expired test value
+func (cl *challengeLibrary) inLibrary(t uint32) bool {
+	// result var is used so that the list is completely scanned and expired values are removed
+	result := false
+
+	// scanning list in reverse to remove elements while iterating on them
+	for i := len(cl.list) - 1; i >= 0; i-- {
+		select {
+		case <-cl.list[i].C:
+			// if timer expired, remove challenge and continue iterating
+			cl.list = append(cl.list[:i], cl.list[i+1:]...)
+			continue
+		default:
+		}
+
+		if t == cl.list[i].val {
+			result = true
+		}
+	}
+
+	return result
 }
