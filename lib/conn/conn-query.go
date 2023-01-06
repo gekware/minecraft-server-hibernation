@@ -196,23 +196,22 @@ func (cl *challengeLibrary) gen() uint32 {
 
 // InLibrary searches library for non-expired test value
 func (cl *challengeLibrary) inLibrary(t uint32) bool {
-	// result var is used so that the list is completely scanned and expired values are removed
-	result := false
-
-	// scanning list in reverse to remove elements while iterating on them
+	// remove expired challenges
+	// (reverse list loop to remove elements while iterating on them)
 	for i := len(cl.list) - 1; i >= 0; i-- {
 		select {
 		case <-cl.list[i].C:
-			// if timer expired, remove challenge and continue iterating
 			cl.list = append(cl.list[:i], cl.list[i+1:]...)
-			continue
 		default:
-		}
-
-		if t == cl.list[i].val {
-			result = true
 		}
 	}
 
-	return result
+	// search for non-expired test value
+	for i := 0; i < len(cl.list); i++ {
+		if t == cl.list[i].val {
+			return true
+		}
+	}
+
+	return false
 }
