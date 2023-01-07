@@ -41,7 +41,7 @@ func HandlerQuery() {
 	// respond with real server info
 	// emulate/forward depending on server status
 
-	connUDP, err := net.ListenPacket("udp", fmt.Sprintf("%s:%d", config.MshHost, config.MshPortQuery))
+	connCli, err := net.ListenPacket("udp", fmt.Sprintf("%s:%d", config.MshHost, config.MshPortQuery))
 	if err != nil {
 		errco.NewLogln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CLIENT_LISTEN, err.Error())
 		return
@@ -52,13 +52,14 @@ func HandlerQuery() {
 	for {
 		// handshake / stats request read
 		var buf []byte = make([]byte, 1024)
-		n, addr, err := connUDP.ReadFrom(buf)
+		n, addrCli, err := connCli.ReadFrom(buf)
 		if err != nil {
 			errco.NewLogln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONN_READ, err.Error())
 			continue
 		}
 
-		logMsh := handleRequest(connUDP, buf[:n], addr)
+		// if minecraft server is not warm, handle request
+		logMsh := handleRequest(connCli, addrCli, buf[:n])
 		if logMsh != nil {
 			logMsh.Log(true)
 		}
@@ -66,7 +67,7 @@ func HandlerQuery() {
 }
 
 // handleRequest handles handshake / stats request from client performing handshake / stats response.
-func handleRequest(connUDP net.PacketConn, req []byte, addr net.Addr) *errco.MshLog {
+func handleRequest(connCli net.PacketConn, addr net.Addr, req []byte) *errco.MshLog {
 	switch len(req) {
 
 	case 7: // handshake request from client
@@ -81,7 +82,7 @@ func handleRequest(connUDP net.PacketConn, req []byte, addr net.Addr) *errco.Msh
 
 		// handshake response send
 		errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "send handshake response:\t%v", res.Bytes())
-		_, err := connUDP.WriteTo(res.Bytes(), addr)
+		_, err := connCli.WriteTo(res.Bytes(), addr)
 		if err != nil {
 			return errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONN_WRITE, err.Error())
 		}
@@ -101,9 +102,9 @@ func handleRequest(connUDP net.PacketConn, req []byte, addr net.Addr) *errco.Msh
 
 		switch len(req) {
 		case 11: // base stats response
-			statRespBase(connUDP, addr, sessionID)
+			statRespBase(connCli, addr, sessionID)
 		case 15: // full stats response
-			statRespFull(connUDP, addr, sessionID)
+			statRespFull(connCli, addr, sessionID)
 		}
 
 		return nil
@@ -114,7 +115,7 @@ func handleRequest(connUDP net.PacketConn, req []byte, addr net.Addr) *errco.Msh
 }
 
 // statRespBase writes a base stats response to udp connection
-func statRespBase(connUDP net.PacketConn, addr net.Addr, sessionID []byte) {
+func statRespBase(connCli net.PacketConn, addr net.Addr, sessionID []byte) {
 	var buf bytes.Buffer
 	buf.WriteByte(0)                                                                 // type
 	buf.Write(sessionID)                                                             // session ID
@@ -128,14 +129,14 @@ func statRespBase(connUDP net.PacketConn, addr net.Addr, sessionID []byte) {
 	buf.WriteString(fmt.Sprintf("%s\x00", utility.GetOutboundIP4()))                       // hostip
 
 	errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "send stats base response:\t%v", buf.Bytes())
-	_, err := connUDP.WriteTo(buf.Bytes(), addr)
+	_, err := connCli.WriteTo(buf.Bytes(), addr)
 	if err != nil {
 		errco.NewLogln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONN_WRITE, err.Error())
 	}
 }
 
 // statRespFull writes a full stats response to udp connection
-func statRespFull(connUDP net.PacketConn, addr net.Addr, sessionID []byte) {
+func statRespFull(connCli net.PacketConn, addr net.Addr, sessionID []byte) {
 	var buf bytes.Buffer
 	buf.WriteByte(0)                        // type
 	buf.Write(sessionID)                    // session ID
@@ -160,7 +161,7 @@ func statRespFull(connUDP net.PacketConn, addr net.Addr, sessionID []byte) {
 	buf.WriteString("\x00")                // example: "aaa\x00bbb\x00\x00"
 
 	errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "send stats full response:\t%v", buf.Bytes())
-	_, err := connUDP.WriteTo(buf.Bytes(), addr)
+	_, err := connCli.WriteTo(buf.Bytes(), addr)
 	if err != nil {
 		errco.NewLogln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONN_WRITE, err.Error())
 	}
