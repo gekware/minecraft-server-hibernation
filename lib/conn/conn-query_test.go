@@ -26,6 +26,8 @@ func Test_QueryFull(t *testing.T) {
 		}
 
 		fmt.Printf("result: %+v\n", res)
+
+		time.Sleep(time.Second)
 	}
 }
 
