@@ -142,6 +142,8 @@ func statsGet(reqClient []byte) ([]byte, *errco.MshLog) {
 	}
 	defer conn.Close()
 
+	conn.SetDeadline(time.Now().Add(time.Second))
+
 	// ---------- ms query handshake ----------- //
 
 	// request handshake
