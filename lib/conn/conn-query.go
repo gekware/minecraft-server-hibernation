@@ -7,11 +7,13 @@ import (
 	"math/big"
 	"math/rand"
 	"net"
+	"strconv"
 	"time"
 
 	"msh/lib/config"
 	"msh/lib/errco"
 	"msh/lib/progmgr"
+	"msh/lib/servctrl"
 	"msh/lib/utility"
 )
 
@@ -38,8 +40,7 @@ type challengeLibrary struct {
 // Accepts requests on config.MshHost, config.MshPortQuery
 func HandlerQuery() {
 	// TODO
-	// respond with real server info
-	// emulate/forward depending on server status
+	// respond correct msh motd
 
 	connCli, err := net.ListenPacket("udp", fmt.Sprintf("%s:%d", config.MshHost, config.MshPortQuery))
 	if err != nil {
@@ -71,18 +72,18 @@ func handleRequest(connCli net.PacketConn, addr net.Addr, req []byte) *errco.Msh
 	switch len(req) {
 
 	case 7: // handshake request from client
-		errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "recv handshake request:\t%v", req)
+		errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "recv handshake req:\t%v", req)
 
 		sessionID := req[3:7]
 
 		// handshake response composition
-		res := bytes.NewBuffer([]byte{9})                       // type: handshake
-		res.Write(sessionID)                                    // session id
-		res.WriteString(fmt.Sprintf("%d", clib.gen()) + "\x00") // challenge (int32 written as string, null terminated)
+		rsp := bytes.NewBuffer([]byte{9})                       // type: handshake
+		rsp.Write(sessionID)                                    // session id
+		rsp.WriteString(fmt.Sprintf("%d", clib.gen()) + "\x00") // challenge (int32 written as string, null terminated)
 
 		// handshake response send
-		errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "send handshake response:\t%v", res.Bytes())
-		_, err := connCli.WriteTo(res.Bytes(), addr)
+		errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "send handshake rsp:\t%v", rsp.Bytes())
+		_, err := connCli.WriteTo(rsp.Bytes(), addr)
 		if err != nil {
 			return errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONN_WRITE, err.Error())
 		}
@@ -90,7 +91,7 @@ func handleRequest(connCli net.PacketConn, addr net.Addr, req []byte) *errco.Msh
 		return nil
 
 	case 11, 15: // full / base stats request from client
-		errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "recv stats request:\t%v", req)
+		errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "recv stats req:\t%v", req)
 
 		sessionID := req[3:7]
 		challenge := req[7:11]
@@ -100,12 +101,29 @@ func handleRequest(connCli net.PacketConn, addr net.Addr, req []byte) *errco.Msh
 			return errco.NewLog(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_QUERY_CHALLENGE, "challenge failed")
 		}
 
-		switch len(req) {
-		case 11: // base stats response
-			statRespBase(connCli, addr, sessionID)
-		case 15: // full stats response
-			statRespFull(connCli, addr, sessionID)
+		// if ms is not warm emulate response
+		logMsh := servctrl.CheckMSWarm()
+		if logMsh != nil {
+			switch len(req) {
+			case 11: // base stats response
+				statsRespBase(connCli, addr, sessionID)
+			case 15: // full stats response
+				statsRespFull(connCli, addr, sessionID)
+			}
+			return nil
 		}
+
+		// if ms is warm get response and send it to client
+		stats, logMsh := statsGet(req)
+		if logMsh != nil {
+			return logMsh.AddTrace()
+		}
+
+		_, err := connCli.WriteTo(stats, addr)
+		if err != nil {
+			return errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONN_WRITE, err.Error())
+		}
+		errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "send stats rsp:\t%v", stats)
 
 		return nil
 
@@ -114,8 +132,74 @@ func handleRequest(connCli net.PacketConn, addr net.Addr, req []byte) *errco.Msh
 	}
 }
 
-// statRespBase writes a base stats response to udp connection
-func statRespBase(connCli net.PacketConn, addr net.Addr, sessionID []byte) {
+func statsGet(req []byte) ([]byte, *errco.MshLog) {
+	// Dial the server using a UDP connection.
+	conn, err := net.Dial("udp", fmt.Sprintf("%s:%d", config.ServHost, config.ServPortQuery))
+	if err != nil {
+		return nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_SERVER_DIAL, err.Error())
+	}
+	defer conn.Close()
+
+	// ---------- ms query handshake ----------- //
+
+	// request handshake
+	data := bytes.NewBuffer([]byte{254, 253}) // magic
+	data.WriteByte(9)                         // handshake code
+	data.Write([]byte{1, 2, 3, 4})            // session id
+	_, err = conn.Write(data.Bytes())
+	if err != nil {
+		return nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONN_WRITE, err.Error())
+	}
+	errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, " ├ send handshake req (-> ms):\t%v", data.Bytes())
+
+	// receive handshake
+	buf := make([]byte, 1024)
+	n, err := conn.Read(buf)
+	if err != nil {
+		return nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONN_READ, err.Error())
+	}
+	errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, " ├ recv handshake rsp (<- ms):\t%v", buf[:n])
+
+	// calculate challenge
+	chall := bytes.NewBuffer(nil)
+	if i, err := strconv.ParseUint(string(buf[5:n-1]), 10, 32); err != nil {
+		return nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_ANALYSIS, err.Error())
+	} else if err = binary.Write(chall, binary.BigEndian, uint32(i)); err != nil {
+		return nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_ANALYSIS, err.Error())
+	}
+
+	// ------------ ms query stats ------------- //
+
+	// request base / full stats
+	data = bytes.NewBuffer([]byte{254, 253}) // magic
+	data.WriteByte(0)                        // stats code
+	data.Write([]byte{1, 2, 3, 4})           // session id
+	data.Write(chall.Bytes())                // challenge
+	if len(req) == 15 {
+		data.Write([]byte{0, 0, 0, 0}) // full request
+	}
+	_, err = conn.Write(data.Bytes())
+	if err != nil {
+		return nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONN_WRITE, err.Error())
+	}
+	errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, " ├ send stats req (-> ms):\t%v", data.Bytes())
+
+	// receive base / full stats
+	n, err = conn.Read(buf)
+	if err != nil {
+		return nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONN_READ, err.Error())
+	}
+	errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, " └ recv stats rsp (<- ms):\t%v", buf[:n])
+
+	// adapt server stats response to client session id
+	data = bytes.NewBuffer(req[2:7]) // stats code (0) + session id (from client request)
+	data.Write(buf[5:n])             // stats (from server response)
+
+	return data.Bytes(), nil
+}
+
+// statsRespBase writes a base stats response to client
+func statsRespBase(connCli net.PacketConn, addr net.Addr, sessionID []byte) {
 	var buf bytes.Buffer
 	buf.WriteByte(0)                                                                 // type
 	buf.Write(sessionID)                                                             // session ID
@@ -128,15 +212,15 @@ func statRespBase(connCli net.PacketConn, addr net.Addr, sessionID []byte) {
 	buf.Write(append(utility.Reverse(big.NewInt(int64(config.MshPort)).Bytes()), byte(0))) // hostport
 	buf.WriteString(fmt.Sprintf("%s\x00", utility.GetOutboundIP4()))                       // hostip
 
-	errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "send stats base response:\t%v", buf.Bytes())
+	errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "send stats base rsp:\t%v", buf.Bytes())
 	_, err := connCli.WriteTo(buf.Bytes(), addr)
 	if err != nil {
 		errco.NewLogln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONN_WRITE, err.Error())
 	}
 }
 
-// statRespFull writes a full stats response to udp connection
-func statRespFull(connCli net.PacketConn, addr net.Addr, sessionID []byte) {
+// statsRespFull writes a full stats response to client
+func statsRespFull(connCli net.PacketConn, addr net.Addr, sessionID []byte) {
 	var buf bytes.Buffer
 	buf.WriteByte(0)                        // type
 	buf.Write(sessionID)                    // session ID
@@ -160,7 +244,7 @@ func statRespFull(connCli net.PacketConn, addr net.Addr, sessionID []byte) {
 	buf.WriteString("\x01player_\x00\x00") // padding (default)
 	buf.WriteString("\x00")                // example: "aaa\x00bbb\x00\x00"
 
-	errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "send stats full response:\t%v", buf.Bytes())
+	errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "send stats full rsp:\t%v", buf.Bytes())
 	_, err := connCli.WriteTo(buf.Bytes(), addr)
 	if err != nil {
 		errco.NewLogln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONN_WRITE, err.Error())
