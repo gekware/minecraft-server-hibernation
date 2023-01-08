@@ -68,13 +68,13 @@ func HandlerQuery() {
 }
 
 // handleRequest handles handshake / stats request from client performing handshake / stats response.
-func handleRequest(connCli net.PacketConn, addr net.Addr, req []byte) *errco.MshLog {
-	switch len(req) {
+func handleRequest(connCli net.PacketConn, addr net.Addr, reqClient []byte) *errco.MshLog {
+	switch len(reqClient) {
 
 	case 7: // handshake request from client
-		errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "recv handshake req:\t%v", req)
+		errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "recv handshake req:\t%v", reqClient)
 
-		sessionID := req[3:7]
+		sessionID := reqClient[3:7]
 
 		// handshake response composition
 		rsp := bytes.NewBuffer([]byte{9})                       // type: handshake
@@ -91,10 +91,10 @@ func handleRequest(connCli net.PacketConn, addr net.Addr, req []byte) *errco.Msh
 		return nil
 
 	case 11, 15: // full / base stats request from client
-		errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "recv stats req:\t%v", req)
+		errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "recv stats req:\t%v", reqClient)
 
-		sessionID := req[3:7]
-		challenge := req[7:11]
+		sessionID := reqClient[3:7]
+		challenge := reqClient[7:11]
 
 		// check that received challenge is known and not expired
 		if !clib.inLibrary(binary.BigEndian.Uint32(challenge)) {
@@ -104,7 +104,7 @@ func handleRequest(connCli net.PacketConn, addr net.Addr, req []byte) *errco.Msh
 		// if ms is not warm emulate response
 		logMsh := servctrl.CheckMSWarm()
 		if logMsh != nil {
-			switch len(req) {
+			switch len(reqClient) {
 			case 11: // base stats response
 				statsRespBase(connCli, addr, sessionID)
 			case 15: // full stats response
@@ -114,7 +114,7 @@ func handleRequest(connCli net.PacketConn, addr net.Addr, req []byte) *errco.Msh
 		}
 
 		// if ms is warm get response and send it to client
-		stats, logMsh := statsGet(req)
+		stats, logMsh := statsGet(reqClient)
 		if logMsh != nil {
 			return logMsh.AddTrace()
 		}
@@ -132,8 +132,10 @@ func handleRequest(connCli net.PacketConn, addr net.Addr, req []byte) *errco.Msh
 	}
 }
 
-func statsGet(req []byte) ([]byte, *errco.MshLog) {
-	// Dial the server using a UDP connection.
+// statsGet connects to ms and performs a stats base/full request.
+// Returns the stats data already adapted for the client response.
+func statsGet(reqClient []byte) ([]byte, *errco.MshLog) {
+	// Dial the server using a UDP connection
 	conn, err := net.Dial("udp", fmt.Sprintf("%s:%d", config.ServHost, config.ServPortQuery))
 	if err != nil {
 		return nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_SERVER_DIAL, err.Error())
@@ -175,7 +177,7 @@ func statsGet(req []byte) ([]byte, *errco.MshLog) {
 	data.WriteByte(0)                        // stats code
 	data.Write([]byte{1, 2, 3, 4})           // session id
 	data.Write(chall.Bytes())                // challenge
-	if len(req) == 15 {
+	if len(reqClient) == 15 {
 		data.Write([]byte{0, 0, 0, 0}) // full request
 	}
 	_, err = conn.Write(data.Bytes())
@@ -192,8 +194,8 @@ func statsGet(req []byte) ([]byte, *errco.MshLog) {
 	errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, " └ recv stats rsp (<- ms):\t%v", buf[:n])
 
 	// adapt server stats response to client session id
-	data = bytes.NewBuffer(req[2:7]) // stats code (0) + session id (from client request)
-	data.Write(buf[5:n])             // stats (from server response)
+	data = bytes.NewBuffer(reqClient[2:7]) // stats code (0) + session id (from client request)
+	data.Write(buf[5:n])                   // stats (from server response)
 
 	return data.Bytes(), nil
 }
