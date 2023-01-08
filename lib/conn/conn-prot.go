@@ -108,9 +108,9 @@ func getReqType(clientSocket net.Conn) ([]byte, int, *errco.MshLog) {
 	dataReqFull = data
 
 	// generate flags
-	listenPortByt := big.NewInt(int64(config.ListenPort)).Bytes() // calculates listen port in BigEndian bytes
-	reqFlagInfo := append(listenPortByt, byte(1))                 // flag contained in INFO request packet -> [99 211 1]
-	reqFlagJoin := append(listenPortByt, byte(2))                 // flag contained in JOIN request packet -> [99 211 2]
+	MshPortByt := big.NewInt(int64(config.MshPort)).Bytes() // calculates listen port in BigEndian bytes
+	reqFlagInfo := append(MshPortByt, byte(1))              // flag contained in INFO request packet -> [99 211 1]
+	reqFlagJoin := append(MshPortByt, byte(2))              // flag contained in JOIN request packet -> [99 211 2]
 
 	// extract request type key byte
 	reqTypeKeyByte := byte(0)
@@ -122,20 +122,20 @@ func getReqType(clientSocket net.Conn) ([]byte, int, *errco.MshLog) {
 	case reqTypeKeyByte == byte(1) || bytes.Contains(dataReqFull, reqFlagInfo):
 		// client is requesting server info
 		// example: [ 16 0 244 5 9 49 50 55 46 48 46 48 46 49 99 211 1 1 0 ]
-		//  ______________ case 1 _______________      _____________ case 2 _____________
-		// [ 16 ... x x x (listenPortBytes) 1 1 0] or [ 16 ... x x x (listenPortBytes) 1 ]
-		// [              ^---reqFlagInfo---^    ]    [              ^---reqFlagInfo---^ ]
-		// [    ^-------------16 bytes------^    ]    [    ^-------------16 bytes------^ ]
+		//  ______________ case 1 _____________      ____________ case 2 ___________
+		// [ 16 ... x x x (MshPortBytes) 1 1 0 ] or [ 16 ... x x x (MshPortBytes) 1 ]
+		// [              ^-reqFlagInfo--^     ]    [              ^-reqFlagInfo--^ ]
+		// [    ^-----------16 bytes-----^     ]    [    ^-----------16 bytes-----^ ]
 
 		return dataReqFull, errco.CLIENT_REQ_INFO, nil
 
 	case reqTypeKeyByte == byte(2) || bytes.Contains(dataReqFull, reqFlagJoin):
 		// client is trying to join the server
 		// example: [ 16 0 244 5 9 49 50 55 46 48 46 48 46 49 99 211 2 ]
-		//  _______________________ case 1 _________________________      ________________________ case 2 ___________________________
-		// [ 16 ... x x x (listenPortBytes) 2 x ... x (player name) ] or [ 16 ... x x x (listenPortBytes) 2 ][ x ... x (player name) ]
-		// [              ^---reqFlagJoin---^                       ]    [              ^---reqFlagJoin---^ ][                       ]
-		// [    ^-------------16 bytes------^                       ]    [    ^-------------16 bytes------^ ][                       ]
+		//  _______________________ case 1 ______________________      ________________________ case 2 ________________________
+		// [ 16 ... x x x (MshPortBytes) 2 x ... x (player name) ] or [ 16 ... x x x (MshPortBytes) 2 ][ x ... x (player name) ]
+		// [              ^-reqFlagJoin--^                       ]    [              ^-reqFlagJoin--^ ][                       ]
+		// [    ^-----------16 bytes-----^                       ]    [    ^-----------16 bytes-----^ ][                       ]
 
 		// msh doesn't know if it's a case 1 or 2: try get an other packet
 		// if EOF keep going

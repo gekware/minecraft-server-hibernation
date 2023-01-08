@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"image"
 	"math"
+	"net"
 	"reflect"
 	"strconv"
 	"strings"
@@ -167,4 +168,16 @@ func FirstNon(s string, vals ...string) string {
 	}
 
 	return s
+}
+
+// GetOutboundIP4 returns the preferred outbound ip of this machine as ip4 string
+func GetOutboundIP4() string {
+	conn, err := net.Dial("udp", "8.8.8.8:80")
+	if err != nil {
+		errco.NewLogln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_SERVER_DIAL, err.Error())
+		return ""
+	}
+	defer conn.Close()
+
+	return conn.LocalAddr().(*net.UDPAddr).IP.To4().String()
 }

@@ -50,19 +50,27 @@ func main() {
 		}
 	}
 
+	// launch GetInput()
+	go input.GetInput()
+
+	// ---------------- connections ---------------- //
+
+	// launch query handler
+	if queryEnabled, logMsh := config.ConfigRuntime.ParsePropertiesBool("enable-query"); logMsh != nil {
+		logMsh.Log(true)
+	} else if queryEnabled {
+		go conn.HandlerQuery()
+	}
+
 	// open a listener
-	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", config.ListenHost, config.ListenPort))
+	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", config.MshHost, config.MshPort))
 	if err != nil {
 		errco.NewLogln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CLIENT_LISTEN, err.Error())
 		progmgr.AutoTerminate()
 	}
 
-	errco.NewLogln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "listening for new clients to connect on %s:%d ...", config.ListenHost, config.ListenPort)
-
-	// launch GetInput()
-	go input.GetInput()
-
-	// infinite cycle to accept clients. when a clients connects it is passed to handleClientSocket()
+	// infinite cycle to handle new clients.
+	errco.NewLogln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "listening for new clients connections\ton %s:%d ...", config.MshHost, config.MshPort)
 	for {
 		clientSocket, err := listener.Accept()
 		if err != nil {

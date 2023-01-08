@@ -14,7 +14,8 @@
   "Msh": {
     "Debug": 1,
     "ID": "",
-    "ListenPort": 25555,
+    "MshPort": 25555,
+    "MshPortQuery": 25555,
     "TimeBeforeStoppingEmptyServer": 30,
     "SuspendAllow": false,
     "SuspendRefresh": -1,

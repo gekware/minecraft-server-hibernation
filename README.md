@@ -94,9 +94,12 @@ Set the logging level for debug purposes
 # 4 - BYTE: connection bytes log
 ```
 
-Port to which players can connect
+Ports configuration
+- _MshPort and MshPortQuery must be different from the respective ones in `server.properties`_
+- _msh enables query handling if `enable-query=true` in `server.properties`_
 ```yaml
-"ListenPort": 25555
+"MshPort": 25555		# port to which players can join
+"MshPortQuery": 25555	# port to which stats query requests are performed 
 ```
 
 TimeBeforeStoppingEmptyServer sets the time (after the last player disconnected) that msh waits before hibernating the minecraft server

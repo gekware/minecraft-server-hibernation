@@ -113,6 +113,8 @@ const (
 	ERROR_SERVER_REQUEST_INFO LogCod = 0x02f201 // error while msh server info request
 	ERROR_JSON_MARSHAL        LogCod = 0x02f300 // error while exporting struct to json bytes
 	ERROR_JSON_UNMARSHAL      LogCod = 0x02f301 // error while importing struct from json bytes
+	ERROR_QUERY_CHALLENGE     LogCod = 0x02f401 // error caused by query challenge
+	ERROR_QUERY_BAD_REQUEST   LogCod = 0x02f402 // error caused by query request
 
 	// config package
 
