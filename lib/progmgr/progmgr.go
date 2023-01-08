@@ -18,7 +18,7 @@ COMMIT COLLECTION
 */
 
 var (
-	MshVersion string = "v2.4.10" // msh version
+	MshVersion string = "v2.4.11" // msh version
 	MshCommit  string = "-------" // msh commit
 
 	// msh program
