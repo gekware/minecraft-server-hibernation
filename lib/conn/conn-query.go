@@ -14,6 +14,7 @@ import (
 	"msh/lib/errco"
 	"msh/lib/progmgr"
 	"msh/lib/servctrl"
+	"msh/lib/servstats"
 	"msh/lib/utility"
 )
 
@@ -39,9 +40,6 @@ type challengeLibrary struct {
 //
 // Accepts requests on config.MshHost, config.MshPortQuery
 func HandlerQuery() {
-	// TODO
-	// respond correct msh motd
-
 	connCli, err := net.ListenPacket("udp", fmt.Sprintf("%s:%d", config.MshHost, config.MshPortQuery))
 	if err != nil {
 		errco.NewLogln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CLIENT_LISTEN, err.Error())
@@ -204,17 +202,30 @@ func statsGet(reqClient []byte) ([]byte, *errco.MshLog) {
 
 // statsRespBase writes a base stats response to client
 func statsRespBase(connCli net.PacketConn, addr net.Addr, sessionID []byte) {
-	var buf bytes.Buffer
-	buf.WriteByte(0)                                                                 // type
-	buf.Write(sessionID)                                                             // session ID
-	buf.WriteString(fmt.Sprintf("%s\x00", config.ConfigRuntime.Msh.InfoHibernation)) // MOTD
-	buf.WriteString("SMP\x00")                                                       // gametype hardcoded (default)
 	levelName, _ := config.ConfigRuntime.ParsePropertiesString("level-name")
-	buf.WriteString(fmt.Sprintf("%s\x00", levelName))                                      // map
-	buf.WriteString("0\x00")                                                               // numplayers hardcoded
-	buf.WriteString("0\x00")                                                               // maxplayers hardcoded
-	buf.Write(append(utility.Reverse(big.NewInt(int64(config.MshPort)).Bytes()), byte(0))) // hostport
-	buf.WriteString(fmt.Sprintf("%s\x00", utility.GetOutboundIP4()))                       // hostip
+	mshPortSmallEndian := utility.Reverse(big.NewInt(int64(config.MshPort)).Bytes())
+	var motd string
+	switch {
+	case servstats.Stats.Status == errco.SERVER_STATUS_OFFLINE || servstats.Stats.Suspended:
+		motd = config.ConfigRuntime.Msh.InfoHibernation
+	case servstats.Stats.Status == errco.SERVER_STATUS_STARTING:
+		motd = config.ConfigRuntime.Msh.InfoStarting
+	case servstats.Stats.Status == errco.SERVER_STATUS_ONLINE:
+		// server can't be online if this function was called
+	case servstats.Stats.Status == errco.SERVER_STATUS_STOPPING:
+		motd = "minecraft server is stopping..."
+	}
+
+	buf := bytes.NewBuffer(nil)
+	buf.WriteByte(0)                                                 // type
+	buf.Write(sessionID)                                             // session ID
+	buf.WriteString(fmt.Sprintf("%s\x00", motd))                     // MOTD
+	buf.WriteString("SMP\x00")                                       // gametype hardcoded (default)
+	buf.WriteString(fmt.Sprintf("%s\x00", levelName))                // map
+	buf.WriteString("0\x00")                                         // numplayers hardcoded
+	buf.WriteString("0\x00")                                         // maxplayers hardcoded
+	buf.Write(append(mshPortSmallEndian, byte(0)))                   // hostport
+	buf.WriteString(fmt.Sprintf("%s\x00", utility.GetOutboundIP4())) // hostip
 
 	errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "send stats base rsp:\t%v", buf.Bytes())
 	_, err := connCli.WriteTo(buf.Bytes(), addr)
@@ -225,18 +236,30 @@ func statsRespBase(connCli net.PacketConn, addr net.Addr, sessionID []byte) {
 
 // statsRespFull writes a full stats response to client
 func statsRespFull(connCli net.PacketConn, addr net.Addr, sessionID []byte) {
-	var buf bytes.Buffer
+	levelName, _ := config.ConfigRuntime.ParsePropertiesString("level-name")
+	var motd string
+	switch {
+	case servstats.Stats.Status == errco.SERVER_STATUS_OFFLINE || servstats.Stats.Suspended:
+		motd = config.ConfigRuntime.Msh.InfoHibernation
+	case servstats.Stats.Status == errco.SERVER_STATUS_STARTING:
+		motd = config.ConfigRuntime.Msh.InfoStarting
+	case servstats.Stats.Status == errco.SERVER_STATUS_ONLINE:
+		// server can't be online if this function was called
+	case servstats.Stats.Status == errco.SERVER_STATUS_STOPPING:
+		motd = "minecraft server is stopping..."
+	}
+
+	buf := bytes.NewBuffer(nil)
 	buf.WriteByte(0)                        // type
 	buf.Write(sessionID)                    // session ID
 	buf.WriteString("splitnum\x00\x80\x00") // padding (default)
 
 	// K, V section
-	buf.WriteString(fmt.Sprintf("hostname\x00%s\x00", config.ConfigRuntime.Msh.InfoHibernation))
+	buf.WriteString(fmt.Sprintf("hostname\x00%s\x00", motd))
 	buf.WriteString(fmt.Sprintf("gametype\x00%s\x00", "SMP"))      // hardcoded (default)
 	buf.WriteString(fmt.Sprintf("game_id\x00%s\x00", "MINECRAFT")) // hardcoded (default)
 	buf.WriteString(fmt.Sprintf("version\x00%s\x00", config.ConfigRuntime.Server.Version))
 	buf.WriteString(fmt.Sprintf("plugins\x00msh/%s: msh %s\x00", config.ConfigRuntime.Server.Version, progmgr.MshVersion)) // example: "plugins\x00{ServerVersion}: {Name} {Version}; {Name} {Version}\x00"
-	levelName, _ := config.ConfigRuntime.ParsePropertiesString("level-name")
 	buf.WriteString(fmt.Sprintf("map\x00%s\x00", levelName))
 	buf.WriteString("numplayers\x000\x00") // hardcoded
 	buf.WriteString("maxplayers\x000\x00") // hardcoded
