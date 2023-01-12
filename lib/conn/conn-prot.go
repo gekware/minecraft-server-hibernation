@@ -97,10 +97,10 @@ func buildMessage(reqType int, message string) []byte {
 
 // getReqType returns the request packet, type (INFO or JOIN).
 // Not player name as it's too difficult to extract.
-func getReqType(clientSocket net.Conn) ([]byte, int, *errco.MshLog) {
+func getReqType(clientConn net.Conn) ([]byte, int, *errco.MshLog) {
 	var dataReqFull []byte
 
-	data, logMsh := getClientPacket(clientSocket)
+	data, logMsh := getClientPacket(clientConn)
 	if logMsh != nil {
 		return nil, errco.CLIENT_REQ_UNKN, logMsh.AddTrace()
 	}
@@ -139,7 +139,7 @@ func getReqType(clientSocket net.Conn) ([]byte, int, *errco.MshLog) {
 
 		// msh doesn't know if it's a case 1 or 2: try get an other packet
 		// if EOF keep going
-		data, logMsh = getClientPacket(clientSocket)
+		data, logMsh = getClientPacket(clientConn)
 		if logMsh != nil && logMsh.Cod != errco.ERROR_CONN_EOF {
 			return nil, errco.CLIENT_REQ_UNKN, logMsh.AddTrace()
 		}
@@ -154,9 +154,9 @@ func getReqType(clientSocket net.Conn) ([]byte, int, *errco.MshLog) {
 
 // getPing performs msh PING response to the client PING request
 // (must be performed after msh INFO response)
-func getPing(clientSocket net.Conn) *errco.MshLog {
+func getPing(clientConn net.Conn) *errco.MshLog {
 	// read the first packet
-	pingData, logMsh := getClientPacket(clientSocket)
+	pingData, logMsh := getClientPacket(clientConn)
 	if logMsh != nil {
 		return logMsh.AddTrace()
 	}
@@ -165,7 +165,7 @@ func getPing(clientSocket net.Conn) *errco.MshLog {
 	case bytes.Equal(pingData, []byte{1, 0}):
 		// packet is [1 0]
 		// read the second packet
-		pingData, logMsh = getClientPacket(clientSocket)
+		pingData, logMsh = getClientPacket(clientConn)
 		if logMsh != nil {
 			return logMsh.AddTrace()
 		}
@@ -177,7 +177,7 @@ func getPing(clientSocket net.Conn) *errco.MshLog {
 	}
 
 	// answer ping
-	clientSocket.Write(pingData)
+	clientConn.Write(pingData)
 
 	errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%smsh --> client%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, pingData)
 
@@ -185,16 +185,16 @@ func getPing(clientSocket net.Conn) *errco.MshLog {
 }
 
 // getClientPacket reads the client socket and returns only the bytes containing data
-// clientSocket connection should not be closed here (need to be closed in caller function).
-func getClientPacket(clientSocket net.Conn) ([]byte, *errco.MshLog) {
+// clientConn connection should not be closed here (need to be closed in caller function).
+func getClientPacket(clientConn net.Conn) ([]byte, *errco.MshLog) {
 	buf := make([]byte, 1024)
 
 	// read first packet
-	dataLen, err := clientSocket.Read(buf)
+	dataLen, err := clientConn.Read(buf)
 	if err != nil {
 		if err == io.EOF {
 			// return empty byte structure and EOF error
-			return []byte{}, errco.NewLog(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_CONN_EOF, "received EOF from %15s", strings.Split(clientSocket.RemoteAddr().String(), ":")[0])
+			return []byte{}, errco.NewLog(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_CONN_EOF, "received EOF from %15s", strings.Split(clientConn.RemoteAddr().String(), ":")[0])
 		} else {
 			return nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CLIENT_SOCKET_READ, err.Error())
 		}
