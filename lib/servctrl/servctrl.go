@@ -46,6 +46,9 @@ func WarmMS() *errco.MshLog {
 		}
 	}
 
+	// set mc warmup time
+	servstats.Stats.WarmUpTime = time.Now()
+
 	// schedule soft freeze of ms
 	FreezeMSSchedule()
 

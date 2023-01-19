@@ -24,7 +24,7 @@ var ServTerm *servTerminal = &servTerminal{IsActive: false}
 type servTerminal struct {
 	IsActive  bool
 	Wg        sync.WaitGroup // used to wait terminal StdoutPipe/StderrPipe
-	startTime time.Time      // uptime of minecraft server
+	startTime time.Time      // time at which minecraft server terminal was started
 	cmd       *exec.Cmd
 	outPipe   io.ReadCloser
 	errPipe   io.ReadCloser
@@ -98,7 +98,7 @@ func TellRaw(reason, text, origin string) *errco.MshLog {
 	return nil
 }
 
-// TermUpTime returns the current minecraft server uptime.
+// TermUpTime returns the current minecraft server terminal uptime.
 // If ms terminal is not running returns -1.
 func TermUpTime() int {
 	if !ServTerm.IsActive {
@@ -106,6 +106,16 @@ func TermUpTime() int {
 	}
 
 	return utility.RoundSec(time.Since(ServTerm.startTime))
+}
+
+// WarmUpTime returns the current minecraft server warmed uptime.
+// If ms is not warm returns -1.
+func WarmUpTime() int {
+	if err := CheckMSWarm(); err != nil {
+		return -1
+	}
+
+	return utility.RoundSec(time.Since(servstats.Stats.WarmUpTime))
 }
 
 // CheckMSWarm checks if minecraft server is warm and it's possible to interact with it.

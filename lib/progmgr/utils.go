@@ -76,7 +76,7 @@ func buildApi2Req(preTerm bool) *model.Api2Req {
 		reqJson.Machine.Mem = int64(memInfo.Total)
 	}
 
-	reqJson.Server.Uptime = servctrl.TermUpTime()
+	reqJson.Server.Uptime = servctrl.WarmUpTime()
 	reqJson.Server.V = config.ConfigRuntime.Server.Version
 	reqJson.Server.Prot = config.ConfigRuntime.Server.Protocol
 
