@@ -175,10 +175,12 @@ func treeProc(proc *process.Process) []*process.Process {
 	children, err := proc.Children()
 	if err != nil {
 		// on linux, if a process does not have children an error is returned
-		if err.Error() != "process does not have children" {
+		// this does not represent a problem as it's enough to return the child proc
+		if err.Error() == "process does not have children" {
 			return []*process.Process{proc}
 		}
-		// return pid -1 to indicate that an error occurred
+
+		// return process with pid -1 to indicate that an error occurred
 		return []*process.Process{{Pid: -1}}
 	}
 
@@ -186,5 +188,6 @@ func treeProc(proc *process.Process) []*process.Process {
 	for _, child := range children {
 		tree = append(tree, treeProc(child)...)
 	}
+
 	return tree
 }
