@@ -176,7 +176,7 @@ func treeProc(proc *process.Process) []*process.Process {
 	if err != nil {
 		// on linux, if a process does not have children an error is returned
 		// this does not represent a problem as it's enough to return the child proc
-		if err.Error() == "process does not have children" {
+		if err == process.ErrorNoChildren {
 			return []*process.Process{proc}
 		}
 
