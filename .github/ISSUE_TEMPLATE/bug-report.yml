@@ -53,14 +53,18 @@ body:
   validations:
     required: true
 
-- type: input
-  id: Architecture
-  attributes:
-    label: System architecture
-    description: The architecture where you installed MSH.
-    placeholder: amd64, i386, arm (32bit / 64bit)
-  validations:
-    required: true
+ - type: dropdown
+    id: Architecture
+    attributes:
+      label: System architecture?
+      multiple: true
+      options:
+        - AMD64
+        - I386
+        - ARM 32 Bit
+        - ARM 64 Bit
+    validations:
+      required: true
 
 - type: input
   id: Minecraft-Version
@@ -70,15 +74,21 @@ body:
     placeholder: 1.16.2, 1.18.2
   validations:
     required: true
-
-- type: input
-  id: Minecraft-Server-Software
-  attributes:
-    label: Minecraft Server Software
-    description: The software you are using to run your Minecraft server.
-    placeholder: Vanilla, Spigot, Paper, etc.
-  validations:
-    required: true
+    
+- type: dropdown
+    id: Minecraft-Server-Software
+    attributes:
+      label: Minecraft Server Software?
+      multiple: true
+      options:
+        - Vanilla
+        - Spigot
+        - Paper
+        - Forge
+        - Fabric
+        - Other (Add to Minecraft Version) 
+    validations:
+      required: true
 
 - type: checkboxes
   attributes:
