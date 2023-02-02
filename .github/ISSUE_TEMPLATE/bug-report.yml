@@ -53,18 +53,18 @@ body:
   validations:
     required: true
 
- - type: dropdown
-    id: Architecture
-    attributes:
-      label: System architecture?
-      multiple: true
-      options:
-        - AMD64
-        - I386
-        - ARM 32 Bit
-        - ARM 64 Bit
-    validations:
-      required: true
+- type: dropdown
+  id: Architecture
+  attributes:
+    label: System architecture?
+    multiple: true
+    options:
+      - AMD64
+      - I386
+      - ARM 32 Bit
+      - ARM 64 Bit
+  validations:
+    required: true
 
 - type: input
   id: Minecraft-Version
@@ -76,19 +76,19 @@ body:
     required: true
     
 - type: dropdown
-    id: Minecraft-Server-Software
-    attributes:
-      label: Minecraft Server Software?
-      multiple: true
-      options:
-        - Vanilla
-        - Spigot
-        - Paper
-        - Forge
-        - Fabric
-        - Other (Add to Minecraft Version) 
-    validations:
-      required: true
+  id: Minecraft-Server-Software
+  attributes:
+    label: Minecraft Server Software?
+    multiple: true
+    options:
+      - Vanilla
+      - Spigot
+      - Paper
+      - Forge
+      - Fabric
+      - Other (Add to Minecraft Version) 
+  validations:
+    required: true
 
 - type: checkboxes
   attributes:
