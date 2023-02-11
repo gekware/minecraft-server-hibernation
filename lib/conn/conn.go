@@ -147,7 +147,7 @@ func HandlerClientConn(clientConn net.Conn) {
 			if logMsh != nil {
 				// msh JOIN response (warn client with text in the loadscreen)
 				logMsh.Log(true)
-				mes := buildMessage(errco.MESSAGE_FORMAT_TXT, "An error occurred while warming the server: check the msh log")
+				mes := buildMessage(reqType, "An error occurred while warming the server: check the msh log")
 				clientConn.Write(mes)
 				errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%smsh --> client%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
 
@@ -157,6 +157,11 @@ func HandlerClientConn(clientConn net.Conn) {
 			// open proxy between client and server
 			openProxy(clientConn, reqPacket, errco.CLIENT_REQ_JOIN)
 		}
+
+	default:
+		mes := buildMessage(reqType, "Client request unknown")
+		clientConn.Write(mes)
+		errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%smsh --> client%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
 	}
 }
 
@@ -248,7 +253,7 @@ func forwardTCP(source, destination net.Conn, isServerToClient bool, req int) {
 
 		// calculate bytes/s to client/server
 		if errco.DebugLvl >= errco.LVL_3 {
-			errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%s%s%s: %v", errco.COLOR_BLUE, direction, errco.COLOR_RESET, data[:dataLen])
+			errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%s%s%s: %v", errco.COLOR_PURPLE, direction, errco.COLOR_RESET, data[:dataLen])
 
 			servstats.Stats.M.Lock()
 			if isServerToClient {
