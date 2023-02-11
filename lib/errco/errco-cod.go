@@ -126,6 +126,7 @@ const (
 	ERROR_VERSION_LOAD     LogCod = 0x03f101 // error while loading version.json from server JAR
 	ERROR_WHITELIST_CHECK  LogCod = 0x03f200 // error while checking whitelist
 	ERROR_TYPE_UNSUPPORTED LogCod = 0x03f300 // error interface{}.(type) not supported
+	ERROR_INVALID_COMMAND  LogCod = 0x03f400 // error start ms command is invalid
 
 	// operative system package
 

@@ -166,19 +166,11 @@ func termStart() *errco.MshLog {
 
 // termLoad loads cmd/pipes into ServTerm
 func termLoad() *errco.MshLog {
-	var command = []string{}
-	for _, ss := range strings.Fields(config.ConfigRuntime.Commands.StartServer) {
-		switch ss {
-		case "<Server.FileName>":
-			command = append(command, config.ConfigRuntime.Server.FileName)
-		case "<Commands.StartServerParam>":
-			command = append(command, strings.Fields(config.ConfigRuntime.Commands.StartServerParam)...)
-		default:
-			command = append(command, ss)
-		}
-	}
-
 	// set terminal cmd
+	command, logMsh := config.ConfigRuntime.BuildCommandStartServer()
+	if logMsh != nil {
+		return logMsh.AddTrace()
+	}
 	ServTerm.cmd = exec.Command(command[0], command[1:]...)
 	ServTerm.cmd.Dir = config.ConfigRuntime.Server.Folder
 
