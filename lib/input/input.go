@@ -41,7 +41,7 @@ func GetInput() {
 	}
 	defer l.Close()
 
-	log.SetOutput(l.Stdout()) // autorefresh prompt line
+	log.SetOutput(l.Stderr()) // autorefresh prompt line
 	for {
 		line, err := l.Readline()
 		switch err {
