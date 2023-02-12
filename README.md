@@ -29,6 +29,7 @@ Compilation procedure:
 ```
 git clone https://github.com/gekware/minecraft-server-hibernation.git  
 cd minecraft-server-hibernation/  
+git submodule update --init
 go build .
 ```
 
