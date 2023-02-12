@@ -1,0 +1,3 @@
+[submodule "gitmod/readline"]
+	path = gitmod/readline
+	url = https://github.com/chzyer/readline
