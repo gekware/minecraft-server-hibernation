@@ -13,6 +13,7 @@ require (
 
 require (
 	github.com/go-ole/go-ole v1.2.6 // indirect
+	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/stretchr/testify v1.8.1 // indirect

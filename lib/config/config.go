@@ -14,6 +14,8 @@ import (
 	"msh/lib/opsys"
 	"msh/lib/servstats"
 	"msh/lib/utility"
+
+	"github.com/google/shlex"
 )
 
 var (
@@ -184,8 +186,14 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 		flag.PrintDefaults()
 	}
 
-	// parse arguments
-	flag.Parse()
+	// join os provided args and split them again with shlex.
+	// (this prevents badly splitted arguments on pterodactyl panel)
+	// fixes #188
+	args, err := shlex.Split(strings.Join(os.Args[1:], " "))
+	if err != nil {
+		return errco.NewLog(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_PARSE, err.Error())
+	}
+	flag.CommandLine.Parse(args)
 
 	// after config variables are set, set debug level
 	errco.NewLogln(errco.TYPE_INF, errco.LVL_0, errco.ERROR_NIL, "setting log level to: %d", c.Msh.Debug)
@@ -245,7 +253,7 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 	}
 
 	// check if java is installed and get java version
-	_, err := exec.LookPath("java")
+	_, err = exec.LookPath("java")
 	if err != nil {
 		logMsh := errco.NewLogln(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_MINECRAFT_SERVER, "java not installed")
 		servstats.Stats.SetMajorError(logMsh)
