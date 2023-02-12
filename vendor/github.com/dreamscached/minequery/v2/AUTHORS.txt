@@ -1,0 +1,5 @@
+This file contains list of people who have either created this project initially
+or heavily contributed to major releases development.
+
+Herman S. <dreamscache.d@gmail.com>
+Original idea and implementation of v1 and v2
