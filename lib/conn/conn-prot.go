@@ -3,10 +3,10 @@ package conn
 import (
 	"bytes"
 	"encoding/json"
-	"io"
 	"math/big"
 	"net"
 	"strings"
+	"time"
 
 	"msh/lib/config"
 	"msh/lib/errco"
@@ -137,13 +137,25 @@ func getReqType(clientConn net.Conn) ([]byte, int, *errco.MshLog) {
 		// [              ^-reqFlagJoin--^                       ]    [              ^-reqFlagJoin--^ ][                       ]
 		// [    ^-----------16 bytes-----^                       ]    [    ^-----------16 bytes-----^ ][                       ]
 
-		// msh doesn't know if it's a case 1 or 2: try get an other packet
-		// if EOF keep going
-		data, logMsh = getClientPacket(clientConn)
-		if logMsh != nil && logMsh.Cod != errco.ERROR_CONN_EOF {
-			return nil, errco.CLIENT_REQ_UNKN, logMsh.AddTrace()
+		// after ms 1.19.3 not always there is a EOF after case 1/2
+		// it's important to calculate if msh should read an other packet
+		// bugfix #197
+		switch {
+		case len(dataReqFull) < int(dataReqFull[0])+1:
+			// case unexpected: should not be possible
+			return nil, errco.CLIENT_REQ_UNKN, errco.NewLog(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_ANALYSIS, "unexpected data lenght")
+
+		case len(dataReqFull) == int(dataReqFull[0])+1:
+			// case 1: msh still has a packet to read
+			data, logMsh = getClientPacket(clientConn)
+			if logMsh != nil {
+				return nil, errco.CLIENT_REQ_UNKN, logMsh.AddTrace() // return request unknown as the request failed
+			}
+			dataReqFull = append(dataReqFull, data...)
+
+		case len(dataReqFull) > int(dataReqFull[0])+1:
+			// case 2 (probably): no need to read more data from client
 		}
-		dataReqFull = append(dataReqFull, data...)
 
 		return dataReqFull, errco.CLIENT_REQ_JOIN, nil
 
@@ -189,15 +201,13 @@ func getPing(clientConn net.Conn) *errco.MshLog {
 func getClientPacket(clientConn net.Conn) ([]byte, *errco.MshLog) {
 	buf := make([]byte, 1024)
 
+	// set deadline to avoid hanging when client is not sending a packet that msh expects
+	clientConn.SetDeadline(time.Now().Add(1 * time.Second))
+
 	// read first packet
 	dataLen, err := clientConn.Read(buf)
 	if err != nil {
-		if err == io.EOF {
-			// return empty byte structure and EOF error
-			return []byte{}, errco.NewLog(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_CONN_EOF, "received EOF from %15s", strings.Split(clientConn.RemoteAddr().String(), ":")[0])
-		} else {
-			return nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CLIENT_SOCKET_READ, err.Error())
-		}
+		return nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CLIENT_SOCKET_READ, err.Error())
 	}
 
 	errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%sclient --> msh%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, buf[:dataLen])
