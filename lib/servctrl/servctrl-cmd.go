@@ -216,7 +216,7 @@ func printerOutErr() {
 		for scanner.Scan() {
 			line = scanner.Text()
 
-			errco.NewLogln(errco.TYPE_SER, errco.LVL_2, errco.ERROR_NIL, line)
+			errco.NewLogln(errco.TYPE_SER, errco.LVL_2, errco.ERROR_NIL, errco.COLOR_GRAY+line+errco.COLOR_RESET)
 
 			// communicate to lastOut so that func Execute() can return the output of the command.
 			// must be a non-blocking select or it might cause hanging
@@ -312,7 +312,7 @@ func printerOutErr() {
 		for scanner.Scan() {
 			line = scanner.Text()
 
-			errco.NewLogln(errco.TYPE_SER, errco.LVL_2, errco.ERROR_NIL, line)
+			errco.NewLogln(errco.TYPE_SER, errco.LVL_2, errco.ERROR_NIL, errco.COLOR_GRAY+line+errco.COLOR_RESET)
 		}
 	}()
 }

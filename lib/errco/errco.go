@@ -106,37 +106,37 @@ func (logMsh *MshLog) Log(tracing bool) *MshLog {
 		logMod.Mex = COLOR_CYAN + logMod.Mex + COLOR_RESET
 	}
 
-	var t string
-	// set logMod colors depending on logMod type
+	// set type, origin, code
+	var typ, ori, cod string
 	switch logMod.Typ {
 	case TYPE_INF:
-		t = COLOR_BLUE + string(logMod.Typ) + COLOR_RESET
+		typ = fmt.Sprintf("%s%-6s%s", COLOR_BLUE, string(logMod.Typ), COLOR_RESET)
+		ori = "\x00"
+		cod = "\x00"
 	case TYPE_SER:
-		t = COLOR_GRAY + string(logMod.Typ) + COLOR_RESET
-		logMod.Mex = COLOR_GRAY + logMod.Mex + "\x00" + COLOR_RESET
+		typ = fmt.Sprintf("%s%-6s%s", COLOR_GRAY, string(logMod.Typ), COLOR_RESET)
+		ori = "\x00"
+		cod = "\x00"
 	case TYPE_BYT:
-		t = COLOR_PURPLE + string(logMod.Typ) + COLOR_RESET
+		typ = fmt.Sprintf("%s%-6s%s", COLOR_PURPLE, string(logMod.Typ), COLOR_RESET)
+		ori = "\x00"
+		cod = "\x00"
 	case TYPE_WAR:
-		t = COLOR_YELLOW + string(logMod.Typ) + COLOR_RESET
+		typ = fmt.Sprintf("%s%-6s%s", COLOR_YELLOW, string(logMod.Typ), COLOR_RESET)
+		ori = fmt.Sprintf("%s%s:%s ", COLOR_YELLOW, logMod.Ori, COLOR_RESET)
+		cod = fmt.Sprintf(" [%06x]", logMod.Cod)
 	case TYPE_ERR:
-		t = COLOR_RED + string(logMod.Typ) + COLOR_RESET
+		typ = fmt.Sprintf("%s%-6s%s", COLOR_RED, string(logMod.Typ), COLOR_RESET)
+		ori = fmt.Sprintf("%s%s:%s ", COLOR_YELLOW, logMod.Ori, COLOR_RESET)
+		cod = fmt.Sprintf(" [%06x]", logMod.Cod)
 	}
 
-	// print logMod depending on logMod type
-	switch logMod.Typ {
-	case TYPE_INF, TYPE_SER, TYPE_BYT:
-		log.Printf("[%-14s %-4s] %s\n",
-			t,
-			strings.Repeat("≡", 4-int(logMod.Lvl)),
-			fmt.Sprintf(logMod.Mex, logMod.Arg...))
-	case TYPE_WAR, TYPE_ERR:
-		log.Printf("[%-14s %-4s] %s %s %s\n",
-			t,
-			strings.Repeat("≡", 4-int(logMod.Lvl)),
-			LogOri(COLOR_YELLOW)+logMod.Ori+":"+LogOri(COLOR_RESET),
-			fmt.Sprintf(logMod.Mex, logMod.Arg...),
-			fmt.Sprintf("[%06x]", logMod.Cod))
-	}
+	log.Printf("[%s%-4s] %s%s%s\n",
+		typ,
+		strings.Repeat("≡", 4-int(logMod.Lvl)),
+		ori,
+		fmt.Sprintf(logMod.Mex, logMod.Arg...),
+		cod)
 
 	// return original log
 	return logMsh
