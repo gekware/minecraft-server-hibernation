@@ -45,6 +45,15 @@ body:
     required: true
 
 - type: input
+  id: MSH-Commit
+  attributes:
+    label: MSH-Commit
+    description: Commit id of your MSH build.
+    placeholder: d2daf2a
+  validations:
+    required: true
+
+- type: input
   id: OS
   attributes:
     label: Operating system
