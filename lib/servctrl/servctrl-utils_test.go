@@ -14,6 +14,9 @@ func Test_getPlayersByListCom(t *testing.T) {
 
 		"[12:34:56] [Server ERROR]: There are 0 out of maximum 20 players online",
 		"[12:34:56] [Server INFO]: There are no numbers here",
+
+		"[12:34:56 INFO]: [Essentials] CONSOLE issued server command: /list\n[12:34:56 INFO]: There are 0 of a max of 20 players online",
+
 	}
 	expected := 0
 
@@ -25,9 +28,16 @@ func Test_getPlayersByListCom(t *testing.T) {
 			t.Logf("string does not contain \"INFO]:\"")
 			continue
 		}
-
-		// check test function for possible `list` outputs
-		firstNumber := regexp.MustCompile(`\d+`).FindString(strings.Split(o, "INFO]:")[1])
+		// check test function for possible `list` outputs, also check for Essentials plugin
+		
+		var firstNumber string
+		if strings.Contains(o, "Essentials") {
+			t.Logf("string contains \"Essentials\"")
+			firstNumber = regexp.MustCompile(`\d+`).FindString(strings.Split(o, "INFO]:")[2])
+		} else {
+			t.Logf("string does not contain \"Essentials\"")
+			firstNumber = regexp.MustCompile(`\d+`).FindString(strings.Split(o, "INFO]:")[1])
+		}
 
 		// check if firstNumber has been found
 		if firstNumber == "" {
