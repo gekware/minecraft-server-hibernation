@@ -16,7 +16,6 @@ func Test_getPlayersByListCom(t *testing.T) {
 		"[12:34:56] [Server INFO]: There are no numbers here",
 
 		"[12:34:56 INFO]: [Essentials] CONSOLE issued server command: /list\n[12:34:56 INFO]: There are 0 of a max of 20 players online",
-
 	}
 	expected := 0
 
@@ -29,7 +28,7 @@ func Test_getPlayersByListCom(t *testing.T) {
 			continue
 		}
 		// check test function for possible `list` outputs, also check for Essentials plugin
-		
+
 		var firstNumber string
 		if strings.Contains(o, "Essentials") {
 			t.Logf("string contains \"Essentials\"")
