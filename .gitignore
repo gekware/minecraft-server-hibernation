@@ -4,5 +4,6 @@
 *.exe
 *.bin
 *.osx
+msh
 
 msh.instance
