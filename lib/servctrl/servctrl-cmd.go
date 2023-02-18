@@ -35,8 +35,13 @@ type servTerminal struct {
 var lastOut = make(chan string)
 
 // Execute executes a command on ms.
-// Commands with no terminal output don't cause hanging:
-// a timeout is set to receive a new terminal output line after which Execute returns.
+//
+// Returns the output lines of ms terminal with a timeout of 200ms since last output line.
+//
+// (Execute on command with no output doesn't cause hanging)
+//
+// (Execute on command with multiple lines returns them separated by \n, if print time between them was less than timeout)
+//
 // [non-blocking]
 func Execute(command string) (string, *errco.MshLog) {
 	// check if ms is warm and interactable
