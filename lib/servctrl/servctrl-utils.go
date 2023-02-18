@@ -67,14 +67,16 @@ func getPlayersByListCom() (int, *errco.MshLog) {
 	}
 
 	// check test function for possible `list` outputs
-	firstNumber := regexp.MustCompile(`\d+`).FindString(strings.Split(output, "INFO]:")[1])
 
-	// check if firstNumber has been found
-	if firstNumber == "" {
-		return 0, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_SERVER_UNEXP_OUTPUT, "firstNumber string is empty")
+	playerCount := regexp.MustCompile(` \d+ `).FindString(output)
+	playerCount = strings.ReplaceAll(playerCount, " ", "")
+
+	// check if playerCount has been found
+	if playerCount == "" {
+		return 0, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_SERVER_UNEXP_OUTPUT, "player count number not found in output of list command")
 	}
 
-	players, err := strconv.Atoi(firstNumber)
+	players, err := strconv.Atoi(playerCount)
 	if err != nil {
 		return 0, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONVERSION, err.Error())
 	}

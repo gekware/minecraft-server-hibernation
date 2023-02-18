@@ -9,11 +9,21 @@ import (
 
 func Test_getPlayersByListCom(t *testing.T) {
 	output := []string{
+		// possible output after sending /list command
+
+		// positive cases [vanilla]
 		"[12:34:56] [Server thread/INFO]: There are 0 of a max of 20 players online:",
 		"[12:34:56] [Server INFO]: There are 0 out of maximum 20 players online.",
 
+		// positive cases [plugins]
+		"[12:01:34 INFO]: Es sind 0 von maximal 15 Spielern online.", // [EssentialsX]
+
+		// negative cases [plugins]
+		"[12:34:56 INFO]: [Essentials] CONSOLE issued server command: /list", // [EssentialsX]
+
+		// negative cases [example]
 		"[12:34:56] [Server ERROR]: There are 0 out of maximum 20 players online",
-		"[12:34:56] [Server INFO]: There are no numbers here",
+		"[12:34:56] [Server INFO]: Example where there are no numbers",
 	}
 	expected := 0
 
@@ -25,17 +35,18 @@ func Test_getPlayersByListCom(t *testing.T) {
 			t.Logf("string does not contain \"INFO]:\"")
 			continue
 		}
+		// check test function for possible `list` outputs, also check for Essentials plugin
 
-		// check test function for possible `list` outputs
-		firstNumber := regexp.MustCompile(`\d+`).FindString(strings.Split(o, "INFO]:")[1])
+		playerCount := regexp.MustCompile(` \d+ `).FindString(o)
+		playerCount = strings.ReplaceAll(playerCount, " ", "")
 
-		// check if firstNumber has been found
-		if firstNumber == "" {
-			t.Logf("firstNumber string is empty")
+		// check if playerCount has been found
+		if playerCount == "" {
+			t.Logf("playerCount string is empty")
 			continue
 		}
 
-		players, err := strconv.Atoi(firstNumber)
+		players, err := strconv.Atoi(playerCount)
 		if err != nil {
 			t.Fatalf(err.Error())
 		}
