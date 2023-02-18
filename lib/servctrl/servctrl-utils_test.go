@@ -16,7 +16,10 @@ func Test_getPlayersByListCom(t *testing.T) {
 		"[12:34:56] [Server INFO]: There are 0 out of maximum 20 players online.",
 
 		// positive cases [plugins]
-		"[12:01:34 INFO]: Es sind 0 von maximal 15 Spielern online.", // [EssentialsX]
+		"[12:01:34 INFO]: Es sind 0 von maximal 15 Spielern online.",                                                                                          // [EssentialsX]
+		"[12:34:56 INFO]: [Essentials] CONSOLE issued server command: /list\n[12:16:32 INFO]: Es sind 0 von maximal 15 Spielern online.",                      // [EssentialsX]
+		"[18:52:06 Server thread/INFO]: Ci sono 0 giocatori online su un massimo di 20.",                                                                      // [EssentialsX]
+		"[18:52:06 Server thread/INFO]: CONSOLE issued server command: /list\n[18:52:06 Server thread/INFO]: Ci sono 0 giocatori online su un massimo di 20.", // [EssentialsX]
 
 		// negative cases [plugins]
 		"[12:34:56 INFO]: [Essentials] CONSOLE issued server command: /list", // [EssentialsX]
