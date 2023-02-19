@@ -1,62 +1,82 @@
 package servctrl
 
 import (
-	"regexp"
-	"strconv"
-	"strings"
 	"testing"
 )
 
-func Test_getPlayersByListCom(t *testing.T) {
-	output := []string{
-		// possible output after sending /list command
+func Test_searchListCom(t *testing.T) {
+	type test struct {
+		str    string
+		expNum int
+		expErr bool
+	}
 
+	var tests []test = []test{
 		// positive cases [vanilla]
-		"[12:34:56] [Server thread/INFO]: There are 0 of a max of 20 players online:",
-		"[12:34:56] [Server INFO]: There are 0 out of maximum 20 players online.",
+		{
+			"[12:34:56] [Server thread/INFO]: There are 0 of a max of 20 players online:",
+			0,
+			false,
+		},
+		{
+			"[12:34:56] [Server INFO]: There are 0 out of maximum 20 players online.",
+			0,
+			false,
+		},
 
 		// positive cases [plugins]
-		"[12:01:34 INFO]: Es sind 0 von maximal 15 Spielern online.",                                                                                          // [EssentialsX]
-		"[12:34:56 INFO]: [Essentials] CONSOLE issued server command: /list\n[12:16:32 INFO]: Es sind 0 von maximal 15 Spielern online.",                      // [EssentialsX]
-		"[18:52:06 Server thread/INFO]: Ci sono 0 giocatori online su un massimo di 20.",                                                                      // [EssentialsX]
-		"[18:52:06 Server thread/INFO]: CONSOLE issued server command: /list\n[18:52:06 Server thread/INFO]: Ci sono 0 giocatori online su un massimo di 20.", // [EssentialsX]
+		{
+			"[12:34:56 INFO]: Es sind 0 von maximal 15 Spielern online.", // [EssentialsX]
+			0,
+			false,
+		},
+		{
+			"[12:34:56 INFO]: [Essentials] CONSOLE issued server command: /list\n[12:34:56 INFO]: Es sind 0 von maximal 15 Spielern online.", // [EssentialsX]
+			0,
+			false,
+		},
+		{
+			"[12:34:56 Server thread/INFO]: Ci sono 0 giocatori online su un massimo di 20.", // [EssentialsX]
+			0,
+			false,
+		},
+		{
+			"[12:34:56 Server thread/INFO]: CONSOLE issued server command: /list\n[12:34:56 Server thread/INFO]: Ci sono 0 giocatori online su un massimo di 20.", // [EssentialsX]
+			0,
+			false,
+		},
 
 		// negative cases [plugins]
-		"[12:34:56 INFO]: [Essentials] CONSOLE issued server command: /list", // [EssentialsX]
+		{
+			"[12:34:56 INFO]: [Essentials] CONSOLE issued server command: /list", // [EssentialsX]
+			-1,
+			true,
+		},
 
 		// negative cases [example]
-		"[12:34:56] [Server ERROR]: There are 0 out of maximum 20 players online",
-		"[12:34:56] [Server INFO]: Example where there are no numbers",
+		{
+			"[12:34:56] [Server ERROR]: There are 0 out of maximum 20 players online",
+			-1,
+			true,
+		},
+		{
+			"[12:34:56] [Server INFO]: Example where there are no numbers",
+			-1,
+			true,
+		},
 	}
-	expected := 0
 
-	for _, o := range output {
-		// TEST: reproduce function behaviour
-
-		// continue if output has unexpected format
-		if !strings.Contains(o, "INFO]:") {
-			t.Logf("string does not contain \"INFO]:\"")
-			continue
-		}
-		// check test function for possible `list` outputs, also check for Essentials plugin
-
-		playerCount := regexp.MustCompile(` \d+ `).FindString(o)
-		playerCount = strings.ReplaceAll(playerCount, " ", "")
-
-		// check if playerCount has been found
-		if playerCount == "" {
-			t.Logf("playerCount string is empty")
-			continue
+	for _, tt := range tests {
+		n, logMsh := searchListCom(tt.str)
+		if logMsh != nil {
+			if tt.expErr {
+				continue
+			}
+			t.Error("function returned unexpected error")
 		}
 
-		players, err := strconv.Atoi(playerCount)
-		if err != nil {
-			t.Fatalf(err.Error())
-		}
-
-		// TEST: check return value
-		if players != expected {
-			t.Fatalf("player count not expected")
+		if n != tt.expNum {
+			t.Error("function returned unexpected number")
 		}
 	}
 }

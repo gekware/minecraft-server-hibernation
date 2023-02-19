@@ -58,27 +58,35 @@ func countPlayerSafe() int {
 func getPlayersByListCom() (int, *errco.MshLog) {
 	output, logMsh := Execute("list")
 	if logMsh != nil {
-		return 0, logMsh.AddTrace()
+		return -1, logMsh.AddTrace()
 	}
 
-	// return if output has unexpected format
-	if !strings.Contains(output, "INFO]:") {
-		return 0, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_SERVER_UNEXP_OUTPUT, "string does not contain \"INFO]:\"")
+	playerCount, logMsh := searchListCom(output)
+	if logMsh != nil {
+		return -1, logMsh.AddTrace()
 	}
 
-	// check test function for possible `list` outputs
+	return playerCount, nil
+}
 
-	playerCount := regexp.MustCompile(` \d+ `).FindString(output)
+// searchListCom analyzes the output of the list command to extract player count
+func searchListCom(s string) (int, *errco.MshLog) {
+	// return if string has unexpected format
+	if !strings.Contains(s, "INFO]:") {
+		return -1, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_SERVER_UNEXP_OUTPUT, "string does not contain \"INFO]:\"")
+	}
+
+	playerCount := regexp.MustCompile(` \d+ `).FindString(s)
 	playerCount = strings.ReplaceAll(playerCount, " ", "")
 
 	// check if playerCount has been found
 	if playerCount == "" {
-		return 0, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_SERVER_UNEXP_OUTPUT, "player count number not found in output of list command")
+		return -1, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_SERVER_UNEXP_OUTPUT, "player count number not found in output of list command")
 	}
 
 	players, err := strconv.Atoi(playerCount)
 	if err != nil {
-		return 0, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONVERSION, err.Error())
+		return -1, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CONVERSION, err.Error())
 	}
 
 	return players, nil
