@@ -99,35 +99,39 @@ func (logMsh *MshLog) Log(tracing bool) *MshLog {
 
 	// -------- operations on copied log --------
 
-	// set logMod colors depending on logMod level
+	// set mex string colors depending on logMod level
 	switch logMod.Lvl {
-	case LVL_0:
-		// make important logs more visible
+	case LVL_0: // make important logs more visible
 		logMod.Mex = COLOR_CYAN + logMod.Mex + COLOR_RESET
 	}
 
-	// set type, origin, code
-	var typ, ori, cod string
+	// set typ, ori, mex, cod strings depending on logMod type
+	var typ, ori, mex, cod string
 	switch logMod.Typ {
 	case TYPE_INF:
 		typ = fmt.Sprintf("%s%-6s%s", COLOR_BLUE, string(logMod.Typ), COLOR_RESET)
 		ori = "\x00"
+		mex = fmt.Sprintf(logMod.Mex, logMod.Arg...)
 		cod = "\x00"
 	case TYPE_SER:
 		typ = fmt.Sprintf("%s%-6s%s", COLOR_GRAY, string(logMod.Typ), COLOR_RESET)
 		ori = "\x00"
+		mex = fmt.Sprintf("%s%s%s", COLOR_GRAY, StringGraphic(fmt.Sprintf(logMod.Mex, logMod.Arg...)), COLOR_RESET) // first transform string to graphic then add coloring (fixes non-graphic bytes written on ms stdout)
 		cod = "\x00"
 	case TYPE_BYT:
 		typ = fmt.Sprintf("%s%-6s%s", COLOR_PURPLE, string(logMod.Typ), COLOR_RESET)
 		ori = "\x00"
+		mex = fmt.Sprintf(logMod.Mex, logMod.Arg...)
 		cod = "\x00"
 	case TYPE_WAR:
 		typ = fmt.Sprintf("%s%-6s%s", COLOR_YELLOW, string(logMod.Typ), COLOR_RESET)
 		ori = fmt.Sprintf("%s%s:%s ", COLOR_YELLOW, logMod.Ori, COLOR_RESET)
+		mex = fmt.Sprintf(logMod.Mex, logMod.Arg...)
 		cod = fmt.Sprintf(" [%06x]", logMod.Cod)
 	case TYPE_ERR:
 		typ = fmt.Sprintf("%s%-6s%s", COLOR_RED, string(logMod.Typ), COLOR_RESET)
 		ori = fmt.Sprintf("%s%s:%s ", COLOR_YELLOW, logMod.Ori, COLOR_RESET)
+		mex = fmt.Sprintf(logMod.Mex, logMod.Arg...)
 		cod = fmt.Sprintf(" [%06x]", logMod.Cod)
 	}
 
@@ -135,7 +139,7 @@ func (logMsh *MshLog) Log(tracing bool) *MshLog {
 		typ,
 		strings.Repeat("≡", 4-int(logMod.Lvl)),
 		ori,
-		fmt.Sprintf(logMod.Mex, logMod.Arg...),
+		mex,
 		cod)
 
 	// return original log
