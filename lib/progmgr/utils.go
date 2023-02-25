@@ -68,11 +68,11 @@ func buildApi2Req(preTerm bool) *model.Api2Req {
 	// get memory dedicated to system
 	if memInfo, err := mem.VirtualMemory(); err != nil {
 		errco.NewLogln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_GET_MEMORY, err.Error()) // log warning
-		reqJson.Machine.Mem = -1
+		// `uint64` doesn't allow -1 as error signaling value
+		reqJson.Machine.Mem = 0
 	} else {
 		// `int64` conversion
-		// `int` leads to overflow in 32bit arch (386)
-		// `uint64` doesn't allow -1 as error signaling value
+		// `int` leads to overflow in 32bit arch
 		reqJson.Machine.Mem = int64(memInfo.Total)
 	}
 
