@@ -7,13 +7,13 @@ import (
 	"github.com/shirou/gopsutil/process"
 )
 
-func Test_Upd(t *testing.T) {
-	var test pStatsByPid = make(pStatsByPid)
-	test.Upd(0, 1212, time.Duration(time.Second))
-	test.Upd(1, 1212, time.Duration(time.Second))
-	test.Upd(2, 1212, time.Duration(time.Second))
+func Test_upd(t *testing.T) {
+	var test pStatsByPid = pStatsByPid{}
+	test.upd(0, 1212, time.Duration(time.Second))
+	test.upd(1, 1212, time.Duration(time.Second))
+	test.upd(2, 1212, time.Duration(time.Second))
 
-	var expected pStatsByPid = map[int32]*pStats{
+	var expected pStatsByPid = pStatsByPid{
 		0: {1212, time.Duration(time.Second)},
 		1: {1212, time.Duration(time.Second)},
 		2: {1212, time.Duration(time.Second)},
@@ -33,10 +33,10 @@ func Test_Upd(t *testing.T) {
 }
 
 func Test_Clean(t *testing.T) {
-	var test pStatsByPid = make(pStatsByPid)
-	test.Upd(0, 1212, time.Duration(time.Second))
-	test.Upd(1, 1212, time.Duration(time.Second))
-	test.Upd(2, 1212, time.Duration(time.Second))
+	var test pStatsByPid = pStatsByPid{}
+	test.upd(0, 1212, time.Duration(time.Second))
+	test.upd(1, 1212, time.Duration(time.Second))
+	test.upd(2, 1212, time.Duration(time.Second))
 
 	treeP := []*process.Process{
 		{Pid: 0},
@@ -44,10 +44,10 @@ func Test_Clean(t *testing.T) {
 		{Pid: 4},
 	}
 
-	var expected pStatsByPid = make(pStatsByPid)
-	expected.Upd(0, 1212, time.Duration(time.Second))
+	var expected pStatsByPid = pStatsByPid{}
+	expected.upd(0, 1212, time.Duration(time.Second))
 
-	test.Clean(treeP)
+	test.clean(treeP)
 
 	if test == nil || expected == nil {
 		t.Errorf("test or expected are nil")

@@ -159,10 +159,10 @@ func getMshTreeStats() (float64, float64) {
 	// get msh process tree
 	treeP := treeProc(mshProc)
 
-	pTracker.Clean(treeP)
+	pTracker.clean(treeP)
 
 	for _, p := range treeP {
-		pCpu, logMsh := CpuPercent(p)
+		pCpu, logMsh := cpuPercent(p)
 		if logMsh != nil {
 			// return current avg usage in case of error
 			return sgm.stats.usageCpu, sgm.stats.usageMem
@@ -179,78 +179,6 @@ func getMshTreeStats() (float64, float64) {
 	}
 
 	return mshTreeCpu, mshTreeMem
-}
-
-// CpuPercent returns the average Cpu percent usage since last call
-func CpuPercent(p *process.Process) (float64, *errco.MshLog) {
-	crt_time, err := p.CreateTime()
-	if err != nil {
-		return -1, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_PROCESS_TIME, err.Error())
-	}
-	lifeTimeNow := time.Since(time.Unix(0, crt_time*int64(time.Millisecond)))
-
-	cput, _ := p.Times()
-	if err != nil {
-		return -1, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_PROCESS_TIME, err.Error())
-	}
-	cpuTotalNow := cput.Total()
-
-	// update tracked pid
-	cpuTotalLast, lifeTimeLast := pTracker.Upd(p.Pid, cpuTotalNow, lifeTimeNow)
-
-	cpuPercent := 100 * (cpuTotalNow - cpuTotalLast) / (lifeTimeNow - lifeTimeLast).Seconds()
-
-	return cpuPercent, nil
-}
-
-type pStats struct {
-	cpuTotalLast float64
-	lifeTimeLast time.Duration
-}
-
-type pStatsByPid map[int32]*pStats
-
-var pTracker pStatsByPid = make(pStatsByPid)
-
-// Clean removes the tracked processes that are not in msh process tree (they don't need to be tracked anymore)
-func (pTracker *pStatsByPid) Clean(treeP []*process.Process) {
-t:
-	for pid := range *pTracker {
-		for _, p := range treeP {
-			if pid == p.Pid {
-				// tracked pid is still in msh tree process
-				// check next tracked pid
-				continue t
-			}
-		}
-
-		// tracked pid is not in msh tree process anymore:
-		// remove it
-		delete(*pTracker, pid)
-	}
-}
-
-// Upd updated tracked pid and returns tracked pid cpu total last and life time last.
-//
-// pTracker.Upd(p.Pid, ..., ...) should be called before accessing pTracker[p.Pid] (if not it will be nil).
-func (pTracker *pStatsByPid) Upd(pid int32, cpuTotalNow float64, lifeTimeNow time.Duration) (float64, time.Duration) {
-	cpuTotalLast := 0.0
-	lifeTimeLast := time.Duration(0)
-
-	// if pid is not tracked, return 0, 0
-	_, ok := (*pTracker)[pid]
-	if ok {
-		cpuTotalLast = (*pTracker)[pid].cpuTotalLast
-		lifeTimeLast = (*pTracker)[pid].lifeTimeLast
-	}
-
-	// update process stats in tracker
-	(*pTracker)[pid] = &pStats{
-		cpuTotalLast: cpuTotalNow,
-		lifeTimeLast: lifeTimeNow,
-	}
-
-	return cpuTotalLast, lifeTimeLast
 }
 
 // treeProc returns the list of tree pids (with ppid)
@@ -273,4 +201,82 @@ func treeProc(proc *process.Process) []*process.Process {
 	}
 
 	return tree
+}
+
+// cpuPercent returns the average Cpu percent usage since last call
+func cpuPercent(p *process.Process) (float64, *errco.MshLog) {
+	crt_time, err := p.CreateTime()
+	if err != nil {
+		return -1, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_PROCESS_TIME, err.Error())
+	}
+	lifeTimeNow := time.Since(time.Unix(0, crt_time*int64(time.Millisecond)))
+
+	cput, _ := p.Times()
+	if err != nil {
+		return -1, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_PROCESS_TIME, err.Error())
+	}
+	cpuTotalNow := cput.Total()
+
+	// update tracked pid
+	cpuTotalLast, lifeTimeLast := pTracker.upd(p.Pid, cpuTotalNow, lifeTimeNow)
+
+	cpuPercent := 100 * (cpuTotalNow - cpuTotalLast) / (lifeTimeNow - lifeTimeLast).Seconds()
+
+	return cpuPercent, nil
+}
+
+// pStats keeps track of a single process stats
+type pStats struct {
+	cpuTotalLast float64
+	lifeTimeLast time.Duration
+}
+
+// pStatsByPid keeps track of multiple processes stats
+//
+// (pid is used as map key to access each single process stats)
+type pStatsByPid map[int32]*pStats
+
+// pTracker is the variable that stores all process stats in a pid map
+var pTracker pStatsByPid = pStatsByPid{}
+
+// clean the processes that are not in msh process tree
+func (pTracker *pStatsByPid) clean(treeP []*process.Process) {
+t:
+	for pid := range *pTracker {
+		for _, p := range treeP {
+			if pid == p.Pid {
+				// tracked pid is still in msh tree process
+				// check next tracked pid
+				continue t
+			}
+		}
+
+		// tracked pid is not in msh tree process anymore:
+		// remove it
+		delete(*pTracker, pid)
+	}
+}
+
+// upd specified pid and returns last cpu total and last life time.
+//
+// pTracker.upd(p.Pid, ..., ...) should be called before accessing pTracker[p.Pid] (if not it will be nil).
+func (pTracker *pStatsByPid) upd(pid int32, cpuTotalNow float64, lifeTimeNow time.Duration) (float64, time.Duration) {
+	// if pid is not tracked, return 0, 0
+	cpuTotalLast := 0.0
+	lifeTimeLast := time.Duration(0)
+
+	// if pid is tracked, return last values
+	_, ok := (*pTracker)[pid]
+	if ok {
+		cpuTotalLast = (*pTracker)[pid].cpuTotalLast
+		lifeTimeLast = (*pTracker)[pid].lifeTimeLast
+	}
+
+	// update process stats in tracker
+	(*pTracker)[pid] = &pStats{
+		cpuTotalLast: cpuTotalNow,
+		lifeTimeLast: lifeTimeNow,
+	}
+
+	return cpuTotalLast, lifeTimeLast
 }
