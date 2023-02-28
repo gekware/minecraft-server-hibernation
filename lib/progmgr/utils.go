@@ -232,7 +232,7 @@ t:
 
 // Upd updated tracked pid and returns tracked pid cpu total last and life time last.
 //
-// Upd makes sure that map[int32]*procStats[p.Pid] won't be <nil>.
+// pTracker.Upd(p.Pid, ..., ...) should be called before accessing pTracker[p.Pid] (if not it will be nil).
 func (pTracker *pStatsByPid) Upd(pid int32, cpuTotalNow float64, lifeTimeNow time.Duration) (float64, time.Duration) {
 	cpuTotalLast := 0.0
 	lifeTimeLast := time.Duration(0)
