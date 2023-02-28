@@ -179,9 +179,10 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 	// c.Msh.Whitelist (type []string, not worth to make it a flag)
 	flag.BoolVar(&c.Msh.WhitelistImport, "wlimport", c.Msh.WhitelistImport, "Specify is minecraft server whitelist should be imported")
 
-	// backwards compatibility
-	flag.BoolVar(&c.Msh.SuspendAllow, "SuspendAllow", c.Msh.SuspendAllow, "Specify if minecraft server process can be suspended.")                            // msh pterodactyl egg
-	flag.IntVar(&c.Msh.SuspendRefresh, "SuspendRefresh", c.Msh.SuspendRefresh, "Specify how often the suspended minecraft server process must be refreshed.") // msh pterodactyl egg
+	// backward compatibility
+	flag.IntVar(&c.Commands.StopServerAllowKill, "allowKill", c.Commands.StopServerAllowKill, "Specify after how many seconds the server should be killed (if stop command fails).") // msh pterodactyl egg
+	flag.BoolVar(&c.Msh.SuspendAllow, "SuspendAllow", c.Msh.SuspendAllow, "Specify if minecraft server process can be suspended.")                                                   // msh pterodactyl egg
+	flag.IntVar(&c.Msh.SuspendRefresh, "SuspendRefresh", c.Msh.SuspendRefresh, "Specify how often the suspended minecraft server process must be refreshed.")                        // msh pterodactyl egg
 
 	// specify the usage when there is an error in the arguments
 	flag.Usage = func() {
