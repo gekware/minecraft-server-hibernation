@@ -203,7 +203,9 @@ func treeProc(proc *process.Process) []*process.Process {
 	return tree
 }
 
-// cpuPercent returns the average Cpu percent usage since last call
+// cpuPercent returns the average cpu percent usage since last call.
+//
+// cpuPercent first call returns the average cpu percent usage since the start of the process.
 func cpuPercent(p *process.Process) (float64, *errco.MshLog) {
 	crt_time, err := p.CreateTime()
 	if err != nil {
