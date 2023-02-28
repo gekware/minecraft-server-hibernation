@@ -141,6 +141,7 @@ const (
 	ERROR_PROCESS_NOT_FOUND       LogCod = 0x04f400 // error process pid was not found
 	ERROR_PROCESS_LIST            LogCod = 0x04f401 // error processes running not found
 	ERROR_PROCESS_KILL            LogCod = 0x04f402 // error process kill
+	ERROR_PROCESS_TIME            LogCod = 0x04f500 // error while retrieving process time
 
 	// utility package
 
