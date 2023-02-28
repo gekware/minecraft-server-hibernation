@@ -12,6 +12,8 @@ import (
 	"msh/lib/errco"
 	"msh/lib/servctrl"
 	"msh/lib/servstats"
+
+	"github.com/shirou/gopsutil/mem"
 )
 
 var (
@@ -85,6 +87,18 @@ func sgmMgr() {
 			mshTreeCpu, mshTreeMem := getMshTreeStats()
 			sgm.stats.usageCpu = (sgm.stats.usageCpu*float64(sgm.stats.dur-1) + float64(mshTreeCpu)) / float64(sgm.stats.dur) // sgm.stats.seconds-1 because the average is relative to 1 sec ago
 			sgm.stats.usageMem = (sgm.stats.usageMem*float64(sgm.stats.dur-1) + float64(mshTreeMem)) / float64(sgm.stats.dur)
+
+			if config.ConfigRuntime.Msh.ShowResourceUsage {
+				memInfo, _ := mem.VirtualMemory()
+				errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "cpu avg: %7.3f %% cpu now: %7.3f %%  -  mem avg: %7.3f %% mem now: %7.3f %% (of %4d MB) = %7.3f MB",
+					sgm.stats.usageCpu,
+					mshTreeCpu,
+					sgm.stats.usageMem,
+					mshTreeMem,
+					memInfo.Total/(1<<20),
+					0.01*mshTreeMem*float64(memInfo.Total)/(1<<20),
+				)
+			}
 
 			sgm.m.Unlock() // not using defer since it's an infinite loop
 

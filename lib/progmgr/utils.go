@@ -145,7 +145,7 @@ func readApi2Res(res *http.Response) (*model.Api2Res, *errco.MshLog) {
 	return resJson, nil
 }
 
-// getMshTreeStats returns current msh tree cpu/mem usage
+// getMshTreeStats returns current msh tree cpu/mem usage percent
 func getMshTreeStats() (float64, float64) {
 	var mshTreeCpu, mshTreeMem float64 = 0, 0
 

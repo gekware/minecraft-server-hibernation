@@ -24,6 +24,7 @@
     "NotifyUpdate": true,
     "NotifyMessage": true,
     "Whitelist": [],
-    "WhitelistImport": false
+    "WhitelistImport": false,
+	"ShowResourceUsage": false
   }
 }

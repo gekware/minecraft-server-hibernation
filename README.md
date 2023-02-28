@@ -148,6 +148,12 @@ _unknown clients are not allowed to start the server, but can join_
 "WhitelistImport": false
 ```
 
+ShowResourceUsage enables the display of the msh tree process cpu/ram usage percent
+_for debug purposes_
+```yaml
+"ShowResourceUsage": false
+```
+
 -----
 
 ### CREDITS:  
