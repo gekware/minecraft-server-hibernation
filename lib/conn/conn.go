@@ -12,6 +12,10 @@ import (
 	"msh/lib/servstats"
 )
 
+func init() {
+	go printDataUsage()
+}
+
 // HandlerClientConn handles a client that is connecting.
 // Can handle a client that is requesting server INFO or server JOIN.
 // If there is a ms major error, it is reported to client then func returns.
@@ -252,7 +256,7 @@ func forwardTCP(source, destination net.Conn, isServerToClient bool, req int) {
 		}
 
 		// calculate bytes/s to client/server
-		if errco.DebugLvl >= errco.LVL_3 {
+		if config.ConfigRuntime.Msh.ShowInternetUsage && errco.DebugLvl >= errco.LVL_3 {
 			errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%s%s%s: %v", errco.COLOR_PURPLE, direction, errco.COLOR_RESET, data[:dataLen])
 
 			servstats.Stats.M.Lock()
@@ -261,6 +265,32 @@ func forwardTCP(source, destination net.Conn, isServerToClient bool, req int) {
 			} else {
 				servstats.Stats.BytesToServer += float64(dataLen)
 			}
+			servstats.Stats.M.Unlock()
+		}
+	}
+}
+
+// printDataUsage prints connection data (KB/s) to clients and to minecraft server.
+//
+// Prints data exchanged only when clients are connected to ms.
+//
+// Logging is disabled when ShowInternetUsage is false.
+//
+// [goroutine]
+func printDataUsage() {
+	ticker := time.NewTicker(time.Second)
+	for {
+		<-ticker.C
+
+		if !config.ConfigRuntime.Msh.ShowInternetUsage {
+			continue
+		}
+
+		if servstats.Stats.BytesToClients != 0 || servstats.Stats.BytesToServer != 0 {
+			errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "data/s: %8.3f KB/s to clients | %8.3f KB/s to server", servstats.Stats.BytesToClients/1024, servstats.Stats.BytesToServer/1024)
+			servstats.Stats.M.Lock()
+			servstats.Stats.BytesToClients = 0
+			servstats.Stats.BytesToServer = 0
 			servstats.Stats.M.Unlock()
 		}
 	}

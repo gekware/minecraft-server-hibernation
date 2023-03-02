@@ -25,6 +25,7 @@
     "NotifyMessage": true,
     "Whitelist": [],
     "WhitelistImport": false,
-	"ShowResourceUsage": false
+	"ShowResourceUsage": false,
+	"ShowInternetUsage": false
   }
 }

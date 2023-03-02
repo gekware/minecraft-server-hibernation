@@ -34,30 +34,6 @@ type serverStats struct {
 	BytesToServer  float64       // tracks bytes/s clients->server
 }
 
-func init() {
-	go printDataUsage()
-}
-
-// printDataUsage prints each second bytes/s to clients and to server.
-// prints data exchanged by clients and server only when servctrl.ServTerm.IsActive
-// Stats.BytesToClients and Stats.BytesToServer are only set when there are clients connected to the server
-// [goroutine]
-func printDataUsage() {
-	ticker := time.NewTicker(time.Second)
-
-	for {
-		<-ticker.C
-
-		if Stats.BytesToClients != 0 || Stats.BytesToServer != 0 {
-			errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "data/s: %8.3f KB/s to clients | %8.3f KB/s to server", Stats.BytesToClients/1024, Stats.BytesToServer/1024)
-			Stats.M.Lock()
-			Stats.BytesToClients = 0
-			Stats.BytesToServer = 0
-			Stats.M.Unlock()
-		}
-	}
-}
-
 // SetMajorError sets *serverStats.MajorError only if nil
 func (s *serverStats) SetMajorError(e *errco.MshLog) {
 	if s.MajorError == nil {

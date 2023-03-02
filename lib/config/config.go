@@ -112,6 +112,29 @@ func (c *Configuration) Save() *errco.MshLog {
 	return nil
 }
 
+// BuildCommandStartServer builds the start server command by replacing placeholders.
+//
+// If generated command has less than 2 arguments, it is considered invalid and error returned.
+func (c *Configuration) BuildCommandStartServer() ([]string, *errco.MshLog) {
+	var command = []string{}
+	for _, ss := range strings.Fields(c.Commands.StartServer) {
+		switch ss {
+		case "<Server.FileName>":
+			command = append(command, c.Server.FileName)
+		case "<Commands.StartServerParam>":
+			command = append(command, strings.Fields(c.Commands.StartServerParam)...)
+		default:
+			command = append(command, ss)
+		}
+	}
+
+	if len(command) < 2 {
+		return command, errco.NewLog(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_INVALID_COMMAND, "generated command to start minecraft server is invalid")
+	}
+
+	return command, nil
+}
+
 // loadDefault loads config file to config variable
 func (c *Configuration) loadDefault() *errco.MshLog {
 	// get working directory
@@ -178,7 +201,8 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 	flag.BoolVar(&c.Msh.NotifyMessage, "notifymes", c.Msh.NotifyMessage, "Enables message notifications.")
 	// c.Msh.Whitelist (type []string, not worth to make it a flag)
 	flag.BoolVar(&c.Msh.WhitelistImport, "wlimport", c.Msh.WhitelistImport, "Enables minecraft server whitelist import.")
-	flag.BoolVar(&c.Msh.ShowResourceUsage, "showres", c.Msh.ShowResourceUsage, "Enables msh resource usage (cpu/mem percentage).")
+	flag.BoolVar(&c.Msh.ShowResourceUsage, "showres", c.Msh.ShowResourceUsage, "Enables logging of msh resource usage (cpu / mem percentage).")
+	flag.BoolVar(&c.Msh.ShowInternetUsage, "showint", c.Msh.ShowInternetUsage, "Enables logging of msh interent usage (->clients / ->server).")
 
 	// backward compatibility
 	flag.IntVar(&c.Commands.StopServerAllowKill, "allowKill", c.Commands.StopServerAllowKill, "Specify after how many seconds the server should be killed (if stop command fails).") // msh pterodactyl egg
@@ -317,27 +341,4 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 	}
 
 	return nil
-}
-
-// BuildCommandStartServer builds the start server command by replacing placeholders.
-//
-// If generated command has less than 2 arguments, it is considered invalid and error returned.
-func (c *Configuration) BuildCommandStartServer() ([]string, *errco.MshLog) {
-	var command = []string{}
-	for _, ss := range strings.Fields(c.Commands.StartServer) {
-		switch ss {
-		case "<Server.FileName>":
-			command = append(command, c.Server.FileName)
-		case "<Commands.StartServerParam>":
-			command = append(command, strings.Fields(c.Commands.StartServerParam)...)
-		default:
-			command = append(command, ss)
-		}
-	}
-
-	if len(command) < 2 {
-		return command, errco.NewLog(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_INVALID_COMMAND, "generated command to start minecraft server is invalid")
-	}
-
-	return command, nil
 }
