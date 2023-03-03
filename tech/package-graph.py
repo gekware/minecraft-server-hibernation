@@ -54,7 +54,7 @@ def getImports(rootAddr: str):
 	# print(visitedRoot)
 
 def visited(packageAddr, rootName):
-	if not rootName in visitedRoot:
+	if rootName not in visitedRoot:
 		return False
 	
 	if packageAddr not in visitedRoot[rootName]:
