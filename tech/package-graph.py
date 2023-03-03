@@ -25,8 +25,6 @@ def getImports(rootAddr: str):
 	rootName = rootAddr.replace("msh/lib/", "")
 	if rootAddr == "":
 		rootName = "main"
-	
-	print("analyzing:", rootName)
 
 	packages_string = subprocess.check_output(["go", "list", "-f", "{{ .Imports }}", rootAddr]).decode("utf-8")
 	packages = packages_string.replace("[", "").replace("]", "").split()
@@ -44,6 +42,7 @@ def getImports(rootAddr: str):
 			continue
 
 		packageName = packageAddr.replace("msh/lib/", "")
+		print("analyzing: {} -> {}".format(rootName, packageName))
 		graph.node(packageName)
 		graph.edge(rootName, packageName)
 		
@@ -64,5 +63,3 @@ def visited(packageAddr, rootName):
 
 if __name__ == "__main__":
 	main()
-
-
