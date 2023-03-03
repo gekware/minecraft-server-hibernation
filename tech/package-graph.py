@@ -33,10 +33,10 @@ def getImports(rootAddr: str):
 		rootName = rootAddr.replace("msh/lib/", "")
 	
 	if rootName in visitedRoot:
+		# return if rootName is already visited
 		return
 	else:
-		# initialize list of visited packages so that packages that
-		# don't import others are included in the dict as an empty list
+		# initialize list of visited packages of rootName
 		visitedRoot[rootName] = []
 
 	packages_string = subprocess.check_output(["go", "list", "-f", "{{ .Imports }}", rootAddr]).decode("utf-8")
@@ -46,9 +46,6 @@ def getImports(rootAddr: str):
 	graph.node(rootName)
 	
 	for packageAddr in packagesAddr:
-		if visited(packageAddr, rootName):
-			continue
-
 		packageName = packageAddr.replace("msh/lib/", "")
 		print("analyzing: {} -> {}".format(rootName, packageName))
 		graph.node(packageName)
@@ -59,15 +56,6 @@ def getImports(rootAddr: str):
 		visitedRoot[rootName].append(packageAddr)
 	
 	# print(visitedRoot)
-
-def visited(packageAddr, rootName):
-	if rootName not in visitedRoot:
-		return False
-	
-	if packageAddr not in visitedRoot[rootName]:
-		return False
-	
-	return True
 
 if __name__ == "__main__":
 	main()
