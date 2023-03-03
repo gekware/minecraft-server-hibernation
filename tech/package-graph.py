@@ -20,11 +20,12 @@ def main():
 	graph.render(os.path.join(os.path.realpath(os.path.dirname(__file__)), "package-graph"), format="png", view=True, cleanup=True)
 
 def getImports(rootAddr: str):
-	# rootName:	errco
 	# rootAddr:	msh/lib/errco
-	rootName = rootAddr.replace("msh/lib/", "")
+	# rootName:	errco
 	if rootAddr == "":
 		rootName = "main"
+	else:
+		rootName = rootAddr.replace("msh/lib/", "")
 
 	packages_string = subprocess.check_output(["go", "list", "-f", "{{ .Imports }}", rootAddr]).decode("utf-8")
 	packages = packages_string.replace("[", "").replace("]", "").split()
