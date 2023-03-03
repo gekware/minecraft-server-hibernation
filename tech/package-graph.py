@@ -32,28 +32,29 @@ def getImports(rootAddr: str):
 	else:
 		rootName = rootAddr.replace("msh/lib/", "")
 	
-	if rootName in visitedRoot:
-		# return if rootName is already visited
+	if rootAddr in visitedRoot:
+		# return if rootAddr is already visited
 		return
 	else:
-		# initialize list of visited packages of rootName
-		visitedRoot[rootName] = []
+		# initialize list of visited packages of rootAddr
+		visitedRoot[rootAddr] = []
+	
+	graph.node(rootAddr, label=rootName)
+
+	print("analyzing %s" % rootAddr)
 
 	packages_string = subprocess.check_output(["go", "list", "-f", "{{ .Imports }}", rootAddr]).decode("utf-8")
 	packages = packages_string.replace("[", "").replace("]", "").split()
 	packagesAddr = [e for e in packages if "msh" in e]
 
-	graph.node(rootName)
-	
 	for packageAddr in packagesAddr:
 		packageName = packageAddr.replace("msh/lib/", "")
-		print("analyzing: {} -> {}".format(rootName, packageName))
-		graph.node(packageName)
-		graph.edge(rootName, packageName)
+		graph.node(packageAddr, label=packageName)
+		graph.edge(rootAddr, packageAddr)
 		
 		getImports(packageAddr)
-		
-		visitedRoot[rootName].append(packageAddr)
+
+		visitedRoot[rootAddr].append(packageAddr)
 	
 	# print(visitedRoot)
 
