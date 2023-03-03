@@ -213,7 +213,7 @@ func cpuPercent(p *process.Process) (float64, *errco.MshLog) {
 	}
 	lifeTimeNow := time.Since(time.Unix(0, crt_time*int64(time.Millisecond)))
 
-	cput, _ := p.Times()
+	cput, err := p.Times()
 	if err != nil {
 		return -1, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_PROCESS_TIME, err.Error())
 	}
