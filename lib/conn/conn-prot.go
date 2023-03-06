@@ -182,10 +182,16 @@ func getPing(clientConn net.Conn) *errco.MshLog {
 			return logMsh.AddTrace()
 		}
 
-	case bytes.Equal(pingData[:2], []byte{1, 0}):
+	// bufix #202: don't use `bytes.Equal(pingData[:2], []byte{1, 0})`
+	// (if pingData == [1] then pingData[:2] == [1 0])
+	// this results in pingData[2:] -> slice bounds out of range [2:1]
+	case bytes.HasPrefix(pingData, []byte{1, 0}):
 		// packet is [1 0 9 1 0 0 0 0 0 89 73 114]
 		// remove first 2 bytes: [1 0 9 1 0 0 0 0 0 89 73 114] -> [9 1 0 0 0 0 0 89 73 114]
 		pingData = pingData[2:]
+
+	default:
+		return errco.NewLog(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_PING_PACKET_UNKNOWN, "received unknown ping packet: %v", pingData)
 	}
 
 	// answer ping

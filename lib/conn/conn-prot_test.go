@@ -1,6 +1,7 @@
 package conn
 
 import (
+	"bytes"
 	"fmt"
 	"net"
 	"testing"
@@ -133,5 +134,139 @@ func Test_getReqType(t *testing.T) {
 
 		serverSocket.Close()
 		time.Sleep(100 * time.Millisecond)
+	}
+}
+
+func Test_getPing(t *testing.T) {
+	// set port which was used to get hardcoded test bytes
+	config.MshPort = 25555
+
+	// emulate msh ping response
+	go func() {
+		listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", "127.0.0.1", 25555))
+		if err != nil {
+			t.Errorf("%s\n", err.Error())
+		}
+
+		for {
+			clientConn, err := listener.Accept()
+			if err != nil {
+				t.Errorf("%s\n", err.Error())
+				continue
+			}
+
+			logMsh := getPing(clientConn)
+			if logMsh != nil {
+				logMsh.Log(true)
+			}
+		}
+	}()
+
+	type test struct {
+		title   string
+		packets [][]byte
+		wait    time.Duration
+		expect  []byte
+	}
+
+	tests := []test{
+		// positive cases
+		{
+			"2 bytes + ping",
+			[][]byte{
+				{1, 0, 9, 1, 0, 0, 0, 0, 0, 89, 73, 114},
+			},
+			0,
+			[]byte{9, 1, 0, 0, 0, 0, 0, 89, 73, 114},
+		},
+		{
+			"2 bytes, ping",
+			[][]byte{
+				{1, 0},
+				{9, 1, 0, 0, 0, 0, 0, 89, 73, 114},
+			},
+			0,
+			[]byte{9, 1, 0, 0, 0, 0, 0, 89, 73, 114},
+		},
+		{
+			"2 bytes, sleep, ping",
+			[][]byte{
+				{1, 0},
+				{9, 1, 0, 0, 0, 0, 0, 89, 73, 114},
+			},
+			100 * time.Millisecond,
+			[]byte{9, 1, 0, 0, 0, 0, 0, 89, 73, 114},
+		},
+
+		// negative cases
+		{
+			"1 bytes, sleep, ping -> expected client timeout",
+			[][]byte{
+				{1},
+				{9, 1, 0, 0, 0, 0, 0, 89, 73, 114},
+			},
+			100 * time.Millisecond,
+			nil,
+		},
+		{
+			"1 bytes different + ping -> expected client timeout",
+			[][]byte{
+				{5, 9, 1, 0, 0, 0, 0, 0, 89, 73, 114},
+			},
+			0,
+			nil,
+		},
+		{
+			"1 bytes different, sleep, ping -> expected client timeout",
+			[][]byte{
+				{5},
+				{9, 1, 0, 0, 0, 0, 0, 89, 73, 114},
+			},
+			100 * time.Millisecond,
+			nil,
+		},
+		{
+			"2 bytes different, sleep, ping -> expected client timeout",
+			[][]byte{
+				{5, 6},
+				{9, 1, 0, 0, 0, 0, 0, 89, 73, 114},
+			},
+			100 * time.Millisecond,
+			nil,
+		},
+	}
+
+	for _, test := range tests {
+		fmt.Printf("\ntesting \"%s\": %v\n", test.title, test.packets)
+		serverSocket, err := net.Dial("tcp", fmt.Sprintf("%s:%d", "127.0.0.1", 25555))
+		if err != nil {
+			t.Errorf("%s\n", err.Error())
+		}
+
+		for _, packet := range test.packets {
+			serverSocket.Write(packet)
+			time.Sleep(test.wait)
+		}
+
+		buf := make([]byte, 1024)
+		serverSocket.SetReadDeadline(time.Now().Add(1 * time.Second))
+		n, err := serverSocket.Read(buf)
+		if err != nil {
+			// if timeout and it's expected continue
+			if netErr, ok := err.(net.Error); ok && netErr.Timeout() && test.expect == nil {
+				fmt.Printf("\tclient will timeout on ping\n")
+				serverSocket.Close()
+				continue
+			}
+			t.Errorf("%s\n", err.Error())
+		}
+
+		fmt.Printf("\tclient receives: %v\n", buf[:n])
+
+		if !bytes.Equal(buf[:n], test.expect) {
+			t.Errorf("\tclient received different bytes from expected\n")
+		}
+
+		serverSocket.Close()
 	}
 }

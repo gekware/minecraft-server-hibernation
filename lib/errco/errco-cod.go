@@ -115,6 +115,7 @@ const (
 	ERROR_JSON_UNMARSHAL      LogCod = 0x02f301 // error while importing struct from json bytes
 	ERROR_QUERY_CHALLENGE     LogCod = 0x02f401 // error caused by query challenge
 	ERROR_QUERY_BAD_REQUEST   LogCod = 0x02f402 // error caused by query request
+	ERROR_PING_PACKET_UNKNOWN LogCod = 0x02f500 // error ping packet received is unknown
 
 	// config package
 
