@@ -148,13 +148,13 @@ _unknown clients are not allowed to start the server, but can join_
 "WhitelistImport": false
 ```
 
-ShowResourceUsage enables the logging of the msh tree process cpu/ram usage percent
+ShowResourceUsage enables the logging of the msh tree process cpu/ram usage percent  
 _for debug purposes (debug level 3 required)_
 ```yaml
 "ShowResourceUsage": false
 ```
 
-ShowInternetUsage enables the logging of the msh connection usage
+ShowInternetUsage enables the logging of the msh connection usage  
 _for debug purposes (debug level 3 required)_
 ```yaml
 "ShowInternetUsage": false
