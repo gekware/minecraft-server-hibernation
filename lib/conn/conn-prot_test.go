@@ -11,9 +11,94 @@ import (
 	"msh/lib/errco"
 )
 
+type test struct {
+	title   string
+	packets [][]byte
+	wait    time.Duration
+	expect  interface{}
+}
+
 func Test_getReqType(t *testing.T) {
 	// set port which was used to get hardcoded test bytes
 	config.MshPort = 25555
+
+	tests := []test{
+		{
+			"client info request (1.18.2 local)",
+			[][]byte{
+				{16, 0, 246, 5, 9, 49, 50, 55, 46, 48, 46, 48, 46, 49, 99, 211, 1},
+			},
+			0,
+			errco.CLIENT_REQ_INFO,
+		},
+		{
+			"client info request (1.18.2 local)",
+			[][]byte{
+				{16, 0, 246, 5, 9, 49, 50, 55, 46, 48, 46, 48, 46, 49, 99, 211, 1, 1, 0},
+			},
+			0,
+			errco.CLIENT_REQ_INFO,
+		},
+		{
+			"client join request (1.18.2 local) [1,2]",
+			[][]byte{
+				{33, 0, 246, 5, 26, 107, 117, 98, 101, 114, 110, 101, 116, 101, 115, 46, 100, 111, 99, 107, 101, 114, 46, 105, 110, 116, 101, 114, 110, 97, 108, 99, 211, 2},
+				{11, 0, 9, 103, 101, 107, 105, 103, 101, 107, 57, 57},
+			},
+			0,
+			errco.CLIENT_REQ_JOIN,
+		},
+		{
+			"client join request (1.18.2 local)",
+			[][]byte{
+				{33, 0, 246, 5, 26, 107, 117, 98, 101, 114, 110, 101, 116, 101, 115, 46, 100, 111, 99, 107, 101, 114, 46, 105, 110, 116, 101, 114, 110, 97, 108, 99, 211, 2, 11, 0, 9, 103, 101, 107, 105, 103, 101, 107, 57, 57},
+			},
+			0,
+			errco.CLIENT_REQ_JOIN,
+		},
+		{
+			"client info request (1.19.3 local)",
+			[][]byte{
+				{16, 0, 249, 5, 9, 49, 50, 55, 46, 48, 46, 48, 46, 49, 99, 211, 1},
+			},
+			0,
+			errco.CLIENT_REQ_INFO,
+		},
+		{
+			"client info request (1.19.3 local)",
+			[][]byte{
+				{16, 0, 249, 5, 9, 49, 50, 55, 46, 48, 46, 48, 46, 49, 99, 211, 1, 1, 0},
+			},
+			0,
+			errco.CLIENT_REQ_INFO,
+		},
+		{
+			"client join request (1.19.3 local) [1,2]",
+			[][]byte{
+				{33, 0, 249, 5, 26, 107, 117, 98, 101, 114, 110, 101, 116, 101, 115, 46, 100, 111, 99, 107, 101, 114, 46, 105, 110, 116, 101, 114, 110, 97, 108, 99, 211, 2},
+				{28, 0, 9, 103, 101, 107, 105, 103, 101, 107, 57, 57, 1, 196, 93, 252, 169, 146, 189, 69, 1, 169, 208, 156, 201, 205, 197, 2, 113},
+			},
+			0,
+			errco.CLIENT_REQ_JOIN,
+		},
+		{
+			"client join request (1.19.3 local) [1,.....2]",
+			[][]byte{
+				{33, 0, 249, 5, 26, 107, 117, 98, 101, 114, 110, 101, 116, 101, 115, 46, 100, 111, 99, 107, 101, 114, 46, 105, 110, 116, 101, 114, 110, 97, 108, 99, 211, 2},
+				{28, 0, 9, 103, 101, 107, 105, 103, 101, 107, 57, 57, 1, 196, 93, 252, 169, 146, 189, 69, 1, 169, 208, 156, 201, 205, 197, 2, 113},
+			},
+			500 * time.Millisecond,
+			errco.CLIENT_REQ_JOIN,
+		},
+		{
+			"client join request (1.19.3 local)",
+			[][]byte{
+				{33, 0, 249, 5, 26, 107, 117, 98, 101, 114, 110, 101, 116, 101, 115, 46, 100, 111, 99, 107, 101, 114, 46, 105, 110, 116, 101, 114, 110, 97, 108, 99, 211, 2, 28, 0, 9, 103, 101, 107, 105, 103, 101, 107, 57, 57, 1, 196, 93, 252, 169, 146, 189, 69, 1, 169, 208, 156, 201, 205, 197, 2, 113},
+			},
+			0,
+			errco.CLIENT_REQ_JOIN,
+		},
+	}
 
 	// open a listener and read request type for each new connection
 	go func() {
@@ -22,7 +107,7 @@ func Test_getReqType(t *testing.T) {
 			t.Errorf("%s\n", err.Error())
 		}
 
-		for {
+		for _, test := range tests {
 			clientConn, err := listener.Accept()
 			if err != nil {
 				t.Errorf("%s\n", err.Error())
@@ -34,91 +119,11 @@ func Test_getReqType(t *testing.T) {
 				t.Errorf(logMsh.Mex, logMsh.Arg...)
 			}
 
-			switch reqType {
-			case errco.CLIENT_REQ_INFO:
-				fmt.Printf("\t-> received info req\n\n")
-			case errco.CLIENT_REQ_JOIN:
-				fmt.Printf("\t-> received join req\n\n")
-			default:
-				t.Errorf("\t-> request unknown\n\n")
+			if reqType != test.expect.(int) {
+				t.Errorf("\treceived request is different from expected\n")
 			}
 		}
 	}()
-
-	type test struct {
-		title   string
-		packets [][]byte
-		wait    time.Duration
-	}
-
-	tests := []test{
-		{
-			"client info request (1.18.2 local)",
-			[][]byte{
-				{16, 0, 246, 5, 9, 49, 50, 55, 46, 48, 46, 48, 46, 49, 99, 211, 1},
-			},
-			0,
-		},
-		{
-			"client info request (1.18.2 local)",
-			[][]byte{
-				{16, 0, 246, 5, 9, 49, 50, 55, 46, 48, 46, 48, 46, 49, 99, 211, 1, 1, 0},
-			},
-			0,
-		},
-		{
-			"client join request (1.18.2 local) [1,2]",
-			[][]byte{
-				{33, 0, 246, 5, 26, 107, 117, 98, 101, 114, 110, 101, 116, 101, 115, 46, 100, 111, 99, 107, 101, 114, 46, 105, 110, 116, 101, 114, 110, 97, 108, 99, 211, 2},
-				{11, 0, 9, 103, 101, 107, 105, 103, 101, 107, 57, 57},
-			},
-			0,
-		},
-		{
-			"client join request (1.18.2 local)",
-			[][]byte{
-				{33, 0, 246, 5, 26, 107, 117, 98, 101, 114, 110, 101, 116, 101, 115, 46, 100, 111, 99, 107, 101, 114, 46, 105, 110, 116, 101, 114, 110, 97, 108, 99, 211, 2, 11, 0, 9, 103, 101, 107, 105, 103, 101, 107, 57, 57},
-			},
-			0,
-		},
-		{
-			"client info request (1.19.3 local)",
-			[][]byte{
-				{16, 0, 249, 5, 9, 49, 50, 55, 46, 48, 46, 48, 46, 49, 99, 211, 1},
-			},
-			0,
-		},
-		{
-			"client info request (1.19.3 local)",
-			[][]byte{
-				{16, 0, 249, 5, 9, 49, 50, 55, 46, 48, 46, 48, 46, 49, 99, 211, 1, 1, 0},
-			},
-			0,
-		},
-		{
-			"client join request (1.19.3 local) [1,2]",
-			[][]byte{
-				{33, 0, 249, 5, 26, 107, 117, 98, 101, 114, 110, 101, 116, 101, 115, 46, 100, 111, 99, 107, 101, 114, 46, 105, 110, 116, 101, 114, 110, 97, 108, 99, 211, 2},
-				{28, 0, 9, 103, 101, 107, 105, 103, 101, 107, 57, 57, 1, 196, 93, 252, 169, 146, 189, 69, 1, 169, 208, 156, 201, 205, 197, 2, 113},
-			},
-			0,
-		},
-		{
-			"client join request (1.19.3 local) [1,.....2]",
-			[][]byte{
-				{33, 0, 249, 5, 26, 107, 117, 98, 101, 114, 110, 101, 116, 101, 115, 46, 100, 111, 99, 107, 101, 114, 46, 105, 110, 116, 101, 114, 110, 97, 108, 99, 211, 2},
-				{28, 0, 9, 103, 101, 107, 105, 103, 101, 107, 57, 57, 1, 196, 93, 252, 169, 146, 189, 69, 1, 169, 208, 156, 201, 205, 197, 2, 113},
-			},
-			500 * time.Millisecond,
-		},
-		{
-			"client join request (1.19.3 local)",
-			[][]byte{
-				{33, 0, 249, 5, 26, 107, 117, 98, 101, 114, 110, 101, 116, 101, 115, 46, 100, 111, 99, 107, 101, 114, 46, 105, 110, 116, 101, 114, 110, 97, 108, 99, 211, 2, 28, 0, 9, 103, 101, 107, 105, 103, 101, 107, 57, 57, 1, 196, 93, 252, 169, 146, 189, 69, 1, 169, 208, 156, 201, 205, 197, 2, 113},
-			},
-			0,
-		},
-	}
 
 	for _, test := range tests {
 		fmt.Printf("testing \"%s\"\n", test.title)
@@ -140,34 +145,6 @@ func Test_getReqType(t *testing.T) {
 func Test_getPing(t *testing.T) {
 	// set port which was used to get hardcoded test bytes
 	config.MshPort = 25555
-
-	// emulate msh ping response
-	go func() {
-		listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", "127.0.0.1", 25555))
-		if err != nil {
-			t.Errorf("%s\n", err.Error())
-		}
-
-		for {
-			clientConn, err := listener.Accept()
-			if err != nil {
-				t.Errorf("%s\n", err.Error())
-				continue
-			}
-
-			logMsh := getPing(clientConn)
-			if logMsh != nil {
-				logMsh.Log(true)
-			}
-		}
-	}()
-
-	type test struct {
-		title   string
-		packets [][]byte
-		wait    time.Duration
-		expect  []byte
-	}
 
 	tests := []test{
 		// positive cases
@@ -236,6 +213,27 @@ func Test_getPing(t *testing.T) {
 		},
 	}
 
+	// emulate msh ping response
+	go func() {
+		listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", "127.0.0.1", 25555))
+		if err != nil {
+			t.Errorf("%s\n", err.Error())
+		}
+
+		for {
+			clientConn, err := listener.Accept()
+			if err != nil {
+				t.Errorf("%s\n", err.Error())
+				continue
+			}
+
+			logMsh := getPing(clientConn)
+			if logMsh != nil {
+				logMsh.Log(true)
+			}
+		}
+	}()
+
 	for _, test := range tests {
 		fmt.Printf("\ntesting \"%s\": %v\n", test.title, test.packets)
 		serverSocket, err := net.Dial("tcp", fmt.Sprintf("%s:%d", "127.0.0.1", 25555))
@@ -249,7 +247,7 @@ func Test_getPing(t *testing.T) {
 		}
 
 		buf := make([]byte, 1024)
-		serverSocket.SetReadDeadline(time.Now().Add(1 * time.Second))
+		serverSocket.SetReadDeadline(time.Now().Add(200 * time.Millisecond))
 		n, err := serverSocket.Read(buf)
 		if err != nil {
 			// if timeout and it's expected continue
@@ -263,7 +261,7 @@ func Test_getPing(t *testing.T) {
 
 		fmt.Printf("\tclient receives: %v\n", buf[:n])
 
-		if !bytes.Equal(buf[:n], test.expect) {
+		if !bytes.Equal(buf[:n], test.expect.([]byte)) {
 			t.Errorf("\tclient received different bytes from expected\n")
 		}
 
