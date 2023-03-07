@@ -11,7 +11,7 @@ updates:
     schedule:
       interval: "weekly"
     labels:
-      - "gomod dependencies"
+      - "gomod_dependencies"
     allow:
       - dependency-type: "all"
     
