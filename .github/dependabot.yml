@@ -4,11 +4,20 @@
 version: 2
 updates:
     # Dependabot automatically checks for updates to any Go modules in the repository, 
-    # then creates pull requests to update them if necessary
+    # then creates pull requests to dev branch
   - package-ecosystem: "gomod"
     directory: "/"
     schedule:
       interval: "daily"
+    labels:
+      - "dependencies"
+    allow:
+      - dependency-type: "direct"
+      - dependency-type: "indirect"
+    ignore:
+      - type: "security"
+    branches:
+      - "dev"
     
     # Dependabot checks for new versions of github actions,
     # then creates pull requests to update any outdated actions
