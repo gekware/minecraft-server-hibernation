@@ -8,7 +8,6 @@ updates:
   - package-ecosystem: "gomod"
     directory: "/"
     target-branch: "dev"
-    vendor: true
     schedule:
       interval: "weekly"
     labels:
