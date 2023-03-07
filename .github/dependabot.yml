@@ -11,7 +11,8 @@ updates:
     schedule:
       interval: "weekly"
     labels:
-      - "gomod_dependencies"
+      - "dependencies"
+      - "gomod"
     allow:
       - dependency-type: "all"
     
@@ -23,6 +24,7 @@ updates:
     schedule:
       interval: "weekly"
     labels:
+      - "dependencies"
       - "github_actions"
     allow:
       - dependency-type: "all"
