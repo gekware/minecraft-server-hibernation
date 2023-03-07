@@ -3,7 +3,18 @@
 
 version: 2
 updates:
-  - package-ecosystem: gomod
-    directory: /
+    # Dependabot automatically checks for updates to any Go modules in the repository, 
+    # then creates pull requests to update them if necessary
+  - package-ecosystem: "gomod"
+    directory: "/"
     schedule:
-      interval: daily
+      interval: "daily"
+    
+    # Dependabot checks for new versions of github actions,
+    # then creates pull requests to update any outdated actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+  
+  
