@@ -23,8 +23,16 @@ type StatusBeta18 struct {
 	MaxPlayers    int
 }
 
+// String returns a user-friendly representation of a server status response.
+// It contains presumed (Beta 1.8+) Minecraft Server version, online count and naturalized MOTD.
+func (s *StatusBeta18) String() string {
+	return fmt.Sprintf("Minecraft Server (Beta 1.8+), %d/%d players online, MOTD: %s",
+		s.OnlinePlayers, s.MaxPlayers, naturalizeMOTD(s.MOTD))
+}
+
 // PingBeta18 pings Beta 1.8 to Release 1.4 (exclusively) Minecraft servers (Notchian servers of more late versions
 // also respond to this ping packet.)
+//
 //goland:noinspection GoUnusedExportedFunction
 func PingBeta18(host string, port int) (*StatusBeta18, error) {
 	return defaultPinger.PingBeta18(host, port)

@@ -154,6 +154,24 @@ By default, `Pinger` sends protocol version -1 in 1.7 ping packets. If you need
 to customize protocol version sent, use `WithProtocolVersion17`. MineQuery provides
 a convenient set of constants you can use &mdash; see `Ping17ProtocolVersion*` constants.
 
+#### WithUnmarshaller
+
+By default, `Pinger` uses standard Go `json.Unmarshal` function to unmarshal JSON which can
+be slow compared to alternatives. If you need to use another unmarshaller library, you can
+use this option to provide an `Unmarshaller` implementation that will be used instead.
+
+#### WithImageDecoder
+
+By default, `Pinger` uses standard Go `png.Decode` function to decode PNG from binary stream.
+If you need to use another decoding library, you can use this option to provide 
+`png.Decode`-compatible function that will be used instead.
+
+#### WithImageEncoding
+
+By default, `Pinger` uses standard Go `base64.StdEncoding` encoding to decode Base64 string
+returned in 1.7+ responses. If you need to use another encoding, you can use this option to 
+provide a compatible implementation that will be used instead.
+
 [1]: MIGRATING.md
 [2]: https://wiki.vg/Server_List_Ping#Beta_1.8_to_1.3
 [3]: https://wiki.vg/Server_List_Ping#1.4_to_1.5

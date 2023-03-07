@@ -21,6 +21,13 @@ type Status14 struct {
 	MaxPlayers    int
 }
 
+// String returns a user-friendly representation of a server status response.
+// It contains presumed (1.4+) Minecraft Server version, online count and naturalized MOTD.
+func (s *Status14) String() string {
+	return fmt.Sprintf("Minecraft Server (1.4+), %d/%d players online, MOTD: %s",
+		s.OnlinePlayers, s.MaxPlayers, naturalizeMOTD(s.MOTD))
+}
+
 // Ping14 pings 1.4 to 1.6 (exclusively) Minecraft servers (Notchian servers of more late versions also respond to
 // this ping packet.)
 //

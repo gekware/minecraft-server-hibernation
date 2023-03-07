@@ -39,6 +39,7 @@ const Ping16ProtocolVersionIncompatible byte = 127
 
 // Full version/snapshot to protocol version mapping list
 // Extracted from https://wiki.vg/Protocol_version_numbers#Versions_before_the_Netty_rewrite
+//
 //goland:noinspection GoUnusedConst
 const (
 	// Ping16ProtocolVersion13w39b holds protocol version (=80) for Minecraft 13w39b.
@@ -421,6 +422,13 @@ type Status16 struct {
 	MaxPlayers      int
 }
 
+// String returns a user-friendly representation of a server status response.
+// It contains Minecraft Server version, protocol version number, online count and naturalized MOTD.
+func (s *Status16) String() string {
+	return fmt.Sprintf("Minecraft Server (1.6+ or older, %s, protocol version %d), %d/%d players online, MOTD: %s",
+		s.ServerVersion, s.ProtocolVersion, s.OnlinePlayers, s.MaxPlayers, naturalizeMOTD(s.MOTD))
+}
+
 // IsIncompatible checks if response returned an incompatible protocol version (=127), meaning
 // this server cannot be joined unless client version is 1.7+.
 func (s *Status16) IsIncompatible() bool {
@@ -429,6 +437,7 @@ func (s *Status16) IsIncompatible() bool {
 
 // Ping16 pings 1.6 to 1.7 (exclusively) Minecraft servers (Notchian servers of more late versions also respond
 // to this ping packet.)
+//
 //goland:noinspection GoUnusedExportedFunction
 func Ping16(host string, port int) (*Status16, error) {
 	return defaultPinger.Ping16(host, port)
