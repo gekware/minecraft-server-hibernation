@@ -45,6 +45,15 @@ body:
     required: true
 
 - type: input
+  id: MSH-Commit
+  attributes:
+    label: MSH-Commit
+    description: Commit id of your MSH build.
+    placeholder: d2daf2a
+  validations:
+    required: true
+
+- type: input
   id: OS
   attributes:
     label: Operating system
@@ -53,12 +62,16 @@ body:
   validations:
     required: true
 
-- type: input
+- type: dropdown
   id: Architecture
   attributes:
-    label: System architecture
-    description: The architecture where you installed MSH.
-    placeholder: amd64, i386, arm (32bit / 64bit)
+    label: System architecture?
+    multiple: true
+    options:
+      - AMD64
+      - I386
+      - ARM 32 Bit
+      - ARM 64 Bit
   validations:
     required: true
 
@@ -70,13 +83,19 @@ body:
     placeholder: 1.16.2, 1.18.2
   validations:
     required: true
-
-- type: input
+    
+- type: dropdown
   id: Minecraft-Server-Software
   attributes:
-    label: Minecraft Server Software
-    description: The software you are using to run your Minecraft server.
-    placeholder: Vanilla, Spigot, Paper, etc.
+    label: Minecraft Server Software?
+    multiple: true
+    options:
+      - Vanilla
+      - Spigot
+      - Paper
+      - Forge
+      - Fabric
+      - Other (Add to Minecraft Version) 
   validations:
     required: true
 
