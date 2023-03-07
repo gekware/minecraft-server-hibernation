@@ -7,23 +7,24 @@ updates:
     # then creates pull requests to dev branch
   - package-ecosystem: "gomod"
     directory: "/"
+    target-branch: "dev"
+    vendor: true
     schedule:
-      interval: "daily"
+      interval: "weekly"
     labels:
-      - "dependencies"
+      - "gomod dependencies"
     allow:
-      - dependency-type: "direct"
-      - dependency-type: "indirect"
-    ignore:
-      - type: "security"
-    branches:
-      - "dev"
+      - dependency-type: "all"
     
     # Dependabot checks for new versions of github actions,
     # then creates pull requests to update any outdated actions
   - package-ecosystem: "github-actions"
     directory: "/"
+    target-branch: "master"
     schedule:
       interval: "weekly"
-  
-  
+    labels:
+      - "github_actions"
+    allow:
+      - dependency-type: "all"
+    
