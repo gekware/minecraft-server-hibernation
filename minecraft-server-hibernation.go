@@ -62,7 +62,7 @@ func main() {
 		go conn.HandlerQuery()
 	}
 
-	// open a listener
+	// open a tcp listener
 	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", config.MshHost, config.MshPort))
 	if err != nil {
 		errco.NewLogln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CLIENT_LISTEN, err.Error())
@@ -70,7 +70,7 @@ func main() {
 	}
 
 	// infinite cycle to handle new clients.
-	errco.NewLogln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "listening for new clients connections\ton %s:%d ...", config.MshHost, config.MshPort)
+	errco.NewLogln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "%-40s %s:%d ...", "listening for new clients connections on", config.MshHost, config.MshPort)
 	for {
 		clientConn, err := listener.Accept()
 		if err != nil {

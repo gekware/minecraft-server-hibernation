@@ -47,7 +47,7 @@ func HandlerQuery() {
 	}
 
 	// infinite cycle to handle new clients queries
-	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "listening for new clients queries\ton %s:%d ...", config.MshHost, config.MshPortQuery)
+	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "%-40s %s:%d ...", "listening for new clients queries on", config.MshHost, config.MshPortQuery)
 	for {
 		// handshake / stats request read
 		var buf []byte = make([]byte, 1024)
