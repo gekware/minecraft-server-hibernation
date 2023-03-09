@@ -5,11 +5,12 @@ import (
 	"log"
 	"runtime"
 	"strings"
+	"time"
 )
 
 // DebugLvl specify the level of debugging
-// (default is LVL_4 so it will log everything)
-var DebugLvl LogLvl = LVL_4
+// (start with LVL_3 to log config load errors)
+var DebugLvl LogLvl = LVL_3
 
 type MshLog struct {
 	Ori LogOri        // log origin function
@@ -39,6 +40,11 @@ const (
 	COLOR_PURPLE = "\033[35m"
 	COLOR_CYAN   = "\033[36m"
 )
+
+func init() {
+	// disable log.Ldate and log.Ltime flags: will be set manually
+	log.SetFlags(0)
+}
 
 // NewLog returns a new msh log object.
 //
@@ -99,14 +105,20 @@ func (logMsh *MshLog) Log(tracing bool) *MshLog {
 
 	// -------- operations on copied log --------
 
-	// set mex string colors depending on logMod level
+	var (
+		typ string // log line: type    of log
+		ori string // log line: origin  of log
+		mex string // log line: message of log
+		cod string // log line: code    of log
+	)
+
+	// set mex string depending on logMod level
 	switch logMod.Lvl {
 	case LVL_0: // make important logs more visible
 		logMod.Mex = COLOR_CYAN + logMod.Mex + COLOR_RESET
 	}
 
 	// set typ, ori, mex, cod strings depending on logMod type
-	var typ, ori, mex, cod string
 	switch logMod.Typ {
 	case TYPE_INF:
 		typ = fmt.Sprintf("%s%-6s%s", COLOR_BLUE, string(logMod.Typ), COLOR_RESET)
@@ -135,7 +147,8 @@ func (logMsh *MshLog) Log(tracing bool) *MshLog {
 		cod = fmt.Sprintf(" [%06x]", logMod.Cod)
 	}
 
-	log.Printf("[%s%-4s] %s%s%s\n",
+	log.Printf("%s [%s%-4s] %s%s%s\n",
+		time.Now().Format("2006/01/02 15:04:05.000"),
 		typ,
 		strings.Repeat("≡", 4-int(logMod.Lvl)),
 		ori,
