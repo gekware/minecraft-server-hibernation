@@ -174,6 +174,10 @@ func getPing(clientConn net.Conn) *errco.MshLog {
 	}
 
 	switch {
+	case bytes.HasPrefix(pingData, []byte{9, 1, 0, 0, 0, 0, 0}):
+		// packet is [9 1 0 0 0 0 0 89 73 114]
+		// this is normal ping
+
 	case bytes.Equal(pingData, []byte{1, 0}):
 		// packet is [1 0]
 		// read the second packet

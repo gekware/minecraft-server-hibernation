@@ -149,6 +149,14 @@ func Test_getPing(t *testing.T) {
 	tests := []test{
 		// positive cases
 		{
+			"ping",
+			[][]byte{
+				{9, 1, 0, 0, 0, 0, 0, 89, 73, 114},
+			},
+			0,
+			[]byte{9, 1, 0, 0, 0, 0, 0, 89, 73, 114},
+		},
+		{
 			"2 bytes + ping",
 			[][]byte{
 				{1, 0, 9, 1, 0, 0, 0, 0, 0, 89, 73, 114},
