@@ -24,16 +24,17 @@ Join our [discord server](https://discord.com/invite/guKB6ETeMF)!
 ### RELEASES:
 Download the latest **releases** on [github](https://github.com/gekware/minecraft-server-hibernation/releases) (for linux, windows and macos)  
 
-_You can download msh from [gekware](https://msh.gekware.net/) or compile the dev branch to use a more recent version, but note that it may still need to be tested_
+_You can download msh from [gekware](https://msh.gekware.net/) or [compile the dev branch](#PROGRAM-COMPILATION) to use a more recent version, but note that it may still need to be tested_
 
 -----
 ### PROGRAM COMPILATION:
 This version was successfully compiled in go version 1.19  
 Compilation procedure:
-```
+```command
 git clone https://github.com/gekware/minecraft-server-hibernation.git  
 cd minecraft-server-hibernation/  
 git submodule update --init
+git checkout dev # execute only if you want to compile the dev branch
 go build .
 ```
 
