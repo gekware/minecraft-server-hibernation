@@ -18,9 +18,13 @@ _(for vanilla/modded on linux/windows/macos)_
 version: v2.4.12  
 Copyright (C) 2019-2023 [gekigek99](https://github.com/gekigek99)  
 
-Check the [releases](https://github.com/gekware/minecraft-server-hibernation/releases) to download the binaries (for linux, windows and macos)
+Join our [discord server](https://discord.com/invite/guKB6ETeMF)!  
 
-_You can compile msh from the dev branch to access a more recent version, but note that it may still need to be tested_
+-----
+### RELEASES:
+Download the latest **releases** on [github](https://github.com/gekware/minecraft-server-hibernation/releases) (for linux, windows and macos)  
+
+_You can download msh from [gekware](https://msh.gekware.net/) or compile the dev branch to use a more recent version, but note that it may still need to be tested_
 
 -----
 ### PROGRAM COMPILATION:
