@@ -1,9 +1,9 @@
 {
   "Server": {
-    "Folder": "../2023-java",
-    "FileName": "purpur.jar",
-    "Version": "1.19.3",
-    "Protocol": 761
+    "Folder": "{path/to/server/folder}",
+    "FileName": "{server.jar}",
+    "Version": "1.19.2",
+    "Protocol": 760
   },
   "Commands": {
     "StartServer": "java <Commands.StartServerParam> -jar <Server.FileName> nogui",
@@ -13,7 +13,7 @@
   },
   "Msh": {
     "Debug": 1,
-    "ID": "910c600810b6c65bee2a285c0c1cb42d48e728d4",
+    "ID": "",
     "MshPort": 25555,
     "MshPortQuery": 25555,
     "ServPort": -1,
