@@ -48,7 +48,8 @@ go build .
     - StopServer
 	- Whitelist
     - \* StopServerAllowKill
-    - \* HibernationInfo and StartingInfo
+    - \* ServPort and ServPortQuery
+    - \* InfoHibernation and InfoStarting
     - \* TimeBeforeStoppingEmptyServer
     - \* NotifyUpdate
 3. \* put the frozen icon you want in `path/to/server.jar/folder` (must be called `server-icon-frozen`, supported formats: `.png`, `.jpg`)
@@ -105,7 +106,9 @@ Ports configuration
 - _msh enables query handling if `enable-query=true` in `server.properties`_
 ```yaml
 "MshPort": 25555		# port to which players can join
-"MshPortQuery": 25555	# port to which stats query requests are performed 
+"MshPortQuery": 25555	# port to which stats query requests are performed from players
+"ServPort" : -1         # port to which msh connects to. Set to -1 to read value from server.properties
+"ServPortQuery": -1     # port to which stats queries are performed from msh. Set to -1 to read from server.properties
 ```
 
 TimeBeforeStoppingEmptyServer sets the time (after the last player disconnected) that msh waits before hibernating the minecraft server

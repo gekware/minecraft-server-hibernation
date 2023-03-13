@@ -1,9 +1,9 @@
 {
   "Server": {
-    "Folder": "{path/to/server/folder}",
-    "FileName": "{server.jar}",
-    "Version": "1.19.2",
-    "Protocol": 760
+    "Folder": "../2023-java",
+    "FileName": "purpur.jar",
+    "Version": "1.19.3",
+    "Protocol": 761
   },
   "Commands": {
     "StartServer": "java <Commands.StartServerParam> -jar <Server.FileName> nogui",
@@ -13,9 +13,11 @@
   },
   "Msh": {
     "Debug": 1,
-    "ID": "",
+    "ID": "910c600810b6c65bee2a285c0c1cb42d48e728d4",
     "MshPort": 25555,
     "MshPortQuery": 25555,
+    "ServPort": -1,
+    "ServPortQuery": -1,
     "TimeBeforeStoppingEmptyServer": 30,
     "SuspendAllow": false,
     "SuspendRefresh": -1,
@@ -25,7 +27,7 @@
     "NotifyMessage": true,
     "Whitelist": [],
     "WhitelistImport": false,
-	"ShowResourceUsage": false,
-	"ShowInternetUsage": false
+    "ShowResourceUsage": false,
+    "ShowInternetUsage": false
   }
 }
