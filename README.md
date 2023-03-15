@@ -107,8 +107,6 @@ Ports configuration
 ```yaml
 "MshPort": 25555		# port to which players can join
 "MshPortQuery": 25555	# port to which stats query requests are performed from players
-"ServPort" : -1         # port to which msh connects to. Set to -1 to read value from server.properties
-"ServPortQuery": -1     # port to which stats queries are performed from msh. Set to -1 to read from server.properties
 ```
 
 TimeBeforeStoppingEmptyServer sets the time (after the last player disconnected) that msh waits before hibernating the minecraft server
@@ -166,6 +164,60 @@ ShowInternetUsage enables the logging of the msh connection usage
 _for debug purposes (debug level 3 required)_
 ```yaml
 "ShowInternetUsage": false
+```
+
+-----
+#### Command-line parameters
+These parameters can be applied when running the executable. Supplying these parameters overwrites the values specified in `msh-config.json`
+
+```yaml
+  -SuspendAllow
+        Enables minecraft server process suspension.
+  -SuspendRefresh int
+        Specify how often the suspended minecraft server process must be refreshed. (default -1)
+  -allowKill int
+        Specify after how many seconds the server should be killed (if stop command fails). (default 10)
+  -allowkill int
+        Specify after how many seconds the server should be killed (if stop command fails). (default 10)
+  -d int
+        Specify debug level. (default 1)
+  -file string
+        Specify minecraft server file name. (default "{server.jar}")
+  -folder string
+        Specify minecraft server folder path. (default "{path/to/server/folder}")
+  -infohibe string
+        Specify hibernation info. (default "                   §fserver status:\n                   §b§lHIBERNATING")
+  -infostar string
+        Specify starting info. (default "                   §fserver status:\n                    §6§lWARMING UP")
+  -msparam string
+        Specify start server parameters. (default "-Xmx1024M -Xms1024M")
+  -notifymes
+        Enables message notifications. (default true)
+  -notifyupd
+        Enables update notifications. (default true)
+  -port int
+        Specify msh port. (default 25555)
+  -protocol int
+        Specify minecraft server protocol. (default 760)
+  -servport int
+        Specify the port that msh connects to.
+  -servportquery int
+        Specify ServPortQuery that msh connects to.
+  -showint
+        Enables logging of msh interent usage (->clients / ->server).
+  -showres
+        Enables logging of msh resource usage (cpu / mem percentage).
+  -suspendallow
+        Enables minecraft server process suspension.
+  -suspendrefresh int
+        Specify how often the suspended minecraft server process must be refreshed. (default -1)
+  -timeout int
+        Specify time to wait before stopping minecraft server. (default 30)
+  -version string
+        Specify minecraft server version. (default "1.19.2")
+  -wlimport
+        Enables minecraft server whitelist import.
+
 ```
 
 -----

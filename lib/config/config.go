@@ -210,8 +210,8 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 	flag.IntVar(&c.Msh.SuspendRefresh, "SuspendRefresh", c.Msh.SuspendRefresh, "Specify how often the suspended minecraft server process must be refreshed.")                        // msh pterodactyl egg
 
 	// flags for ServPort and ServPortQuery
-	flag.IntVar(&c.Msh.ServPort, "servport", c.Msh.ServPort, "Specify ServPort.")
-	flag.IntVar(&c.Msh.ServPortQuery, "servportquery", c.Msh.ServPortQuery, "Specify ServPortQuery.")
+	flag.IntVar(&c.Msh.ServPort, "servport", c.Msh.ServPort, "Specify the port that msh connects to.")
+	flag.IntVar(&c.Msh.ServPortQuery, "servportquery", c.Msh.ServPortQuery, "Specify ServPortQuery that msh connects to.")
 
 	// specify the usage when there is an error in the arguments
 	flag.Usage = func() {
@@ -306,13 +306,14 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 	MshPort = c.Msh.MshPort
 	MshPortQuery = c.Msh.MshPortQuery
 
-	// load ServPort and ServPortQuery from msh-config file. Will be updated if set to default of -1
+	// load ServPort and ServPortQuery from launch parameters. Will be updated if set to default of 0
 	ServPort = c.Msh.ServPort
 	ServPortQuery = c.Msh.ServPortQuery
 
 	// ServHost	defined in global definition
+
 	// read server port from server.properties if not set via flag
-	if ServPort == -1 {
+	if ServPort == 0 {
 		if ServPort, logMsh = c.ParsePropertiesInt("server-port"); logMsh != nil {
 			logMsh.Log(true)
 		} else if ServPort == c.Msh.MshPort {
@@ -322,7 +323,7 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 	}
 
 	// read server query port from server.properties if not set via flag
-	if ServPortQuery == -1 {
+	if ServPortQuery == 0 {
 		if ServPortQuery, logMsh = c.ParsePropertiesInt("query.port"); logMsh != nil {
 			logMsh.Log(true)
 		} else if ServPortQuery == c.Msh.MshPortQuery {
