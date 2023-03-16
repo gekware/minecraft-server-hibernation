@@ -68,7 +68,7 @@ func main() {
 	}
 
 	// infinite cycle to handle new clients.
-	errco.NewLogln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "%-40s %s:%d ...", "listening for new clients connections on", config.MshHost, config.MshPort)
+	errco.NewLogln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "%-40s %10s:%5d ...", "listening for new clients connections on", config.MshHost, config.MshPort)
 	for {
 		clientConn, err := listener.Accept()
 		if err != nil {
