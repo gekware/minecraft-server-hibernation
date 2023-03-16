@@ -328,15 +328,15 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "msh connection  proxy setup: %10s:%5d --> %10s:%5d", MshHost, MshPort, ServHost, ServPort)
 
 	// check if queries are enabled by config, start arguments or ms config
-	queriesStatus := "queries disabled"
+	queriesStatus := "query handling disabled"
 	if c.Msh.EnableQuery {
-		queriesStatus = "queries enabled by msh config or start arguments"
+		queriesStatus = "query handling enabled by msh config or start arguments"
 	} else if msConfigQueryEnabled, logMsh := c.ParsePropertiesBool("enable-query"); logMsh != nil {
-		queriesStatus = "queries disabled by error"
+		queriesStatus = "query handling disabled by error"
 		c.Msh.EnableQuery = false
 		logMsh.Log(true)
 	} else if msConfigQueryEnabled {
-		queriesStatus = "queries enabled by minecraft server config"
+		queriesStatus = "query handling enabled by minecraft server config"
 		c.Msh.EnableQuery = true
 	}
 
