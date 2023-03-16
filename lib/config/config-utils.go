@@ -168,7 +168,7 @@ func (c *Configuration) loadIcon() *errco.MshLog {
 func (c *Configuration) getVersionInfo() (string, int, *errco.MshLog) {
 	reader, err := zip.OpenReader(filepath.Join(c.Server.Folder, c.Server.FileName))
 	if err != nil {
-		return "", -1, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_VERSION_LOAD, err.Error())
+		return "", -1, errco.NewLog(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_VERSION_LOAD, err.Error())
 	}
 	defer reader.Close()
 
