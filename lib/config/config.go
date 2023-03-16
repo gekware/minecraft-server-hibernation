@@ -192,6 +192,8 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 	flag.IntVar(&c.Msh.Debug, "d", c.Msh.Debug, "Specify debug level.")
 	// c.Msh.ID should not be set by a flag
 	flag.IntVar(&c.Msh.MshPort, "port", c.Msh.MshPort, "Specify msh port.")
+	flag.IntVar(&ServPort, "servport", ServPort, "Specify the minecraft server port.")
+	flag.IntVar(&ServPortQuery, "servportquery", ServPortQuery, "Specify minecraft server port for queries.")
 	flag.Int64Var(&c.Msh.TimeBeforeStoppingEmptyServer, "timeout", c.Msh.TimeBeforeStoppingEmptyServer, "Specify time to wait before stopping minecraft server.")
 	flag.BoolVar(&c.Msh.SuspendAllow, "suspendallow", c.Msh.SuspendAllow, "Enables minecraft server process suspension.")
 	flag.IntVar(&c.Msh.SuspendRefresh, "suspendrefresh", c.Msh.SuspendRefresh, "Specify how often the suspended minecraft server process must be refreshed.")
@@ -298,17 +300,23 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 	// ---------------- setup load ----------------- //
 
 	// load ports
-	// MshHost	defined in global definition
+
+	// MshHost defined in global definition
 	MshPort = c.Msh.MshPort
 	MshPortQuery = c.Msh.MshPortQuery
+
 	// ServHost	defined in global definition
-	if ServPort, logMsh = c.ParsePropertiesInt("server-port"); logMsh != nil {
+	if ServPort != 0 {
+		// ServPort defined in msh start arguments
+	} else if ServPort, logMsh = c.ParsePropertiesInt("server-port"); logMsh != nil {
 		logMsh.Log(true)
 	} else if ServPort == c.Msh.MshPort {
 		logMsh := errco.NewLogln(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_CONFIG_LOAD, "ServPort and MshPort appear to be the same, please change one of them")
 		servstats.Stats.SetMajorError(logMsh)
 	}
-	if ServPortQuery, logMsh = c.ParsePropertiesInt("query.port"); logMsh != nil {
+	if ServPortQuery != 0 {
+		// ServPortQuery defined in msh start arguments
+	} else if ServPortQuery, logMsh = c.ParsePropertiesInt("query.port"); logMsh != nil {
 		logMsh.Log(true)
 	} else if ServPortQuery == c.Msh.MshPortQuery {
 		logMsh := errco.NewLogln(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_CONFIG_LOAD, "ServPortQuery and MshPortQuery appear to be the same, please change one of them")
