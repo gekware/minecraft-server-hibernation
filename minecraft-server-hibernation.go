@@ -56,9 +56,7 @@ func main() {
 	// ---------------- connections ---------------- //
 
 	// launch query handler
-	if queryEnabled, logMsh := config.ConfigRuntime.ParsePropertiesBool("enable-query"); logMsh != nil {
-		logMsh.Log(true)
-	} else if queryEnabled {
+	if config.ConfigRuntime.Msh.EnableQuery {
 		go conn.HandlerQuery()
 	}
 

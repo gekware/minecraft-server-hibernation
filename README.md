@@ -100,10 +100,11 @@ Set the logging level for debug purposes
 
 Ports configuration
 - _MshPort and MshPortQuery must be different from the respective ones in `server.properties`_
-- _msh enables query handling if `enable-query=true` in `server.properties`_
+- _query handling is enabled if `EnableQuery: true` in `msh-config.json` or `enable-query=true` in `server.properties`_
 ```yaml
 "MshPort": 25555		# port to which players can join
 "MshPortQuery": 25555	# port to which stats query requests are performed from clients
+"EnableQuery": true		# enable query handling
 ```
 
 TimeBeforeStoppingEmptyServer sets the time (after the last player disconnected) that msh waits before hibernating the minecraft server

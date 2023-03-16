@@ -19,6 +19,7 @@ type Configuration struct {
 		ID                            string   `json:"ID"`
 		MshPort                       int      `json:"MshPort"`
 		MshPortQuery                  int      `json:"MshPortQuery"`
+		EnableQuery                   bool     `json:"EnableQuery"`
 		TimeBeforeStoppingEmptyServer int64    `json:"TimeBeforeStoppingEmptyServer"`
 		SuspendAllow                  bool     `json:"SuspendAllow"`   // specify if msh should suspend java server process
 		SuspendRefresh                int      `json:"SuspendRefresh"` // specify if msh should refresh java server process suspension and every how many seconds

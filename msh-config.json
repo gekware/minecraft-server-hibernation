@@ -16,6 +16,7 @@
     "ID": "",
     "MshPort": 25555,
     "MshPortQuery": 25555,
+    "EnableQuery": true,
     "TimeBeforeStoppingEmptyServer": 30,
     "SuspendAllow": false,
     "SuspendRefresh": -1,

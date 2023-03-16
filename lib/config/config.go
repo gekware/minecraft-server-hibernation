@@ -195,6 +195,7 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 	flag.IntVar(&c.Msh.MshPortQuery, "portquery", c.Msh.MshPortQuery, "Specify msh port for queries.")
 	flag.IntVar(&ServPort, "servport", ServPort, "Specify the minecraft server port.")
 	flag.IntVar(&ServPortQuery, "servportquery", ServPortQuery, "Specify minecraft server port for queries.")
+	flag.BoolVar(&c.Msh.EnableQuery, "enablequery", c.Msh.EnableQuery, "Enables queries handling.")
 	flag.Int64Var(&c.Msh.TimeBeforeStoppingEmptyServer, "timeout", c.Msh.TimeBeforeStoppingEmptyServer, "Specify time to wait before stopping minecraft server.")
 	flag.BoolVar(&c.Msh.SuspendAllow, "suspendallow", c.Msh.SuspendAllow, "Enables minecraft server process suspension.")
 	flag.IntVar(&c.Msh.SuspendRefresh, "suspendrefresh", c.Msh.SuspendRefresh, "Specify how often the suspended minecraft server process must be refreshed.")
@@ -324,8 +325,26 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 		servstats.Stats.SetMajorError(logMsh)
 	}
 
-	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "msh connection  proxy setup: %s:%d --> %s:%d", MshHost, MshPort, ServHost, ServPort)
-	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "msh stats query proxy setup: %s:%d --> %s:%d", MshHost, MshPortQuery, ServHost, ServPortQuery)
+	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "msh connection  proxy setup: %10s:%5d --> %10s:%5d", MshHost, MshPort, ServHost, ServPort)
+
+	// check if queries are enabled by config, start arguments or ms config
+	queriesStatus := "queries disabled"
+	if c.Msh.EnableQuery {
+		queriesStatus = "queries enabled by msh config or start arguments"
+	} else if msConfigQueryEnabled, logMsh := c.ParsePropertiesBool("enable-query"); logMsh != nil {
+		queriesStatus = "queries disabled by error"
+		c.Msh.EnableQuery = false
+		logMsh.Log(true)
+	} else if msConfigQueryEnabled {
+		queriesStatus = "queries enabled by minecraft server config"
+		c.Msh.EnableQuery = true
+	}
+
+	if c.Msh.EnableQuery {
+		errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "msh stats query proxy setup: %10s:%5d --> %10s:%5d (%s)", MshHost, MshPortQuery, ServHost, ServPortQuery, queriesStatus)
+	} else {
+		errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "%s", queriesStatus)
+	}
 
 	// load ms version/protocol
 	c.Server.Version, c.Server.Protocol, logMsh = c.getVersionInfo()
