@@ -15,7 +15,7 @@ _(for vanilla/modded on linux/windows/macos)_
     </a>
 </p>
 
-version: v2.4.12  
+version: v2.5.0  
 Copyright (C) 2019-2023 [gekigek99](https://github.com/gekigek99)  
 
 Join our [discord server](https://discord.com/invite/guKB6ETeMF)!  
