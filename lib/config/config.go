@@ -328,22 +328,19 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "msh connection  proxy setup: %10s:%5d --> %10s:%5d", MshHost, MshPort, ServHost, ServPort)
 
 	// check if queries are enabled by config, start arguments or ms config
-	queriesStatus := "query handling disabled"
-	if c.Msh.EnableQuery {
-		queriesStatus = "query handling enabled by msh config or start arguments"
-	} else if msConfigQueryEnabled, logMsh := c.ParsePropertiesBool("enable-query"); logMsh != nil {
-		queriesStatus = "query handling disabled by error"
+	if !c.Msh.EnableQuery {
+		errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "msh stats query proxy setup: disabled by msh config or start arguments")
 		c.Msh.EnableQuery = false
+	} else if msConfigEnableQuery, logMsh := c.ParsePropertiesBool("enable-query"); logMsh != nil {
+		errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "msh stats query proxy setup: disabled by error-┐")
 		logMsh.Log(true)
-	} else if msConfigQueryEnabled {
-		queriesStatus = "query handling enabled by minecraft server config"
-		c.Msh.EnableQuery = true
-	}
-
-	if c.Msh.EnableQuery {
-		errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "msh stats query proxy setup: %10s:%5d --> %10s:%5d (%s)", MshHost, MshPortQuery, ServHost, ServPortQuery, queriesStatus)
+		c.Msh.EnableQuery = false
+	} else if !msConfigEnableQuery {
+		errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "msh stats query proxy setup: disabled by minecraft server config")
+		c.Msh.EnableQuery = false
 	} else {
-		errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "%s", queriesStatus)
+		errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "msh stats query proxy setup: %10s:%5d --> %10s:%5d", MshHost, MshPortQuery, ServHost, ServPortQuery)
+		c.Msh.EnableQuery = true
 	}
 
 	// load ms version/protocol
