@@ -291,6 +291,7 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 	if err != nil {
 		logMsh := errco.NewLogln(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_MINECRAFT_SERVER, "java not installed")
 		servstats.Stats.SetMajorError(logMsh)
+		JavaV = "not installed"
 	} else if out, err := exec.Command("java", "--version").Output(); err != nil {
 		// non blocking error
 		errco.NewLogln(errco.TYPE_WAR, errco.LVL_1, errco.ERROR_CONFIG_CHECK, "could not execute 'java -version' command")
