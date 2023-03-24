@@ -118,14 +118,17 @@ _To mitigate ram usage you can set a high swappiness (on linux)_
 - cons: ram usage as minecraft server without msh (cpu remains ~0)  
 
 SuspendRefresh enables refresh of minecraft server suspension every set seconds (to avoid watchdog crash at unsuspension)  
-- setting `these variables` and `SuspendRefresh` might prevent minecraft server watchdog crash when `SuspendAllow` is enabled  
+- setting the following variables and `SuspendRefresh` might prevent minecraft server watchdog crash when `SuspendAllow` is enabled  
+- ⚠️: might prevent crash (enabling `SuspendRefresh` is advised anyway)  
+- ✅: prevents crash even without enabling `SuspendRefresh` (for the specified minecraft versions)  
 
-|       file        |                       variable                       |
-| ----------------- | ---------------------------------------------------- |
-| server.properties | `max-tick-time= -1`                                  |
-| spigot.yml        | `timeout-time: -1`, `restart-on-crash: false`        |
-| bukkit.yml        | `warn-on-overload: false`                            |
-| paper-global.yml  | `early-warning-delay: -1`, `early-warning-every: -1` |
+|       file        |                       variable                       |       working       |
+| ----------------- | ---------------------------------------------------- | ------------------- |
+| msh-config.json   | `"StartServerParam": "-Ddisable.watchdog=true"`      | ✅ (paper, purpur) |
+| server.properties | `max-tick-time= -1`                                  | ⚠️                 |
+| spigot.yml        | `timeout-time: -1`, `restart-on-crash: false`        | ⚠️                 |
+| bukkit.yml        | `warn-on-overload: false`                            | ⚠️                 |
+| paper-global.yml  | `early-warning-delay: -1`, `early-warning-every: -1` | ⚠️                 |
 
 ```yaml
 "SuspendAllow": false
