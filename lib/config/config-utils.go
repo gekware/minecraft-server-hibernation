@@ -166,7 +166,13 @@ func (c *Configuration) loadIcon() *errco.MshLog {
 //
 // (checkout version.json info: https://minecraft.fandom.com/wiki/Version.json)
 func (c *Configuration) getVersionInfo() (string, int, *errco.MshLog) {
-	reader, err := zip.OpenReader(filepath.Join(c.Server.Folder, c.Server.FileName))
+	var serverFilename = c.Server.FileName
+
+	if strings.Contains(c.Server.FileName, "fabric-server-launch.jar") {
+		serverFilename = filepath.Join("versions", c.Server.Version, "server-"+c.Server.Version+".jar")
+	}
+
+	reader, err := zip.OpenReader(filepath.Join(c.Server.Folder, serverFilename))
 	if err != nil {
 		return "", -1, errco.NewLog(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_VERSION_LOAD, err.Error())
 	}
