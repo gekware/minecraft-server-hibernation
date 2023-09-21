@@ -8,7 +8,7 @@ require (
 	github.com/dreamscached/minequery/v2 v2.4.1
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/shirou/gopsutil v3.21.11+incompatible
-	golang.org/x/image v0.7.0
+	golang.org/x/image v0.12.0
 	golang.org/x/sys v0.8.0
 )
 
@@ -20,7 +20,7 @@ require (
 	github.com/tklauser/go-sysconf v0.3.11 // indirect
 	github.com/tklauser/numcpus v0.6.1 // indirect
 	github.com/yusufpapurcu/wmi v1.2.3 // indirect
-	golang.org/x/text v0.12.0 // indirect
+	golang.org/x/text v0.13.0 // indirect
 )
 
 replace github.com/chzyer/readline => ./gitmod/readline
