@@ -204,7 +204,7 @@ func (c *Configuration) getVersionInfo(altServerName ...string) (string, int, *e
 	}
 
 	if c.Server.FileName != "server.jar" { //check if it matches the deafult name, if not
-		return c.getVersionInfo("server.jar") //fallback to default naming scheme
+		return c.getVersionInfo(filepath.Join("versions", c.Server.Version, "server-"+c.Server.Version+".jar")) //fallback to default naming scheme
 	}
 
 	return "", -1, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_VERSION_LOAD, "minecraft server version and protocol could not be extracted from version.json")
