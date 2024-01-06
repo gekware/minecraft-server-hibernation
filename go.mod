@@ -8,7 +8,7 @@ require (
 	github.com/dreamscached/minequery/v2 v2.4.1
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/shirou/gopsutil v3.21.11+incompatible
-	golang.org/x/image v0.12.0
+	golang.org/x/image v0.14.0
 	golang.org/x/sys v0.12.0
 )
 
