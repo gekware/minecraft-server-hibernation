@@ -201,6 +201,7 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 	flag.IntVar(&c.Msh.SuspendRefresh, "suspendrefresh", c.Msh.SuspendRefresh, "Specify how often the suspended minecraft server process must be refreshed.")
 	flag.StringVar(&c.Msh.InfoHibernation, "infohibe", c.Msh.InfoHibernation, "Specify hibernation info.")
 	flag.StringVar(&c.Msh.InfoStarting, "infostar", c.Msh.InfoStarting, "Specify starting info.")
+	flag.StringVar(&c.Msh.MsgStarting, "msgstar", c.Msh.MsgStarting, "Specify server starting error message.")
 	flag.BoolVar(&c.Msh.NotifyUpdate, "notifyupd", c.Msh.NotifyUpdate, "Enables update notifications.")
 	flag.BoolVar(&c.Msh.NotifyMessage, "notifymes", c.Msh.NotifyMessage, "Enables message notifications.")
 	// c.Msh.Whitelist (type []string, not worth to make it a flag)

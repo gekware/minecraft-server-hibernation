@@ -141,6 +141,11 @@ Hibernation and Starting server description
 "InfoStarting": "                   §fserver status:\n                    §6§lWARMING UP"
 ```
 
+Connection error message contents when client tries to join but the server is starting
+```yaml
+"MsgStarting": "Server start command issued. Please wait..."
+```
+
 Set to false if you don't want notifications (every 20 minutes)
 ```yaml
 "NotifyUpdate": true
