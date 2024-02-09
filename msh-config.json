@@ -22,6 +22,7 @@
     "SuspendRefresh": -1,
     "InfoHibernation": "                   §fserver status:\n                   §b§lHIBERNATING",
     "InfoStarting": "                   §fserver status:\n                    §6§lWARMING UP",
+    "MsgStarting": "Server start command issued. Please wait...",
     "NotifyUpdate": true,
     "NotifyMessage": true,
     "Whitelist": [],
