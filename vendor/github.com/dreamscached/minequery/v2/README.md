@@ -22,11 +22,14 @@
 # 🚀 Migrating from v2 or v1
 
 If you're new to MineQuery, you can skip this part. If you have used it before, you
-might want to give it a read if you're planning to switch from v1 or v2.0.x.
+might want to give it a read if you're planning to switch from v1, or want to know
+about breaking changes in v2.x.x version and how to adapt your codebase.
 
 See [MIGRATING.md][1] for help with migrating from MineQuery.
 
-## #️⃣ Minecraft Version Support
+## ✨ Features
+
+### ⛏ Minecraft Version Support
 
 MineQuery supports pinging of all versions of Minecraft.
 
@@ -34,15 +37,19 @@ MineQuery supports pinging of all versions of Minecraft.
 |----------------------|-----------------|-------------|-------------|
 | ✅ Supported          | ✅ Supported     | ✅ Supported | ✅ Supported |
 
-### Query Protocol Support
+### 📡 Query Protocol Support
 
-MineQuery fully supports [Query][9] protocol. 
+MineQuery v2.1.0+ fully supports [Query][9] protocol.
+
+### 🏷 SRV Record Support
+
+MineQuery v2.5.0+ fully supports SRV records.
 
 ## 📚 How to use
 
 ### Basic usage
 
-For simple pinging with default parameters, use package-global `Ping*` functions 
+For simple pinging with default parameters, use package-global `Ping*` functions
 (where `*` is your respective Minecraft server version.)
 
 If you're unsure about version, it is known that Notchian servers respond to
@@ -85,10 +92,10 @@ response validation, you can use `Pinger` struct with `PingerOption` passed to i
 import "github.com/dreamscached/minequery/v2"
 
 pinger := minequery.NewPinger(
-	minequery.WithTimeout(5 * time.Second), 
-	minequery.WithUseStrict(true),
-	minequery.WithProtocolVersion16(minequery.Ping16ProtocolVersion162), 
-	minequery.WithProtocolVersion17(minequery.Ping17ProtocolVersion172),
+minequery.WithTimeout(5 * time.Second),
+minequery.WithUseStrict(true),
+minequery.WithProtocolVersion16(minequery.Ping16ProtocolVersion162),
+minequery.WithProtocolVersion17(minequery.Ping17ProtocolVersion172),
 )
 ```
 
@@ -127,13 +134,13 @@ to customize this duration, you can use `WithTimeout` option.
 
 By default, `Pinger` does not validate response data it receives and silently
 omits erroneous values it processes (incorrect favicon or bad player UUID).
-If you need it to return an error in case of invalid response, you can use 
+If you need it to return an error in case of invalid response, you can use
 `WithUseStrict` option.
 
 #### WithQueryCacheExpiry
 
-By default, `Pinger` stores query sessions in cache for 30 seconds and flushes expired 
-entries every 5 minutes. If you want to override these defaults, use `WithQueryCacheExpiry` 
+By default, `Pinger` stores query sessions in cache for 30 seconds and flushes expired
+entries every 5 minutes. If you want to override these defaults, use `WithQueryCacheExpiry`
 option.
 
 #### WithQueryCacheDisabled
@@ -141,6 +148,13 @@ option.
 By default, `Pinger` stores query sessions in cache, reusing sessions and security tokens
 and saving bandwidth. If you don't want to use session cache, use `WithQueryCacheDisabled`
 option.
+
+#### WithQueryCache
+
+By default, `Pinger` stores query sessions using `patrickmn/go-cache` library
+(and `WithQueryCacheExpiry`/`WithQueryCacheDisabled` only affect this implementation of
+cache for Go). If you wish to use other cache implementation, you can use any that
+implements `Cache` interface.
 
 #### WithProtocolVersion16
 
@@ -163,21 +177,29 @@ use this option to provide an `Unmarshaller` implementation that will be used in
 #### WithImageDecoder
 
 By default, `Pinger` uses standard Go `png.Decode` function to decode PNG from binary stream.
-If you need to use another decoding library, you can use this option to provide 
+If you need to use another decoding library, you can use this option to provide
 `png.Decode`-compatible function that will be used instead.
 
 #### WithImageEncoding
 
 By default, `Pinger` uses standard Go `base64.StdEncoding` encoding to decode Base64 string
-returned in 1.7+ responses. If you need to use another encoding, you can use this option to 
+returned in 1.7+ responses. If you need to use another encoding, you can use this option to
 provide a compatible implementation that will be used instead.
 
 [1]: MIGRATING.md
+
 [2]: https://wiki.vg/Server_List_Ping#Beta_1.8_to_1.3
+
 [3]: https://wiki.vg/Server_List_Ping#1.4_to_1.5
+
 [4]: https://wiki.vg/Server_List_Ping#1.6
+
 [5]: https://wiki.vg/Server_List_Ping#Current
+
 [6]: https://github.com/dreamscached/minequery/issues/25
+
 [7]: https://pkg.go.dev/github.com/dreamscached/minequery/v2
+
 [8]: #basic-usage
+
 [9]: https://wiki.vg/Query

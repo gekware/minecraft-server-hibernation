@@ -10,10 +10,13 @@ import (
 
 var errStackEmpty = errors.New("stack is empty")
 
+// stack provides a simple array-based stack implementation for internal use within minequery.
 type stack []interface{}
 
+// Push pushes an item on top of the stack.
 func (s *stack) Push(value interface{}) { *s = append(*s, value) }
 
+// Pop removes an item from the top of the stack, returning errStackEmpty if stack is empty.
 func (s *stack) Pop() (interface{}, error) {
 	if len(*s) == 0 {
 		return nil, errStackEmpty

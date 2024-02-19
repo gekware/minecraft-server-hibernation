@@ -41,6 +41,14 @@ func PingBeta18(host string, port int) (*StatusBeta18, error) {
 // PingBeta18 pings Beta 1.8 to Release 1.4 (exclusively) Minecraft servers (Notchian servers of more late versions
 // also respond to this ping packet.)
 func (p *Pinger) PingBeta18(host string, port int) (*StatusBeta18, error) {
+	status, err := p.pingGeneric(p.pingBeta18, host, port)
+	if err != nil {
+		return nil, err
+	}
+	return status.(*StatusBeta18), nil
+}
+
+func (p *Pinger) pingBeta18(host string, port int) (interface{}, error) {
 	conn, err := p.openTCPConn(host, port)
 	if err != nil {
 		return nil, err

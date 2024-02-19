@@ -446,6 +446,14 @@ func Ping16(host string, port int) (*Status16, error) {
 // Ping16 pings 1.6 to 1.7 (exclusively) Minecraft servers (Notchian servers of more late versions also respond
 // to this ping packet.)
 func (p *Pinger) Ping16(host string, port int) (*Status16, error) {
+	status, err := p.pingGeneric(p.ping16, host, port)
+	if err != nil {
+		return nil, err
+	}
+	return status.(*Status16), nil
+}
+
+func (p *Pinger) ping16(host string, port int) (interface{}, error) {
 	conn, err := p.openTCPConn(host, port)
 	if err != nil {
 		return nil, err
