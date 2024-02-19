@@ -1,6 +1,7 @@
 package minequery
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"strings"
@@ -56,6 +57,30 @@ func (p *Pinger) openUDPConnWithLocalAddr(host string, remotePort int, localAddr
 		}
 	}
 	return conn, nil
+}
+
+// resolveSRV performs SRV lookup of a Minecraft server hostname.
+//
+// In case there are no records found, an empty string, a zero port and nil error are returned.
+//
+// In case when there is more than one record, the hostname and port of the first record with
+// the least weight is returned.
+func (p *Pinger) resolveSRV(host string) (string, uint16, error) {
+	_, records, err := net.LookupSRV("minecraft", "tcp", host)
+	if err != nil {
+		var dnsError *net.DNSError
+		if errors.As(err, &dnsError) && dnsError.IsNotFound {
+			return "", 0, nil
+		}
+
+		return "", 0, err
+	}
+
+	if len(records) == 0 {
+		return "", 0, nil
+	}
+	target := records[0]
+	return target.Target, target.Port, nil
 }
 
 func shouldWrapIPv6(host string) bool {

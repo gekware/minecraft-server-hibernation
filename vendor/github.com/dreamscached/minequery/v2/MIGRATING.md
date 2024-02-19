@@ -5,6 +5,12 @@ versions of it may introduce changes that might be breaking to existing codebase
 
 This page will help you migrate your code in order to adapt to changes.
 
+## From v2.4.x
+
+Version 2.5.0 enables SRV records support which is (to adhere to expected behavior) 
+enabled *by default*. If you need to stick to v2.4.x behavior, disable it with
+`WithPreferSRVRecords` option when creating new `Pinger` instance.
+
 ## From v2.2.x
 
 Version 2.3.0 enables query session caching by default. If you need to stick to 
