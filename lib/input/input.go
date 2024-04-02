@@ -60,6 +60,10 @@ func GetInput() {
 			errco.NewLogln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_INPUT_READ, err.Error())
 			continue
 		}
+		// Replace "/" with "mine "
+		if strings.HasPrefix(line, "/") {
+			line = strings.Replace(line, "/", "mine ", 1)
+		}
 
 		// make sure that only 1 space separates words
 		lineSplit := strings.Fields(line)
