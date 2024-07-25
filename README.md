@@ -169,7 +169,7 @@ _for debug purposes (debug level 3 required)_
 
 Author: [gekigek99](https://github.com/gekigek99)  
 
-Contributors: [najtin](https://github.com/najtin), [f8ith](https://github.com/f8ith), [Br31zh](https://github.com/Br31zh), [someotherotherguy](https://github.com/someotherotherguy), [navidmafi](https://github.com/navidmafi), [cromefire](https://github.com/cromefire), [andreblanke](https://github.com/andreblanke), [KyleGospo](https://github.com/KyleGospo), [A-wels](https://github.com/A-wels)  
+Contributors: [najtin](https://github.com/najtin), [f8ith](https://github.com/f8ith), [Br31zh](https://github.com/Br31zh), [someotherotherguy](https://github.com/someotherotherguy), [navidmafi](https://github.com/navidmafi), [cromefire](https://github.com/cromefire), [andreblanke](https://github.com/andreblanke), [KyleGospo](https://github.com/KyleGospo), [A-wels](https://github.com/A-wels), [dxomg](https://github.com/dxomg)  
 
 Docker branch (outdated): [lubocode](https://github.com/lubocode/minecraft-server-hibernation)  
 
