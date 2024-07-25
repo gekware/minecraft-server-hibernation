@@ -4,7 +4,7 @@ github.com/chzyer/readline
 # github.com/denisbrodbeck/machineid v1.0.1
 ## explicit
 github.com/denisbrodbeck/machineid
-# github.com/dreamscached/minequery/v2 v2.4.1
+# github.com/dreamscached/minequery/v2 v2.5.0
 ## explicit; go 1.13
 github.com/dreamscached/minequery/v2
 # github.com/go-ole/go-ole v1.3.0
