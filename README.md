@@ -175,17 +175,20 @@ Pterodactyl egg: [BolverBlitz](https://github.com/gekware/minecraft-server-hiber
 <details>
 	<summary>Contributors</summary>
 	<ul>
-		<li><a href="https://github.com/najtin">najtin</a></li>
-		<li><a href="https://github.com/f8ith">f8ith</a></li>
-		<li><a href="https://github.com/Br31zh">Br31zh</a></li>
-		<li><a href="https://github.com/someotherotherguy">someotherotherguy</a></li>
-		<li><a href="https://github.com/navidmafi">navidmafi</a></li>
-		<li><a href="https://github.com/cromefire">cromefire</a></li>
-		<li><a href="https://github.com/andreblanke">andreblanke</a></li>
-		<li><a href="https://github.com/KyleGospo">KyleGospo</a></li>
-		<li><a href="https://github.com/A-wels">A-wels</a></li>
-		<li><a href="https://github.com/dxomg">dxomg</a></li>
-		<li><a href="https://github.com/JackGlobetrotter">JackGlobetrotter</a></li>
+		<li><a href="https://github.com/gekware/minecraft-server-hibernation/commits?author=najtin">najtin</a></li>
+		<li><a href="https://github.com/gekware/minecraft-server-hibernation/commits?author=lubocode">lubocode</a></li>
+		<li><a href="https://github.com/gekware/minecraft-server-hibernation/commits?author=BolverBlitz">BolverBlitz</a></li>
+		<li><a href="https://github.com/gekware/minecraft-server-hibernation/commits?author=f8ith">f8ith</a></li>
+		<li><a href="https://github.com/gekware/minecraft-server-hibernation/commits?author=Br31zh">Br31zh</a></li>
+		<li><a href="https://github.com/gekware/minecraft-server-hibernation/commits?author=someotherotherguy">someotherotherguy</a></li>
+		<li><a href="https://github.com/gekware/minecraft-server-hibernation/commits?author=navidmafi">navidmafi</a></li>
+		<li><a href="https://github.com/gekware/minecraft-server-hibernation/commits?author=cromefire">cromefire</a></li>
+		<li><a href="https://github.com/gekware/minecraft-server-hibernation/commits?author=andreblanke">andreblanke</a></li>
+		<li><a href="https://github.com/gekware/minecraft-server-hibernation/commits?author=KyleGospo">KyleGospo</a></li>
+		<li><a href="https://github.com/gekware/minecraft-server-hibernation/commits?author=A-wels">A-wels</a></li>
+		<li><a href="https://github.com/gekware/minecraft-server-hibernation/commits?author=dxomg">dxomg</a></li>
+		<li><a href="https://github.com/gekware/minecraft-server-hibernation/commits?author=JackGlobetrotter">JackGlobetrotter</a></li>
+		<li><a href="https://github.com/gekware/minecraft-server-hibernation/commits?author=Chris6ix">Chris6ix</a></li>
 	</ul>
 </details>
 
