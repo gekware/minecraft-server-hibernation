@@ -38,7 +38,7 @@ github.com/tklauser/numcpus
 # github.com/yusufpapurcu/wmi v1.2.3
 ## explicit; go 1.16
 github.com/yusufpapurcu/wmi
-# golang.org/x/image v0.14.0
+# golang.org/x/image v0.15.0
 ## explicit; go 1.18
 golang.org/x/image/draw
 golang.org/x/image/math/f64
