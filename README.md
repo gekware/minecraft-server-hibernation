@@ -189,6 +189,7 @@ Pterodactyl egg: [BolverBlitz](https://github.com/gekware/minecraft-server-hiber
 		<li><a href="https://github.com/gekware/minecraft-server-hibernation/commits?author=dxomg">dxomg</a></li>
 		<li><a href="https://github.com/gekware/minecraft-server-hibernation/commits?author=JackGlobetrotter">JackGlobetrotter</a></li>
 		<li><a href="https://github.com/gekware/minecraft-server-hibernation/commits?author=Chris6ix">Chris6ix</a></li>
+		<li><a href="https://github.com/gekware/minecraft-server-hibernation/commits?author=TheDevMinerTV">TheDevMinerTV</a></li>
 	</ul>
 </details>
 
