@@ -191,8 +191,10 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 
 	flag.IntVar(&c.Msh.Debug, "d", c.Msh.Debug, "Specify debug level.")
 	// c.Msh.ID should not be set by a flag
+	flag.StringVar(&MshHost, "host", MshHost, "Specify msh host.")
 	flag.IntVar(&c.Msh.MshPort, "port", c.Msh.MshPort, "Specify msh port.")
 	flag.IntVar(&c.Msh.MshPortQuery, "portquery", c.Msh.MshPortQuery, "Specify msh port for queries.")
+	flag.StringVar(&ServHost, "servhost", ServHost, "Specify the minecraft server host.")
 	flag.IntVar(&ServPort, "servport", ServPort, "Specify the minecraft server port.")
 	flag.IntVar(&ServPortQuery, "servportquery", ServPortQuery, "Specify minecraft server port for queries.")
 	flag.BoolVar(&c.Msh.EnableQuery, "enablequery", c.Msh.EnableQuery, "Enables queries handling.")
