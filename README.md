@@ -171,12 +171,23 @@ _for debug purposes (debug level 3 required)_
 ### CREDITS:  
 
 Author: [gekigek99](https://github.com/gekigek99)  
-
-Contributors: [najtin](https://github.com/najtin), [f8ith](https://github.com/f8ith), [Br31zh](https://github.com/Br31zh), [someotherotherguy](https://github.com/someotherotherguy), [navidmafi](https://github.com/navidmafi), [cromefire](https://github.com/cromefire), [andreblanke](https://github.com/andreblanke), [KyleGospo](https://github.com/KyleGospo), [A-wels](https://github.com/A-wels), [dxomg](https://github.com/dxomg), [JackGlobetrotter](https://github.com/JackGlobetrotter)  
-
-Docker branch (outdated): [lubocode](https://github.com/lubocode/minecraft-server-hibernation)  
-
 Pterodactyl egg: [BolverBlitz](https://github.com/gekware/minecraft-server-hibernation-pterodactyl-egg)  
+<details>
+	<summary>Contributors</summary>
+	<ul>
+		<li><a href="https://github.com/najtin">najtin</a></li>
+		<li><a href="https://github.com/f8ith">f8ith</a></li>
+		<li><a href="https://github.com/Br31zh">Br31zh</a></li>
+		<li><a href="https://github.com/someotherotherguy">someotherotherguy</a></li>
+		<li><a href="https://github.com/navidmafi">navidmafi</a></li>
+		<li><a href="https://github.com/cromefire">cromefire</a></li>
+		<li><a href="https://github.com/andreblanke">andreblanke</a></li>
+		<li><a href="https://github.com/KyleGospo">KyleGospo</a></li>
+		<li><a href="https://github.com/A-wels">A-wels</a></li>
+		<li><a href="https://github.com/dxomg">dxomg</a></li>
+		<li><a href="https://github.com/JackGlobetrotter">JackGlobetrotter</a></li>
+	</ul>
+</details>
 
 _If you wish to contribute, please create a pull request using the dev branch as the base for your changes_
 
