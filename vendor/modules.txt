@@ -29,10 +29,10 @@ github.com/shirou/gopsutil/net
 github.com/shirou/gopsutil/process
 # github.com/stretchr/testify v1.8.4
 ## explicit; go 1.20
-# github.com/tklauser/go-sysconf v0.3.13
+# github.com/tklauser/go-sysconf v0.3.14
 ## explicit; go 1.18
 github.com/tklauser/go-sysconf
-# github.com/tklauser/numcpus v0.7.0
+# github.com/tklauser/numcpus v0.8.0
 ## explicit; go 1.18
 github.com/tklauser/numcpus
 # github.com/yusufpapurcu/wmi v1.2.4
@@ -42,7 +42,7 @@ github.com/yusufpapurcu/wmi
 ## explicit; go 1.18
 golang.org/x/image/draw
 golang.org/x/image/math/f64
-# golang.org/x/sys v0.18.0
+# golang.org/x/sys v0.19.0
 ## explicit; go 1.18
 golang.org/x/sys/unix
 golang.org/x/sys/windows
