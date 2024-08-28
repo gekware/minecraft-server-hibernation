@@ -66,6 +66,12 @@ func GetInput() {
 
 		errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "user input: %s", lineSplit[:])
 
+		if len(lineSplit) == 0 {
+			// fix crash on null input
+			errco.NewLogln(errco.TYPE_WAR, errco.LVL_0, errco.ERROR_COMMAND_INPUT, "specify a command (msh - mine)")
+			continue
+		}
+
 		switch lineSplit[0] {
 		// target msh
 		case "msh":
