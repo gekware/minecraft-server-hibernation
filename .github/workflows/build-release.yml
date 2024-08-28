@@ -1,0 +1,85 @@
+name: Build and Release Go Program
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        goos: [linux, windows, darwin, freebsd]
+        goarch: [amd64, arm64]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.20' # Set the Go version you need
+
+      - name: Extract version from README.md
+        id: get_version
+        run: |
+          version=$(grep -oP 'version:\s*\Kv[0-9]+\.[0-9]+\.[0-9]+' README.md)
+          echo "VERSION=${version}" >> $GITHUB_ENV
+
+      - name: Get short commit hash
+        id: get_commit_hash
+        run: echo "COMMIT_HASH=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+      - name: Set file extension
+        id: set_extension
+        run: |
+          if [[ "${{ matrix.goos }}" == "windows" ]]; then
+            echo "EXT=exe" >> $GITHUB_ENV
+          elif [[ "${{ matrix.goos }}" == "darwin" ]]; then
+            echo "EXT=osx" >> $GITHUB_ENV
+          else
+            echo "EXT=bin" >> $GITHUB_ENV
+          fi
+
+      - name: Build binary
+        run: |
+          mkdir -p dist/
+          output_name="msh-${{ env.VERSION }}-${{ env.COMMIT_HASH }}-${{ matrix.goos }}-${{ matrix.goarch }}.${{ env.EXT }}"
+          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -o dist/${output_name}
+
+      - name: Upload binaries and config file as artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-artifacts
+          path: |
+            dist/
+            msh-config.json
+
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: dist/
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: Release ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Assets
+        run: |
+          for file in dist/* msh-config.json; do
+            file_name=$(basename $file)
+            echo "Uploading $file_name"
+            gh release upload ${{ github.ref_name }} $file --clobber
+          done
