@@ -67,7 +67,7 @@ func GetInput() {
 		errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "user input: %s", lineSplit[:])
 
 		// prevent crash when input is empty
-		if (len(lineSplit) == 0) {
+		if len(lineSplit) == 0 {
 			continue
 		}
 
