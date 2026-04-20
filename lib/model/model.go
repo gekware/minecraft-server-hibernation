@@ -25,6 +25,7 @@ type Configuration struct {
 		SuspendRefresh                int      `json:"SuspendRefresh"` // specify if msh should refresh java server process suspension and every how many seconds
 		InfoHibernation               string   `json:"InfoHibernation"`
 		InfoStarting                  string   `json:"InfoStarting"`
+		MsgStarting                   string   `json:"MsgStarting"`
 		NotifyUpdate                  bool     `json:"NotifyUpdate"`
 		NotifyMessage                 bool     `json:"NotifyMessage"`
 		Whitelist                     []string `json:"Whitelist"`
