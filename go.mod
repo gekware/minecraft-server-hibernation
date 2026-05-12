@@ -1,6 +1,6 @@
 module msh
 
-go 1.24.0
+go 1.25.0
 
 require (
 	github.com/chzyer/readline v1.5.1
@@ -9,7 +9,7 @@ require (
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/shirou/gopsutil v3.21.11+incompatible
 	golang.org/x/image v0.21.0
-	golang.org/x/sys v0.41.0
+	golang.org/x/sys v0.44.0
 )
 
 require (
