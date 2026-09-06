@@ -1,8 +1,11 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net"
+	"os"
+	"syscall"
 
 	"msh/lib/config"
 	"msh/lib/conn"
@@ -62,9 +65,28 @@ func main() {
 
 	// open a tcp listener
 	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", config.MshHost, config.MshPort))
+
 	if err != nil {
-		errco.NewLogln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CLIENT_LISTEN, err.Error())
+		finalMsg := fmt.Sprintf("Could not start server on port %d", config.MshPort)
+
+		var opErr *net.OpError
+		if errors.As(err, &opErr) {
+			var sysErr *os.SyscallError
+			if errors.As(opErr.Err, &sysErr) {
+				if errno, ok := sysErr.Err.(syscall.Errno); ok {
+					// 10048 is Windows WSAEADDRINUSE
+					// syscall.EADDRINUSE is the standard Unix/Go constant
+					if errno == syscall.EADDRINUSE || errno == 10048 {
+						finalMsg = fmt.Sprintf("Port %d is already in use by another program.", config.MshPort)
+					}
+				}
+			}
+		}
+
+		errco.NewLogln(errco.TYPE_ERR, errco.LVL_0, errco.ERROR_CLIENT_LISTEN, finalMsg)
+
 		progmgr.AutoTerminate()
+		return // Important to return here to avoid accessing 'listener' when it's nil
 	}
 
 	// infinite cycle to handle new clients.

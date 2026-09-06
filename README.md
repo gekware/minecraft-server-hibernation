@@ -7,6 +7,7 @@
 [![msh - stars](https://img.shields.io/github/stars/gekware/minecraft-server-hibernation?color=ffbd19)](https://github.com/gekware/minecraft-server-hibernation/stargazers)
 
 Avoid wasting resources by starting your Minecraft server automatically when a player joins and stopping it when no one is online  
+MSH has collectively hibernated Minecraft servers for over a millennium (1000 Years), saving millions of CPU-hours since 2019. ❤️  
 _(for vanilla/modded on linux/windows/macos)_  
 
 <p align="center" >
@@ -15,8 +16,8 @@ _(for vanilla/modded on linux/windows/macos)_
     </a>
 </p>
 
-version: v2.5.0  
-Copyright (C) 2019-2023 [gekigek99](https://github.com/gekigek99)  
+version: v2.5.1  
+Copyright (C) 2019-2026 [gekigek99](https://github.com/gekigek99)  
 
 Join our [discord server](https://discord.com/invite/guKB6ETeMF)!  
 
@@ -28,7 +29,7 @@ _You can download msh from [gekware](https://msh.gekware.net/) or [compile the d
 
 -----
 ### PROGRAM COMPILATION:
-This version was successfully compiled in go version 1.19  
+This version was successfully compiled in go version 1.24  
 Compilation procedure:
 ```command
 git clone https://github.com/gekware/minecraft-server-hibernation.git  
@@ -48,6 +49,7 @@ go build .
     - StopServer
 	- Whitelist
     - \* TimeBeforeStoppingEmptyServer
+    - \* ClientPacketTimeout
     - \* [others...](#DEFINITIONS)
 3. \* put the frozen icon you want in `path/to/server.jar/folder` (must be called `server-icon-frozen`, supported formats: `.png`, `.jpg`)
 4. on the router (to which the server is connected): forward port 25555 to server ([tutorial](https://www.wikihow.com/Open-Ports#Opening-Router-Firewall-Ports))
@@ -110,6 +112,13 @@ Ports configuration
 TimeBeforeStoppingEmptyServer sets the time (after the last player disconnected) that msh waits before hibernating the minecraft server
 ```yaml
 "TimeBeforeStoppingEmptyServer": 30
+```
+
+ClientPacketTimeout sets the time (in seconds) that msh waits for a client to send a complete packet  
+_the default value is fine for most setups: increase it only if clients on a slow or high latency connection fail to connect_  
+_if the parameter is missing from `msh-config.json` msh uses 1 second_
+```yaml
+"ClientPacketTimeout": 1
 ```
 
 SuspendAllow enables msh to suspend minecraft server process when there are no players online  

@@ -74,6 +74,53 @@ func BytBetween(data, a, b []byte) ([]byte, *errco.MshLog) {
 	return data[aIndex+len(a):][:bIndex], nil
 }
 
+// ParseVarInt decodes the minecraft protocol VarInt starting at data[offset]
+// and returns its value and the number of bytes it is composed of
+func ParseVarInt(data []byte, offset int) (int, int, *errco.MshLog) {
+	// scheme: [ 1xxxxxxx | 1xxxxxxx | ... | 0xxxxxxx ]
+	// every byte carries 7 bits of data and the most significant bit signals that an other byte follows.
+	// a VarInt is composed of 5 bytes at most
+
+	var value int
+
+	for i := 0; i < 5; i++ {
+		if offset+i >= len(data) {
+			return 0, 0, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_ANALYSIS, "VarInt is truncated")
+		}
+
+		byt := data[offset+i]
+		value |= int(byt&0x7f) << (7 * i)
+
+		// most significant bit not set: this is the last byte of the VarInt
+		if byt&0x80 == 0 {
+			return value, i + 1, nil
+		}
+	}
+
+	return 0, 0, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_ANALYSIS, "VarInt is longer than 5 bytes")
+}
+
+// EncodeVarInt encodes value as a minecraft protocol VarInt.
+// The returned bytes are 1 to 5, depending on the value:
+// encoding it with a fixed amount of bytes overflows as soon as
+// the value doesn't fit in the bits available
+func EncodeVarInt(value int) []byte {
+	// scheme: [ 1xxxxxxx | 1xxxxxxx | ... | 0xxxxxxx ]
+	// every byte carries 7 bits of data and the most significant bit signals that an other byte follows
+
+	byt := make([]byte, 0, 5)
+
+	for {
+		// no bits left apart from the 7 least significant: this is the last byte of the VarInt
+		if value&^0x7f == 0 {
+			return append(byt, byte(value))
+		}
+
+		byt = append(byt, byte(value&0x7f|0x80))
+		value >>= 7
+	}
+}
+
 // SliceContain returns true if the slice contains the element.
 // Supported types: string, int, uint32.
 // In case of error, false is returned.

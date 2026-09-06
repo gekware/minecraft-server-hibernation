@@ -1,0 +1,85 @@
+name: Manual Release Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g., v2.5.0)'
+        required: true
+        default: 'v2.5.0'
+
+env:
+    # https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    strategy:
+      matrix:
+        include:
+          - os: darwin
+            arch: amd64
+            suffix: .osx
+          - os: darwin
+            arch: arm64
+            suffix: .osx
+          - os: linux
+            arch: amd64
+            suffix: .bin
+          - os: linux
+            arch: arm
+            suffix: .bin
+          - os: linux
+            arch: arm64
+            suffix: .bin
+          - os: windows
+            arch: amd64
+            suffix: .exe
+          - os: windows
+            arch: arm64
+            suffix: .exe
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - name: Get Short SHA
+        id: vars
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Build Binary
+        env:
+          GOOS: ${{ matrix.os }}
+          GOARCH: ${{ matrix.arch }}
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          COMMIT="${{ steps.vars.outputs.sha_short }}"
+          FILENAME="msh-${VERSION}-${COMMIT}-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.suffix }}"
+          
+          go build -v \
+            -ldflags="-X 'msh/lib/progmgr.MshVersion=${VERSION}' -X 'msh/lib/progmgr.MshCommit=${COMMIT}'" \
+            -o "dist/${FILENAME}" .
+          
+          # Copy the config file into the dist folder so it's collected for every matrix run
+          cp msh-config.json dist/msh-config.json
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.version }}
+          name: Release ${{ github.event.inputs.version }}
+          draft: false
+          prerelease: false
+          files: |
+            dist/*
+            ${{ strategy.job-index == 0 && 'msh-config.json' || '' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

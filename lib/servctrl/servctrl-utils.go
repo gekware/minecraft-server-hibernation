@@ -15,6 +15,7 @@ import (
 	"msh/lib/errco"
 	"msh/lib/model"
 	"msh/lib/servstats"
+	"msh/lib/utility"
 )
 
 // countPlayerSafe returns the number of players on the server.
@@ -102,6 +103,47 @@ func getPlayersByServInfo() (int, *errco.MshLog) {
 	return servInfo.Players.Online, nil
 }
 
+// extractServInfo returns the json data contained in a minecraft server info response.
+//
+// response scheme:
+// [ packet length (VarInt) | packet id (VarInt, 0) | json length (VarInt) | json ]
+//
+// the header can't be assumed to be a fixed amount of bytes: its length fields are VarInts,
+// so the header is 3 bytes for a json shorter than 128 bytes, 5 bytes up to 16383 bytes
+// and 7 bytes above that
+func extractServInfo(data []byte) ([]byte, *errco.MshLog) {
+	// packet length
+	_, n, logMsh := utility.ParseVarInt(data, 0)
+	if logMsh != nil {
+		return nil, logMsh.AddTrace()
+	}
+	offset := n
+
+	// packet id (must be 0 for a server info response)
+	packetID, n, logMsh := utility.ParseVarInt(data, offset)
+	if logMsh != nil {
+		return nil, logMsh.AddTrace()
+	}
+	if packetID != 0 {
+		return nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_SERVER_REQUEST_INFO, "packet id is not of a server info response (%d)", packetID)
+	}
+	offset += n
+
+	// json length
+	jsonLen, n, logMsh := utility.ParseVarInt(data, offset)
+	if logMsh != nil {
+		return nil, logMsh.AddTrace()
+	}
+	offset += n
+
+	// the json is cut at the declared length: any byte after it is not part of it
+	if jsonLen < 0 || offset+jsonLen > len(data) {
+		return nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_SERVER_REQUEST_INFO, "not enough data received (declared json length: %d, received: %d)", jsonLen, len(data)-offset)
+	}
+
+	return data[offset : offset+jsonLen], nil
+}
+
 // getServInfo returns server info after emulating a server info request to the minecraft server
 func getServInfo() (*model.DataInfo, *errco.MshLog) {
 	var recInfoData []byte = []byte{}
@@ -155,12 +197,12 @@ func getServInfo() (*model.DataInfo, *errco.MshLog) {
 		recInfoData = append(recInfoData, buf[:dataLen]...)
 	}
 
-	// remove first 5 bytes that are used as header to get only the json data
+	// remove the header to get only the json data
 	// [178 88 0 175 88]{"description":{ ...
-	if len(recInfoData) < 5 {
-		return nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_SERVER_REQUEST_INFO, "not enough data received (%v)", recInfoData)
+	recInfoData, logMsh = extractServInfo(recInfoData)
+	if logMsh != nil {
+		return nil, logMsh.AddTrace()
 	}
-	recInfoData = recInfoData[5:]
 
 	// load data into struct
 	err = json.Unmarshal(recInfoData, recInfo)
