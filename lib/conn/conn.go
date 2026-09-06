@@ -29,6 +29,11 @@ func HandlerClientConn(clientConn net.Conn) {
 	reqPacket, reqType, logMsh := getReqType(clientConn)
 	if logMsh != nil {
 		logMsh.Log(true)
+
+		// close the client connection before returning
+		errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "closing connection for: %s", clientAddress)
+		clientConn.Close()
+
 		return
 	}
 
@@ -155,6 +160,11 @@ func HandlerClientConn(clientConn net.Conn) {
 				clientConn.Write(mes)
 				errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%smsh --> client%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
 
+				// close the client connection before returning
+				// (the proxy is not opened, so no one else will close it)
+				errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "closing connection for: %s", clientAddress)
+				clientConn.Close()
+
 				return
 			}
 
@@ -166,6 +176,10 @@ func HandlerClientConn(clientConn net.Conn) {
 		mes := buildMessage(reqType, "Client request unknown")
 		clientConn.Write(mes)
 		errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%smsh --> client%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
+
+		// close the client connection before returning
+		errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "closing connection for: %s", clientAddress)
+		clientConn.Close()
 	}
 }
 
@@ -184,6 +198,10 @@ func openProxy(clientConn net.Conn, serverInitPacket []byte, req int) {
 		mes := buildMessage(errco.CLIENT_REQ_JOIN, "can't connect to server... check if minecraft server is running and set the correct ServPort")
 		clientConn.Write(mes)
 		errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%smsh --> client%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
+
+		// close the client connection before returning
+		// (forwardTCP is not launched, so no one else will close it)
+		clientConn.Close()
 
 		return
 	}
