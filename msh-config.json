@@ -18,6 +18,7 @@
     "MshPortQuery": 25555,
     "EnableQuery": true,
     "TimeBeforeStoppingEmptyServer": 30,
+    "ClientPacketTimeout": 1,
     "SuspendAllow": false,
     "SuspendRefresh": -1,
     "InfoHibernation": "                   §fserver status:\n                   §b§lHIBERNATING",

@@ -3,6 +3,7 @@ package conn
 import (
 	"bytes"
 	"encoding/json"
+	"io"
 	"math/big"
 	"net"
 	"strings"
@@ -11,6 +12,18 @@ import (
 	"msh/lib/config"
 	"msh/lib/errco"
 	"msh/lib/model"
+)
+
+const (
+	// maxPacketLen is the maximum length (in bytes) of the data of a client packet that msh accepts.
+	// handshake / login start / ping packets are a few dozen bytes long: this limit is very generous
+	// and prevents a malicious client from making msh allocate a huge buffer
+	// by declaring an enormous packet length
+	maxPacketLen int = 32 * 1024
+
+	// defaultClientPacketTimeout is the time (in seconds) msh waits for a complete client packet
+	// when Msh.ClientPacketTimeout is not set (or is invalid) in msh-config.json
+	defaultClientPacketTimeout int = 1
 )
 
 // buildMessage takes the request type and message to write to the client
@@ -208,21 +221,77 @@ func getPing(clientConn net.Conn) *errco.MshLog {
 	return nil
 }
 
-// getClientPacket reads the client socket and returns only the bytes containing data
+// getClientPacket reads one complete packet from the client socket and returns its bytes
+// (packet length VarInt included).
+//
+// packet scheme: [ packet length (VarInt) | packet data (packet length bytes) ]
+//
+// tcp is a stream of bytes without message boundaries: a single Read() can return a partial
+// packet (or more than one packet), so bytes are read until the packet is complete and
+// not a single byte more (the bytes that follow belong to the next packet and must be
+// left on the socket for the caller / minecraft server).
 // clientConn connection should not be closed here (need to be closed in caller function).
 func getClientPacket(clientConn net.Conn) ([]byte, *errco.MshLog) {
-	buf := make([]byte, 1024)
+	// set deadline to avoid hanging when client is not sending a packet that msh expects.
+	// the deadline is absolute and set once: it must not be renewed while reading the packet,
+	// otherwise a slow client could keep the connection open indefinitely by sending 1 byte at a time
+	timeout := config.ConfigRuntime.Msh.ClientPacketTimeout
+	if timeout <= 0 {
+		timeout = defaultClientPacketTimeout
+	}
+	clientConn.SetDeadline(time.Now().Add(time.Duration(timeout) * time.Second))
 
-	// set deadline to avoid hanging when client is not sending a packet that msh expects
-	clientConn.SetDeadline(time.Now().Add(1 * time.Second))
+	// read packet length
+	packetLen, packetLenByt, logMsh := readVarInt(clientConn)
+	if logMsh != nil {
+		return nil, logMsh.AddTrace()
+	}
 
-	// read first packet
-	dataLen, err := clientConn.Read(buf)
+	// check packet length before allocating memory for it
+	// (packetLen < 0 catches a 5 bytes VarInt overflowing int on 32 bit systems)
+	if packetLen < 0 || packetLen > maxPacketLen {
+		return nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CLIENT_SOCKET_READ, "client declared a packet length out of range (%d)", packetLen)
+	}
+
+	// read packet data (keep reading until the whole packet has been received)
+	packet := make([]byte, len(packetLenByt)+packetLen)
+	copy(packet, packetLenByt)
+	_, err := io.ReadFull(clientConn, packet[len(packetLenByt):])
 	if err != nil {
 		return nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CLIENT_SOCKET_READ, err.Error())
 	}
 
-	errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%sclient --> msh%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, buf[:dataLen])
+	errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%sclient --> msh%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, packet)
 
-	return buf[:dataLen], nil
+	return packet, nil
+}
+
+// readVarInt reads a minecraft protocol VarInt from r and returns
+// its value and the raw bytes it is composed of.
+// bytes are read one at a time (without buffering) so that the bytes following
+// the VarInt are left untouched on the socket.
+func readVarInt(r io.Reader) (int, []byte, *errco.MshLog) {
+	// scheme: [ 1xxxxxxx | 1xxxxxxx | ... | 0xxxxxxx ]
+	// every byte carries 7 bits of data and the most significant bit signals that an other byte follows.
+	// a VarInt is composed of 5 bytes at most
+
+	var value int
+	byt := make([]byte, 1)
+	raw := make([]byte, 0, 5)
+
+	for i := 0; i < 5; i++ {
+		if _, err := io.ReadFull(r, byt); err != nil {
+			return 0, nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CLIENT_SOCKET_READ, err.Error())
+		}
+
+		raw = append(raw, byt[0])
+		value |= int(byt[0]&0x7f) << (7 * i)
+
+		// most significant bit not set: this is the last byte of the VarInt
+		if byt[0]&0x80 == 0 {
+			return value, raw, nil
+		}
+	}
+
+	return 0, nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CLIENT_SOCKET_READ, "client sent a VarInt longer than 5 bytes")
 }

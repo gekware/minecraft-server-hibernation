@@ -49,6 +49,7 @@ go build .
     - StopServer
 	- Whitelist
     - \* TimeBeforeStoppingEmptyServer
+    - \* ClientPacketTimeout
     - \* [others...](#DEFINITIONS)
 3. \* put the frozen icon you want in `path/to/server.jar/folder` (must be called `server-icon-frozen`, supported formats: `.png`, `.jpg`)
 4. on the router (to which the server is connected): forward port 25555 to server ([tutorial](https://www.wikihow.com/Open-Ports#Opening-Router-Firewall-Ports))
@@ -111,6 +112,13 @@ Ports configuration
 TimeBeforeStoppingEmptyServer sets the time (after the last player disconnected) that msh waits before hibernating the minecraft server
 ```yaml
 "TimeBeforeStoppingEmptyServer": 30
+```
+
+ClientPacketTimeout sets the time (in seconds) that msh waits for a client to send a complete packet  
+_the default value is fine for most setups: increase it only if clients on a slow or high latency connection fail to connect_  
+_if the parameter is missing from `msh-config.json` msh uses 1 second_
+```yaml
+"ClientPacketTimeout": 1
 ```
 
 SuspendAllow enables msh to suspend minecraft server process when there are no players online  
