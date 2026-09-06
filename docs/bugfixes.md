@@ -78,3 +78,45 @@ added, along with an error check that closes both connections when forwarding th
 
 **Test:** `Test_answerClient` in `lib/conn/conn-prot_test.go` — answering on a closed connection
 must return a log. Before the fix the error was dropped and the function reported success.
+
+---
+
+## Different subsystem
+
+These two were found while tracing the short read, but they sit on other code paths and neither
+contributed to it. They share one root mistake with it: treating a VarInt as a fixed size field.
+
+### B3 — the answer header overflows above 16383 bytes
+
+**Where:** `lib/conn/conn-prot.go`, `buildMessage()` / `mountHeader()`
+
+**What:** the length fields of msh's own answers were encoded with a hand rolled base-128 helper
+that always emitted exactly 2 bytes:
+
+```go
+firstByte := len(message)%128 + 128
+secondByte := float64(len(message) / 128)
+```
+
+They are VarInts. From `len >= 16384` the second byte gets the continuation bit set, so the client
+waits for a third byte that is never sent and the frame is misread. The code even documented its own
+ceiling — `bytes used: [ 2 | 1 | 2 | 0 - 16379 ]` — without enforcing it.
+
+**Trigger:** an INFO answer larger than 16383 bytes. The answer is dominated by the base64 server
+icon: the default msh icon is 11056 base64 chars, so the response is around 11.3 KB and there is
+roughly 5 KB of headroom. `loadIcon()` scales any user icon to 64x64 and recompresses it, so only an
+unusually incompressible 64x64 PNG gets there. Latent and bounded — but reachable.
+
+**Impact:** the client cannot parse the status response; the server list entry fails to load.
+
+**Fix:** `mountHeader` uses `utility.EncodeVarInt`, which produces 1 to 5 bytes as the spec requires.
+The pointless `float64` (integer division converted to float and back to byte) is gone with it.
+
+**Wire change to be aware of:** messages under 128 bytes (the JOIN loadscreen text) now use a 1 byte
+length field instead of the old overlong `[len|0x80, 0]`. Both are valid VarInts and both are
+accepted by clients, but as with the short read itself, this can only be proven against a real
+client over a real network.
+
+**Test:** `Test_buildMessage` in `lib/conn/conn-prot_test.go` builds answers of 3 sizes and decodes
+the full header back. Before the fix, the 20000 byte case reports a packet length of 3630 for a
+packet holding 20013 bytes of data.

@@ -2,6 +2,7 @@ package conn
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net"
@@ -12,6 +13,8 @@ import (
 
 	"msh/lib/config"
 	"msh/lib/errco"
+	"msh/lib/model"
+	"msh/lib/utility"
 )
 
 type test struct {
@@ -577,5 +580,72 @@ func Test_answerClient(t *testing.T) {
 
 	if logMsh := answerClient(clientConn, mes); logMsh == nil {
 		t.Errorf("\tanswer to the client on a closed connection did not return a log\n")
+	}
+}
+
+// Test_buildMessage checks that the header msh mounts on its answers is a valid
+// minecraft packet whatever the message length
+func Test_buildMessage(t *testing.T) {
+	tests := []struct {
+		title   string
+		message string
+	}{
+		{"short message", "server is hibernating"},
+		{"message just below the 2 bytes length limit", strings.Repeat("a", 16000)},
+		// a fixed 2 bytes length field overflows here: the second byte gets the
+		// continuation bit set and the client waits for a third byte that never comes
+		{"message above the 2 bytes length limit", strings.Repeat("a", 20000)},
+	}
+
+	for _, test := range tests {
+		fmt.Printf("testing \"%s\"\n", test.title)
+
+		packet := buildMessage(errco.CLIENT_REQ_JOIN, test.message)
+
+		// packet length
+		packetLen, n, logMsh := utility.ParseVarInt(packet, 0)
+		if logMsh != nil {
+			t.Errorf("\t\"%s\": %s\n", test.title, fmt.Sprintf(logMsh.Mex, logMsh.Arg...))
+			continue
+		}
+		if n+packetLen != len(packet) {
+			t.Errorf("\t\"%s\": packet length field (%d) does not match the packet (%d bytes of data)\n", test.title, packetLen, len(packet)-n)
+			continue
+		}
+		offset := n
+
+		// packet id
+		packetID, n, logMsh := utility.ParseVarInt(packet, offset)
+		if logMsh != nil {
+			t.Errorf("\t\"%s\": %s\n", test.title, fmt.Sprintf(logMsh.Mex, logMsh.Arg...))
+			continue
+		}
+		if packetID != 0 {
+			t.Errorf("\t\"%s\": packet id is %d instead of 0\n", test.title, packetID)
+			continue
+		}
+		offset += n
+
+		// json length
+		jsonLen, n, logMsh := utility.ParseVarInt(packet, offset)
+		if logMsh != nil {
+			t.Errorf("\t\"%s\": %s\n", test.title, fmt.Sprintf(logMsh.Mex, logMsh.Arg...))
+			continue
+		}
+		offset += n
+		if offset+jsonLen != len(packet) {
+			t.Errorf("\t\"%s\": json length field (%d) does not match the remaining bytes (%d)\n", test.title, jsonLen, len(packet)-offset)
+			continue
+		}
+
+		// the json must contain the original message
+		dataTxt := &model.DataTxt{}
+		if err := json.Unmarshal(packet[offset:], dataTxt); err != nil {
+			t.Errorf("\t\"%s\": json is not valid: %s\n", test.title, err.Error())
+			continue
+		}
+		if dataTxt.Text != test.message {
+			t.Errorf("\t\"%s\": message in the json is different from expected\n", test.title)
+		}
 	}
 }

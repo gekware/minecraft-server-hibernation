@@ -30,32 +30,23 @@ const (
 func buildMessage(reqType int, message string) []byte {
 	// mountHeader mounts the full header to a specified message
 	var mountHeader = func(data []byte) []byte {
-		//                  ┌--------------------full header--------------------┐
-		// scheme:          [ sub-header1     | sub-header2 | sub-header3       | message   ]
-		// bytes used:      [ 2               | 1           | 2                 | 0 - 16379 ]
-		// value range:     [ 128 0 - 255 127 | 0           | 128 0 - 255 127	| --------- ]
+		//          ┌-------------full header-------------┐
+		// scheme:  [ packet length | packet id | json length | json    ]
+		// type:    [ VarInt        | VarInt, 0 | VarInt      | ------- ]
+		//
+		// the length fields are VarInts and must be encoded as such: encoding them with a
+		// fixed amount of bytes overflows as soon as the length doesn't fit in the bits
+		// available (a 2 bytes encoding breaks at 16384 bytes, which a big server icon
+		// is enough to reach)
 
-		// addSubHeader mounts 1 sub-header to a specified message
-		var addSubHeader = func(message []byte) []byte {
-			//              ┌------sub-header1/3------┐
-			// scheme:      [ firstByte | secondByte  | data ]
-			// value range: [ 128 - 255 | 0 - 127     | ---- ]
-			// it's a number composed of 2 digits in base-128 (firstByte is least significant byte)
-			// sub-header represents the length of the following data
+		// json length
+		data = append(utility.EncodeVarInt(len(data)), data...)
 
-			firstByte := len(message)%128 + 128
-			secondByte := float64(len(message) / 128)
-			return append([]byte{byte(firstByte), byte(secondByte)}, message...)
-		}
-
-		// sub-header3 calculation
-		data = addSubHeader(data)
-
-		// sub-header2 calculation
+		// packet id
 		data = append([]byte{0}, data...)
 
-		// sub-header1 calculation
-		data = addSubHeader(data)
+		// packet length
+		data = append(utility.EncodeVarInt(len(data)), data...)
 
 		return data
 	}
