@@ -11,6 +11,7 @@ import (
 	"msh/lib/config"
 	"msh/lib/errco"
 	"msh/lib/model"
+	"msh/lib/utility"
 )
 
 const (
@@ -207,14 +208,14 @@ func getReqType(clientConn net.Conn) ([]byte, int, *errco.MshLog) {
 // since the fields before it have a variable length (VarInts and the server address string)
 func parseHandshake(packet []byte) (int, *errco.MshLog) {
 	// packet length
-	_, n, logMsh := parseVarInt(packet, 0)
+	_, n, logMsh := utility.ParseVarInt(packet, 0)
 	if logMsh != nil {
 		return 0, logMsh.AddTrace()
 	}
 	offset := n
 
 	// packet id (must be 0 for a handshake packet)
-	packetID, n, logMsh := parseVarInt(packet, offset)
+	packetID, n, logMsh := utility.ParseVarInt(packet, offset)
 	if logMsh != nil {
 		return 0, logMsh.AddTrace()
 	}
@@ -224,14 +225,14 @@ func parseHandshake(packet []byte) (int, *errco.MshLog) {
 	offset += n
 
 	// protocol version
-	_, n, logMsh = parseVarInt(packet, offset)
+	_, n, logMsh = utility.ParseVarInt(packet, offset)
 	if logMsh != nil {
 		return 0, logMsh.AddTrace()
 	}
 	offset += n
 
 	// server address (String: VarInt length followed by that amount of bytes)
-	addressLen, n, logMsh := parseVarInt(packet, offset)
+	addressLen, n, logMsh := utility.ParseVarInt(packet, offset)
 	if logMsh != nil {
 		return 0, logMsh.AddTrace()
 	}
@@ -248,38 +249,12 @@ func parseHandshake(packet []byte) (int, *errco.MshLog) {
 	offset += 2
 
 	// next state
-	nextState, _, logMsh := parseVarInt(packet, offset)
+	nextState, _, logMsh := utility.ParseVarInt(packet, offset)
 	if logMsh != nil {
 		return 0, logMsh.AddTrace()
 	}
 
 	return nextState, nil
-}
-
-// parseVarInt decodes the minecraft protocol VarInt starting at packet[offset]
-// and returns its value and the number of bytes it is composed of
-func parseVarInt(packet []byte, offset int) (int, int, *errco.MshLog) {
-	// scheme: [ 1xxxxxxx | 1xxxxxxx | ... | 0xxxxxxx ]
-	// every byte carries 7 bits of data and the most significant bit signals that an other byte follows.
-	// a VarInt is composed of 5 bytes at most
-
-	var value int
-
-	for i := 0; i < 5; i++ {
-		if offset+i >= len(packet) {
-			return 0, 0, errco.NewLog(errco.TYPE_WAR, errco.LVL_4, errco.ERROR_CLIENT_REQ, "VarInt is truncated")
-		}
-
-		byt := packet[offset+i]
-		value |= int(byt&0x7f) << (7 * i)
-
-		// most significant bit not set: this is the last byte of the VarInt
-		if byt&0x80 == 0 {
-			return value, i + 1, nil
-		}
-	}
-
-	return 0, 0, errco.NewLog(errco.TYPE_WAR, errco.LVL_4, errco.ERROR_CLIENT_REQ, "VarInt is longer than 5 bytes")
 }
 
 // getPing performs msh PING response to the client PING request
