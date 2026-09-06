@@ -120,3 +120,42 @@ client over a real network.
 **Test:** `Test_buildMessage` in `lib/conn/conn-prot_test.go` builds answers of 3 sizes and decodes
 the full header back. Before the fix, the 20000 byte case reports a packet length of 3630 for a
 packet holding 20013 bytes of data.
+
+### B4 — the minecraft server info response header was assumed to be 5 bytes
+
+**Where:** `lib/servctrl/servctrl-utils.go`, `getServInfo()`
+
+**What:** msh emulates a status request against the real minecraft server to count players, and
+stripped the response header with a constant:
+
+```go
+// remove first 5 bytes that are used as header to get only the json data
+recInfoData = recInfoData[5:]
+```
+
+The header is `packet length (VarInt) | packet id | json length (VarInt)`, so its size follows the
+size of the json:
+
+| json size | real header | what `[5:]` does |
+| --- | --- | --- |
+| < 128 bytes | 3 bytes | eats 2 bytes of json → unmarshal fails |
+| 128 – 16383 bytes | **5 bytes** | correct |
+| >= 16384 bytes | 7 bytes | leaves 2 junk bytes → unmarshal fails |
+
+The json was also never cut at its declared length, so anything the server sent after it went into
+the unmarshal too.
+
+**Trigger:** both ends are reachable but borderline. Under 128 bytes needs a short MOTD and a server
+with no favicon (whether it fits depends on the minecraft version, which keeps adding fields); over
+16384 bytes needs a heavy `server-icon.png`.
+
+**Impact:** not fatal. `countPlayerSafe()` falls back to the `list` command and then to msh's
+internal connection count, so player counting keeps working — but it logs an error every cycle and
+spams the server console with `list` commands.
+
+**Fix:** `extractServInfo()`, a pure function that decodes the two VarInts with
+`utility.ParseVarInt`, checks the packet id and slices the json at its declared length.
+
+**Test:** `Test_extractServInfo` in `lib/servctrl/servctrl-utils_test.go` covers all three header
+sizes plus malformed responses. Before the fix the 3 byte and 7 byte cases return corrupted json,
+and a response declaring more json than it carries is accepted silently.
