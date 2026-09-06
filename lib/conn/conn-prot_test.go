@@ -192,6 +192,18 @@ func Test_getReqType(t *testing.T) {
 			50 * time.Millisecond,
 			errco.CLIENT_REQ_INFO,
 		},
+		{
+			// the server address is length prefixed and can contain any byte, msh port bytes
+			// followed by the info request byte included: searching the packet for that
+			// sequence classifies this join request as an info request
+			"client join request with msh port flag inside server address",
+			[][]byte{
+				mountHandshake(761, "srv"+string([]byte{99, 211, 1})+".example.com", 25555, 2),
+				{11, 0, 9, 103, 101, 107, 105, 103, 101, 107, 57, 57},
+			},
+			0,
+			errco.CLIENT_REQ_JOIN,
+		},
 	}
 
 	// check that the test helpers build the same bytes as the hardcoded packets above

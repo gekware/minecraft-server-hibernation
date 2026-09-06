@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
-	"math/big"
 	"net"
 	"strings"
 	"time"
@@ -120,61 +119,135 @@ func getReqType(clientConn net.Conn) ([]byte, int, *errco.MshLog) {
 
 	dataReqFull = data
 
-	// generate flags
-	MshPortByt := big.NewInt(int64(config.MshPort)).Bytes() // calculates listen port in BigEndian bytes
-	reqFlagInfo := append(MshPortByt, byte(1))              // flag contained in INFO request packet -> [99 211 1]
-	reqFlagJoin := append(MshPortByt, byte(2))              // flag contained in JOIN request packet -> [99 211 2]
-
-	// extract request type key byte
-	reqTypeKeyByte := byte(0)
-	if len(dataReqFull) > int(dataReqFull[0]) {
-		reqTypeKeyByte = dataReqFull[int(dataReqFull[0])]
+	// the handshake packet fields are parsed in order to extract the "next state" field.
+	// the packet must not be searched for a flag composed of the msh port bytes followed by
+	// the request type byte: that same sequence can appear inside the server address field
+	// (which is length prefixed and can contain any byte), resulting in a wrong request type
+	nextState, logMsh := parseHandshake(dataReqFull)
+	if logMsh != nil {
+		// log why the handshake could not be parsed (only shown at byte log level),
+		// then report the request as unknown
+		logMsh.Log(true)
+		return nil, errco.CLIENT_REQ_UNKN, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CLIENT_REQ, "client request unknown (received: %v)", dataReqFull)
 	}
 
-	switch {
-	case reqTypeKeyByte == byte(1) || bytes.Contains(dataReqFull, reqFlagInfo):
+	switch nextState {
+	case 1:
 		// client is requesting server info
-		// example: [ 16 0 244 5 9 49 50 55 46 48 46 48 46 49 99 211 1 1 0 ]
-		//  ______________ case 1 _____________      ____________ case 2 ___________
-		// [ 16 ... x x x (MshPortBytes) 1 1 0 ] or [ 16 ... x x x (MshPortBytes) 1 ]
-		// [              ^-reqFlagInfo--^     ]    [              ^-reqFlagInfo--^ ]
-		// [    ^-----------16 bytes-----^     ]    [    ^-----------16 bytes-----^ ]
+		// example: [ 16 0 244 5 9 49 50 55 46 48 46 48 46 49 99 211 1 ]
+		// scheme:  [ 16  | 0  | 244 5    | 9 49 50 55 46 48 46 48 46 49 | 99 211      | 1          ]
+		//          [ len | id | protocol | server address              | server port | next state ]
 
 		return dataReqFull, errco.CLIENT_REQ_INFO, nil
 
-	case reqTypeKeyByte == byte(2) || bytes.Contains(dataReqFull, reqFlagJoin):
+	case 2:
 		// client is trying to join the server
-		// example: [ 16 0 244 5 9 49 50 55 46 48 46 48 46 49 99 211 2 ]
-		//  _______________________ case 1 ______________________      ________________________ case 2 ________________________
-		// [ 16 ... x x x (MshPortBytes) 2 x ... x (player name) ] or [ 16 ... x x x (MshPortBytes) 2 ][ x ... x (player name) ]
-		// [              ^-reqFlagJoin--^                       ]    [              ^-reqFlagJoin--^ ][                       ]
-		// [    ^-----------16 bytes-----^                       ]    [    ^-----------16 bytes-----^ ][                       ]
+		// example: [ 16 0 244 5 9 49 50 55 46 48 46 48 46 49 99 211 2 ][ 11 0 9 x ... x (player name) ]
+		//          [                 handshake packet                ][      login start packet      ]
 
-		// after ms 1.19.3 not always there is a EOF after case 1/2
-		// it's important to calculate if msh should read an other packet
-		// bugfix #197
-		switch {
-		case len(dataReqFull) < int(dataReqFull[0])+1:
-			// case unexpected: should not be possible
-			return nil, errco.CLIENT_REQ_UNKN, errco.NewLog(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_ANALYSIS, "unexpected data lenght")
-
-		case len(dataReqFull) == int(dataReqFull[0])+1:
-			// case 1: msh still has a packet to read
-			data, logMsh = getClientPacket(clientConn)
-			if logMsh != nil {
-				return nil, errco.CLIENT_REQ_UNKN, logMsh.AddTrace() // return request unknown as the request failed
-			}
-			dataReqFull = append(dataReqFull, data...)
-
-		case len(dataReqFull) > int(dataReqFull[0])+1:
-			// case 2 (probably): no need to read more data from client
+		// the handshake packet is followed by the login start packet (which contains the player name):
+		// it must be read too, since HandlerClientConn scans the returned bytes for whitelisted
+		// players and openProxy forwards them to the minecraft server.
+		// after ms 1.19.3 not always there is a EOF after the handshake packet, so msh can't rely
+		// on the client sending it separately (bugfix #197).
+		// now that getClientPacket returns exactly one packet, the login start packet
+		// is always read with a separate call
+		data, logMsh = getClientPacket(clientConn)
+		if logMsh != nil {
+			return nil, errco.CLIENT_REQ_UNKN, logMsh.AddTrace() // return request unknown as the request failed
 		}
+		dataReqFull = append(dataReqFull, data...)
 
 		return dataReqFull, errco.CLIENT_REQ_JOIN, nil
 
 	default:
 		return nil, errco.CLIENT_REQ_UNKN, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CLIENT_REQ, "client request unknown (received: %v)", dataReqFull)
 	}
+}
+
+// parseHandshake parses a minecraft handshake packet and returns its "next state" field
+// (1 when the client is requesting server info, 2 when the client is trying to join).
+//
+// handshake packet scheme:
+// [ packet length (VarInt) | packet id (VarInt, 0) | protocol version (VarInt) | server address (String) | server port (unsigned short) | next state (VarInt) ]
+//
+// the fields must be parsed in order: "next state" can't be located by indexing the packet,
+// since the fields before it have a variable length (VarInts and the server address string)
+func parseHandshake(packet []byte) (int, *errco.MshLog) {
+	// packet length
+	_, n, logMsh := parseVarInt(packet, 0)
+	if logMsh != nil {
+		return 0, logMsh.AddTrace()
+	}
+	offset := n
+
+	// packet id (must be 0 for a handshake packet)
+	packetID, n, logMsh := parseVarInt(packet, offset)
+	if logMsh != nil {
+		return 0, logMsh.AddTrace()
+	}
+	if packetID != 0 {
+		return 0, errco.NewLog(errco.TYPE_WAR, errco.LVL_4, errco.ERROR_CLIENT_REQ, "packet id is not of an handshake packet (%d)", packetID)
+	}
+	offset += n
+
+	// protocol version
+	_, n, logMsh = parseVarInt(packet, offset)
+	if logMsh != nil {
+		return 0, logMsh.AddTrace()
+	}
+	offset += n
+
+	// server address (String: VarInt length followed by that amount of bytes)
+	addressLen, n, logMsh := parseVarInt(packet, offset)
+	if logMsh != nil {
+		return 0, logMsh.AddTrace()
+	}
+	offset += n
+	if addressLen < 0 || offset+addressLen > len(packet) {
+		return 0, errco.NewLog(errco.TYPE_WAR, errco.LVL_4, errco.ERROR_CLIENT_REQ, "server address field is truncated")
+	}
+	offset += addressLen
+
+	// server port (unsigned short)
+	if offset+2 > len(packet) {
+		return 0, errco.NewLog(errco.TYPE_WAR, errco.LVL_4, errco.ERROR_CLIENT_REQ, "server port field is truncated")
+	}
+	offset += 2
+
+	// next state
+	nextState, _, logMsh := parseVarInt(packet, offset)
+	if logMsh != nil {
+		return 0, logMsh.AddTrace()
+	}
+
+	return nextState, nil
+}
+
+// parseVarInt decodes the minecraft protocol VarInt starting at packet[offset]
+// and returns its value and the number of bytes it is composed of
+func parseVarInt(packet []byte, offset int) (int, int, *errco.MshLog) {
+	// scheme: [ 1xxxxxxx | 1xxxxxxx | ... | 0xxxxxxx ]
+	// every byte carries 7 bits of data and the most significant bit signals that an other byte follows.
+	// a VarInt is composed of 5 bytes at most
+
+	var value int
+
+	for i := 0; i < 5; i++ {
+		if offset+i >= len(packet) {
+			return 0, 0, errco.NewLog(errco.TYPE_WAR, errco.LVL_4, errco.ERROR_CLIENT_REQ, "VarInt is truncated")
+		}
+
+		byt := packet[offset+i]
+		value |= int(byt&0x7f) << (7 * i)
+
+		// most significant bit not set: this is the last byte of the VarInt
+		if byt&0x80 == 0 {
+			return value, i + 1, nil
+		}
+	}
+
+	return 0, 0, errco.NewLog(errco.TYPE_WAR, errco.LVL_4, errco.ERROR_CLIENT_REQ, "VarInt is longer than 5 bytes")
 }
 
 // getPing performs msh PING response to the client PING request
