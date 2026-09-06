@@ -3,6 +3,7 @@ package conn
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"net"
 	"strings"
 	"sync"
@@ -531,5 +532,50 @@ func Test_getClientPacket(t *testing.T) {
 		if !bytes.Equal(packets[i], test.expect.([]byte)) {
 			t.Errorf("\t\"%s\": received packet is different from expected\n\treceived: %v\n\texpected: %v\n", test.title, packets[i], test.expect.([]byte))
 		}
+	}
+}
+
+// Test_answerClient checks that a failed answer to the client is reported
+// instead of being silently discarded
+func Test_answerClient(t *testing.T) {
+	mes := []byte{9, 1, 0, 0, 0, 0, 0, 89, 73, 114}
+
+	// open the listener before dialing, to avoid a race between listener and client
+	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", "127.0.0.1", 25555))
+	if err != nil {
+		t.Fatalf("%s\n", err.Error())
+	}
+	defer listener.Close()
+
+	// positive case: the client receives the message and no log is returned
+	serverSocket, err := net.Dial("tcp", fmt.Sprintf("%s:%d", "127.0.0.1", 25555))
+	if err != nil {
+		t.Fatalf("%s\n", err.Error())
+	}
+
+	clientConn, err := listener.Accept()
+	if err != nil {
+		t.Fatalf("%s\n", err.Error())
+	}
+
+	if logMsh := answerClient(clientConn, mes); logMsh != nil {
+		t.Errorf("\tanswer to the client failed: %s\n", fmt.Sprintf(logMsh.Mex, logMsh.Arg...))
+	}
+
+	buf := make([]byte, len(mes))
+	serverSocket.SetReadDeadline(time.Now().Add(time.Second))
+	if _, err := io.ReadFull(serverSocket, buf); err != nil {
+		t.Errorf("\tclient did not receive the answer: %s\n", err.Error())
+	} else if !bytes.Equal(buf, mes) {
+		t.Errorf("\tclient received different bytes from expected\n\treceived: %v\n\texpected: %v\n", buf, mes)
+	}
+
+	serverSocket.Close()
+
+	// negative case: answering on a closed connection must be reported
+	clientConn.Close()
+
+	if logMsh := answerClient(clientConn, mes); logMsh == nil {
+		t.Errorf("\tanswer to the client on a closed connection did not return a log\n")
 	}
 }

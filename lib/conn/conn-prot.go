@@ -107,6 +107,38 @@ func buildMessage(reqType int, message string) []byte {
 	}
 }
 
+// answerClient writes a message to the client and logs the bytes sent.
+//
+// A write deadline is set explicitly: getClientPacket sets a deadline that applies to reads
+// and writes alike, and by the time msh answers, that deadline is meant for a request
+// that has already been read and might be about to expire.
+//
+// clientConn connection should not be closed here (need to be closed in caller function).
+func answerClient(clientConn net.Conn, mes []byte) *errco.MshLog {
+	clientConn.SetWriteDeadline(time.Now().Add(clientPacketTimeout()))
+
+	_, err := clientConn.Write(mes)
+	if err != nil {
+		return errco.NewLog(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_CONN_WRITE, err.Error())
+	}
+
+	errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%smsh --> client%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
+
+	return nil
+}
+
+// clientPacketTimeout returns the time msh waits for a complete client packet.
+// Msh.ClientPacketTimeout is not set in configs that predate the parameter,
+// in which case the original behaviour is kept.
+func clientPacketTimeout() time.Duration {
+	timeout := config.ConfigRuntime.Msh.ClientPacketTimeout
+	if timeout <= 0 {
+		timeout = defaultClientPacketTimeout
+	}
+
+	return time.Duration(timeout) * time.Second
+}
+
 // getReqType returns the request packet, type (INFO or JOIN).
 // Not player name as it's too difficult to extract.
 func getReqType(clientConn net.Conn) ([]byte, int, *errco.MshLog) {
@@ -287,9 +319,10 @@ func getPing(clientConn net.Conn) *errco.MshLog {
 	}
 
 	// answer ping
-	clientConn.Write(pingData)
-
-	errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%smsh --> client%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, pingData)
+	logMsh = answerClient(clientConn, pingData)
+	if logMsh != nil {
+		return logMsh.AddTrace()
+	}
 
 	return nil
 }
@@ -308,11 +341,7 @@ func getClientPacket(clientConn net.Conn) ([]byte, *errco.MshLog) {
 	// set deadline to avoid hanging when client is not sending a packet that msh expects.
 	// the deadline is absolute and set once: it must not be renewed while reading the packet,
 	// otherwise a slow client could keep the connection open indefinitely by sending 1 byte at a time
-	timeout := config.ConfigRuntime.Msh.ClientPacketTimeout
-	if timeout <= 0 {
-		timeout = defaultClientPacketTimeout
-	}
-	clientConn.SetDeadline(time.Now().Add(time.Duration(timeout) * time.Second))
+	clientConn.SetReadDeadline(time.Now().Add(clientPacketTimeout()))
 
 	// read packet length
 	packetLen, packetLenByt, logMsh := readVarInt(clientConn)
