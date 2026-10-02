@@ -4,16 +4,70 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version tag (e.g., v2.5.0)'
+        description: 'Existing version tag to release (e.g., v2.5.1)'
         required: true
-        default: 'v2.5.0'
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ inputs.version }}
+  cancel-in-progress: false
 
 env:
-    # https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+  # https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.release.outputs.version }}
+      commit: ${{ steps.release.outputs.commit }}
+      short_commit: ${{ steps.release.outputs.short_commit }}
+    steps:
+      - name: Validate version and resolve its tag
+        id: release
+        uses: actions/github-script@v8
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+        with:
+          script: |
+            const version = process.env.RELEASE_VERSION;
+            if (!/^v[0-9]+\.[0-9]+\.[0-9]+$/.test(version) || version.trim() !== version) {
+              throw new Error('Version must have the form vX.Y.Z.');
+            }
+
+            const repo = context.repo;
+            for await (const page of github.paginate.iterator(github.rest.repos.listReleases, {
+              ...repo, per_page: 100
+            })) {
+              if (page.data.some(release => release.tag_name === version)) {
+                throw new Error(`A release already exists for ${version}; refusing to replace it.`);
+              }
+            }
+
+            // Resolve both lightweight and annotated tags to one immutable checkout.
+            let { data: { object } } = await github.rest.git.getRef({
+              ...repo, ref: `tags/${version}`
+            });
+            while (object.type === 'tag') {
+              const { data: tag } = await github.rest.git.getTag({
+                ...repo, tag_sha: object.sha
+              });
+              object = tag.object;
+            }
+            if (object.type !== 'commit') {
+              throw new Error(`${version} must point to a commit.`);
+            }
+
+            core.setOutput('version', version);
+            core.setOutput('commit', object.sha);
+            core.setOutput('short_commit', object.sha.slice(0, 7));
+
   build:
+    needs: prepare
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -43,39 +97,40 @@ jobs:
             suffix: .exe
 
     steps:
-      - name: Checkout code
+      - name: Checkout release commit
         uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.commit }}
+          persist-credentials: false
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.24'
 
-      - name: Get Short SHA
-        id: vars
-        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-
       - name: Build Binary
         env:
           GOOS: ${{ matrix.os }}
           GOARCH: ${{ matrix.arch }}
+          SUFFIX: ${{ matrix.suffix }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+          COMMIT: ${{ needs.prepare.outputs.short_commit }}
         run: |
-          VERSION="${{ github.event.inputs.version }}"
-          COMMIT="${{ steps.vars.outputs.sha_short }}"
-          FILENAME="msh-${VERSION}-${COMMIT}-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.suffix }}"
-          
+          FILENAME="msh-${VERSION}-${COMMIT}-${GOOS}-${GOARCH}${SUFFIX}"
+
           go build -v \
             -ldflags="-X 'msh/lib/progmgr.MshVersion=${VERSION}' -X 'msh/lib/progmgr.MshCommit=${COMMIT}'" \
             -o "dist/${FILENAME}" .
-          
+
           # Copy the config file into the dist folder so it's collected for every matrix run
           cp msh-config.json dist/msh-config.json
 
       - name: Upload to Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event.inputs.version }}
-          name: Release ${{ github.event.inputs.version }}
+          tag_name: ${{ needs.prepare.outputs.version }}
+          target_commitish: ${{ needs.prepare.outputs.commit }}
+          name: Release ${{ needs.prepare.outputs.version }}
           draft: false
           prerelease: false
           files: |
