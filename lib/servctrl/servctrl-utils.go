@@ -137,7 +137,7 @@ func extractServInfo(data []byte) ([]byte, *errco.MshLog) {
 	offset += n
 
 	// the json is cut at the declared length: any byte after it is not part of it
-	if jsonLen < 0 || offset+jsonLen > len(data) {
+	if jsonLen < 0 || jsonLen > len(data)-offset {
 		return nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_SERVER_REQUEST_INFO, "not enough data received (declared json length: %d, received: %d)", jsonLen, len(data)-offset)
 	}
 

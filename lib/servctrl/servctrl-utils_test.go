@@ -146,3 +146,30 @@ func Test_extractServInfo(t *testing.T) {
 		}
 	}
 }
+
+func Test_extractServInfo_rejectsLargeJSONLength(t *testing.T) {
+	tests := []struct {
+		name   string
+		length []byte
+	}{
+		{"MaxInt32", []byte{0xff, 0xff, 0xff, 0xff, 0x07}},
+		{"MaxInt32 minus six", []byte{0xf9, 0xff, 0xff, 0xff, 0x07}},
+		{"MaxInt32 minus seven", []byte{0xf8, 0xff, 0xff, 0xff, 0x07}},
+		{"negative length", []byte{0xff, 0xff, 0xff, 0xff, 0x0f}},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			// Adding the seven-byte header to the first two lengths overflows
+			// a 32-bit int. Reject the missing JSON without attempting to slice it.
+			data := append([]byte{6, 0}, test.length...)
+			extracted, logMsh := extractServInfo(data)
+			if logMsh == nil {
+				t.Fatal("expected an error for a JSON length larger than the response")
+			}
+			if extracted != nil {
+				t.Errorf("expected no JSON on error, got %v", extracted)
+			}
+		})
+	}
+}
