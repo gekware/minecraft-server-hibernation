@@ -15,6 +15,10 @@ func Test_QueryFull(t *testing.T) {
 
 	go HandlerQuery()
 
+	// give HandlerQuery the time to open the udp listener before querying it
+	// (net.ListenPacket is called inside the goroutine and there is no readiness signal)
+	time.Sleep(200 * time.Millisecond)
+
 	minequery.WithUseStrict(true)
 
 	for i := 0; i < 3; i++ {
@@ -22,7 +26,7 @@ func Test_QueryFull(t *testing.T) {
 
 		res, err := minequery.QueryFull(config.MshHost, config.MshPortQuery)
 		if err != nil {
-			t.Fatalf(err.Error())
+			t.Fatal(err)
 		}
 
 		fmt.Printf("result: %+v\n", res)
@@ -36,6 +40,10 @@ func Test_QueryBasic(t *testing.T) {
 
 	go HandlerQuery()
 
+	// give HandlerQuery the time to open the udp listener before querying it
+	// (net.ListenPacket is called inside the goroutine and there is no readiness signal)
+	time.Sleep(200 * time.Millisecond)
+
 	minequery.WithUseStrict(true)
 
 	for i := 0; i < 3; i++ {
@@ -43,7 +51,7 @@ func Test_QueryBasic(t *testing.T) {
 
 		res, err := minequery.QueryBasic(config.MshHost, config.MshPortQuery)
 		if err != nil {
-			t.Fatalf(err.Error())
+			t.Fatal(err)
 		}
 
 		fmt.Printf("result: %+v\n", res)

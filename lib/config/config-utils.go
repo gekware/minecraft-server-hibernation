@@ -165,8 +165,13 @@ func (c *Configuration) loadIcon() *errco.MshLog {
 // In case of error "", -1, *errco.MshLog are returned.
 //
 // (checkout version.json info: https://minecraft.fandom.com/wiki/Version.json)
-func (c *Configuration) getVersionInfo() (string, int, *errco.MshLog) {
-	reader, err := zip.OpenReader(filepath.Join(c.Server.Folder, c.Server.FileName))
+func (c *Configuration) getVersionInfo(altServerName ...string) (string, int, *errco.MshLog) {
+	var serverFileName = c.Server.FileName
+	if len(altServerName) > 0 {
+		serverFileName = altServerName[0]
+	}
+
+	reader, err := zip.OpenReader(filepath.Join(c.Server.Folder, serverFileName))
 	if err != nil {
 		return "", -1, errco.NewLog(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_VERSION_LOAD, err.Error())
 	}
@@ -196,6 +201,10 @@ func (c *Configuration) getVersionInfo() (string, int, *errco.MshLog) {
 		}
 
 		return utility.FirstNon("", info.Version1, info.Version2), info.Protocol, nil
+	}
+
+	if c.Server.FileName != "server.jar" { //check if it matches the deafult name, if not
+		return c.getVersionInfo(filepath.Join("versions", c.Server.Version, "server-"+c.Server.Version+".jar")) //fallback to default naming scheme
 	}
 
 	return "", -1, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_VERSION_LOAD, "minecraft server version and protocol could not be extracted from version.json")

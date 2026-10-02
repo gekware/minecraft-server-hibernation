@@ -371,7 +371,7 @@ func (p *Pinger) writeQueryFullStatPacket(conn *net.UDPConn, sessionID int32, to
 
 func (p *Pinger) parseQueryHandshakeResponse(reader io.Reader) (int32, error) {
 	// Read all the remaining data in packet and ensure it has NUL terminator (if UseStrict)
-	token, _ := io.ReadAll(reader)
+	token, _ := readAll(reader)
 	if len(token) == 0 {
 		return 0, fmt.Errorf("challenge token is empty")
 	}
@@ -392,7 +392,7 @@ func (p *Pinger) parseQueryHandshakeResponse(reader io.Reader) (int32, error) {
 
 func (p *Pinger) parseQueryBasicStatResponse(reader io.Reader) (*BasicQueryStatus, error) {
 	// Read all the remaining data and ensure it has NUL terminator (if UseStrict)
-	data, _ := io.ReadAll(reader)
+	data, _ := readAll(reader)
 	if len(data) == 0 {
 		return nil, fmt.Errorf("%w: empty response body", ErrInvalidStatus)
 	}
@@ -437,7 +437,7 @@ func (p *Pinger) parseQueryBasicStatResponse(reader io.Reader) (*BasicQueryStatu
 	}
 
 	// Read host as byte sequence
-	hostBytes, err := io.ReadAll(remReader)
+	hostBytes, err := readAll(remReader)
 	if err != nil {
 		return nil, err
 	}
@@ -454,7 +454,7 @@ func (p *Pinger) parseQueryBasicStatResponse(reader io.Reader) (*BasicQueryStatu
 
 func (p *Pinger) parseQueryFullStatResponse(reader io.Reader) (*FullQueryStatus, error) {
 	// Read all the remaining data and ensure it has NUL terminator (if UseStrict)
-	data, _ := io.ReadAll(reader)
+	data, _ := readAll(reader)
 	if len(data) == 0 {
 		return nil, fmt.Errorf("%w: empty response body", ErrInvalidStatus)
 	}

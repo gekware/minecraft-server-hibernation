@@ -1,7 +1,12 @@
 package servctrl
 
 import (
+	"bytes"
+	"fmt"
+	"strings"
 	"testing"
+
+	"msh/lib/utility"
 )
 
 func Test_searchListCom(t *testing.T) {
@@ -78,5 +83,93 @@ func Test_searchListCom(t *testing.T) {
 		if n != tt.expNum {
 			t.Error("function returned unexpected number")
 		}
+	}
+}
+
+func Test_extractServInfo(t *testing.T) {
+	// mountResponse builds a minecraft server info response around a json payload:
+	// [ packet length (VarInt) | packet id (VarInt, 0) | json length (VarInt) | json ]
+	mountResponse := func(jsonData []byte) []byte {
+		data := append([]byte{0}, utility.EncodeVarInt(len(jsonData))...)
+		data = append(data, jsonData...)
+		return append(utility.EncodeVarInt(len(data)), data...)
+	}
+
+	// json payloads whose length puts the header at 3, 5 and 7 bytes:
+	// only the 5 bytes case worked when the header size was hardcoded
+	tests := []struct {
+		title    string
+		jsonData []byte
+	}{
+		{
+			"short description, no favicon (3 bytes header)",
+			[]byte(`{"description":{"text":""},"players":{"max":20,"online":0},"version":{"name":"1.19.2","protocol":760}}`),
+		},
+		{
+			"regular response (5 bytes header)",
+			[]byte(`{"description":{"text":"` + strings.Repeat("a", 1000) + `"}}`),
+		},
+		{
+			"big favicon (7 bytes header)",
+			[]byte(`{"description":{"text":"` + strings.Repeat("a", 20000) + `"}}`),
+		},
+	}
+
+	for _, test := range tests {
+		fmt.Printf("testing \"%s\"\n", test.title)
+
+		extracted, logMsh := extractServInfo(mountResponse(test.jsonData))
+		if logMsh != nil {
+			t.Errorf("\t\"%s\": %s\n", test.title, fmt.Sprintf(logMsh.Mex, logMsh.Arg...))
+			continue
+		}
+
+		if !bytes.Equal(extracted, test.jsonData) {
+			t.Errorf("\t\"%s\": extracted json is different from expected\n\textracted: %s\n", test.title, string(extracted))
+		}
+	}
+
+	// negative cases
+	negative := []struct {
+		title string
+		data  []byte
+	}{
+		{"empty response", []byte{}},
+		{"truncated header", []byte{128}},
+		{"json shorter than declared", append([]byte{10, 0, 8}, []byte("abc")...)},
+		{"packet id is not 0", []byte{3, 9, 1, 65}},
+	}
+
+	for _, test := range negative {
+		if _, logMsh := extractServInfo(test.data); logMsh == nil {
+			t.Errorf("\t\"%s\": expected an error, got none\n", test.title)
+		}
+	}
+}
+
+func Test_extractServInfo_rejectsLargeJSONLength(t *testing.T) {
+	tests := []struct {
+		name   string
+		length []byte
+	}{
+		{"MaxInt32", []byte{0xff, 0xff, 0xff, 0xff, 0x07}},
+		{"MaxInt32 minus six", []byte{0xf9, 0xff, 0xff, 0xff, 0x07}},
+		{"MaxInt32 minus seven", []byte{0xf8, 0xff, 0xff, 0xff, 0x07}},
+		{"negative length", []byte{0xff, 0xff, 0xff, 0xff, 0x0f}},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			// Adding the seven-byte header to the first two lengths overflows
+			// a 32-bit int. Reject the missing JSON without attempting to slice it.
+			data := append([]byte{6, 0}, test.length...)
+			extracted, logMsh := extractServInfo(data)
+			if logMsh == nil {
+				t.Fatal("expected an error for a JSON length larger than the response")
+			}
+			if extracted != nil {
+				t.Errorf("expected no JSON on error, got %v", extracted)
+			}
+		})
 	}
 }

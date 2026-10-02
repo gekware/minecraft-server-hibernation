@@ -283,7 +283,8 @@ func printerOutErr() {
 						FreezeMSSchedule()
 
 					// the server is stopping
-					case strings.Contains(lineContent, "Stopping") && strings.Contains(lineContent, "server"):
+					case strings.HasPrefix(lineContent, "Stopping server"):
+						// This ensures it only triggers if "Stopping server" is at the start of the message
 						servstats.Stats.Status = errco.SERVER_STATUS_STOPPING
 						errco.NewLogln(errco.TYPE_INF, errco.LVL_1, errco.ERROR_NIL, "MINECRAFT SERVER IS STOPPING!")
 					}

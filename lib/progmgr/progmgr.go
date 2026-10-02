@@ -13,9 +13,10 @@ import (
 
 /*
 COMMIT COLLECTION
-- this is commit 700!
-- this is commit 800!
-- this is commit 900!
+- this is commit  700!
+- this is commit  800!
+- this is commit  900!
+- this is commit 1000!
 */
 
 var (
@@ -26,6 +27,7 @@ var (
 	msh *program = &program{
 		startTime: time.Now(),
 		sigExit:   make(chan os.Signal, 1),
+		sigUser:   make(chan os.Signal, 1),
 		mgrActive: false,
 	}
 )
@@ -33,6 +35,7 @@ var (
 type program struct {
 	startTime time.Time      // msh program start time
 	sigExit   chan os.Signal // channel through which OS termination signals are notified
+	sigUser   chan os.Signal // channel through which User-defined signals are notified
 	mgrActive bool           // indicates if msh manager is running
 }
 
@@ -45,6 +48,8 @@ func MshMgr() {
 
 	// set msh.sigExit to relay termination signals
 	signal.Notify(msh.sigExit, syscall.SIGINT, syscall.SIGHUP, syscall.SIGTERM, syscall.SIGQUIT)
+
+	SetupUserSignalHandling(msh)
 
 	msh.mgrActive = true
 

@@ -26,6 +26,201 @@ const Ping17ProtocolVersionUndefined int32 = -1
 
 //goland:noinspection GoUnusedConst
 const (
+	// Ping17ProtocolVersion1202 holds a protocol version (=764) for Minecraft 1.20.2
+	Ping17ProtocolVersion1202 int32 = 764
+
+	// Ping17ProtocolVersion1202rc2 holds a protocol version (=1073741977) for Minecraft 1.20.2-rc2
+	Ping17ProtocolVersion1202rc2 int32 = 1073741977
+
+	// Ping17ProtocolVersion1202rc1 holds a protocol version (=1073741976) for Minecraft 1.20.2-rc1
+	Ping17ProtocolVersion1202rc1 int32 = 1073741976
+
+	// Ping17ProtocolVersion1202pre4 holds a protocol version (=1073741975) for Minecraft 1.20.2-pre4
+	Ping17ProtocolVersion1202pre4 int32 = 1073741975
+
+	// Ping17ProtocolVersion1202pre3 holds a protocol version (=1073741974) for Minecraft 1.20.2-pre3
+	Ping17ProtocolVersion1202pre3 int32 = 1073741974
+
+	// Ping17ProtocolVersion1202pre2 holds a protocol version (=1073741973) for Minecraft 1.20.2-pre2
+	Ping17ProtocolVersion1202pre2 int32 = 1073741973
+
+	// Ping17ProtocolVersion1202pre1 holds a protocol version (=1073741972) for Minecraft 1.20.2-pre1
+	Ping17ProtocolVersion1202pre1 int32 = 1073741972
+
+	// Ping17ProtocolVersion23w35a holds a protocol version (=1073741971) for Minecraft 23w35a
+	Ping17ProtocolVersion23w35a int32 = 1073741971
+
+	// Ping17ProtocolVersion23w33a holds a protocol version (=1073741970) for Minecraft 23w33a
+	Ping17ProtocolVersion23w33a int32 = 1073741970
+
+	// Ping17ProtocolVersion23w32a holds a protocol version (=1073741969) for Minecraft 23w32a
+	Ping17ProtocolVersion23w32a int32 = 1073741969
+
+	// Ping17ProtocolVersion23w31a holds a protocol version (=1073741968) for Minecraft 23w31a
+	Ping17ProtocolVersion23w31a int32 = 1073741968
+
+	// Ping17ProtocolVersion1201 holds a protocol version (=763) for Minecraft 1.20.1
+	Ping17ProtocolVersion1201 int32 = 763
+
+	// Ping17ProtocolVersion1201rc1 holds a protocol version (=1073741966) for Minecraft 1.20.1-rc1
+	Ping17ProtocolVersion1201rc1 int32 = 1073741966
+
+	// Ping17ProtocolVersion120 holds a protocol version (=763) for Minecraft 1.20
+	Ping17ProtocolVersion120 int32 = 763
+
+	// Ping17ProtocolVersion120rc1 holds a protocol version (=1073741965) for Minecraft 1.20-rc1
+	Ping17ProtocolVersion120rc1 int32 = 1073741965
+
+	// Ping17ProtocolVersion120pre7 holds a protocol version (=1073741964) for Minecraft 1.20-pre7
+	Ping17ProtocolVersion120pre7 int32 = 1073741964
+
+	// Ping17ProtocolVersion120pre6 holds a protocol version (=1073741963) for Minecraft 1.20-pre6
+	Ping17ProtocolVersion120pre6 int32 = 1073741963
+
+	// Ping17ProtocolVersion120pre5 holds a protocol version (=1073741962) for Minecraft 1.20-pre5
+	Ping17ProtocolVersion120pre5 int32 = 1073741962
+
+	// Ping17ProtocolVersion120pre4 holds a protocol version (=1073741961) for Minecraft 1.20-pre4
+	Ping17ProtocolVersion120pre4 int32 = 1073741961
+
+	// Ping17ProtocolVersion120pre3 holds a protocol version (=1073741960) for Minecraft 1.20-pre3
+	Ping17ProtocolVersion120pre3 int32 = 1073741960
+
+	// Ping17ProtocolVersion120pre2 holds a protocol version (=1073741959) for Minecraft 1.20-pre2
+	Ping17ProtocolVersion120pre2 int32 = 1073741959
+
+	// Ping17ProtocolVersion120pre1 holds a protocol version (=1073741958) for Minecraft 1.20-pre1
+	Ping17ProtocolVersion120pre1 int32 = 1073741958
+
+	// Ping17ProtocolVersion23w18a holds a protocol version (=1073741957) for Minecraft 23w18a
+	Ping17ProtocolVersion23w18a int32 = 1073741957
+
+	// Ping17ProtocolVersion23w17a holds a protocol version (=1073741956) for Minecraft 23w17a
+	Ping17ProtocolVersion23w17a int32 = 1073741956
+
+	// Ping17ProtocolVersion23w16a holds a protocol version (=1073741955) for Minecraft 23w16a
+	Ping17ProtocolVersion23w16a int32 = 1073741955
+
+	// Ping17ProtocolVersion23w14a holds a protocol version (=1073741954) for Minecraft 23w14a
+	Ping17ProtocolVersion23w14a int32 = 1073741954
+
+	// Ping17ProtocolVersion23w13a holds a protocol version (=1073741952) for Minecraft 23w13a
+	Ping17ProtocolVersion23w13a int32 = 1073741952
+
+	// Ping17ProtocolVersion23w12a holds a protocol version (=1073741951) for Minecraft 23w12a
+	Ping17ProtocolVersion23w12a int32 = 1073741951
+
+	// Ping17ProtocolVersion1194 holds a protocol version (=762) for Minecraft 1.19.4
+	Ping17ProtocolVersion1194 int32 = 762
+
+	// Ping17ProtocolVersion1194rc3 holds a protocol version (=1073741950) for Minecraft 1.19.4-rc3
+	Ping17ProtocolVersion1194rc3 int32 = 1073741950
+
+	// Ping17ProtocolVersion1194rc2 holds a protocol version (=1073741949) for Minecraft 1.19.4-rc2
+	Ping17ProtocolVersion1194rc2 int32 = 1073741949
+
+	// Ping17ProtocolVersion1194rc1 holds a protocol version (=1073741948) for Minecraft 1.19.4-rc1
+	Ping17ProtocolVersion1194rc1 int32 = 1073741948
+
+	// Ping17ProtocolVersion1194pre4 holds a protocol version (=1073741947) for Minecraft 1.19.4-pre4
+	Ping17ProtocolVersion1194pre4 int32 = 1073741947
+
+	// Ping17ProtocolVersion1194pre3 holds a protocol version (=1073741946) for Minecraft 1.19.4-pre3
+	Ping17ProtocolVersion1194pre3 int32 = 1073741946
+
+	// Ping17ProtocolVersion1194pre2 holds a protocol version (=1073741945) for Minecraft 1.19.4-pre2
+	Ping17ProtocolVersion1194pre2 int32 = 1073741945
+
+	// Ping17ProtocolVersion1194pre1 holds a protocol version (=1073741944) for Minecraft 1.19.4-pre1
+	Ping17ProtocolVersion1194pre1 int32 = 1073741944
+
+	// Ping17ProtocolVersion23w07a holds a protocol version (=1073741943) for Minecraft 23w07a
+	Ping17ProtocolVersion23w07a int32 = 1073741943
+
+	// Ping17ProtocolVersion23w06a holds a protocol version (=1073741942) for Minecraft 23w06a
+	Ping17ProtocolVersion23w06a int32 = 1073741942
+
+	// Ping17ProtocolVersion23w05a holds a protocol version (=1073741941) for Minecraft 23w05a
+	Ping17ProtocolVersion23w05a int32 = 1073741941
+
+	// Ping17ProtocolVersion23w04a holds a protocol version (=1073741940) for Minecraft 23w04a
+	Ping17ProtocolVersion23w04a int32 = 1073741940
+
+	// Ping17ProtocolVersion23w03a holds a protocol version (=1073741939) for Minecraft 23w03a
+	Ping17ProtocolVersion23w03a int32 = 1073741939
+
+	// Ping17ProtocolVersion1193 holds a protocol version (=761) for Minecraft 1.19.3
+	Ping17ProtocolVersion1193 int32 = 761
+
+	// Ping17ProtocolVersion1193rc3 holds a protocol version (=1073741938) for Minecraft 1.19.3-rc3
+	Ping17ProtocolVersion1193rc3 int32 = 1073741938
+
+	// Ping17ProtocolVersion1193rc2 holds a protocol version (=1073741937) for Minecraft 1.19.3-rc2
+	Ping17ProtocolVersion1193rc2 int32 = 1073741937
+
+	// Ping17ProtocolVersion1193rc1 holds a protocol version (=1073741936) for Minecraft 1.19.3-rc1
+	Ping17ProtocolVersion1193rc1 int32 = 1073741936
+
+	// Ping17ProtocolVersion1193pre3 holds a protocol version (=1073741935) for Minecraft 1.19.3-pre3
+	Ping17ProtocolVersion1193pre3 int32 = 1073741935
+
+	// Ping17ProtocolVersion1193pre2 holds a protocol version (=1073741934) for Minecraft 1.19.3-pre2
+	Ping17ProtocolVersion1193pre2 int32 = 1073741934
+
+	// Ping17ProtocolVersion1193pre1 holds a protocol version (=1073741933) for Minecraft 1.19.3-pre1
+	Ping17ProtocolVersion1193pre1 int32 = 1073741933
+
+	// Ping17ProtocolVersion22w46a holds a protocol version (=1073741932) for Minecraft 22w46a
+	Ping17ProtocolVersion22w46a int32 = 1073741932
+
+	// Ping17ProtocolVersion22w45a holds a protocol version (=1073741931) for Minecraft 22w45a
+	Ping17ProtocolVersion22w45a int32 = 1073741931
+
+	// Ping17ProtocolVersion22w44a holds a protocol version (=1073741930) for Minecraft 22w44a
+	Ping17ProtocolVersion22w44a int32 = 1073741930
+
+	// Ping17ProtocolVersion22w43a holds a protocol version (=1073741929) for Minecraft 22w43a
+	Ping17ProtocolVersion22w43a int32 = 1073741929
+
+	// Ping17ProtocolVersion22w42a holds a protocol version (=1073741928) for Minecraft 22w42a
+	Ping17ProtocolVersion22w42a int32 = 1073741928
+
+	// Ping17ProtocolVersion1192 holds a protocol version (=760) for Minecraft 1.19.2
+	Ping17ProtocolVersion1192 int32 = 760
+
+	// Ping17ProtocolVersion1192rc2 holds a protocol version (=1073741927) for Minecraft 1.19.2-rc2
+	Ping17ProtocolVersion1192rc2 int32 = 1073741927
+
+	// Ping17ProtocolVersion1192rc1 holds a protocol version (=1073741926) for Minecraft 1.19.2-rc1
+	Ping17ProtocolVersion1192rc1 int32 = 1073741926
+
+	// Ping17ProtocolVersion1191 holds a protocol version (=760) for Minecraft 1.19.1
+	Ping17ProtocolVersion1191 int32 = 760
+
+	// Ping17ProtocolVersion1191rc3 holds a protocol version (=1073741925) for Minecraft 1.19.1-rc3
+	Ping17ProtocolVersion1191rc3 int32 = 1073741925
+
+	// Ping17ProtocolVersion1191rc2 holds a protocol version (=1073741924) for Minecraft 1.19.1-rc2
+	Ping17ProtocolVersion1191rc2 int32 = 1073741924
+
+	// Ping17ProtocolVersion1191pre6 holds a protocol version (=1073741923) for Minecraft 1.19.1-pre6
+	Ping17ProtocolVersion1191pre6 int32 = 1073741923
+
+	// Ping17ProtocolVersion1191pre5 holds a protocol version (=1073741922) for Minecraft 1.19.1-pre5
+	Ping17ProtocolVersion1191pre5 int32 = 1073741922
+
+	// Ping17ProtocolVersion1191pre4 holds a protocol version (=1073741921) for Minecraft 1.19.1-pre4
+	Ping17ProtocolVersion1191pre4 int32 = 1073741921
+
+	// Ping17ProtocolVersion1191pre3 holds a protocol version (=1073741920) for Minecraft 1.19.1-pre3
+	Ping17ProtocolVersion1191pre3 int32 = 1073741920
+
+	// Ping17ProtocolVersion1191pre2 holds a protocol version (=1073741919) for Minecraft 1.19.1-pre2
+	Ping17ProtocolVersion1191pre2 int32 = 1073741919
+
+	// Ping17ProtocolVersion1191rc1 holds a protocol version (=1073741918) for Minecraft 1.19.1-rc1
+	Ping17ProtocolVersion1191rc1 int32 = 1073741918
+
 	// Ping17ProtocolVersion1191pre1 holds a protocol version (=1073741917) for Minecraft 1.19.1-pre1.
 	Ping17ProtocolVersion1191pre1 int32 = 1073741917
 
@@ -1745,6 +1940,14 @@ func Ping17(host string, port int) (*Status17, error) {
 
 // Ping17 pings 1.7+ Minecraft servers.
 func (p *Pinger) Ping17(host string, port int) (*Status17, error) {
+	status, err := p.pingGeneric(p.ping17, host, port)
+	if err != nil {
+		return nil, err
+	}
+	return status.(*Status17), nil
+}
+
+func (p *Pinger) ping17(host string, port int) (interface{}, error) {
 	conn, err := p.openTCPConn(host, port)
 	if err != nil {
 		return nil, err
