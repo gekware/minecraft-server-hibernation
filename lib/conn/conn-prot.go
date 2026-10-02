@@ -228,7 +228,8 @@ func parseHandshake(packet []byte) (int, *errco.MshLog) {
 		return 0, logMsh.AddTrace()
 	}
 	offset += n
-	if addressLen < 0 || offset+addressLen > len(packet) {
+	// Compare against the remaining bytes so an untrusted length cannot overflow int.
+	if addressLen < 0 || addressLen > len(packet)-offset {
 		return 0, errco.NewLog(errco.TYPE_WAR, errco.LVL_4, errco.ERROR_CLIENT_REQ, "server address field is truncated")
 	}
 	offset += addressLen

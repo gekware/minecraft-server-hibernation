@@ -78,6 +78,59 @@ func splitBytewise(data []byte) [][]byte {
 	return fragments
 }
 
+func Test_parseHandshake_bounds(t *testing.T) {
+	tests := []struct {
+		name    string
+		packet  []byte
+		want    int
+		wantErr bool
+	}{
+		{
+			name:   "valid handshake",
+			packet: mountHandshake(758, "localhost", 25555, 1),
+			want:   1,
+		},
+		{
+			// Adding this length to the address offset used to overflow on 32-bit builds.
+			name:    "maximum signed 32-bit address length",
+			packet:  []byte{10, 0, 0, 255, 255, 255, 255, 7, 0, 0, 1},
+			wantErr: true,
+		},
+		{
+			name:    "negative address length",
+			packet:  []byte{10, 0, 0, 255, 255, 255, 255, 15, 0, 0, 1},
+			wantErr: true,
+		},
+		{
+			name:    "address extends one byte past packet",
+			packet:  []byte{7, 0, 0, 5, 'a', 0, 0, 1},
+			wantErr: true,
+		},
+		{
+			name:    "address consumes remaining packet",
+			packet:  []byte{7, 0, 0, 4, 'a', 0, 0, 1},
+			wantErr: true,
+		},
+		{
+			name:    "missing next state",
+			packet:  []byte{6, 0, 0, 1, 'a', 0, 0},
+			wantErr: true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got, logMsh := parseHandshake(test.packet)
+			if (logMsh != nil) != test.wantErr {
+				t.Fatalf("parseHandshake returned error %v, want error %v", logMsh, test.wantErr)
+			}
+			if !test.wantErr && got != test.want {
+				t.Errorf("next state = %d, want %d", got, test.want)
+			}
+		})
+	}
+}
+
 func Test_getReqType(t *testing.T) {
 	// set port which was used to get hardcoded test bytes
 	config.MshPort = 25555
