@@ -322,19 +322,9 @@ func getClientPacket(clientConn net.Conn) ([]byte, *errco.MshLog) {
 		return nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CLIENT_SOCKET_READ, "client declared a packet length out of range (%d)", packetLen)
 	}
 
-	headerLen := len(packetLenByt)
-	if headerLen < 1 || headerLen > 5 {
-		return nil, errco.NewLog(
-			errco.TYPE_ERR, errco.LVL_3,
-			errco.ERROR_CLIENT_SOCKET_READ,
-			"invalid packet length header size (%d)", headerLen,
-		)
-	}
-
-	// read packet data (keep reading until the whole packet has been received)
 	// Compute the allocation size in 64 bits even on 32-bit builds.
-	packetSize := int64(headerLen) + int64(packetLen)
-	packet := make([]byte, packetSize)
+	headerLen := len(packetLenByt)
+	packet := make([]byte, int64(headerLen)+int64(packetLen))
 	copy(packet, packetLenByt)
 	_, err := io.ReadFull(clientConn, packet[headerLen:])
 	if err != nil {
