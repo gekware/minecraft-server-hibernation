@@ -4,10 +4,12 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"math"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"msh/lib/errco"
 	"msh/lib/model"
@@ -152,6 +154,7 @@ func (c *Configuration) loadDefault() *errco.MshLog {
 	}
 
 	// write data to config variable
+	c.Msh.ConnectTimeoutSeconds = 60
 	err = json.Unmarshal(configData, &c)
 	if err != nil {
 		return errco.NewLog(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_CONFIG_LOAD, err.Error())
@@ -198,6 +201,7 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 	flag.IntVar(&ServPort, "servport", ServPort, "Specify the minecraft server port.")
 	flag.IntVar(&ServPortQuery, "servportquery", ServPortQuery, "Specify minecraft server port for queries.")
 	flag.BoolVar(&c.Msh.EnableQuery, "enablequery", c.Msh.EnableQuery, "Enables queries handling.")
+	flag.IntVar(&c.Msh.ConnectTimeoutSeconds, "logintimeout", c.Msh.ConnectTimeoutSeconds, "Specify the proxy read/write timeout in seconds.")
 	flag.Int64Var(&c.Msh.TimeBeforeStoppingEmptyServer, "timeout", c.Msh.TimeBeforeStoppingEmptyServer, "Specify time to wait before stopping minecraft server.")
 	flag.IntVar(&c.Msh.ClientPacketTimeout, "clienttimeout", c.Msh.ClientPacketTimeout, "Specify how many seconds msh waits for a complete client packet.")
 	flag.BoolVar(&c.Msh.SuspendAllow, "suspendallow", c.Msh.SuspendAllow, "Enables minecraft server process suspension.")
@@ -231,6 +235,11 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 		return errco.NewLog(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_PARSE, err.Error())
 	}
 	flag.CommandLine.Parse(args)
+
+	if c.Msh.ConnectTimeoutSeconds <= 0 || int64(c.Msh.ConnectTimeoutSeconds) > math.MaxInt64/int64(time.Second) {
+		return errco.NewLog(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_CONFIG_CHECK,
+			"ConnectTimeoutSeconds/-logintimeout must be between 1 and %d seconds", math.MaxInt64/int64(time.Second))
+	}
 
 	// after config variables are set, set debug level
 	errco.NewLogln(errco.TYPE_INF, errco.LVL_0, errco.ERROR_NIL, "setting log level to: %d", c.Msh.Debug)

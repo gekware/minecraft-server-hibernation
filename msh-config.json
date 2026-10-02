@@ -28,6 +28,7 @@
     "Whitelist": [],
     "WhitelistImport": false,
     "ShowResourceUsage": false,
-    "ShowInternetUsage": false
+    "ShowInternetUsage": false,
+	"ConnectTimeoutSeconds": 60
   }
 }

@@ -252,8 +252,9 @@ func forwardTCP(source, destination net.Conn, isServerToClient bool, req int) {
 
 	for {
 		// update read and write timeout
-		source.SetReadDeadline(time.Now().Add(60 * time.Second))
-		destination.SetWriteDeadline(time.Now().Add(60 * time.Second))
+		deadline := time.Now().Add(time.Duration(config.ConfigRuntime.Msh.ConnectTimeoutSeconds) * time.Second)
+		source.SetReadDeadline(deadline)
+		destination.SetWriteDeadline(deadline)
 
 		// read data from source
 		dataLen, err := source.Read(data)
