@@ -45,10 +45,10 @@ func Test_HandlerClientConn_startingMessage(t *testing.T) {
 	tests := []struct {
 		name, message, progress, want string
 	}{
-		{"default", "Server start command issued. Please wait...", "0%", "Server start command issued. Please wait... 0%"},
-		{"custom text", "§6Attendi \"Mondo\"…\nCaricamento", "42%", "§6Attendi \"Mondo\"…\nCaricamento 42%"},
-		{"empty message", "", "87%", " 87%"},
-		{"empty progress", "Almost ready.", "", "Almost ready. "},
+		{"default", "Server start command issued. Please wait...", "0%", "Server start command issued. Please wait... [loading 0%]"},
+		{"custom text", "§6Attendi \"Mondo\"…\nCaricamento", "42%", "§6Attendi \"Mondo\"…\nCaricamento [loading 42%]"},
+		{"empty message", "", "87%", " [loading 87%]"},
+		{"empty progress", "Almost ready.", "", "Almost ready. [loading ]"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
