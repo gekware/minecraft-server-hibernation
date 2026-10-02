@@ -33,6 +33,7 @@ type Configuration struct {
 		WhitelistImport               bool     `json:"WhitelistImport"`
 		ShowResourceUsage             bool     `json:"ShowResourceUsage"`
 		ShowInternetUsage             bool     `json:"ShowInternetUsage"`
+		ConnectTimeoutSeconds         int      `json:"ConnectTimeoutSeconds"`
 	} `json:"Msh"`
 }
 
