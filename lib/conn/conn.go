@@ -140,7 +140,7 @@ func HandlerClientConn(clientConn net.Conn) {
 			}
 
 			// msh JOIN response (answer client with text in the loadscreen)
-			mes := buildMessage(reqType, "Server start command issued. Please wait... "+servstats.Stats.LoadProgress)
+			mes := buildMessage(reqType, config.ConfigRuntime.Msh.MsgStarting+" [loading "+servstats.Stats.LoadProgress+"]")
 			answerClient(clientConn, mes).Log(true)
 
 		} else {

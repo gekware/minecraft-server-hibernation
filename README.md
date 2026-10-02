@@ -150,6 +150,13 @@ Hibernation and Starting server description
 "InfoStarting": "                   §fserver status:\n                    §6§lWARMING UP"
 ```
 
+Message shown when a player tries to join while the server is starting
+```yaml
+"MsgStarting": "Server start command issued. Please wait..."
+```
+
+The current loading progress is appended automatically as `[loading 43%]`, with the percentage taken from the server's current progress.
+
 Set to false if you don't want notifications (every 20 minutes)
 ```yaml
 "NotifyUpdate": true
