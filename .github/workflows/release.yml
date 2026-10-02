@@ -66,11 +66,34 @@ jobs:
             core.setOutput('commit', object.sha);
             core.setOutput('short_commit', object.sha.slice(0, 7));
 
+  test:
+    needs: prepare
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [amd64, '386']
+    steps:
+      - name: Checkout release commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.commit }}
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - name: Test release commit
+        env:
+          GOARCH: ${{ matrix.arch }}
+          CGO_ENABLED: '0'
+        run: go test -mod=vendor -count=1 -timeout=5m ./...
+
   build:
     needs: prepare
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     strategy:
       matrix:
         include:
@@ -112,29 +135,130 @@ jobs:
         env:
           GOOS: ${{ matrix.os }}
           GOARCH: ${{ matrix.arch }}
+          CGO_ENABLED: '0'
           SUFFIX: ${{ matrix.suffix }}
           VERSION: ${{ needs.prepare.outputs.version }}
           COMMIT: ${{ needs.prepare.outputs.short_commit }}
         run: |
           FILENAME="msh-${VERSION}-${COMMIT}-${GOOS}-${GOARCH}${SUFFIX}"
 
-          go build -v \
+          go build -mod=vendor -v \
             -ldflags="-X 'msh/lib/progmgr.MshVersion=${VERSION}' -X 'msh/lib/progmgr.MshCommit=${COMMIT}'" \
             -o "dist/${FILENAME}" .
 
-          # Copy the config file into the dist folder so it's collected for every matrix run
-          cp msh-config.json dist/msh-config.json
+          # Package the shared config once, alongside the Linux amd64 binary.
+          if [[ "$GOOS/$GOARCH" == 'linux/amd64' ]]; then
+            cp msh-config.json dist/msh-config.json
+          fi
 
-      - name: Upload to Release
-        uses: softprops/action-gh-release@v2
+      - name: Save release artifacts
+        uses: actions/upload-artifact@v4
         with:
-          tag_name: ${{ needs.prepare.outputs.version }}
-          target_commitish: ${{ needs.prepare.outputs.commit }}
-          name: Release ${{ needs.prepare.outputs.version }}
-          draft: false
-          prerelease: false
-          files: |
-            dist/*
-            ${{ strategy.job-index == 0 && 'msh-config.json' || '' }}
+          name: msh-${{ matrix.os }}-${{ matrix.arch }}
+          path: dist/*
+          if-no-files-found: error
+
+  publish:
+    needs: [prepare, test, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all release artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: msh-*
+          path: dist
+          merge-multiple: true
+
+      # This job handles artifacts only; repository code runs in read-only jobs.
+      - name: Upload a new draft and publish the complete release
+        uses: actions/github-script@v8
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+          RELEASE_COMMIT: ${{ needs.prepare.outputs.commit }}
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const version = process.env.RELEASE_VERSION;
+            const commit = process.env.RELEASE_COMMIT;
+            if (!/^v[0-9]+\.[0-9]+\.[0-9]+$/.test(version) || version.trim() !== version ||
+                !/^[a-f0-9]{40}$/.test(commit) || commit.trim() !== commit) {
+              throw new Error('Invalid release version or commit.');
+            }
+
+            const prefix = `msh-${version}-${commit.slice(0, 7)}-`;
+            const expected = [
+              'darwin-amd64.osx', 'darwin-arm64.osx',
+              'linux-amd64.bin', 'linux-arm.bin', 'linux-arm64.bin',
+              'windows-amd64.exe', 'windows-arm64.exe'
+            ].map(target => prefix + target).concat('msh-config.json');
+            const files = fs.readdirSync('dist');
+            if (files.length !== expected.length || expected.some(name => !files.includes(name))) {
+              throw new Error('Release artifacts are missing or unexpected.');
+            }
+            for (const name of expected) {
+              const stat = fs.lstatSync(path.join('dist', name));
+              if (!stat.isFile() || stat.size === 0) {
+                throw new Error(`Invalid release artifact: ${name}`);
+              }
+            }
+
+            const repo = context.repo;
+            async function verifyTag() {
+              let { data: { object } } = await github.rest.git.getRef({
+                ...repo, ref: `tags/${version}`
+              });
+              while (object.type === 'tag') {
+                const { data: tag } = await github.rest.git.getTag({
+                  ...repo, tag_sha: object.sha
+                });
+                object = tag.object;
+              }
+              if (object.type !== 'commit' || object.sha !== commit) {
+                throw new Error(`${version} no longer points to the tested commit.`);
+              }
+            }
+            await verifyTag();
+
+            // A write token can also see drafts that the read-only prepare job cannot.
+            for await (const page of github.paginate.iterator(github.rest.repos.listReleases, {
+              ...repo, per_page: 100
+            })) {
+              if (page.data.some(release => release.tag_name === version)) {
+                throw new Error(`A release already exists for ${version}; refusing to replace it.`);
+              }
+            }
+
+            const { data: draft } = await github.rest.repos.createRelease({
+              ...repo,
+              tag_name: version,
+              target_commitish: commit,
+              name: `Release ${version}`,
+              draft: true,
+              prerelease: false
+            });
+            // Upload only to this new release ID. A failure leaves an unpublished draft.
+            for (const name of expected) {
+              const data = fs.readFileSync(path.join('dist', name));
+              const { data: asset } = await github.rest.repos.uploadReleaseAsset({
+                ...repo,
+                release_id: draft.id,
+                name,
+                data,
+                headers: {
+                  'content-type': 'application/octet-stream',
+                  'content-length': data.length
+                }
+              });
+              if (asset.state !== 'uploaded' || asset.size !== data.length || asset.name !== name) {
+                throw new Error(`Release artifact upload was incomplete: ${name}`);
+              }
+            }
+
+            await verifyTag();
+            await github.rest.repos.updateRelease({
+              ...repo, release_id: draft.id, draft: false
+            });
+            core.info(`Published ${version} from ${commit} with all ${expected.length} artifacts.`);
