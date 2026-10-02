@@ -332,7 +332,9 @@ func getClientPacket(clientConn net.Conn) ([]byte, *errco.MshLog) {
 	}
 
 	// read packet data (keep reading until the whole packet has been received)
-	packet := make([]byte, headerLen+packetLen)
+	// Compute the allocation size in 64 bits even on 32-bit builds.
+	packetSize := int64(headerLen) + int64(packetLen)
+	packet := make([]byte, packetSize)
 	copy(packet, packetLenByt)
 	_, err := io.ReadFull(clientConn, packet[headerLen:])
 	if err != nil {
