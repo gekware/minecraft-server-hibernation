@@ -152,6 +152,7 @@ func (c *Configuration) loadDefault() *errco.MshLog {
 	}
 
 	// write data to config variable
+	c.Msh.MsgStarting = "Server start command issued. Please wait..."
 	err = json.Unmarshal(configData, &c)
 	if err != nil {
 		return errco.NewLog(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_CONFIG_LOAD, err.Error())
