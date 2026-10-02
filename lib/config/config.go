@@ -4,10 +4,12 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"math"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"msh/lib/errco"
 	"msh/lib/model"
@@ -232,6 +234,11 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 		return errco.NewLog(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_PARSE, err.Error())
 	}
 	flag.CommandLine.Parse(args)
+
+	if c.Msh.ConnectTimeoutSeconds <= 0 || int64(c.Msh.ConnectTimeoutSeconds) > math.MaxInt64/int64(time.Second) {
+		return errco.NewLog(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_CONFIG_CHECK,
+			"ConnectTimeoutSeconds/-logintimeout must be between 1 and %d seconds", math.MaxInt64/int64(time.Second))
+	}
 
 	// after config variables are set, set debug level
 	errco.NewLogln(errco.TYPE_INF, errco.LVL_0, errco.ERROR_NIL, "setting log level to: %d", c.Msh.Debug)
