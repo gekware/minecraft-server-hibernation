@@ -155,7 +155,7 @@ Message shown when a player tries to join while the server is starting
 "MsgStarting": "Server start command issued. Please wait..."
 ```
 
-The current loading progress (for example, `42%`) is appended automatically. Existing configuration files that omit `MsgStarting` use the message shown above.
+The current loading progress (for example, `42%`) is appended automatically.
 
 Set to false if you don't want notifications (every 20 minutes)
 ```yaml
