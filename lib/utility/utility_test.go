@@ -75,6 +75,10 @@ func Test_ParseVarInt_errors(t *testing.T) {
 	}{
 		{"empty data", []byte{}, 0},
 		{"offset out of range", []byte{1}, 1},
+		{"negative offset", []byte{1}, -1},
+		{"minimum integer offset", []byte{1}, -int(^uint(0)>>1) - 1},
+		{"maximum integer offset", []byte{128, 1}, int(^uint(0) >> 1)},
+		{"truncated VarInt at nonzero offset", []byte{0, 128}, 1},
 		{"truncated VarInt", []byte{128, 128}, 0},
 		{"VarInt longer than 5 bytes", []byte{128, 128, 128, 128, 128, 1}, 0},
 	}

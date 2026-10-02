@@ -84,7 +84,7 @@ func ParseVarInt(data []byte, offset int) (int, int, *errco.MshLog) {
 	var value int
 
 	for i := 0; i < 5; i++ {
-		if offset+i >= len(data) {
+		if offset < 0 || offset >= len(data) || i >= len(data)-offset {
 			return 0, 0, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_ANALYSIS, "VarInt is truncated")
 		}
 
