@@ -477,6 +477,8 @@ func Test_getClientPacket(t *testing.T) {
 	// packets that getClientPacket must return, whatever the way they are written by the client
 	handshake := mountHandshake(758, "127.0.0.1", 25555, 1)
 	handshakeBig := mountHandshake(758, strings.Repeat("a", 2000), 25555, 1)
+	// Encode 32768 using all five allowed VarInt bytes to exercise the largest allocation.
+	maximumPacket := append([]byte{0x80, 0x80, 0x82, 0x80, 0x00}, make([]byte, maxPacketLen)...)
 
 	tests := []test{
 		{
@@ -505,6 +507,12 @@ func Test_getClientPacket(t *testing.T) {
 			handshakeBig,
 		},
 		{
+			"maximum payload with a five-byte length header",
+			[][]byte{maximumPacket},
+			0,
+			maximumPacket,
+		},
+		{
 			// the bytes following the packet belong to the next packet:
 			// they must be left on the socket for the caller / minecraft server
 			"packet followed by an other packet",
@@ -518,6 +526,12 @@ func Test_getClientPacket(t *testing.T) {
 			// msh must not allocate a buffer of the size declared by the client
 			"declared packet length out of range",
 			[][]byte{varInt(maxPacketLen + 1)},
+			0,
+			nil,
+		},
+		{
+			"length header exceeds five bytes",
+			[][]byte{{0x80, 0x80, 0x80, 0x80, 0x80, 0x00}},
 			0,
 			nil,
 		},
