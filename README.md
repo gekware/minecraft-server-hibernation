@@ -150,10 +150,12 @@ Hibernation and Starting server description
 "InfoStarting": "                   §fserver status:\n                    §6§lWARMING UP"
 ```
 
-Connection error message contents when client tries to join but the server is starting
+Message shown when a player tries to join while the server is starting
 ```yaml
 "MsgStarting": "Server start command issued. Please wait..."
 ```
+
+The current loading progress (for example, `42%`) is appended automatically. Existing configuration files that omit `MsgStarting` use the message shown above.
 
 Set to false if you don't want notifications (every 20 minutes)
 ```yaml
