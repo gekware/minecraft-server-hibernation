@@ -1,6 +1,6 @@
 module msh
 
-go 1.24.0
+go 1.25.0
 
 require (
 	github.com/chzyer/readline v1.5.1
@@ -8,7 +8,7 @@ require (
 	github.com/dreamscached/minequery/v2 v2.5.0
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/shirou/gopsutil v3.21.11+incompatible
-	golang.org/x/image v0.21.0
+	golang.org/x/image v0.40.0
 	golang.org/x/sys v0.41.0
 )
 
@@ -20,7 +20,7 @@ require (
 	github.com/tklauser/go-sysconf v0.3.16 // indirect
 	github.com/tklauser/numcpus v0.11.0 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
-	golang.org/x/text v0.34.0 // indirect
+	golang.org/x/text v0.37.0 // indirect
 )
 
 replace github.com/chzyer/readline => ./gitmod/readline
